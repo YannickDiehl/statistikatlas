@@ -2,7 +2,7 @@ import { mariposaEntries, entryById, formulaTargets } from './mariposaCatalog';
 import { concepts, connections, type Edge } from './concepts';
 import { ref, inputs, isOperation, outputRef, keyOf, type Ref, type Route } from './learning';
 export type Point={x:number;y:number};
-// Fixed places make the map a spatial memory. Selection never rearranges it.
+// Home coordinates keep the map reproducible; mapLayout adds soft spacing and optional, reversible gravity.
 export const places:Record<string,Point>={
  nominal:{x:0,y:750},ordinal:{x:240,y:750},frequency:{x:240,y:1050},ranks:{x:480,y:1050},median:{x:730,y:750},crosstab:{x:480,y:1300},spearman:{x:730,y:1300},
  pairs:{x:0,y:150},series:{x:0,y:340},metric:{x:0,y:540},

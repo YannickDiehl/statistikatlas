@@ -1,8 +1,8 @@
 # Statistikatlas – interaktiver Baukasten
 
-Stand: 10. September 2026 · Vollständige mariposa-0.7.2-Erweiterung mit 200 synthetischen Befragten.
+Stand: 10. September 2026 · Weiche Themenflächen und optionale Gravitation; vollständige mariposa-0.7.2-Erweiterung mit 200 synthetischen Befragten.
 
-Die große Karte ist die Start- und Arbeitsfläche. 104 Bausteine liegen in acht verbundenen Kartenbereichen. Die bisherigen 36 Begriffe behalten ihre Position. Beim Herauszoomen erscheinen Bereichsmarkierungen; ein Klick holt die einzelnen Bausteine heran. Alle 80 öffentlichen mariposa-Funktionen sind auffindbar. Es gibt keine Verfahrensreiter. Die Kurslandkarte außerhalb dieses Projekts bleibt unberührt.
+Die große Karte ist die Start- und Arbeitsfläche. 104 Bausteine liegen in acht durchlässigen, transparenten Themenellipsen. Die Grundanordnung bleibt reproduzierbar; neue Themen rücken leicht zu ihren gemeinsamen Bausteinen. Dezente Themenüberschriften öffnen den jeweiligen Ausschnitt. Verbindungen bleiben über Themenfelder hinweg sichtbar. Alle 80 öffentlichen mariposa-Funktionen sind auffindbar. Es gibt keine Verfahrensreiter. Die Kurslandkarte außerhalb dieses Projekts bleibt unberührt.
 
 ## Erkunden
 
@@ -12,7 +12,8 @@ Die große Karte ist die Start- und Arbeitsfläche. 104 Bausteine liegen in acht
 4. Eine Befragten-ID eingeben, mit den Pfeilen zur nächsten Person gehen oder eine Diagrammmarkierung auswählen. Formeln, Gruppen, Rangtabellen und Dateneditor beziehen sich auf dieselbe stabile ID.
 5. **Datensatz · 200** öffnet alle 28 Spalten und 200 Befragten in einer Tabelle mit 20 Zeilen je Seite. Spaltenköpfe öffnen ihre Erklärung. Eine Zelle auswählen und ihre Originalantwort im Editor ändern. Der Dialog startet auf der Seite der aktuellen Person; ein CSV-Download enthält den ganzen Datensatz.
 6. **Mit den Daten experimentieren** zeigt Verteilungen beziehungsweise das Streudiagramm und einen Editor für die gewählte Person. Punkte lassen sich in zulässigen Werteschritten bewegen. Kategorien werden mit Auswahlfeldern bearbeitet; Transformationen bleiben auf geeignete Spalten beschränkt.
-7. **Zurück / Vorwärts** stellt Begriff, Verwendung, Spaltenzuordnung, Rechenweg, Befragte, Voraussetzungsspur und Kartenausschnitt wieder her. Der Datensatz selbst wird dabei nicht zurückgesetzt. **Ganze Karte** öffnet den Überblick.
+7. **Zurück / Vorwärts** stellt Begriff, Verwendung, Spaltenzuordnung, Rechenweg, Befragte, Voraussetzungsspur und Kartenausschnitt wieder her. Der Datensatz selbst wird dabei nicht zurückgesetzt. **Ganze Karte** stellt die Grundanordnung und den Überblick wieder her.
+8. **Bezüge heranziehen** schaltet nach einer Auswahl die Gravitation ein. Direkte aktive Bezüge rücken um den ausgewählten Baustein zusammen. Bei aktivierter Voraussetzungsspur kommen die rekursiven Voraussetzungen hinzu. Die Bewegung endet nach 420 ms; reduzierte Bewegung wird berücksichtigt. Hover hebt weiterhin ausschließlich hervor. **Anordnung zurücksetzen** erhält die Auswahl und stellt die Grundanordnung wieder her. Zurück/Vorwärts und der Pfadverlauf bewahren auch Anordnung und Gravitation. Die aktuellen Positionen werden bei schnellen Klicks während der Bewegung als Anker übernommen.
 
 ## mariposa erkunden
 

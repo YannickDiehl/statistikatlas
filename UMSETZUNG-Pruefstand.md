@@ -1,3 +1,15 @@
+# Aktueller Prüfstand · durchlässige Karte und Gravitation
+
+10. September 2026: Transparente Themenellipsen mit freien, anklickbaren Überschriften; leicht gelockerte Grundanordnung der neuen Themen. Alle 104 Felder und Verbindungen bleiben erhalten. Bereichszoom passt auch auf schmalen Bildschirmen zum tatsächlichen Ausschnitt.
+
+Optionale Gravitation um den ausgewählten Baustein: aktive direkte Bezüge, mit Voraussetzungsspur auch rekursive Voraussetzungen. Alternative Rechenwege ziehen keine Knoten an; Welch-ANOVA zieht die klassischen Tukey-/Scheffé-Anschlüsse nicht heran. Anker, Layout und Kamera bleiben bei Vorwärts/Zurück, Pfadverlauf und schnellen Klicks nachvollziehbar. Ein Klick setzt die Anordnung zurück. Hover löst keine Layoutberechnung aus. Die Bewegung endet nach 420 ms und berücksichtigt die Systemeinstellung für reduzierte Bewegung.
+
+61 Tests bestehen, einschließlich deterministischer, überlappungsfreier Endpositionen, tatsächlicher Annäherung entfernter Bezüge, Rechenwegvarianten, Verlauf und Anker während einer laufenden Bewegung. TypeScript sowie Produktions- und Offline-Build bestehen. Quelltextprüfung berücksichtigt außerdem den Abbruch vorheriger Kamerafahrten bei schneller Neuauswahl. Während der lokalen Strukturänderung meldete Hot Reload kurzzeitig ungültige alte Bereichsdaten und ResizeObserver-Hinweise; Bereichsmaße sind nun explizit, die Flächen folgen dem fertigen Layout statt jedem Animationsbild, und die Überschrift besitzt einen gültigen Fallback für alte Hot-Reload-Daten. Keine Browser-Interaktionsprüfung oder visuelle Geräteprüfung. R-Aufrufe und Lehrdaten bleiben auf dem zuvor geprüften Stand.
+
+Der folgende Prüfstand dokumentiert die vorausgehende mariposa-Erweiterung:
+
+---
+
 # Aktueller Prüfstand · mariposa-Erweiterung
 
 10. September 2026: 80 öffentliche Funktionen, 104 Bausteine, acht Kartenbereiche, 200 synthetische Befragte mit 28 Variablen. Vollständige Zuordnung und Prüfergebnisse: [MARIPOSA-ABDECKUNG.md](MARIPOSA-ABDECKUNG.md).
