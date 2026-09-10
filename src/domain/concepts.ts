@@ -1,3 +1,4 @@
+import { foundationLinks } from './foundations/catalog';
 import { mariposaEntries, formulaTargets } from './mariposaCatalog';
 export type ConceptCategory = 'data' | 'operation' | 'summary' | 'relationship';
 
@@ -16,7 +17,8 @@ export interface Edge {
   source: string;
   target: string;
   label: string;
-  kind: 'build' | 'condition' | 'optional';
+  kind: 'build' | 'condition' | 'optional' | 'meaning';
+  variants?:number[];
 }
 
 // „boundary“ bezeichnet einen erklärten Ausgangspunkt dieses Ausschnitts.
@@ -176,7 +178,7 @@ export const concepts: Concept[] = [
   {id:'crosstab',title:'Kreuztabelle',short:'Zwei kategoriale Merkmale gemeinsam zählen.',explanation:'Jede Zelle zählt Personen mit einer bestimmten Kombination aus X- und Y-Kategorie. Zeilenprozente beantworten, wie sich Y innerhalb einer X-Kategorie verteilt. Eine Kreuztabelle beschreibt den Zusammenhang, ist aber kein Signifikanztest.',formula:'nⱼₖ',category:'relationship'},
 ];
 
-concepts.push(...mariposaEntries.filter(e=>!e.existing).map(e=>({id:e.id,title:e.title,short:e.intro,explanation:[e.intro,e.output,...e.notes].join(" "),formula:e.formula,category:(e.region==='prepare'?'data':e.variants.length?'relationship':'summary') as ConceptCategory})));
+concepts.push(...mariposaEntries.filter(e=>!e.existing).map(e=>({id:e.id,title:e.title,short:e.intro,explanation:[e.intro,e.output,...e.notes].join(" "),formula:e.formula,boundary:e.requires.length===0&&formulaTargets(e.formula).length===0,category:(e.region==='prepare'?'data':e.variants.length?'relationship':'summary') as ConceptCategory})));
 
 const edge = (source: string, target: string, label: string, kind: Edge['kind'] = 'build'): Edge => ({
   id: `${source}--${target}`, source, target, label, kind,
@@ -257,10 +259,11 @@ export const connections: Edge[] = [
 
 for(const entry of mariposaEntries.filter(e=>!e.existing)){
  const linked=new Map<string,{label:string;kind:Edge['kind']}>();
- for(const id of [...new Set([entry.formula,...entry.variants.map(v=>v.formula||entry.formula)].flatMap(formulaTargets))])if(id!==entry.id)linked.set(id,{label:'liefert einen Baustein',kind:'build'});
+ for(const id of [...new Set([entry.formula,...entry.variants.map(v=>v.formula||entry.formula)].flatMap(formulaTargets))])if(id!==entry.id&&!entry.inputExclusions?.includes(id))linked.set(id,{label:'liefert einen Baustein',kind:'build'});
  for(const requirement of entry.requires)if(requirement.id!==entry.id)linked.set(requirement.id,{label:requirement.reason,kind:'condition'});
  for(const [id,link] of linked)connections.push(edge(id,entry.id,link.label,link.kind));
 }
+for(const link of foundationLinks){if(!connections.some(e=>e.source===link.source&&e.target===link.target))connections.push({...edge(link.source,link.target,link.label,'meaning'),variants:link.variants});}
 export const conceptById: Record<string, Concept> = Object.fromEntries(
   concepts.map((concept) => [concept.id, concept]),
 );

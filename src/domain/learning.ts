@@ -73,7 +73,7 @@ const safeSum = (a: (number|null)[]) => a.some(v=>v===null)?null:finite(a.reduce
 export function inputs(r:Ref,route:Route):Ref[]{const result=rawInputs(r,route);return r.basis==='ranks'?result.map(child=>child.id==='series'?ref('ranks',child.variable):({...child,basis:'ranks'})):result;}
 function rawInputs(r: Ref, route: Route): Ref[] {
  const v=r.variable,make=(id:string,use?:string)=>ref(id,v,use);
- const entry=entryById[r.id];if(entry&&!entry.existing)return [...new Set([...formulaTargets(entry.variants[Number(r.use?.slice(1)||0)]?.formula||entry.formula),...entry.requires.map(c=>c.id)])].filter(id=>id!==r.id).map(id=>entryById[id]&&!entryById[id].existing&&entryById[id].variants.length?make(id,'v0'):make(id));
+ const entry=entryById[r.id];if(entry&&!entry.existing)return [...new Set([...formulaTargets(entry.variants[Number(r.use?.slice(1)||0)]?.formula||entry.formula),...entry.requires.map(c=>c.id)])].filter(id=>id!==r.id&&!entry.inputExclusions?.includes(id)).map(id=>entryById[id]&&!entryById[id].existing&&entryById[id].variants.length?make(id,'v0'):make(id));
  if(r.id==='scaling')return [make(r.use==='z'?'centering':'series'),make('sd')];
  if(isOperation(r)&&r.use){switch(r.use){
  case 'frequency':return [make('series'),make('validn')];case 'mean':return [make('sum'),make('validn')];case 'sum':return [make('series')];case 'validn':return [make('series')];

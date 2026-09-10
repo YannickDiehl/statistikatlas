@@ -1,9 +1,10 @@
+import { foundationEntries } from './foundations/catalog';
 // Audited against the local mariposa 0.7.2 source and NAMESPACE, 2026-09-10.
 // Formula tokens link to the same permanent concepts as the map edges.
 export type RoleKind='quantitative'|'ordered'|'category'|'twoGroups'|'binary'|'continuous'|'items'|'repeated'|'pairedBinary'|'multiple'|'predictor'|'factors'|'interaction'|'likert';
 export type ColumnRole={key:string;label:string;kind:RoleKind;default:string[];many:boolean};
 export type MethodVariant={label:string;fn:string;code:string;roles?:ColumnRole[];formula?:string;note?:string;external?:boolean};
-export type AtlasEntry={id:string;title:string;region:string;intro:string;formula:string;requires:{id:string;reason:string}[];notes:string[];output:string;variants:MethodVariant[];roles:ColumnRole[];existing:boolean;lab?:string};
+export type AtlasEntry={id:string;title:string;region:string;intro:string;formula:string;requires:{id:string;reason:string}[];notes:string[];output:string;variants:MethodVariant[];roles:ColumnRole[];existing:boolean;lab?:string;inputExclusions?:string[];sources?:{title:string;url:string}[]};
 export const mariposaVersion='0.7.2';
 export const mariposaExports:string[]=["ancova", "binomial_test", "center", "chi_square", "chisq_gof", "codebook", "copy_labels", "cramers_v", "crosstab", "describe", "drop_labels", "dunn_test", "efa", "factorial_anova", "find_var", "fisher_test", "fre", "frequency", "friedman_test", "goodman_gamma", "kendall_tau", "kruskal_wallis", "levene_test", "linear_regression", "logistic_regression", "mann_whitney", "marginal_effects", "mcnemar_test", "multiple_response", "na_frequencies", "normality_test", "oneway_anova", "pairwise_wilcoxon", "partial_cor", "pearson_cor", "phi", "pomps", "read_por", "read_sas", "read_spss", "read_stata", "read_xlsx", "read_xpt", "rec", "reliability", "row_count", "row_means", "row_sums", "scheffe_test", "set_na", "spearman_rho", "std", "strip_tags", "t_test", "to_character", "to_dummy", "to_label", "to_labelled", "to_numeric", "tukey_test", "unlabel", "untag_na", "val_labels", "var_label", "w_iqr", "w_kurtosis", "w_mean", "w_median", "w_modus", "w_quantile", "w_range", "w_sd", "w_se", "w_skew", "w_var", "wilcoxon_test", "write_spss", "write_stata", "write_xlsx", "write_xpt"];
 export const mariposaEntries:AtlasEntry[]=[
@@ -3199,6 +3200,10 @@ export const mariposaEntries:AtlasEntry[]=[
  }
 ];
 
+// Result interpretation is represented by non-recursive meaning edges.
+for(const entry of mariposaEntries)if(['normality_test','fisher_test'].includes(entry.id))entry.requires=entry.requires.filter(r=>r.id!=='p_value');
+mariposaEntries.find(entry=>entry.id==='fisher_test')!.inputExclusions=['p_value'];
+mariposaEntries.push(...foundationEntries);
 export const entryById:Record<string,AtlasEntry>=Object.fromEntries(mariposaEntries.map(e=>[e.id,e]));
 export const functionToConcept:Record<string,string>=Object.fromEntries(mariposaEntries.flatMap(e=>e.variants.map(v=>[v.fn,e.id])));
 export function formulaParts(text:string):{text:string;target?:string;hint?:string}[]{return text.split(/(\[\[[^\]]+\]\])/g).filter(Boolean).map(s=>{if(!s.startsWith('[['))return {text:s};const parts=s.slice(2,-2).split('|'),hint=parts.pop(),target=parts.pop(),text=parts.join('|');return {text,target,hint};});}

@@ -1,4 +1,16 @@
-# Aktueller Prüfstand · durchlässige Karte und Gravitation
+# Aktueller Prüfstand · Grundlagen und Ergebnisdeutung
+
+10. September 2026: 55 neue Grundlagen mit verknüpften Formeln, Quellen und interaktiven Experimenten. Insgesamt 159 Bausteine, 486 Verbindungen und zwölf transparente Themenbereiche. Alle 80 öffentlichen mariposa-Exporte bleiben erschlossen. Vollständige neue Abdeckung: [GRUNDLAGEN-ABDECKUNG.md](GRUNDLAGEN-ABDECKUNG.md).
+
+143 direkte Einordnungsverbindungen verbinden Verfahren mit der Deutung ihrer Ergebnisse. Sie bleiben außerhalb der rekursiven Rechenvoraussetzungen. Fisher-p-Werte sind als Ergebnis, nicht als Recheneingang verknüpft. Effektgrößen, Intervalle und Varianten folgen den tatsächlich berichteten mariposa-Ausgaben. Beim Ausflug in eine Grundlage bleiben Spalten, Rangbasis, Route und die gewählte Verfahrensvariante für die Rückkehr erhalten; Hover verwendet dieselbe erinnerte Variante.
+
+71 automatisierte Tests bestehen. Die neuen numerischen Prüfungen vergleichen 85 Dichte-/Masse-/CDF-Punkte und 99 Quantile über acht Verteilungsfamilien sowie 74 Normaltest-Power-Fälle mit unabhängigen R-4.5.3-Referenzen. Zusätzlich geprüft: diskrete Grenzen, reproduzierbare Stichproben, OLS, Rotationsinvarianz, Überanpassung, bekannte Formelziele und azyklische Voraussetzungen, direkte Einordnungsbezüge, 159 kollisionsfreie Positionen und serverseitiges Rendern aller 55 Experimente mit endlichen SVG-Koordinaten. TypeScript sowie Produktions- und Offline-Build bestehen.
+
+Die bisherigen mariposa-R-Aufrufe und der Datensatz wurden nicht geändert; ihre vorherige Ausführungsprüfung bleibt unten dokumentiert. Keine Browser-Interaktionsprüfung, visuelle Geräteprüfung oder Erprobung mit Studierenden in diesem Umsetzungslauf.
+
+---
+
+# Früherer Prüfstand · durchlässige Karte und Gravitation
 
 10. September 2026: Transparente Themenellipsen mit freien, anklickbaren Überschriften; leicht gelockerte Grundanordnung der neuen Themen. Alle 104 Felder und Verbindungen bleiben erhalten. Bereichszoom passt auch auf schmalen Bildschirmen zum tatsächlichen Ausschnitt.
 

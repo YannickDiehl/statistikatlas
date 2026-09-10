@@ -1,8 +1,8 @@
 # Statistikatlas – interaktiver Baukasten
 
-Stand: 10. September 2026 · Weiche Themenflächen und optionale Gravitation; vollständige mariposa-0.7.2-Erweiterung mit 200 synthetischen Befragten.
+Stand: 10. September 2026 · 55 zusätzliche Grundlagen mit interaktiven Experimenten; vollständige mariposa-0.7.2-Erweiterung, weiche Themenflächen und optionale Gravitation.
 
-Die große Karte ist die Start- und Arbeitsfläche. 104 Bausteine liegen in acht durchlässigen, transparenten Themenellipsen. Die Grundanordnung bleibt reproduzierbar; neue Themen rücken leicht zu ihren gemeinsamen Bausteinen. Dezente Themenüberschriften öffnen den jeweiligen Ausschnitt. Verbindungen bleiben über Themenfelder hinweg sichtbar. Alle 80 öffentlichen mariposa-Funktionen sind auffindbar. Es gibt keine Verfahrensreiter. Die Kurslandkarte außerhalb dieses Projekts bleibt unberührt.
+Die große Karte ist die Start- und Arbeitsfläche. 159 Bausteine liegen in zwölf durchlässigen, transparenten Themenellipsen. Die Grundanordnung bleibt reproduzierbar; neue Themen rücken leicht zu ihren gemeinsamen Bausteinen. Dezente Themenüberschriften öffnen den jeweiligen Ausschnitt. Verbindungen bleiben über Themenfelder hinweg sichtbar. Alle 80 öffentlichen mariposa-Funktionen sind auffindbar. Es gibt keine Verfahrensreiter. Die Kurslandkarte außerhalb dieses Projekts bleibt unberührt.
 
 ## Erkunden
 
@@ -22,6 +22,14 @@ Die Suche akzeptiert deutsche Begriffe und R-Funktionsnamen. Jede Funktionskarte
 R-Aufrufe lassen sich kopieren oder zusammen mit dem passenden CSV-Startskript herunterladen. Die aktuellen 200 Befragten und ein maschinenlesbares Codebuch können direkt daneben heruntergeladen werden. Komplexe mariposa-Verfahren laufen in R; der Atlas berechnet dafür keine vorgetäuschten Ergebnisse. Die bestehenden interaktiven Basisrechnungen bleiben unmittelbar nutzbar.
 
 Die vollständige Abdeckung und Prüfung ist in [MARIPOSA-ABDECKUNG.md](MARIPOSA-ABDECKUNG.md) dokumentiert. Der R-Generator prüft den Namespace auf neu hinzugekommene oder entfernte Exporte.
+
+## Grundlagen im Zusammenhang verstehen
+
+55 zusätzliche Bausteine erklären Wahrscheinlichkeiten und Verteilungen, Stichproben und Inferenz sowie Modell- und Messkonzepte. Alle besitzen verknüpfte Formeln, fachliche Quellen und ein passendes interaktives Experiment. Verteilungen lassen sich als Dichte bzw. Einzelwahrscheinlichkeiten oder als kumulierte Wahrscheinlichkeit betrachten. Weitere Experimente zeigen Stichprobenmittelwerte, wiederholte Konfidenzintervalle, p-Werte und Power, Selektionsverzerrung, Regression, Überanpassung, Konfundierung und die Bildung von Messmodellen.
+
+143 zusätzliche Verbindungen vom Typ **Einordnung** erschließen die Bedeutung berichteter Ergebnisse und Anwendungen. Sie sind gepunktet und werden direkt hervorgehoben; sie erzeugen keine rekursiven Rechenvoraussetzungen. Die Auswahl einer Grundlage bewahrt die Spalten, den Rechenweg und die Verfahrensvariante für den Rückweg. Eigenständige Modellsimulationen sind vom veränderbaren Lehrdatensatz getrennt gekennzeichnet.
+
+Die vollständige Liste, Experimente und fachlichen Grenzen stehen in [GRUNDLAGEN-ABDECKUNG.md](GRUNDLAGEN-ABDECKUNG.md).
 
 ## Lehrdatensatz
 
@@ -65,7 +73,7 @@ pnpm build
 
 `pnpm build` prüft TypeScript, erstellt `dist/` und schreibt eine eigenständige HTML-Datei nach `Statistikatlas-Prototyp.html` und `dist/Statistikatlas-offline.html`. Die Anwendung funktioniert damit ohne Server und Netzwerk. Datenänderungen werden auf diesem Gerät gespeichert. Bestehende Eingaben des bisherigen 16-Spalten-Datensatzes werden beibehalten; die zwölf neuen Spalten werden deterministisch ergänzt. Die vorherige Speicherung des Fünf-Personen-Beispiels wird nicht überschrieben.
 
-Erweiterung: `mariposaCatalog.ts` enthält den geprüften Katalog und die verlinkten Formeln, `mariposa.ts` erzeugt rollenabhängige R-Aufrufe. `PackageInspector` und `MariposaPanel` ergänzen die Erklärungen.
+Erweiterung: `mariposaCatalog.ts` enthält den geprüften Katalog und die verlinkten Formeln, `mariposa.ts` erzeugt rollenabhängige R-Aufrufe. `PackageInspector` und `MariposaPanel` ergänzen die Erklärungen. `domain/foundations` enthält Grundlagenkatalog, numerische Modelle und unabhängige R-Referenzen; `components/foundations` enthält die dazugehörigen Experimente.
 
 Aktive Kernmodule: `survey.ts` (Codebuch, Datensatz, Auswahlregeln), `descriptive.ts` (Ränge, Median, Häufigkeiten), `learning.ts` und `formulas.ts` (Baukasten und Formeln), `network.ts` und `exploration.ts` (Karte und Verlauf). `NetworkMap`, `ConceptInspector`, `ColumnPicker`, `SurveyData`, `SurveyAnalysis` und `SurveyExperiment` bilden die Oberfläche. Frühere Komponenten und Fünf-Fall-Referenztests bleiben als Bestand erhalten.
 

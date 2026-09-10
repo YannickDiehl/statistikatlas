@@ -2,7 +2,9 @@
 
 Stand: 10. September 2026, lokaler Paketquellstand **0.7.2**.
 
-Alle **80 öffentlichen Exporte** sind genau einem fachlichen Kartenknoten zugeordnet. Der Atlas enthält **104 Bausteine** und **236 kanonische Verbindungen** in acht räumlichen Bereichen. Ein Alias oder Dateiformat benötigt keine eigene isolierte Verfahrenskarte. Varianten ergänzen die Formel- und Aufrufauswahl innerhalb einer Karte.
+Alle **80 öffentlichen Exporte** sind genau einem fachlichen Kartenknoten zugeordnet. Der Atlas enthält **159 Bausteine** und **486 kanonische Verbindungen** in zwölf räumlichen Bereichen. Ein Alias oder Dateiformat benötigt keine eigene isolierte Verfahrenskarte. Varianten ergänzen die Formel- und Aufrufauswahl innerhalb einer Karte.
+
+55 neue Grundlagen und 143 direkte Einordnungsverbindungen ergänzen die Verfahren. Der aktuelle Gesamtprüfstand umfasst 71 Tests. Details: [GRUNDLAGEN-ABDECKUNG.md](GRUNDLAGEN-ABDECKUNG.md). Die 80 Exporte und ihre 110 Aufrufvarianten bleiben unverändert.
 
 ## Abdeckungsmatrix
 
@@ -97,7 +99,7 @@ SAV, DTA, XPT und XLSX wurden in einem temporären Verzeichnis geschrieben und w
 
 Cramér-V und Gamma rufen intern auch den χ²-Test auf. In den synthetischen Beispieltabellen entstehen erwartete Warnungen wegen kleiner erwarteter Zellhäufigkeiten. Diese betreffen die asymptotische Testnäherung, nicht die deskriptive Berechnung der Zusammenhangsmaße.
 
-55 automatisierte TypeScript-/SSR-Tests prüfen insbesondere Datenmigration, Skalenniveaus, alle Formelreferenzen, Variantenpfade, kollisionsfreie feste Positionen, X/Y- und Rangkontext in den R-Aufrufen sowie vollständige Verlaufseinträge. Kein Browser-Interaktionstest wurde durchgeführt. Die optionale WebMCP-Registrierung wurde mit einem Testkontext geprüft; eine unterstützte reale Browser-WebMCP-Umgebung war nicht verfügbar.
+Beim ursprünglichen mariposa-Ausbau wurden 55 automatisierte TypeScript-/SSR-Tests ausgeführt. Sie prüfen insbesondere Datenmigration, Skalenniveaus, alle Formelreferenzen, Variantenpfade, kollisionsfreie feste Positionen, X/Y- und Rangkontext in den R-Aufrufen sowie vollständige Verlaufseinträge. Kein Browser-Interaktionstest wurde durchgeführt. Die optionale WebMCP-Registrierung wurde mit einem Testkontext geprüft; eine unterstützte reale Browser-WebMCP-Umgebung war nicht verfügbar.
 
 ## Prüfung wiederholen
 
