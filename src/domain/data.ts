@@ -1,0 +1,3 @@
+import { type DataPair } from './statistics';
+export function parseInput(text:string):number|null {const clean=text.trim().replace(',','.');if(!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(clean))return null;const n=Number(clean);return Number.isFinite(n)&&Math.abs(n)<=1e6?n:null;}
+export function validStoredPairs(value:unknown):value is DataPair[]{return Array.isArray(value)&&value.length>=1&&value.length<=8&&value.every(p=>p&&typeof p.id==='string'&&p.id.length>0&&typeof p.x==='number'&&typeof p.y==='number'&&Number.isFinite(p.x)&&Number.isFinite(p.y)&&Math.abs(p.x)<=1e6&&Math.abs(p.y)<=1e6)&&new Set(value.map(p=>p.id)).size===value.length;}
