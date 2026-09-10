@@ -1,7 +1,8 @@
+import type { RSettings } from './mariposa';
 import type { Viewport } from '@xyflow/react';
 import { defaultSelection, type ColumnSelection } from './survey';
 import type { Ref, Route, Variable } from './learning';
-export type ExplorationView={selected:Ref|null;variable:Variable;caseId:string;route:Route;trace:boolean;panelOpen:boolean;columns:ColumnSelection;viewport?:Viewport};
+export type ExplorationView={selected:Ref|null;variable:Variable;caseId:string;route:Route;trace:boolean;panelOpen:boolean;columns:ColumnSelection;rSettings?:Record<string,RSettings>;viewport?:Viewport};
 export type ExplorationHistory={present:ExplorationView;past:ExplorationView[];future:ExplorationView[]};
 export function initialExploration(caseId:string,columns:ColumnSelection={...defaultSelection}):ExplorationHistory{return {present:{selected:null,variable:'x',caseId,columns,route:'covariance',trace:false,panelOpen:false},past:[],future:[]};}
 export function visit(history:ExplorationHistory,next:ExplorationView,viewport?:Viewport):ExplorationHistory{return {present:next,past:[...history.past.slice(-49),{...history.present,viewport}],future:[]};}

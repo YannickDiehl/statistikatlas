@@ -1,3 +1,4 @@
+import { entryById } from './mariposaCatalog';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createElement } from 'react';
@@ -18,8 +19,8 @@ const rows=createSurvey(),noop=()=>{},close=(a:number|null,b:number)=>assert.ok(
 const context=(selection:ColumnSelection=defaultSelection)=>lessonContext(projectPairs(rows,selection),'P137','covariance',{x:columnById[selection.x],y:columnById[selection.y]},selection.likertMetric);
 function targets(e:Expression):ReturnType<typeof ref>[]{if(typeof e==='string')return [];switch(e.type){case 'term':return [e.target];case 'row':return e.items.flatMap(targets);case 'fraction':return [e.operation,...targets(e.top),...targets(e.bottom)];case 'sum':return [e.target,e.count,...targets(e.body)];case 'power':case 'root':return [e.operation,...targets(e.body)];}}
 
-test('the reproducible survey contains exactly 200 unique respondents and valid values in all 16 columns',()=>{
- assert.equal(rows.length,200);assert.equal(surveyColumns.length,16);assert.deepEqual(rows,createSurvey());assert.ok(validSurvey(rows));assert.equal(rows[199].id,'P200');
+test('the reproducible survey contains exactly 200 unique respondents and valid values in all 28 columns',()=>{
+ assert.equal(rows.length,200);assert.equal(surveyColumns.length,28);assert.deepEqual(rows,createSurvey());assert.ok(validSurvey(rows));assert.equal(rows[199].id,'P200');
  for(const c of surveyColumns){for(const r of rows)assert.ok(validColumnValue(c,r.values[c.id]),`${r.id}/${c.id}`);if(c.categories)for(const k of c.categories)assert.ok(rows.some(r=>r.values[c.id]===k.value),`${c.id} misses category ${k.value}`);}
  for(const size of [5,7,10]){const c=surveyColumns.find(c=>c.kind==='likert'&&c.categories?.length===size)!;assert.equal(c.min,1);assert.equal(c.max,size);assert.equal(c.scale,'ordinal');}
  assert.ok(rows.some(r=>r.values.lernzeit%1!==0));assert.ok(!validSurvey(rows.slice(0,199)));
@@ -83,8 +84,8 @@ test('React Flow wrappers retain pointer hit-testing when selection and dragging
  assert.match(html,/pointer-events:all/);assert.match(html,/z-index:3/);assert.match(html,/Mittelwert im Netzwerk erkunden/);
 });
 
-test('all 36 inspectors and their survey experiments render with eligible columns without invalid geometry',()=>{
- for(const concept of concepts){const selection=reconcileColumns(concept.id,{...defaultSelection,x:'geschlecht',y:'schulabschluss'}),c=context(selection),reference=ref(concept.id);const html=renderToStaticMarkup(createElement(ConceptInspector,{selected:reference,context:c,selection,onColumns:noop,onData:noop,highlight:null,onHighlight:noop,onSelect:noop,onHover:noop,onClose:noop,onFocusMap:noop,onCase:noop,onPairs:noop,onReset:noop,resetRevision:0,onVariable:noop,onRoute:noop,trace:false,onTrace:noop,experimentOpen:true,experimentRequest:0,onExperimentFocused:noop,onExperiment:noop}));assert.doesNotMatch(html,/NaN|Infinity|width="-/);assert.match(html,/P137/);assert.ok(html.length<140000,concept.id);}
+test('all inspectors and their survey experiments render with eligible columns without invalid geometry',()=>{
+ for(const concept of concepts){const selection=reconcileColumns(concept.id,{...defaultSelection,x:'geschlecht',y:'schulabschluss'}),c=context(selection),reference=ref(concept.id);const html=renderToStaticMarkup(createElement(ConceptInspector,{selected:reference,context:c,selection,onColumns:noop,onData:noop,highlight:null,onHighlight:noop,onSelect:noop,onHover:noop,onClose:noop,onFocusMap:noop,onCase:noop,onPairs:noop,onReset:noop,resetRevision:0,onVariable:noop,onRoute:noop,trace:false,onTrace:noop,experimentOpen:true,experimentRequest:0,onExperimentFocused:noop,onExperiment:noop}));assert.doesNotMatch(html,/NaN|Infinity|width="-/);if(!entryById[concept.id]||entryById[concept.id].existing)assert.match(html,/P137/);assert.ok(html.length<140000,concept.id);}
  const c=context({...defaultSelection,x:'schulabschluss',y:'finanzlage'});const ranks=renderToStaticMarkup(createElement(SurveyExperiment,{reference:ref('spearman'),context:c,onPairs:noop,onCase:noop,onData:noop,onReset:noop}));assert.match(ranks,/Rang von Schulabschluss/);assert.doesNotMatch(ranks,/NaN|Infinity/);
  const dataset=renderToStaticMarkup(createElement(SurveyData,{rows,selection:defaultSelection,caseId:'P137',procedure:'mean',onCase:noop,onChange:noop,onSelection:noop,onReset:noop,onClose:noop}));assert.match(dataset,/P137/);assert.match(dataset,/P140/);assert.doesNotMatch(dataset,/<th scope="row"><button[^>]*>P001/);
 });

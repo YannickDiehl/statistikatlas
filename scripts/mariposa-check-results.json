@@ -1,0 +1,905 @@
+{
+  "package": "mariposa",
+  "version": "0.7.2",
+  "date": "2026-09-10",
+  "publicFunctions": 80,
+  "concepts": 104,
+  "connections": 236,
+  "exampleVariants": 110,
+  "checks": [
+    {
+      "id": "data_export",
+      "fn": "write_spss",
+      "label": "SPSS · SAV",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_export",
+      "fn": "write_stata",
+      "label": "Stata · DTA",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_export",
+      "fn": "write_xpt",
+      "label": "SAS Transport · XPT",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_export",
+      "fn": "write_xlsx",
+      "label": "Excel · Daten",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_export",
+      "fn": "write_xlsx",
+      "label": "Excel · Codebuch",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "se",
+      "fn": "w_se",
+      "label": "Standardfehler des Mittels",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "se",
+      "fn": "w_se",
+      "label": "Einheitsgewichte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "mean",
+      "fn": "w_mean",
+      "label": "Ohne Gewichte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "mean",
+      "fn": "w_mean",
+      "label": "Mit Einheitsgewichten",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "variance",
+      "fn": "w_var",
+      "label": "Ohne Gewichte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "variance",
+      "fn": "w_var",
+      "label": "Mit Einheitsgewichten",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "sd",
+      "fn": "w_sd",
+      "label": "Ohne Gewichte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "sd",
+      "fn": "w_sd",
+      "label": "Mit Einheitsgewichten",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "median",
+      "fn": "w_median",
+      "label": "Ohne Gewichte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "median",
+      "fn": "w_median",
+      "label": "Mit Einheitsgewichten",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "frequency",
+      "fn": "frequency",
+      "label": "Häufigkeitstabelle",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "frequency",
+      "fn": "fre",
+      "label": "Kurzname fre",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "crosstab",
+      "fn": "crosstab",
+      "label": "Zeilenprozente",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "crosstab",
+      "fn": "crosstab",
+      "label": "Spaltenprozente",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "pearson",
+      "fn": "pearson_cor",
+      "label": "Gemeinsame vollständige Fälle",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "pearson",
+      "fn": "pearson_cor",
+      "label": "Paarweiser Ausschluss",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "spearman",
+      "fn": "spearman_rho",
+      "label": "Rangkorrelation",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "centering",
+      "fn": "center",
+      "label": "Neue zentrierte Spalte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "z",
+      "fn": "std",
+      "label": "z-Werte · Standardabweichung",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "z",
+      "fn": "std",
+      "label": "Zwei Standardabweichungen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "z",
+      "fn": "std",
+      "label": "MAD · robuste Skalierung",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "z",
+      "fn": "std",
+      "label": "Gini-Mitteldifferenz",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "t_test",
+      "fn": "t_test",
+      "label": "Welch · zwei unabhängige Gruppen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "t_test",
+      "fn": "t_test",
+      "label": "Student · gleiche Varianzen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "t_test",
+      "fn": "t_test",
+      "label": "Eine Stichprobe · gegen 7",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "t_test",
+      "fn": "t_test",
+      "label": "Verbundene Mittelwerte · Differenz gegen 0",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "t_test",
+      "fn": "t_test",
+      "label": "Erste Gruppe kleiner · einseitig",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "t_test",
+      "fn": "t_test",
+      "label": "Erste Gruppe größer · einseitig",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "oneway_anova",
+      "fn": "oneway_anova",
+      "label": "Klassischen Rechenweg erklären",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "oneway_anova",
+      "fn": "oneway_anova",
+      "label": "Welch-Rechenweg erklären",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "factorial_anova",
+      "fn": "factorial_anova",
+      "label": "Zwei Faktoren mit Interaktion",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "ancova",
+      "fn": "ancova",
+      "label": "Ein Faktor plus Kovariaten",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "ancova",
+      "fn": "ancova",
+      "label": "Mehrere Faktoren plus Kovariaten",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "levene_test",
+      "fn": "levene_test",
+      "label": "Brown–Forsythe · Median",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "levene_test",
+      "fn": "levene_test",
+      "label": "Levene · Mittelwert",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "normality_test",
+      "fn": "normality_test",
+      "label": "Beide Normalitätstests",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "mann_whitney",
+      "fn": "mann_whitney",
+      "label": "Zweiseitiger Rangvergleich",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "mann_whitney",
+      "fn": "mann_whitney",
+      "label": "Erste Gruppe kleiner · einseitig",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "mann_whitney",
+      "fn": "mann_whitney",
+      "label": "Erste Gruppe größer · einseitig",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "kruskal_wallis",
+      "fn": "kruskal_wallis",
+      "label": "Gruppen über Ränge vergleichen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "wilcoxon_test",
+      "fn": "wilcoxon_test",
+      "label": "Messung X gegen Messung Y",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "friedman_test",
+      "fn": "friedman_test",
+      "label": "Drei Testzeitpunkte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "dunn_test",
+      "fn": "dunn_test",
+      "label": "Paarvergleiche",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "tukey_test",
+      "fn": "tukey_test",
+      "label": "Paarvergleiche",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "scheffe_test",
+      "fn": "scheffe_test",
+      "label": "Paarvergleiche",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "pairwise_wilcoxon",
+      "fn": "pairwise_wilcoxon",
+      "label": "Paarvergleiche",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "binomial_test",
+      "fn": "binomial_test",
+      "label": "Ja-Anteil gegen 50 %",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "chi_square",
+      "fn": "chi_square",
+      "label": "Ohne Kontinuitätskorrektur",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "chi_square",
+      "fn": "chi_square",
+      "label": "Kontinuitätskorrektur bei 2×2",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "chisq_gof",
+      "fn": "chisq_gof",
+      "label": "Gleichverteilung als Lehrhypothese",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "chisq_gof",
+      "fn": "chisq_gof",
+      "label": "Vorgegebene Bildungsanteile",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "fisher_test",
+      "fn": "fisher_test",
+      "label": "Feste Ränder · zweiseitig",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "mcnemar_test",
+      "fn": "mcnemar_test",
+      "label": "Mit Kontinuitätskorrektur",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "mcnemar_test",
+      "fn": "mcnemar_test",
+      "label": "Ohne Kontinuitätskorrektur",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "phi",
+      "fn": "phi",
+      "label": "Zwei binäre Merkmale",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "cramers_v",
+      "fn": "cramers_v",
+      "label": "Kategoriale Zusammenhangsstärke",
+      "status": "ok",
+      "detail": "",
+      "warnings": [
+        "Chi-squared approximation may be incorrect",
+        "10 cells (50%) have expected count < 5. Chi-squared approximation may be\nunreliable."
+      ]
+    },
+    {
+      "id": "goodman_gamma",
+      "fn": "goodman_gamma",
+      "label": "Geordnete Kategorien",
+      "status": "ok",
+      "detail": "",
+      "warnings": [
+        "Chi-squared approximation may be incorrect",
+        "10 cells (40%) have expected count < 5. Chi-squared approximation may be\nunreliable."
+      ]
+    },
+    {
+      "id": "kendall_tau",
+      "fn": "kendall_tau",
+      "label": "Tau-b ohne Gewichte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "partial_cor",
+      "fn": "partial_cor",
+      "label": "Lineare Kontrolle",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "linear_regression",
+      "fn": "linear_regression",
+      "label": "Additives Modell",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "linear_regression",
+      "fn": "linear_regression",
+      "label": "Interaktion zweier Prädiktoren",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "logistic_regression",
+      "fn": "logistic_regression",
+      "label": "Binäres Logitmodell",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "marginal_effects",
+      "fn": "marginal_effects",
+      "label": "Effekte eines Logitmodells",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "reliability",
+      "fn": "reliability",
+      "label": "Fünf gleichgerichtete Lehritems",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "fn": "efa",
+      "label": "Eine Hauptkomponente · PCA",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "fn": "efa",
+      "label": "Ein gemeinsamer Faktor · ML",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "fn": "efa",
+      "label": "Zwei Komponenten · Varimax",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "fn": "efa",
+      "label": "Zwei Komponenten · Oblimin",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "fn": "efa",
+      "label": "Zwei Komponenten · Promax",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "describe",
+      "fn": "describe",
+      "label": "Alle Kennwerte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "quantile",
+      "fn": "w_quantile",
+      "label": "Quartile nach Type 6",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "quantile",
+      "fn": "w_iqr",
+      "label": "Interquartilsabstand",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "range",
+      "fn": "w_range",
+      "label": "Beobachtete Spannweite",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "mode",
+      "fn": "w_modus",
+      "label": "Häufigste Ausprägung",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "shape",
+      "fn": "w_skew",
+      "label": "Schiefe",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "shape",
+      "fn": "w_kurtosis",
+      "label": "Kurtosis · Exzess",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "shape",
+      "fn": "w_kurtosis",
+      "label": "Kurtosis · ohne Abzug 3",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "multiple_response",
+      "fn": "multiple_response",
+      "label": "Lernquellen · Mehrfachauswahl",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "codebook",
+      "fn": "codebook",
+      "label": "Codebuch erzeugen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "codebook",
+      "fn": "find_var",
+      "label": "Lernvariablen finden",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "labels",
+      "fn": "var_label",
+      "label": "Fragetext setzen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "labels",
+      "fn": "val_labels",
+      "label": "Antworttexte setzen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "labels",
+      "fn": "copy_labels",
+      "label": "Labels kopieren",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "labels",
+      "fn": "drop_labels",
+      "label": "Unbenutzte Labels entfernen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "labels",
+      "fn": "unlabel",
+      "label": "Labels entfernen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "conversion",
+      "fn": "to_label",
+      "label": "Labels zu Faktoren",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "conversion",
+      "fn": "to_labelled",
+      "label": "Gelabelter Vektor",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "conversion",
+      "fn": "to_character",
+      "label": "Labels zu Text",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "conversion",
+      "fn": "to_numeric",
+      "label": "Numerische Werte",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "missing_tools",
+      "fn": "set_na",
+      "label": "Code als fehlend markieren",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "missing_tools",
+      "fn": "na_frequencies",
+      "label": "Fehlende Angaben zählen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "missing_tools",
+      "fn": "untag_na",
+      "label": "Missing-Code zurückholen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "missing_tools",
+      "fn": "strip_tags",
+      "label": "Missing-Tags entfernen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "recode",
+      "fn": "rec",
+      "label": "Itemrichtung umkehren",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "dummy",
+      "fn": "to_dummy",
+      "label": "Indikatoren mit Referenzkategorie",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "pomps",
+      "fn": "pomps",
+      "label": "Theoretische Skalenbreite",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "row_operations",
+      "fn": "row_means",
+      "label": "Itemmittel pro Person",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "row_operations",
+      "fn": "row_sums",
+      "label": "Itemsumme pro Person",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "row_operations",
+      "fn": "row_count",
+      "label": "Anzahl gewählter Lernquellen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "pearson",
+      "fn": "pearson_cor",
+      "label": "Pearson auf mittleren Rängen",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_import",
+      "fn": "read_spss",
+      "label": "SPSS · SAV",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_import",
+      "fn": "read_por",
+      "label": "SPSS Portable · POR",
+      "status": "parsed_external_file_required",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_import",
+      "fn": "read_stata",
+      "label": "Stata · DTA",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_import",
+      "fn": "read_sas",
+      "label": "SAS · native Datei",
+      "status": "parsed_external_file_required",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_import",
+      "fn": "read_xpt",
+      "label": "SAS Transport · XPT",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "data_import",
+      "fn": "read_xlsx",
+      "label": "Excel · XLSX",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    }
+  ]
+}

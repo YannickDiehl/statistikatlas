@@ -1,3 +1,13 @@
+# Aktueller Prüfstand · mariposa-Erweiterung
+
+10. September 2026: 80 öffentliche Funktionen, 104 Bausteine, acht Kartenbereiche, 200 synthetische Befragte mit 28 Variablen. Vollständige Zuordnung und Prüfergebnisse: [MARIPOSA-ABDECKUNG.md](MARIPOSA-ABDECKUNG.md).
+
+55 Tests bestehen; TypeScript und Produktions-/Offline-Build bestehen. 110 auswählbare R-Varianten plus zusätzlicher Rangkontext wurden geprüft: 109 erfolgreich ausgeführt, zwei externe Importaufrufe syntaktisch geprüft. Keine Browser-Interaktionsprüfung. Optionale WebMCP-Verträge im Testkontext geprüft; reale Browserunterstützung nicht geprüft.
+
+Der folgende frühere Prüfstand dokumentiert den Ausbau vor mariposa:
+
+---
+
 # Umsetzung und Prüfstand
 
 10. September 2026 · Anklickbare Netzkarte, eingehende Hoverpfade und synthetischer Lehrdatensatz.

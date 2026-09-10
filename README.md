@@ -1,8 +1,8 @@
 # Statistikatlas – interaktiver Baukasten
 
-Stand: 10. September 2026 · Netzkarte mit 200 synthetischen Befragten.
+Stand: 10. September 2026 · Vollständige mariposa-0.7.2-Erweiterung mit 200 synthetischen Befragten.
 
-Die große Karte ist die Start- und Arbeitsfläche. Alle 36 Begriffe behalten ihre Position. 70 Grundbeziehungen werden durch Verbindungen zur aktuellen Verwendung ergänzt. Es gibt keine Verfahrensreiter. Die Kurslandkarte außerhalb dieses Projekts bleibt unberührt.
+Die große Karte ist die Start- und Arbeitsfläche. 104 Bausteine liegen in acht verbundenen Kartenbereichen. Die bisherigen 36 Begriffe behalten ihre Position. Beim Herauszoomen erscheinen Bereichsmarkierungen; ein Klick holt die einzelnen Bausteine heran. Alle 80 öffentlichen mariposa-Funktionen sind auffindbar. Es gibt keine Verfahrensreiter. Die Kurslandkarte außerhalb dieses Projekts bleibt unberührt.
 
 ## Erkunden
 
@@ -10,9 +10,17 @@ Die große Karte ist die Start- und Arbeitsfläche. Alle 36 Begriffe behalten ih
 2. Im Inspector passende Spalten für X und gegebenenfalls Y wählen. Ungeeignete Spalten sind mit Begründung deaktiviert. Fragewortlaut, Einheit, Messniveau, Antwortkategorien und Kodierung stehen direkt darunter. Beim Wechsel des Verfahrens bleiben passende Spalten erhalten; nötige Ersatzzuordnungen werden erklärt.
 3. Formelzeichen und eingehende oder ausgehende Bezüge führen zu denselben Bausteinen in der Karte. Im zusätzlichen Rechenbaum lassen sich weitere Voraussetzungen öffnen. X/Y und der Rangkontext bleiben erhalten.
 4. Eine Befragten-ID eingeben, mit den Pfeilen zur nächsten Person gehen oder eine Diagrammmarkierung auswählen. Formeln, Gruppen, Rangtabellen und Dateneditor beziehen sich auf dieselbe stabile ID.
-5. **Datensatz · 200** öffnet alle 16 Spalten und 200 Befragten in einer Tabelle mit 20 Zeilen je Seite. Spaltenköpfe öffnen ihre Erklärung. Eine Zelle auswählen und ihre Originalantwort im Editor ändern. Der Dialog startet auf der Seite der aktuellen Person; ein CSV-Download enthält den ganzen Datensatz.
+5. **Datensatz · 200** öffnet alle 28 Spalten und 200 Befragten in einer Tabelle mit 20 Zeilen je Seite. Spaltenköpfe öffnen ihre Erklärung. Eine Zelle auswählen und ihre Originalantwort im Editor ändern. Der Dialog startet auf der Seite der aktuellen Person; ein CSV-Download enthält den ganzen Datensatz.
 6. **Mit den Daten experimentieren** zeigt Verteilungen beziehungsweise das Streudiagramm und einen Editor für die gewählte Person. Punkte lassen sich in zulässigen Werteschritten bewegen. Kategorien werden mit Auswahlfeldern bearbeitet; Transformationen bleiben auf geeignete Spalten beschränkt.
 7. **Zurück / Vorwärts** stellt Begriff, Verwendung, Spaltenzuordnung, Rechenweg, Befragte, Voraussetzungsspur und Kartenausschnitt wieder her. Der Datensatz selbst wird dabei nicht zurückgesetzt. **Ganze Karte** öffnet den Überblick.
+
+## mariposa erkunden
+
+Die Suche akzeptiert deutsche Begriffe und R-Funktionsnamen. Jede Funktionskarte erklärt Bedeutung, Voraussetzungen, formale Bausteine und Ausgabe. Innerhalb der Karte lassen sich passende Aufrufvarianten und Datenspalten wählen. Formelpfade berücksichtigen die gewählte Variante; Verlaufseinträge bewahren auch die R-Auswahl.
+
+R-Aufrufe lassen sich kopieren oder zusammen mit dem passenden CSV-Startskript herunterladen. Die aktuellen 200 Befragten und ein maschinenlesbares Codebuch können direkt daneben heruntergeladen werden. Komplexe mariposa-Verfahren laufen in R; der Atlas berechnet dafür keine vorgetäuschten Ergebnisse. Die bestehenden interaktiven Basisrechnungen bleiben unmittelbar nutzbar.
+
+Die vollständige Abdeckung und Prüfung ist in [MARIPOSA-ABDECKUNG.md](MARIPOSA-ABDECKUNG.md) dokumentiert. Der R-Generator prüft den Namespace auf neu hinzugekommene oder entfernte Exporte.
 
 ## Lehrdatensatz
 
@@ -24,7 +32,10 @@ Die 200 Erwachsenen P001–P200 werden mit einem festen Zufallsstartwert erzeugt
 | Ordinale Kategorien | Höchster allgemeinbildender Schulabschluss; finanzielle Lage |
 | Binäre Indikatoren | Erwerbstätigkeit; Weiterbildung (je 0 = Nein, 1 = Ja) |
 | Metrische Werte | Haushaltsnettoeinkommen, Alter, Haushaltsgröße, Erwerbsarbeitszeit, Lernzeit, Schlafdauer, Wissenstest |
-| Likert-Items | Lernplanung 1–5, Lernzuversicht 1–7, Statistikinteresse 1–10 |
+| Likert-Einzelitems | Lernplanung 1–5, Lernzuversicht 1–7, Statistikinteresse 1–10 |
+| Gemeinsamer Itemblock | Fünf gleichgerichtete 7-stufige Methoden-Zuversichtsitems |
+| Messwiederholung | Wissenstest zu drei Zeitpunkten; dieselbe binäre Kursfrage vor/nachher |
+| Mehrfachauswahl | Lernquelle Buch, Video, Kurs (je 0/1) |
 
 Geschlecht und Berufsabschluss haben keine numerische Rangfolge. Schul- und Berufsabschlüsse sind getrennt; Meister, Techniker und Bachelor werden nicht als künstliche Rangfolge codiert. Grundlage der didaktischen Kategorien: [GESIS Schulabschluss](https://pretest.gesis.org/frage/showFrage?frage=1149&lang=de&selectedProj=123), [GESIS Ausbildungsabschluss](https://pretest.gesis.org/frage/showFrage?frage=1150&lang=de&selectedProj=123) und [DQR-FAQ](https://www.dqr.de/dqr/de/der-dqr/faq/deutscher-qualifikationsrahmen-faq.html).
 
@@ -51,7 +62,9 @@ pnpm test
 pnpm build
 ```
 
-`pnpm build` prüft TypeScript, erstellt `dist/` und schreibt eine eigenständige HTML-Datei nach `Statistikatlas-Prototyp.html` und `dist/Statistikatlas-offline.html`. Die Anwendung funktioniert damit ohne Server und Netzwerk. Datenänderungen werden auf diesem Gerät gespeichert. Die vorherige Speicherung des Fünf-Personen-Beispiels wird nicht überschrieben.
+`pnpm build` prüft TypeScript, erstellt `dist/` und schreibt eine eigenständige HTML-Datei nach `Statistikatlas-Prototyp.html` und `dist/Statistikatlas-offline.html`. Die Anwendung funktioniert damit ohne Server und Netzwerk. Datenänderungen werden auf diesem Gerät gespeichert. Bestehende Eingaben des bisherigen 16-Spalten-Datensatzes werden beibehalten; die zwölf neuen Spalten werden deterministisch ergänzt. Die vorherige Speicherung des Fünf-Personen-Beispiels wird nicht überschrieben.
+
+Erweiterung: `mariposaCatalog.ts` enthält den geprüften Katalog und die verlinkten Formeln, `mariposa.ts` erzeugt rollenabhängige R-Aufrufe. `PackageInspector` und `MariposaPanel` ergänzen die Erklärungen.
 
 Aktive Kernmodule: `survey.ts` (Codebuch, Datensatz, Auswahlregeln), `descriptive.ts` (Ränge, Median, Häufigkeiten), `learning.ts` und `formulas.ts` (Baukasten und Formeln), `network.ts` und `exploration.ts` (Karte und Verlauf). `NetworkMap`, `ConceptInspector`, `ColumnPicker`, `SurveyData`, `SurveyAnalysis` und `SurveyExperiment` bilden die Oberfläche. Frühere Komponenten und Fünf-Fall-Referenztests bleiben als Bestand erhalten.
 

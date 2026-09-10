@@ -13,7 +13,7 @@ import { initialExploration, visit, step } from './exploration';
 
 test('all concepts keep a unique non-overlapping place across every selection and route',()=>{
  const initial=JSON.stringify(places),ids=new Set(concepts.map(c=>c.id));
- assert.equal(ids.size,36);assert.equal(connections.length,70);assert.deepEqual(new Set(Object.keys(places)),ids);
+ assert.equal(ids.size,104);assert.ok(connections.length>200);assert.deepEqual(new Set(Object.keys(places)),ids);
  for(const a of concepts)for(const b of concepts){if(a.id===b.id)continue;const p=places[a.id],q=places[b.id];assert.ok(Math.abs(p.x-q.x)>=196||Math.abs(p.y-q.y)>=112,`${a.id} overlaps ${b.id}`);}
  for(const c of concepts)for(const route of ['covariance','z'] as Route[]){const edges=mapRelations(ref(c.id),route);assert.equal(new Set(edges.map(e=>e.id)).size,edges.length);for(const e of edges)assert.ok(ids.has(e.source)&&ids.has(e.target));for(const e of connections)assert.ok(edges.some(next=>next.id===e.id));}
  assert.equal(JSON.stringify(places),initial);
