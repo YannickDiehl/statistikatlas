@@ -1,19 +1,20 @@
 # Statistikatlas – interaktiver Baukasten
 
-Stand: 10. September 2026. Die vier Einstiege Mittelwert, Streuung, z-Standardisierung und Korrelation erschließen dieselben 29 Begriffe. Die Gesamtkarte bewahrt ihre 53 konzeptionellen Beziehungen. Die vorhandene Seminarlandkarte im Nachbarordner bleibt unberührt.
+Stand: 10. September 2026, Revision „Karte zuerst“. Die große, durchgängig sichtbare Netzkarte ist der Ausgangspunkt. Alle 29 Begriffe behalten beim Erkunden ihre Position. Die 53 Grundbeziehungen werden durch passende Verbindungen für die aktuelle Verwendung ergänzt. Die Oberfläche besitzt keine Reiter für einzelne Verfahren. Die vorhandene Seminarlandkarte im Nachbarordner bleibt unberührt.
 
 ## Ausprobieren
 
-`Statistikatlas-Prototyp.html` enthält die gesamte Anwendung einschließlich Skripten und Stilen. Die Datei lässt sich ohne Server oder Internet öffnen. Die gehostete Fassung bietet dieselbe Datei über „Offline-Version herunterladen“ an.
+`Statistikatlas-Prototyp.html` enthält die gesamte Anwendung einschließlich Skripten und Stilen. Die Datei lässt sich ohne Server oder Internet öffnen. Die gehostete Fassung bietet dieselbe Datei über „Offline öffnen“ an.
 
-1. Einen der vier Einstiege auswählen.
-2. Im Bauplan einen Baustein erklären lassen oder mit **Woraus entsteht das?** seine direkten Eingänge öffnen. Rechenschritte erscheinen kompakt zwischen Eingängen und Ergebnis.
-3. Die unterstrichenen Zeichen der gesetzten Formel anklicken. Zähler, Nenner, Summe, Potenz, Wurzel und Rechenzeichen führen zur passenden Verwendung des Bausteins. X und Y bleiben unterscheidbar.
-4. Die Person bei **i =** auswählen oder einen Punkt beziehungsweise Balken anklicken. Formel, Einsetzung, Diagramm und Tabellenzeile beziehen sich auf dieselbe Person. Bei Σ werden weiterhin alle Fälle summiert.
-5. Die Beispieldaten verändern, eine Person ergänzen oder entfernen. Die Zahlenfelder akzeptieren Dezimalkommas; bei ungültiger Eingabe bleibt der letzte gültige Wert mit Hinweis erhalten. Es sind ein bis acht vollständige Fälle möglich.
-6. Bei Korrelation zwischen **Über die Kovarianz** und **Über z-Werte** wechseln. Formel und Bauplan wechseln gemeinsam; Daten und Ergebnis bleiben erhalten.
-7. **Zurück** stellt Auswahl, Einstieg, Rechenweg, Variable, Person, offene Zweige und Kartenausschnitt wieder her. Datenänderungen bleiben bestehen. **Zurücksetzen** stellt die fünf Beispielpaare wieder her und leert ungültige Eingabeentwürfe.
-8. **Alle 29 Bausteine** öffnet Gesamtkarte und durchsuchbare Sammlung. Auf Mobilgeräten ersetzt eine lokale Liste aus Auswahl und direkten Eingängen die große verschiebbare Karte.
+1. Einen Begriff **direkt in der Karte** anklicken oder über **Begriff finden** suchen. Ziehen bewegt die Karte; die Zoomsteuerung und die kleine Übersicht helfen bei der Orientierung. Die Einführung ist schließbar.
+2. Die Auswahl bleibt in der Karte sichtbar. Ihre direkten Beziehungen werden hervorgehoben; der Inspector erklärt den Begriff daneben, auf kleinen Bildschirmen darunter. Beim Auswählen wird eine lesbare Mindestgröße hergestellt, ohne die Knoten neu anzuordnen.
+3. Unter **Von hier aus weiter** zu einem vorausgehenden oder nachfolgenden Begriff springen. Auch Kartenknoten, Verbindungslinien und Formelzeichen sind Navigationsziele. **Bezüge in der Karte heranholen** richtet den Ausschnitt aus; **Alle Voraussetzungen** verfolgt den aktuellen Rechenweg rückwärts.
+4. Die unterstrichenen Zeichen der gesetzten Formel anklicken. Zähler, Nenner, Summe, Potenz, Wurzel und Rechenzeichen führen zur passenden Verwendung desselben Begriffs in der Karte. Beispielsweise bleibt ein Klick auf sᵧ bei der Standardabweichung von Y.
+5. Unter **Die Rechnung als Baukasten entfalten** weitere Eingänge mit + öffnen. Der lokale Rechenbaum ergänzt die große Karte. Jeder Eingang führt wieder zu seinem Platz im Netz.
+6. **Beispieldaten** springt direkt zur Datenbearbeitung. Die Person bei **i =**, ein Punkt oder ein Balken bestimmt den aktuellen Fall. Formel, Einsetzung, Diagramm und Tabellenzeile beziehen sich auf dieselbe Person; Σ summiert alle Fälle. Es sind ein bis acht vollständige Fälle möglich; Dezimalkommas werden akzeptiert.
+7. Bei Pearson im Inspector zwischen **Über die Kovarianz** und **Über z-Werte** wechseln. Formel, Baukasten und hervorgehobene Voraussetzungen wechseln zusammen. Bei z-Produkten werden die Rohdatenkovarianz und weitere Verwendungen ausdrücklich als andere Rechenwege gekennzeichnet.
+8. **Zurück / Vorwärts** stellt Auswahl, Verwendung, Rechenweg, Variable, Person, Voraussetzungsspur und Kartenausschnitt wieder her. Datenänderungen bleiben bestehen. **Ganze Karte** führt zum Gesamtüberblick; das Schließen der Erklärung lässt die aktuelle Auswahl im Netz bestehen.
+9. **Zurücksetzen** stellt die fünf Beispielpaare wieder her und leert ungültige Eingabeentwürfe.
 
 Im Streudiagramm lassen sich Punkte ziehen. Fokussierte Punkte reagieren außerdem auf Pfeiltasten (Schrittweite 0,1); Zahlenfelder bieten eine weitere Eingabemöglichkeit. Alle Experimente verwenden dieselben Fälle. Daten werden ausschließlich im aktuellen Browser gespeichert. Bei blockiertem Speicher bleibt die Anwendung für die Sitzung nutzbar.
 
@@ -53,9 +54,13 @@ Die automatisierten Prüfungen decken Referenzwerte, Randfälle, Invarianzen, X/
 - `src/domain/formulas.ts`: strukturierte Ausdrücke und ihre kontextbezogenen Navigationsziele.
 - `src/domain/data.ts`: Zahleneingabe und Prüfung gespeicherter Fälle.
 - `src/components/Formula.tsx`: interaktive Brüche, Summen, Potenzen, Wurzeln und Einsetzungen.
-- `src/components/LearningGraph.tsx`: lokaler Bauplan, geteilte Knoten, Gesamtkarte und mobile Eingangsliste.
+- `src/domain/network.ts`: feste Kartenpositionen, kontextbezogene Beziehungen und Voraussetzungsspuren.
+- `src/domain/exploration.ts`: Navigation und Wiederherstellung des Kartenausschnitts.
+- `src/components/NetworkMap.tsx`: ständig sichtbare Netzkarte mit Zoom, Übersicht und verknüpfter Auswahl.
+- `src/components/ConceptInspector.tsx`: Erklärung, Formeln, Beziehungen und Experimente zur Auswahl.
+- `src/components/Recipe.tsx`: ergänzender aufklappbarer Rechenbaum.
 - `src/components/Experiment.tsx`: gekoppelte Diagramme, Punktbewegung und gemeinsame Datentabelle.
-- `src/App.tsx`: Einstiege, Navigation mit Verlauf, Rechenwege, Sammlung und lokale Speicherung.
+- `src/App.tsx`: Suche, Kartennavigation mit Verlauf, Inspector und gemeinsame lokale Daten.
 - `src/styles.css`: gemeinsame Gestaltung und Anpassung an kleine Bildschirme.
 
-Die älteren Komponenten `ConceptNode`, `ConceptEdge` und `ExamplePanel` sowie `readings.ts` und `lib/graph.ts` bleiben als Bestand des ersten Prototyps erhalten; die neue Oberfläche verwendet die oben genannten Komponenten. React, TypeScript, React Flow und Dagre sowie die vorhandenen Paketversionen wurden beibehalten.
+Die älteren Komponenten `LearningGraph`, `ConceptNode`, `ConceptEdge` und `ExamplePanel` sowie `readings.ts` und `lib/graph.ts` bleiben als Bestand des ersten Prototyps erhalten; die neue Oberfläche verwendet die oben genannten Komponenten. React, TypeScript, React Flow und Dagre sowie die vorhandenen Paketversionen wurden beibehalten.

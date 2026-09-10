@@ -1,24 +1,24 @@
 # Umsetzung und Prüfstand
 
-10. September 2026 · Umsetzung von `KONZEPT-Weiterentwicklung.md` im vorhandenen React-Projekt.
+10. September 2026 · Revision „Karte zuerst“ nach dem Feedback zur zu statischen Umsetzung.
 
 ## Enthalten
 
-Vier gleichberechtigte Einstiege; alle 29 Begriffe; Gesamtkarte und Begriffssuche; aufklappbare direkte Recheneingänge; kompakte Operationen mit konkreter Verwendung; getrennte X/Y-Verwendungen und gemeinsam genutzte Größen; gesetzte interaktive Formeln; numerische Einsetzungen; gemeinsame Fallauswahl; bedingungsbezogene Hinweise; beide Pearson-Rechenwege; fünf Diagrammfamilien plus Beispiele für Skalenniveau und allgemeine Operationen; veränderbare Daten und bewegliche Punkte; lokale Speicherung; Navigation mit Verlauf und Kartenausschnitt; mobile Ansicht mit direkten Eingängen; Offline-Export.
+Die Netzkarte ist die Start- und Arbeitsfläche. Keine Verfahrensreiter. Alle 29 Begriffe behalten ihre räumliche Position und bleiben beim Auswählen in der Karte vorhanden. Direkte Bezüge, Voraussetzungsspuren, eingehende und ausgehende Links sowie Formelzeichen ermöglichen die Navigation. Ein Inspector zeigt Erklärungen, formale und numerische Formeln, den aufklappbaren Rechenbaum und Experimente. Auf Mobilgeräten bleibt die Karte über dem Inspector bedienbar.
+
+Kontextbezogene Verbindungen unterscheiden z-Produkte von unstandardisierten Abweichungsprodukten und aktuelle Rechnungen von weiteren Verwendungen. Beide Pearson-Rechenwege bleiben verfügbar. Zurück und Vorwärts stellen den Ausschnitt und den fachlichen Kontext wieder her; Datenänderungen bleiben bestehen. Die Beispielbearbeitung wird gezielt ins Sichtfeld gescrollt. Suche, Minikarte, Zoom, schließbare Einführung und ein lesbarer Mindestzoom unterstützen die Orientierung.
 
 ## Automatisiert geprüft
 
-- TypeScript-Prüfung und Produktionsbuild.
-- 24 Tests: Referenzdaten und `n − 1`, Verschiebung/Skalierung, abnehmende und gekrümmte Zusammenhänge, konstante Dezimalwerte, kleine echte Streuung, leere/einzelne Fälle, numerische Grenzen, beide Pearson-Rechenwege und ihre Grenzen, X/Y- und Fallzuordnung, z-Skalierung gegenüber roher Skalierung, Einheiten und Operationsverwendungen, Referenzen sämtlicher Formeln, geteilte Voraussetzungen beim Zuklappen, gerundete Einsetzungen sowie Zahleneingabe und gespeicherte Fälle.
-- Serverseitiges Rendern von Formel und Experiment für alle 29 Begriffe, beide Variablen und Standard-/Einzelfall-/Konstantdaten; keine NaN- oder Infinity-Ausgabe.
-- Selbstständiger Export mit eingebetteten Skripten und Stilen.
+- TypeScript-Prüfung und Produktionsbuild einschließlich selbstständiger Offline-Datei.
+- 32 Tests, davon acht zusätzliche Prüfungen für die Revision: 29 eindeutige kollisionsfreie Kartenpositionen; Erhalt aller 53 Grundbeziehungen; Navigation in beide Richtungen; Verwendung und X/Y-Kontext; fachlich korrekte z-Produkt-Verbindungen; Voraussetzungsspuren für beide Pearson-Rechenwege; Rechenweg beim Übergang zu Pearson; Wiederherstellung von Verlauf und Ausschnitt einschließlich inzwischen gelöschter Fälle; initiale Oberfläche ohne Verfahrensreiter und alle 29 Inspector-Ansichten.
+- Bestehende Prüfungen für Referenzdaten, Randfälle, Invarianzen, Einheiten, Operationsverwendungen, Formelziele, geteilte Recheneingänge, Rundungskennzeichnung, Dezimalkommas und gespeicherte Fälle bleiben erhalten.
+- Serverseitiges Rendern von Formel und Experiment für alle Begriffe, beide Variablen und Standard-/Einzelfall-/Konstantdaten; keine NaN- oder Infinity-Ausgabe.
 
 ## Durch Quelltextprüfung korrigiert
 
-Falsche Streuung konstanter Dezimalreihen; Einheiten und undefinierte Ergebnisse der z-Produkte; fehlende Operationsverwendungen; Variable beim Vertiefen; Einstieg beim Öffnen aus der Sammlung; Verwendungen in Experimenten; lokale mobile Liste; Zurücksetzen ungültiger Eingabeentwürfe; Drag-/Pfeiltastenbedienung für Punkte; Wiederherstellung der Kartenpositionen zusammen mit dem Ausschnitt.
+Falsche Zuordnung der z-Produktsumme zur Rohdatenkovarianz; Voraussetzungsspur beim z-Rechenweg; unpassende X/Y-Schalter für gemeinsame Größen; Datenbearbeitung außerhalb des Sichtfelds; verdeckte Auswahl beim Öffnen des Inspectors; zu kleiner Auswahlzoom; nicht schließbare mobile Einführung; aktuelle Kameraaufnahme während schneller Navigation.
 
-## Noch nicht als geprüft behauptet
+## Grenzen der Prüfung
 
-Diese neue Oberfläche wurde in diesem Umsetzungslauf nicht mit automatisierten Browserklicks, Screenshots oder Nutzertests geprüft. Serverseitiges Rendern ersetzt weder einen visuellen Test auf realen Geräten noch einen Test mit Screenreader. Die vorherigen Prüfberichte im Ordner `artifacts/` beziehen sich auf die ältere Oberfläche.
-
-Die endgültige Gestaltung und ein kurzer Erprobungsdurchlauf mit Studierenden bleiben sinnvolle nächste Schritte. Die Kursinhalte außerhalb dieses Atlas-Ausschnitts wurden nicht erweitert.
+Diese Revision wurde nicht mit automatisierten Browserklicks, Screenshots oder Nutzertests geprüft. Serverseitiges Rendern und Quelltextprüfung ersetzen keine Prüfung auf realen Geräten oder mit Screenreader. Frühere Prüfberichte unter `artifacts/` gehören zu älteren Oberflächen. Die endgültige Gestaltung und eine Erprobung mit Studierenden stehen noch aus. Die Kursinhalte außerhalb dieses Atlas-Ausschnitts wurden nicht erweitert.

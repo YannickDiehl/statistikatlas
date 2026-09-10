@@ -1,3 +1,5 @@
+> Aktualisierung vom 10. September 2026: Die nachfolgende Planung mit vier Einstiegen wurde durch das Nutzerfeedback revidiert. Maßgeblich ist jetzt die dauerhaft sichtbare Netzkarte ohne Verfahrensreiter; aktuelle Bedienung und Prüfstand stehen in README.md und UMSETZUNG-Pruefstand.md.
+
 # Statistikatlas: Gesamtkonzept für die Weiterentwicklung
 
 Stand: 10. September 2026. Konzeptioneller Entwurf für den vorhandenen Atlas mit 29 Konzepten und vier Einstiegen. Ausgangspunkt ist der besprochene Mittelwert-Prototyp mit aufklappbaren Bausteinen, verständlichen Erklärungen, interaktiven Formeln und veränderbaren Beispieldaten. Die Anwendung selbst wird durch dieses Dokument nicht verändert.
