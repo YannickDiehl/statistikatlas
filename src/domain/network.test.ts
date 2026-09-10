@@ -13,7 +13,7 @@ import { initialExploration, visit, step } from './exploration';
 
 test('all concepts keep a unique non-overlapping place across every selection and route',()=>{
  const initial=JSON.stringify(places),ids=new Set(concepts.map(c=>c.id));
- assert.equal(ids.size,29);assert.equal(connections.length,53);assert.deepEqual(new Set(Object.keys(places)),ids);
+ assert.equal(ids.size,36);assert.equal(connections.length,70);assert.deepEqual(new Set(Object.keys(places)),ids);
  for(const a of concepts)for(const b of concepts){if(a.id===b.id)continue;const p=places[a.id],q=places[b.id];assert.ok(Math.abs(p.x-q.x)>=196||Math.abs(p.y-q.y)>=112,`${a.id} overlaps ${b.id}`);}
  for(const c of concepts)for(const route of ['covariance','z'] as Route[]){const edges=mapRelations(ref(c.id),route);assert.equal(new Set(edges.map(e=>e.id)).size,edges.length);for(const e of edges)assert.ok(ids.has(e.source)&&ids.has(e.target));for(const e of connections)assert.ok(edges.some(next=>next.id===e.id));}
  assert.equal(JSON.stringify(places),initial);
@@ -76,7 +76,7 @@ test('the initial surface starts on the network without procedure tabs or a sele
  const html=renderToStaticMarkup(createElement(ReactFlowProvider,null,createElement(App)));
  assert.match(html,/gesamte interaktive Netzkarte/);assert.match(html,/Wo möchtest du anfangen/);
  assert.doesNotMatch(html,/entry-nav|role="tab"|id="inspector-title"/);
- assert.match(html,/Beispieldaten bearbeiten/);
+ assert.match(html,/Datensatz mit 200 Befragten öffnen/);
 });
 
 test('inspectors render every concept, distinguish other uses and hide irrelevant X/Y switches',()=>{

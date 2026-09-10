@@ -50,7 +50,7 @@ test('displayed rounded arithmetic is marked approximate, even when the result i
  const pairs=[1,1,1,0,0,0,0,0].map((x,i)=>({id:String(i),x,y:i})),c=lessonContext(pairs,'0','covariance');
  for(const r of [ref('ss'),ref('add'),ref('variance')]){const html=renderToStaticMarkup(createElement(Formula,{reference:r,context:c,numeric:true,onSelect:()=>{}}));assert.match(html,/≈/);}
 });
-test('all 29 concepts render both variables with boundary data and usable formula links',()=>{
+test('all concepts render both variables with boundary data and usable formula links',()=>{
  for(const pairs of [defaultPairs,defaultPairs.slice(0,1),defaultPairs.map(p=>({...p,x:0,y:0}))])for(const variable of ['x','y'] as const)for(const concept of concepts){const reference=ref(concept.id,variable),context=lessonContext(pairs,pairs[0].id,'covariance');const html=renderToStaticMarkup(createElement(Formula,{reference,context,onSelect:()=>{}}));assert.ok(html.length>100,concept.id);assert.doesNotMatch(html,/NaN|Infinity/);const experiment=renderToStaticMarkup(createElement(Experiment,{reference,context,showBoth:concept.category==='relationship',onPairs:()=>{},onCase:()=>{},onReset:()=>{}}));assert.doesNotMatch(experiment,/NaN|Infinity/);}
 });
 test('German numeric input and stored cases preserve valid complete row identities',()=>{

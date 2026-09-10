@@ -15,5 +15,5 @@ export function Formula({reference,context,onSelect,onHighlight,highlight,numeri
   case 'root':return <span className="math-root">{control('√',e.operation,'Quadratwurzel ziehen')}<span>{render(e.body)}</span></span>;
   }
  }
- return <div className={numeric?'live-formula':'symbolic-formula'}><div className="math-expression" aria-label={numeric?'Rechnung mit den aktuellen Daten':'Interaktive Formel'}>{render(formulaFor(reference,context,numeric))}</div>{!numeric&&<p className="formula-hint">{hint||'Formelzeichen anklicken, um den Baustein zu öffnen.'}</p>}</div>;
+ return <div className={numeric?'live-formula':'symbolic-formula'}><div className="math-expression" aria-label={numeric?'Rechnung mit den aktuellen Daten':'Interaktive Formel'}>{render(formulaFor(reference,context,numeric))}</div>{numeric&&context.pairs.length>8&&['series','sum','ss','crossproduct_sum','count'].includes(reference.id)&&<p className="small-copy">… kürzt die Anzeige. Berechnet werden alle {context.pairs.length} Befragten; die ausgewählte Person bleibt in der Vorschau sichtbar.</p>}{!numeric&&<p className="formula-hint">{hint||'Formelzeichen anklicken, um den Baustein zu öffnen.'}</p>}</div>;
 }

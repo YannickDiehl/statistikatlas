@@ -1,0 +1,16 @@
+import { calculateStatistics, type DataPair } from './statistics';
+export function averageRanks(values:number[]):number[]{const sorted=values.map((value,index)=>({value,index})).sort((a,b)=>a.value-b.value),ranks=Array(values.length).fill(0);let i=0;while(i<sorted.length){let j=i+1;while(j<sorted.length&&sorted[j].value===sorted[i].value)j++;const rank=(i+1+j)/2;for(let k=i;k<j;k++)ranks[sorted[k].index]=rank;i=j;}return ranks;}
+export function rankedPairs(pairs:DataPair[]):DataPair[]{const x=averageRanks(pairs.map(p=>p.x)),y=averageRanks(pairs.map(p=>p.y));return pairs.map((p,i)=>({id:p.id,x:x[i],y:y[i]}));}
+export function spearman(pairs:DataPair[]){return calculateStatistics(rankedPairs(pairs)).pearson;}
+export function middleValues(values:number[]):[number,number]|null{if(!values.length)return null;const sorted=[...values].sort((a,b)=>a-b);return [sorted[Math.floor((sorted.length-1)/2)],sorted[Math.floor(sorted.length/2)]];}
+export function frequencyTable(values:number[],levels?:number[]){const counts=new Map<number,number>((levels||[]).map(v=>[v,0]));for(const v of values)counts.set(v,(counts.get(v)||0)+1);return [...counts].sort((a,b)=>a[0]-b[0]).map(([value,count])=>({value,count,proportion:values.length?count/values.length:0}));}
+export function crossTable(pairs:DataPair[],xLevels?:number[],yLevels?:number[]){const x=xLevels||[...new Set(pairs.map(p=>p.x))].sort((a,b)=>a-b),y=yLevels||[...new Set(pairs.map(p=>p.y))].sort((a,b)=>a-b),cells=x.map(a=>y.map(b=>pairs.filter(p=>p.x===a&&p.y===b).length));return {x,y,cells,rowTotals:cells.map(row=>row.reduce((a,b)=>a+b,0)),columnTotals:y.map((_,j)=>cells.reduce((sum,row)=>sum+row[j],0)),n:pairs.length};}
+export function histogram(values:number[],count=10){if(!values.length)return [];const min=Math.min(...values),max=Math.max(...values);if(min===max)return [{low:min,high:max,count:values.length,last:true}];const width=(max-min)/count,result=Array.from({length:count},(_,i)=>({low:min+i*width,high:min+(i+1)*width,count:0,last:i===count-1}));for(const v of values)result[Math.min(count-1,Math.floor((v-min)/width))].count++;return result;}
+export function previewIndices(length:number,selected=0){if(length<=8)return Array.from({length},(_,i)=>i);return [...new Set([0,1,Math.max(0,Math.min(length-1,selected)),length-1])].sort((a,b)=>a-b);}
+
+export type DistributionGroup={key:string;label:string;indices:number[];count:number;proportion:number};
+export function distributionGroups(values:number[],column?:{categories?:{value:number;label:string}[]}):DistributionGroup[]{
+ const fmt=(n:number)=>new Intl.NumberFormat('de-DE',{maximumFractionDigits:2}).format(n);
+ if(column?.categories||new Set(values).size<=12){const levels=column?.categories||[...new Set(values)].sort((a,b)=>a-b).map(value=>({value,label:fmt(value)}));return levels.map(level=>{const indices=values.flatMap((v,i)=>v===level.value?[i]:[]);return {key:String(level.value),label:level.label,indices,count:indices.length,proportion:values.length?indices.length/values.length:0};});}
+ const bins=histogram(values);return bins.map((b,k)=>{const indices=values.flatMap((v,i)=>v>=b.low&&(v<b.high||b.last&&v<=b.high)?[i]:[]);return {key:`bin-${k}`,label:`${fmt(b.low)} bis ${b.last?'':'< '}${fmt(b.high)}`,indices,count:indices.length,proportion:indices.length/values.length};});
+}

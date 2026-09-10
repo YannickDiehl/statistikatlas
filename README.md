@@ -1,39 +1,48 @@
 # Statistikatlas – interaktiver Baukasten
 
-Stand: 10. September 2026, Revision „Karte zuerst“. Die große, durchgängig sichtbare Netzkarte ist der Ausgangspunkt. Alle 29 Begriffe behalten beim Erkunden ihre Position. Die 53 Grundbeziehungen werden durch passende Verbindungen für die aktuelle Verwendung ergänzt. Die Oberfläche besitzt keine Reiter für einzelne Verfahren. Die vorhandene Seminarlandkarte im Nachbarordner bleibt unberührt.
+Stand: 10. September 2026 · Netzkarte mit 200 synthetischen Befragten.
 
-## Ausprobieren
+Die große Karte ist die Start- und Arbeitsfläche. Alle 36 Begriffe behalten ihre Position. 70 Grundbeziehungen werden durch Verbindungen zur aktuellen Verwendung ergänzt. Es gibt keine Verfahrensreiter. Die Kurslandkarte außerhalb dieses Projekts bleibt unberührt.
 
-`Statistikatlas-Prototyp.html` enthält die gesamte Anwendung einschließlich Skripten und Stilen. Die Datei lässt sich ohne Server oder Internet öffnen. Die gehostete Fassung bietet dieselbe Datei über „Offline öffnen“ an.
+## Erkunden
 
-1. Einen Begriff **direkt in der Karte** anklicken oder über **Begriff finden** suchen. Ziehen bewegt die Karte; die Zoomsteuerung und die kleine Übersicht helfen bei der Orientierung. Die Einführung ist schließbar.
-2. Die Auswahl bleibt in der Karte sichtbar. Ihre direkten Beziehungen werden hervorgehoben; der Inspector erklärt den Begriff daneben, auf kleinen Bildschirmen darunter. Beim Auswählen wird eine lesbare Mindestgröße hergestellt, ohne die Knoten neu anzuordnen.
-3. Unter **Von hier aus weiter** zu einem vorausgehenden oder nachfolgenden Begriff springen. Auch Kartenknoten, Verbindungslinien und Formelzeichen sind Navigationsziele. **Bezüge in der Karte heranholen** richtet den Ausschnitt aus; **Alle Voraussetzungen** verfolgt den aktuellen Rechenweg rückwärts.
-4. Die unterstrichenen Zeichen der gesetzten Formel anklicken. Zähler, Nenner, Summe, Potenz, Wurzel und Rechenzeichen führen zur passenden Verwendung desselben Begriffs in der Karte. Beispielsweise bleibt ein Klick auf sᵧ bei der Standardabweichung von Y.
-5. Unter **Die Rechnung als Baukasten entfalten** weitere Eingänge mit + öffnen. Der lokale Rechenbaum ergänzt die große Karte. Jeder Eingang führt wieder zu seinem Platz im Netz.
-6. **Beispieldaten** springt direkt zur Datenbearbeitung. Die Person bei **i =**, ein Punkt oder ein Balken bestimmt den aktuellen Fall. Formel, Einsetzung, Diagramm und Tabellenzeile beziehen sich auf dieselbe Person; Σ summiert alle Fälle. Es sind ein bis acht vollständige Fälle möglich; Dezimalkommas werden akzeptiert.
-7. Bei Pearson im Inspector zwischen **Über die Kovarianz** und **Über z-Werte** wechseln. Formel, Baukasten und hervorgehobene Voraussetzungen wechseln zusammen. Bei z-Produkten werden die Rohdatenkovarianz und weitere Verwendungen ausdrücklich als andere Rechenwege gekennzeichnet.
-8. **Zurück / Vorwärts** stellt Auswahl, Verwendung, Rechenweg, Variable, Person, Voraussetzungsspur und Kartenausschnitt wieder her. Datenänderungen bleiben bestehen. **Ganze Karte** führt zum Gesamtüberblick; das Schließen der Erklärung lässt die aktuelle Auswahl im Netz bestehen.
-9. **Zurücksetzen** stellt die fünf Beispielpaare wieder her und leert ungültige Eingabeentwürfe.
+1. Eine Karte an beliebiger Stelle anklicken. Beim Darüberfahren oder Tastaturfokus werden sämtliche eingehenden Pfade hervorgehoben; beim Verlassen kehrt die bisherige Auswahl zurück.
+2. Im Inspector passende Spalten für X und gegebenenfalls Y wählen. Ungeeignete Spalten sind mit Begründung deaktiviert. Fragewortlaut, Einheit, Messniveau, Antwortkategorien und Kodierung stehen direkt darunter. Beim Wechsel des Verfahrens bleiben passende Spalten erhalten; nötige Ersatzzuordnungen werden erklärt.
+3. Formelzeichen und eingehende oder ausgehende Bezüge führen zu denselben Bausteinen in der Karte. Im zusätzlichen Rechenbaum lassen sich weitere Voraussetzungen öffnen. X/Y und der Rangkontext bleiben erhalten.
+4. Eine Befragten-ID eingeben, mit den Pfeilen zur nächsten Person gehen oder eine Diagrammmarkierung auswählen. Formeln, Gruppen, Rangtabellen und Dateneditor beziehen sich auf dieselbe stabile ID.
+5. **Datensatz · 200** öffnet alle 16 Spalten und 200 Befragten in einer Tabelle mit 20 Zeilen je Seite. Spaltenköpfe öffnen ihre Erklärung. Eine Zelle auswählen und ihre Originalantwort im Editor ändern. Der Dialog startet auf der Seite der aktuellen Person; ein CSV-Download enthält den ganzen Datensatz.
+6. **Mit den Daten experimentieren** zeigt Verteilungen beziehungsweise das Streudiagramm und einen Editor für die gewählte Person. Punkte lassen sich in zulässigen Werteschritten bewegen. Kategorien werden mit Auswahlfeldern bearbeitet; Transformationen bleiben auf geeignete Spalten beschränkt.
+7. **Zurück / Vorwärts** stellt Begriff, Verwendung, Spaltenzuordnung, Rechenweg, Befragte, Voraussetzungsspur und Kartenausschnitt wieder her. Der Datensatz selbst wird dabei nicht zurückgesetzt. **Ganze Karte** öffnet den Überblick.
 
-Im Streudiagramm lassen sich Punkte ziehen. Fokussierte Punkte reagieren außerdem auf Pfeiltasten (Schrittweite 0,1); Zahlenfelder bieten eine weitere Eingabemöglichkeit. Alle Experimente verwenden dieselben Fälle. Daten werden ausschließlich im aktuellen Browser gespeichert. Bei blockiertem Speicher bleibt die Anwendung für die Sitzung nutzbar.
+## Lehrdatensatz
 
-## Fachliche Konventionen
+Die 200 Erwachsenen P001–P200 werden mit einem festen Zufallsstartwert erzeugt. Es handelt sich ausschließlich um synthetische, vollständige Antworten. Die konstruierten Verteilungen und Zusammenhänge sind nicht repräsentativ; die Zustimmungsitems sind eigene Lehrbeispiele und keine validierten psychologischen Skalen.
 
-- Stichprobenvarianz und Stichprobenkovarianz verwenden `n − 1`. Ein Mittelwert benötigt mindestens einen Wert, die korrigierte Stichprobenstreuung mindestens zwei.
-- Die Fallauswahl bleibt in diesem Beispiel gemeinsam und vollständig. Univariate Rechnungen benötigen inhaltlich keine zweite Variable.
-- Standardabweichung und Varianz einer konstanten Reihe sind 0; deren z-Werte und Pearson-Korrelation sind nicht definiert. Für z von X ist die Streuung von Y unerheblich.
-- Die allgemeine Skalierung zeigt `uᵢ / a`, lokal mit `a = s`. Ihr eigenständiges Beispiel verwendet ursprüngliche Werte, der z-Weg bereits zentrierte Werte.
-- Kovarianz und Abweichungsprodukte tragen Produkteinheiten, Varianzen quadrierte Einheiten, Standardabweichungen ursprüngliche Einheiten; z, z-Produkte und r sind einheitenlos.
-- Intern wird mit ungerundeten Zahlen gerechnet; numerische Einsetzungen sind mit `≈` gekennzeichnet. Extremwerte außerhalb ±1.000.000 werden in der Eingabe zurückgewiesen.
-- Metrisches Skalenniveau und Fallzuordnung erscheinen als inhaltliche Annahmen. Sie werden nicht aus einer Zahlenliste automatisch bestätigt. Linearität wird als Interpretationsfrage erklärt.
-- Standardisieren erzeugt keine Normalverteilung. Für die deskriptive Berechnung von r ist keine Normalverteilung nötig. Korrelation belegt keine Kausalität.
+| Bereich | Spalten |
+|---|---|
+| Nominale Kategorien | Geschlechtseintrag; zuletzt erworbener Berufs-/Hochschulabschluss |
+| Ordinale Kategorien | Höchster allgemeinbildender Schulabschluss; finanzielle Lage |
+| Binäre Indikatoren | Erwerbstätigkeit; Weiterbildung (je 0 = Nein, 1 = Ja) |
+| Metrische Werte | Haushaltsnettoeinkommen, Alter, Haushaltsgröße, Erwerbsarbeitszeit, Lernzeit, Schlafdauer, Wissenstest |
+| Likert-Items | Lernplanung 1–5, Lernzuversicht 1–7, Statistikinteresse 1–10 |
 
-## Gestaltung
+Geschlecht und Berufsabschluss haben keine numerische Rangfolge. Schul- und Berufsabschlüsse sind getrennt; Meister, Techniker und Bachelor werden nicht als künstliche Rangfolge codiert. Grundlage der didaktischen Kategorien: [GESIS Schulabschluss](https://pretest.gesis.org/frage/showFrage?frage=1149&lang=de&selectedProj=123), [GESIS Ausbildungsabschluss](https://pretest.gesis.org/frage/showFrage?frage=1150&lang=de&selectedProj=123) und [DQR-FAQ](https://www.dqr.de/dqr/de/der-dqr/faq/deutscher-qualifikationsrahmen-faq.html).
 
-Die Oberfläche übernimmt die angenommene Richtung der beiden Demonstrationen: warmes Papierweiß `#FAF8F3`, Georgia, Bordeaux `#8B2E2E` und Dunkelgrün `#1A4D3E`, kurze Einführungen und sichtbar gesetzte Formeln. Systemschriften halten die Offline-Datei unabhängig von externen Schriftanbietern. Die abschließende gestalterische Abstimmung bleibt ein eigener nächster Schritt.
+Likert-Items bleiben als geordnete Kategorien beschrieben. Wie gewünscht werden ihre Abstände standardmäßig für metrische Verfahren als gleich groß angenommen; diese Annahme ist sichtbar und kann ausgeschaltet werden. Die 10er-Skala läuft von 1 bis 10 und besitzt keine neutrale Mittelkategorie. Zur Gestaltung: [GESIS Ratingskalen](https://www.gesis.org/fileadmin/admin/Dateikatalog/pdf/guidelines/gestaltung_ratingskalen_frageboegen_menold_bogner_2015.pdf).
 
-## Entwicklung und Prüfung
+## Verfahren und fachliche Konventionen
+
+- **Häufigkeiten:** Kategorienzählung oder bei vielen metrischen Werten zehn gleich breite Klassen; absolute und relative Häufigkeiten verwenden dieselben 200 Fälle.
+- **Median:** Bei geradem n werden die beiden mittleren metrischen Werte gemittelt. Für ordinale Kategorien werden gegebenenfalls beide Mittelkategorien genannt; Kategoriencodes werden nicht zu einer erfundenen Antwort gemittelt.
+- **Spearman:** Pearson auf den mittleren Rängen, einschließlich Gleichständen. Die interaktive Rechnung führt in einen ausdrücklich gekennzeichneten Rangkontext. Die einfache Differenzenformel ohne Gleichstandskorrektur wird nicht verwendet. [Rangdefinition](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.rankdata.html), [Spearman](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.spearmanr.html).
+- **Kreuztabellen:** Kategoriale X/Y-Spalten; absolute Zellenhäufigkeiten, Zeilenprozente oder Gesamtprozente mit konsistenten Randsummen. Kein Signifikanztest.
+- **Mittelwert und Streuung:** Metrische Spalten, binäre 0/1-Indikatoren und Likert unter der gewählten Annahme. Der Mittelwert einer 0/1-Variable ist der Anteil der 1. Für Haushaltseinkommen wird kein persönliches Pro-Kopf-Einkommen behauptet.
+- Stichprobenvarianz und Stichprobenkovarianz verwenden n − 1. Standardabweichung einer konstanten Reihe ist 0; z und Korrelation mit dieser Reihe sind nicht definiert.
+- Pearson besitzt weiterhin beide Rechenwege: Kovarianz geteilt durch Streuungsprodukt oder Summe der z-Produkte geteilt durch n − 1. Nominale Mehrkategoriencodes und ordinale Abschlüsse werden dafür nicht freigegeben.
+- Einheiten stammen aus den gewählten Spalten. Ränge, z-Werte und standardisierte Größen werden passend gekennzeichnet. Zahlen werden intern ungerundet berechnet.
+- Lange Formeln zeigen wenige verknüpfte Beiträge einschließlich der aktuellen Person und eine Auslassungsmarke; die Rechnung verwendet alle 200 Fälle. Diagramme aggregieren Verteilungen, statt 200 beschriftete Einzelbalken zu zeichnen.
+
+## Entwicklung und Offline-Fassung
 
 ```sh
 pnpm install
@@ -42,25 +51,8 @@ pnpm test
 pnpm build
 ```
 
-Vite startet auf der ausgegebenen lokalen Adresse, regulär `127.0.0.1:5173`. `pnpm build` prüft TypeScript, erstellt `dist/` und schreibt die eigenständige HTML-Datei sowohl ins Projekt als auch nach `dist/Statistikatlas-offline.html`.
+`pnpm build` prüft TypeScript, erstellt `dist/` und schreibt eine eigenständige HTML-Datei nach `Statistikatlas-Prototyp.html` und `dist/Statistikatlas-offline.html`. Die Anwendung funktioniert damit ohne Server und Netzwerk. Datenänderungen werden auf diesem Gerät gespeichert. Die vorherige Speicherung des Fünf-Personen-Beispiels wird nicht überschrieben.
 
-Die automatisierten Prüfungen decken Referenzwerte, Randfälle, Invarianzen, X/Y-Kontexte, Formelziele, Operationsverwendungen, Einheiten, geteilte Voraussetzungen, Eingabeprüfung und das serverseitige Rendern aller 29 Begriffe ab. Der aktuelle Prüfstand ist in `UMSETZUNG-Pruefstand.md` dokumentiert. Frühere Browserprüfungen und Screenshots unter `artifacts/` gehören zum vorherigen Prototyp und sind kein Nachweis für diese neue Oberfläche.
+Aktive Kernmodule: `survey.ts` (Codebuch, Datensatz, Auswahlregeln), `descriptive.ts` (Ränge, Median, Häufigkeiten), `learning.ts` und `formulas.ts` (Baukasten und Formeln), `network.ts` und `exploration.ts` (Karte und Verlauf). `NetworkMap`, `ConceptInspector`, `ColumnPicker`, `SurveyData`, `SurveyAnalysis` und `SurveyExperiment` bilden die Oberfläche. Frühere Komponenten und Fünf-Fall-Referenztests bleiben als Bestand erhalten.
 
-## Aktive Bausteine im Quelltext
-
-- `src/domain/concepts.ts`: 29 fachliche Begriffe und 53 Beziehungen der Gesamtkarte.
-- `src/domain/statistics.ts`: unabhängige numerische Berechnung.
-- `src/domain/learning.ts`: Begriff plus Verwendung, X/Y-Kontext, echte Recheneingänge, Werte, Bedingungen und kurze Texte.
-- `src/domain/formulas.ts`: strukturierte Ausdrücke und ihre kontextbezogenen Navigationsziele.
-- `src/domain/data.ts`: Zahleneingabe und Prüfung gespeicherter Fälle.
-- `src/components/Formula.tsx`: interaktive Brüche, Summen, Potenzen, Wurzeln und Einsetzungen.
-- `src/domain/network.ts`: feste Kartenpositionen, kontextbezogene Beziehungen und Voraussetzungsspuren.
-- `src/domain/exploration.ts`: Navigation und Wiederherstellung des Kartenausschnitts.
-- `src/components/NetworkMap.tsx`: ständig sichtbare Netzkarte mit Zoom, Übersicht und verknüpfter Auswahl.
-- `src/components/ConceptInspector.tsx`: Erklärung, Formeln, Beziehungen und Experimente zur Auswahl.
-- `src/components/Recipe.tsx`: ergänzender aufklappbarer Rechenbaum.
-- `src/components/Experiment.tsx`: gekoppelte Diagramme, Punktbewegung und gemeinsame Datentabelle.
-- `src/App.tsx`: Suche, Kartennavigation mit Verlauf, Inspector und gemeinsame lokale Daten.
-- `src/styles.css`: gemeinsame Gestaltung und Anpassung an kleine Bildschirme.
-
-Die älteren Komponenten `LearningGraph`, `ConceptNode`, `ConceptEdge` und `ExamplePanel` sowie `readings.ts` und `lib/graph.ts` bleiben als Bestand des ersten Prototyps erhalten; die neue Oberfläche verwendet die oben genannten Komponenten. React, TypeScript, React Flow und Dagre sowie die vorhandenen Paketversionen wurden beibehalten.
+Der aktuelle Prüfstand steht in `UMSETZUNG-Pruefstand.md`. Frühere Browserberichte unter `artifacts/` beziehen sich auf ältere Oberflächen.

@@ -1,24 +1,25 @@
 # Umsetzung und Prüfstand
 
-10. September 2026 · Revision „Karte zuerst“ nach dem Feedback zur zu statischen Umsetzung.
+10. September 2026 · Anklickbare Netzkarte, eingehende Hoverpfade und synthetischer Lehrdatensatz.
 
 ## Enthalten
 
-Die Netzkarte ist die Start- und Arbeitsfläche. Keine Verfahrensreiter. Alle 29 Begriffe behalten ihre räumliche Position und bleiben beim Auswählen in der Karte vorhanden. Direkte Bezüge, Voraussetzungsspuren, eingehende und ausgehende Links sowie Formelzeichen ermöglichen die Navigation. Ein Inspector zeigt Erklärungen, formale und numerische Formeln, den aufklappbaren Rechenbaum und Experimente. Auf Mobilgeräten bleibt die Karte über dem Inspector bedienbar.
+36 Begriffe mit 70 Grundbeziehungen. Ganze Kartenflächen erhalten Pointer-Ereignisse und liegen über den Kanten. Hover und Tastaturfokus verfolgen ausschließlich die vollständigen eingehenden Pfade im jeweiligen Rohwert-, z- oder Rangkontext.
 
-Kontextbezogene Verbindungen unterscheiden z-Produkte von unstandardisierten Abweichungsprodukten und aktuelle Rechnungen von weiteren Verwendungen. Beide Pearson-Rechenwege bleiben verfügbar. Zurück und Vorwärts stellen den Ausschnitt und den fachlichen Kontext wieder her; Datenänderungen bleiben bestehen. Die Beispielbearbeitung wird gezielt ins Sichtfeld gescrollt. Suche, Minikarte, Zoom, schließbare Einführung und ein lesbarer Mindestzoom unterstützen die Orientierung.
+200 reproduzierbare synthetische Befragte, 16 Spalten plus ID, Codebuch, zulässige Werte, passende X/Y-Auswahl, sichtbare Likert-Annahme, Datensatzdialog mit Pagination und CSV. Keine echten Befragten oder fehlenden Antworten. Datenänderungen sind von der Navigation getrennt und erhalten alle übrigen Spalten.
+
+Häufigkeiten, Median, mittlere Ränge, Spearman und Kreuztabellen ergänzen die bisherigen Verfahren. Lange Rechnungen sind kompakt; Verteilungen und Streudiagramme bleiben bei 200 Fällen bedienbar. Bedingungs- und Formelverweise erhalten Variable, Verwendung und Rangkontext.
 
 ## Automatisiert geprüft
 
-- TypeScript-Prüfung und Produktionsbuild einschließlich selbstständiger Offline-Datei.
-- 32 Tests, davon acht zusätzliche Prüfungen für die Revision: 29 eindeutige kollisionsfreie Kartenpositionen; Erhalt aller 53 Grundbeziehungen; Navigation in beide Richtungen; Verwendung und X/Y-Kontext; fachlich korrekte z-Produkt-Verbindungen; Voraussetzungsspuren für beide Pearson-Rechenwege; Rechenweg beim Übergang zu Pearson; Wiederherstellung von Verlauf und Ausschnitt einschließlich inzwischen gelöschter Fälle; initiale Oberfläche ohne Verfahrensreiter und alle 29 Inspector-Ansichten.
-- Bestehende Prüfungen für Referenzdaten, Randfälle, Invarianzen, Einheiten, Operationsverwendungen, Formelziele, geteilte Recheneingänge, Rundungskennzeichnung, Dezimalkommas und gespeicherte Fälle bleiben erhalten.
-- Serverseitiges Rendern von Formel und Experiment für alle Begriffe, beide Variablen und Standard-/Einzelfall-/Konstantdaten; keine NaN- oder Infinity-Ausgabe.
+47 Tests: bestehende numerische Referenzen und Randfälle sowie neue Prüfungen für den vollständigen Datensatz, Werteskalen und Antwortkategorien, Auswahlregeln, Zelländerungen ohne Datenverlust, dynamische Einheiten, Likert-Annahmen, Spearman mit Gleichständen, Rangkontext in Formeln und Bedingungen, ordinale Medianpaare, metrische Mediane, Histogrammsummen und Kreuztabellenränder, kompakte Rechnungen mit 200 Fällen, vollständige eingehende Hoverpfade und React Flows Pointer-Hit-Testing bei deaktivierter Auswahl/Bewegung.
+
+Alle 36 Inspector-Ansichten und zugehörigen Survey-Experimente werden serverseitig mit passenden Spalten gerendert. Keine NaN-/Infinity-Ausgabe oder negativen SVG-Breiten. TypeScript und Produktionsbuild inklusive selbstständigem Offline-Export gehören zum Abschluss.
 
 ## Durch Quelltextprüfung korrigiert
 
-Falsche Zuordnung der z-Produktsumme zur Rohdatenkovarianz; Voraussetzungsspur beim z-Rechenweg; unpassende X/Y-Schalter für gemeinsame Größen; Datenbearbeitung außerhalb des Sichtfelds; verdeckte Auswahl beim Öffnen des Inspectors; zu kleiner Auswahlzoom; nicht schließbare mobile Einführung; aktuelle Kameraaufnahme während schneller Navigation.
+React Flow unterdrückte Mausereignisse des Knoten-Wrappers; Kanten lagen über Karten. Außerdem: doppelte X/Y-Zuordnungen mit überschriebenen Änderungen, Escape schloss zwei UI-Ebenen, ungültige Eingabeentwürfe wanderten zur nächsten Person, Rangbasis ging in Bedingungs- und z-Verweisen verloren, Y-Häufigkeiten verlinkten X, Y-Ränge zeigten das X-Zeichen, Haushaltsmittelwerte wurden als persönlicher Betrag formuliert und die numerische Mediananzeige verwendete ein falsches Rechenzeichen.
 
 ## Grenzen der Prüfung
 
-Diese Revision wurde nicht mit automatisierten Browserklicks, Screenshots oder Nutzertests geprüft. Serverseitiges Rendern und Quelltextprüfung ersetzen keine Prüfung auf realen Geräten oder mit Screenreader. Frühere Prüfberichte unter `artifacts/` gehören zu älteren Oberflächen. Die endgültige Gestaltung und eine Erprobung mit Studierenden stehen noch aus. Die Kursinhalte außerhalb dieses Atlas-Ausschnitts wurden nicht erweitert.
+Keine automatisierten Browserklicks, Screenshots oder Nutzertests in diesem Umsetzungslauf. Serverseitiges Rendern und Quelltextprüfung ersetzen keine Erprobung auf realen Geräten oder mit Screenreader. Frühere Browserartefakte gehören zu älteren Oberflächen. Die Kursinhalte außerhalb dieses Atlas-Ausschnitts bleiben unverändert.

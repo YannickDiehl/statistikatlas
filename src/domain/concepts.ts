@@ -166,6 +166,13 @@ export const concepts: Concept[] = [
     explanation: 'Pearsons r standardisiert die Kovarianz mit beiden Standardabweichungen. Es liegt zwischen −1 und +1; das Vorzeichen gibt die Richtung an und der Betrag die Stärke des linearen Zusammenhangs. Für die Berechnung ist keine Normalverteilung erforderlich. Korrelation belegt keine Ursache-Wirkungs-Beziehung.',
     formula: 'r = sₓᵧ / (sₓ · sᵧ) = Σ(zₓᵢ zᵧᵢ) / (n − 1)', category: 'relationship',
   },
+  {id:'nominal',title:'Nominale Kategorien',short:'Unterschiedlich, aber ohne Rangfolge.',explanation:'Kategorien benennen verschiedene Ausprägungen. Ihre Zahlencodes sind Etiketten. Man kann Fälle zählen und Kategorien kreuzen; Abstände zwischen Codes sind keine Messwerte.',category:'data',boundary:true},
+  {id:'ordinal',title:'Geordnete Kategorien',short:'Eine Reihenfolge, aber keine festen Abstände.',explanation:'Bei ordinalen Merkmalen ist die Reihenfolge der Kategorien sinnvoll. Wie groß ein Schritt zwischen benachbarten Kategorien ist, steht damit nicht fest. Median und Rangkorrelation nutzen die Ordnung.',category:'data',boundary:true},
+  {id:'frequency',title:'Häufigkeiten',short:'Wie oft kommt eine Ausprägung vor?',explanation:'Die absolute Häufigkeit zählt Fälle einer Kategorie oder Klasse. Die relative Häufigkeit teilt diese Anzahl durch die Zahl aller verwendeten Fälle. Bei stetigen Variablen kann eine Klasseneinteilung die Verteilung sichtbar machen.',formula:'hⱼ = nⱼ / n',category:'summary'},
+  {id:'median',title:'Median',short:'Die Mitte der geordneten Werte.',explanation:'Sortiere die Werte. Der Median teilt die geordnete Verteilung in zwei Hälften. Bei einer geraden Fallzahl liegen zwei Werte in der Mitte. Für metrische Daten mitteln wir diese; bei ordinalen Kategorien zeigen wir gegebenenfalls beide Mittelkategorien.',formula:'Median = Mitte der geordneten Werte',category:'summary'},
+  {id:'ranks',title:'Ränge',short:'Werte durch ihre Position in der Ordnung ersetzen.',explanation:'Der kleinste Wert erhält Rang 1. Haben mehrere Personen denselben Wert, erhalten sie den Mittelwert ihrer belegten Rangplätze. Die Zuordnung zur Person bleibt erhalten.',formula:'R(xᵢ)',category:'operation'},
+  {id:'spearman',title:'Spearman-Korrelation',short:'Zusammenhang anhand der Ränge.',explanation:'Spearman ist die Pearson-Korrelation der Ränge beider Variablen. Gleiche Werte erhalten mittlere Ränge. Das Maß beschreibt monotone Zusammenhänge: Höhere X-Werte gehen eher mit höheren oder niedrigeren Y-Werten einher, auch ohne eine Gerade.',formula:'ρₛ = r(R(X), R(Y))',category:'relationship'},
+  {id:'crosstab',title:'Kreuztabelle',short:'Zwei kategoriale Merkmale gemeinsam zählen.',explanation:'Jede Zelle zählt Personen mit einer bestimmten Kombination aus X- und Y-Kategorie. Zeilenprozente beantworten, wie sich Y innerhalb einer X-Kategorie verteilt. Eine Kreuztabelle beschreibt den Zusammenhang, ist aber kein Signifikanztest.',formula:'nⱼₖ',category:'relationship'},
 ];
 
 const edge = (source: string, target: string, label: string, kind: Edge['kind'] = 'build'): Edge => ({
@@ -226,6 +233,23 @@ export const connections: Edge[] = [
   edge('multiply', 'pearson', 'multipliziert je zwei z-Werte im alternativen Weg', 'optional'),
   edge('add', 'pearson', 'summiert z-Produkte im alternativen Weg', 'optional'),
   edge('df', 'pearson', 'liefert n − 1 im alternativen Weg', 'optional'),
+  edge('series','frequency','liefert die Ausprägungen'),
+  edge('count','frequency','zählt Fälle je Kategorie oder Klasse'),
+  edge('validn','frequency','liefert den Nenner der relativen Häufigkeit'),
+  edge('nominal','frequency','erlaubt Kategorien zu unterscheiden','condition'),
+  edge('ordinal','median','liefert eine sinnvolle Reihenfolge','condition'),
+  edge('series','ranks','liefert Werte mit ihrer Fallzuordnung'),
+  edge('ordinal','ranks','erlaubt eine Rangfolge','condition'),
+  edge('ranks','median','ordnet die Werte für die Mitte'),
+  edge('validn','median','bestimmt die mittleren Positionen'),
+  edge('ranks','spearman','ersetzt X und Y durch mittlere Ränge'),
+  edge('pearson','spearman','korreliert die beiden Rangreihen'),
+  edge('pairs','spearman','hält die Ränge derselben Person zusammen'),
+  edge('frequency','crosstab','zählt die Kombinationen der Kategorien'),
+  edge('pairs','crosstab','liefert beide Kategorien derselben Person'),
+  edge('nominal','crosstab','erlaubt gemeinsame Kategorienzählung','condition'),
+  edge('ordinal','frequency','erhält die Reihenfolge der Kategorien','optional'),
+  edge('metric','median','erlaubt das Mitteln der beiden mittleren Zahlen','optional'),
 ];
 
 export const conceptById: Record<string, Concept> = Object.fromEntries(
