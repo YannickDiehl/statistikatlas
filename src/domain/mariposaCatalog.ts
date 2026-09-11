@@ -227,10 +227,10 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "paired_difference",
-  "title": "Differenzen & Vorzeichenränge",
+  "title": "Gepaarte Differenzen",
   "region": "groups",
   "intro": "Bilde pro Person den späteren minus den früheren Wert. Für Wilcoxon werden Nulldifferenzen entfernt, Beträge geordnet und ihre Ränge wieder mit dem Vorzeichen verbunden.",
-  "formula": "dᵢ = [[yᵢ − xᵢ|subtract|Später minus früher]]; W⁺ = Σ [[R(|dᵢ|)|ranks|Mittlere Ränge der Differenzbeträge]] für dᵢ > 0",
+  "formula": "dᵢ = [[yᵢ − xᵢ|paired_design|Zwei Messungen derselben Person]]",
   "requires": [
    {
     "id": "paired_design",
@@ -240,7 +240,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "notes": [
    "Differenzbeträge brauchen eine sinnvolle Vergleichsskala. Für die Lageinterpretation des Vorzeichen-Rang-Tests wird eine symmetrische Differenzverteilung angenommen."
   ],
-  "output": "Hier sind die Ränge der Differenzen gemeint. Bei Spearman werden dagegen zwei ganze Variablen separat gerankt.",
+  "output": "Eine Differenz beschreibt die Veränderung einer Person. Der gepaarte t-Test verwendet die ursprünglichen Differenzen; Wilcoxon ordnet zusätzlich deren Beträge.",
   "variants": [],
   "roles": [],
   "existing": false
@@ -1484,7 +1484,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "title": "Wilcoxon · verbunden",
   "region": "groups",
   "intro": "Vergleiche zwei Messungen derselben Personen mit dem Vorzeichen-Rang-Test. Entscheidend sind die geordneten absoluten Differenzen und ihre Vorzeichen.",
-  "formula": "V = W⁺ = Σ [[R(|yᵢ−xᵢ|)|paired_difference|Ränge positiver Differenzen]] für yᵢ > xᵢ",
+  "formula": "dᵢ = [[yᵢ−xᵢ|paired_difference|Differenzen derselben Personen]]; V = W⁺ = Σ [[R(|dᵢ|)|ranks|Mittlere Ränge der Differenzbeträge]] für dᵢ > 0",
   "requires": [
    {
     "id": "paired_design",
@@ -1973,7 +1973,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "title": "McNemar",
   "region": "categorical",
   "intro": "Prüfe, ob sich eine binäre Antwort bei denselben Personen verändert. Dafür zählen nur Personen, deren Antwort zwischen den Messungen wechselt.",
-  "formula": "χ² = (|[[b − c|paired_difference|Wechsel Nein→Ja minus Ja→Nein]]| − 1)² / (b+c)",
+  "formula": "χ² = (|[[b − c|crosstab|Wechsel Nein→Ja minus Ja→Nein]]| − 1)² / (b+c)",
   "requires": [
    {
     "id": "paired_design",
@@ -1996,7 +1996,7 @@ export const mariposaEntries:AtlasEntry[]=[
     "label": "Ohne Kontinuitätskorrektur",
     "fn": "mcnemar_test",
     "code": "mcnemar_test(d, {x}, {y}, correct = FALSE)",
-    "formula": "χ² = ([[b − c|paired_difference|Unterschied der Wechselzahlen]])² / (b+c)"
+    "formula": "χ² = ([[b − c|crosstab|Unterschied der Wechselzahlen]])² / (b+c)"
    }
   ],
   "roles": [

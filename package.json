@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
-    "build": "tsc --noEmit && vite build && node scripts/export-offline.mjs",
+    "build": "node --import tsx scripts/generate-map-layout.ts && tsc --noEmit && vite build && node scripts/export-offline.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 5173",
     "test": "node --import tsx --test src/domain/*.test.ts src/lib/*.test.ts"
   },

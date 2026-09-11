@@ -1,3 +1,16 @@
+## 11. September 2026 – zusammenhängendes Gravitationsnetz
+
+- 144 sichtbare statistische Begriffe bilden eine einzige zusammenhängende Komponente. 15 Rechenbegriffe bleiben in Suche, interaktiven Formeln und der rechten Detailansicht erhalten.
+- Verdeckte Rechenzwischenstufen werden zu durchgehenden Verbindungen projiziert. Allgemeine Grundrechenoperationen werden nicht als Brücken zwischen ihren unabhängigen Verwendungen benutzt.
+- Deterministische, vorab berechnete Anordnung ohne Themenzentren: gewichtete Federkräfte, Begrenzung stark vernetzter Knoten, sanfte fachliche Leserichtung und getrennte Klickflächen.
+- Normale Auswahl und Datenänderungen lösen keine Simulation aus. Heranziehen, Ziehen und Zurücksetzen sind explizite Aktionen; der Verlauf bewahrt die Anordnung.
+- Gepaarte Differenzen sind von der für Wilcoxon zusätzlich erforderlichen Rangbildung getrennt. McNemars Wechselzahlen verweisen auf die Kreuztabelle.
+- 70 automatisierte Tests bestanden; nach der letzten kleinen Verlaufsänderung die 13 betroffenen Karten- und Navigationstests erneut bestanden. TypeScript, Produktionsbuild und eigenständige Offline-HTML erfolgreich.
+- Geprüft: beide Pearson-Wege, X/Y-Kontext, ausgegliederte Rechenschritte, p-Wert-Verbindungen, Standardfehler, Verfahrenvarianten, vollständige Erreichbarkeit, kollisionsfreie Anordnung, gezieltes Heranziehen und Ziehen, Wiederherstellung im Verlauf.
+- Keine neue Browser-Bildprüfung oder FPS-Messung. Frühere Bildschirmberichte gelten nicht als Prüfung dieser neuen Oberfläche.
+
+---
+
 # Aktueller Prüfstand · Grundlagen und Ergebnisdeutung
 
 10. September 2026: 55 neue Grundlagen mit verknüpften Formeln, Quellen und interaktiven Experimenten. Insgesamt 159 Bausteine, 486 Verbindungen und zwölf transparente Themenbereiche. Alle 80 öffentlichen mariposa-Exporte bleiben erschlossen. Vollständige neue Abdeckung: [GRUNDLAGEN-ABDECKUNG.md](GRUNDLAGEN-ABDECKUNG.md).

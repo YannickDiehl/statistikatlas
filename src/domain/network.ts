@@ -44,7 +44,8 @@ export function incomingPaths(id:string,edges:NetworkEdge[]){
  walk(id);for(const e of edges)if(e.kind==='meaning'&&!e.alternative&&(e.source===id||e.target===id)){nodes.add(e.source);nodes.add(e.target);links.add(e.id);}return {nodes,edges:links};
 }
 function zProducts(selected:Ref|null,route:Route){if(!selected)return false;const out=outputRef(selected);return out.id==='z'||out.use==='z'&&['crossproduct','crossproduct_sum','scaling'].includes(out.id)||out.id==='pearson'&&route==='z';}
-function recipeRefs(selected:Ref,route:Route){const result:Ref[]=[],seen=new Set<string>();function walk(r:Ref){if(seen.has(keyOf(r)))return;seen.add(keyOf(r));result.push(r);inputs(r,route).forEach(walk);}walk(selected);return result;}
+const recipeCache=new Map<string,Ref[]>();
+function recipeRefs(selected:Ref,route:Route){const cacheKey=JSON.stringify(selected)+route,cached=recipeCache.get(cacheKey);if(cached)return cached;const result:Ref[]=[],seen=new Set<string>();function walk(r:Ref){if(seen.has(keyOf(r)))return;seen.add(keyOf(r));result.push(r);inputs(r,route).forEach(walk);}walk(selected);if(recipeCache.size>256)recipeCache.clear();recipeCache.set(cacheKey,result);return result;}
 // The same places support different uses. Edges explicitly distinguish a current
 // calculation from another use of an operation or a product.
 export function mapRelations(selected:Ref|null,route:Route,anchor?:Ref|null):NetworkEdge[]{

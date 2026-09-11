@@ -1,9 +1,11 @@
+import { CalculationSteps } from './CalculationSteps';
+import { visibleNeighbors } from '../domain/visibleNetwork';
 import { FoundationLab } from './foundations/FoundationLab';
 import { MeaningLinks } from './MeaningLinks';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, Focus, X } from 'lucide-react';
 import { entryById } from '../domain/mariposaCatalog';
-import { neighbors, referenceInMap } from '../domain/network';
+import { referenceInMap } from '../domain/network';
 import { ref, titleFor, numberText, type Ref } from '../domain/learning';
 import { MariposaPanel, LinkedFormula, type RPanelProps } from './MariposaPanel';
 function PrincipleLab({id}:{id:string}){
@@ -18,10 +20,11 @@ function PrincipleLab({id}:{id:string}){
 export function PackageInspector(p:RPanelProps&{selected:Ref;onClose:()=>void;onFocusMap:()=>void;trace:boolean;onTrace:()=>void}){
  const e=p.entry,v=e.variants[p.settings?.variant??Number(p.selected.use?.slice(1)||0)],scroll=useRef<HTMLElement>(null);
  useEffect(()=>{scroll.current?.scrollTo({top:0,behavior:'instant'});},[e.id]);
- const links=neighbors(e.id,p.selected,p.route||'covariance',p.contextAnchor),before=links.before.filter(x=>!x.alternative&&x.kind!=='meaning'),after=links.after.filter(x=>!x.alternative&&x.kind!=='meaning');
- function link(id:string,label:string){return <button className="relation-link" key={id} onClick={()=>p.onSelect(referenceInMap(id,p.selected,p.route||'covariance',p.contextAnchor))} onPointerEnter={()=>p.onHover(id)} onPointerLeave={()=>p.onHover(null)} onFocus={()=>p.onHover(id)} onBlur={()=>p.onHover(null)}><span><strong>{titleFor(ref(id))}</strong><small>{label}</small></span><ArrowUpRight size={15}/></button>;}
- return <aside className="network-inspector package-inspector" ref={scroll} aria-labelledby="inspector-title"><div className="inspector-top"><span className="eyebrow">{e.variants.length?'Verfahren & Werkzeuge':'Gemeinsamer Baustein'}</span><button className="inspector-close" onClick={p.onClose} aria-label="Erklärung einklappen"><X size={18}/></button></div><h1 id="inspector-title">{e.title}</h1><p className="concept-intro">{e.intro}</p><button className="map-focus-link" onClick={p.onFocusMap}><Focus size={15}/>Bezüge in der Karte heranholen</button>
+ const links=visibleNeighbors(p.selected,p.route||'covariance',p.contextAnchor),before=links.before.filter(x=>!x.alternative&&x.kind!=='meaning'),after=links.after.filter(x=>!x.alternative&&x.kind!=='meaning');
+ function link(id:string,label:string){return <button className="relation-link" key={`${id}-${label}`} onClick={()=>p.onSelect(referenceInMap(id,p.selected,p.route||'covariance',p.contextAnchor))} onPointerEnter={()=>p.onHover(id)} onPointerLeave={()=>p.onHover(null)} onFocus={()=>p.onHover(id)} onBlur={()=>p.onHover(null)}><span><strong>{titleFor(ref(id))}</strong><small>{label}</small></span><ArrowUpRight size={15}/></button>;}
+ return <aside className="network-inspector package-inspector" ref={scroll} aria-labelledby="inspector-title"><div className="inspector-top"><span className="eyebrow">{e.variants.length?'Verfahren & Werkzeuge':'Gemeinsamer Baustein'}</span><button className="inspector-close" onClick={p.onClose} aria-label="Erklärung einklappen"><X size={18}/></button></div><h1 id="inspector-title">{e.title}</h1><p className="concept-intro">{e.intro}</p><button className="map-focus-link" onClick={p.onFocusMap}><Focus size={15}/>Bezüge in der Karte zeigen</button>
  <LinkedFormula key={`${e.id}-${p.settings?.variant||0}`} contextAnchor={p.contextAnchor} route={p.route} formula={v?.formula||e.formula} reference={p.selected} onSelect={p.onSelect} onHover={p.onHover}/>
+ <CalculationSteps reference={p.selected} route={p.route||'covariance'} formula={v?.formula||e.formula} onSelect={p.onSelect} onHover={p.onHover}/>
  <FoundationLab key={e.id} id={e.id} rows={p.rows} selection={p.selection}/>
  {e.lab&&<PrincipleLab key={e.id} id={e.lab}/>}
  <section className="package-meaning"><h2>Was sagt das Ergebnis?</h2><p>{e.output}</p></section>

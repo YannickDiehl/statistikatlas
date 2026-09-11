@@ -1,19 +1,20 @@
 # Statistikatlas – interaktiver Baukasten
 
-Stand: 10. September 2026 · 55 zusätzliche Grundlagen mit interaktiven Experimenten; vollständige mariposa-0.7.2-Erweiterung, weiche Themenflächen und optionale Gravitation.
+Stand: 11. September 2026 · zusammenhängendes, gewichtetes Gravitationsnetz mit 144 sichtbaren statistischen Begriffen und 15 Rechenbegriffen in der Detailansicht.
 
-Die große Karte ist die Start- und Arbeitsfläche. 159 Bausteine liegen in zwölf durchlässigen, transparenten Themenellipsen. Die Grundanordnung bleibt reproduzierbar; neue Themen rücken leicht zu ihren gemeinsamen Bausteinen. Dezente Themenüberschriften öffnen den jeweiligen Ausschnitt. Verbindungen bleiben über Themenfelder hinweg sichtbar. Alle 80 öffentlichen mariposa-Funktionen sind auffindbar. Es gibt keine Verfahrensreiter. Die Kurslandkarte außerhalb dieses Projekts bleibt unberührt.
+Die große Karte ist die Start- und Arbeitsfläche. Ihre Anordnung wird aus fachlichen Beziehungen berechnet, ohne Themenflächen oder kategorische Positionsvorgaben. Rechenbeziehungen ziehen stärker an als Voraussetzungen und Einordnungen; stark vernetzte Knoten erhalten begrenzte Anziehung. Eine sanfte Richtung von Grundlagen zu weiterführenden Verfahren entsteht aus den Rechenabhängigkeiten. Diese Leserichtung ist keine historische Zeitleiste. Alle 159 Begriffe und alle 80 öffentlichen mariposa-Funktionen bleiben über Erklärungen und Suche erreichbar. Es gibt keine Verfahrensreiter.
 
 ## Erkunden
 
 1. Eine Karte an beliebiger Stelle anklicken. Beim Darüberfahren oder Tastaturfokus werden sämtliche eingehenden Pfade hervorgehoben; beim Verlassen kehrt die bisherige Auswahl zurück.
 2. Im Inspector passende Spalten für X und gegebenenfalls Y wählen. Ungeeignete Spalten sind mit Begründung deaktiviert. Fragewortlaut, Einheit, Messniveau, Antwortkategorien und Kodierung stehen direkt darunter. Beim Wechsel des Verfahrens bleiben passende Spalten erhalten; nötige Ersatzzuordnungen werden erklärt.
-3. Formelzeichen und eingehende oder ausgehende Bezüge führen zu denselben Bausteinen in der Karte. Im zusätzlichen Rechenbaum lassen sich weitere Voraussetzungen öffnen. X/Y und der Rangkontext bleiben erhalten.
+3. Formelzeichen öffnen die jeweilige Erklärung. Statistische Bausteine bleiben mit ihrer Stelle in der Karte verbunden; Grundrechenoperationen und einzelne Zwischenstufen werden ausschließlich rechts erläutert. **Rechenschritte & Zeichen verstehen** listet die zugehörigen Schritte auf. X/Y, Verfahrensvariante und Rangkontext bleiben erhalten.
 4. Eine Befragten-ID eingeben, mit den Pfeilen zur nächsten Person gehen oder eine Diagrammmarkierung auswählen. Formeln, Gruppen, Rangtabellen und Dateneditor beziehen sich auf dieselbe stabile ID.
 5. **Datensatz · 200** öffnet alle 28 Spalten und 200 Befragten in einer Tabelle mit 20 Zeilen je Seite. Spaltenköpfe öffnen ihre Erklärung. Eine Zelle auswählen und ihre Originalantwort im Editor ändern. Der Dialog startet auf der Seite der aktuellen Person; ein CSV-Download enthält den ganzen Datensatz.
 6. **Mit den Daten experimentieren** zeigt Verteilungen beziehungsweise das Streudiagramm und einen Editor für die gewählte Person. Punkte lassen sich in zulässigen Werteschritten bewegen. Kategorien werden mit Auswahlfeldern bearbeitet; Transformationen bleiben auf geeignete Spalten beschränkt.
 7. **Zurück / Vorwärts** stellt Begriff, Verwendung, Spaltenzuordnung, Rechenweg, Befragte, Voraussetzungsspur und Kartenausschnitt wieder her. Der Datensatz selbst wird dabei nicht zurückgesetzt. **Ganze Karte** stellt die Grundanordnung und den Überblick wieder her.
-8. **Bezüge heranziehen** schaltet nach einer Auswahl die Gravitation ein. Direkte aktive Bezüge rücken um den ausgewählten Baustein zusammen. Bei aktivierter Voraussetzungsspur kommen die rekursiven Voraussetzungen hinzu. Die Bewegung endet nach 420 ms; reduzierte Bewegung wird berücksichtigt. Hover hebt weiterhin ausschließlich hervor. **Anordnung zurücksetzen** erhält die Auswahl und stellt die Grundanordnung wieder her. Zurück/Vorwärts und der Pfadverlauf bewahren auch Anordnung und Gravitation. Die aktuellen Positionen werden bei schnellen Klicks während der Bewegung als Anker übernommen.
+8. **Bezüge heranziehen** rückt die aktiven Bezüge einmal um die Auswahl zusammen. Weitere Klicks und Hover ändern die Anordnung nicht. Am Griff rechts oben lassen sich einzelne Knoten verschieben; direkte Nachbarn geben je nach Verbindungsart nach. **Anordnung zurücksetzen** stellt die berechnete Grundanordnung wieder her. Zurück/Vorwärts bewahrt die eigenen Anordnungen und den Kartenausschnitt. Reduzierte Bewegung wird berücksichtigt.
+
 
 ## mariposa erkunden
 
@@ -71,10 +72,10 @@ pnpm test
 pnpm build
 ```
 
-`pnpm build` prüft TypeScript, erstellt `dist/` und schreibt eine eigenständige HTML-Datei nach `Statistikatlas-Prototyp.html` und `dist/Statistikatlas-offline.html`. Die Anwendung funktioniert damit ohne Server und Netzwerk. Datenänderungen werden auf diesem Gerät gespeichert. Bestehende Eingaben des bisherigen 16-Spalten-Datensatzes werden beibehalten; die zwölf neuen Spalten werden deterministisch ergänzt. Die vorherige Speicherung des Fünf-Personen-Beispiels wird nicht überschrieben.
+`pnpm build` berechnet die deterministische Grundanordnung vorab, prüft TypeScript, erstellt `dist/` und schreibt eine eigenständige HTML-Datei nach `Statistikatlas-Prototyp.html` und `dist/Statistikatlas-offline.html`. Die Anwendung funktioniert damit ohne Server und Netzwerk. Datenänderungen werden auf diesem Gerät gespeichert. Bestehende Eingaben des bisherigen 16-Spalten-Datensatzes werden beibehalten; die zwölf neuen Spalten werden deterministisch ergänzt. Die vorherige Speicherung des Fünf-Personen-Beispiels wird nicht überschrieben.
 
 Erweiterung: `mariposaCatalog.ts` enthält den geprüften Katalog und die verlinkten Formeln, `mariposa.ts` erzeugt rollenabhängige R-Aufrufe. `PackageInspector` und `MariposaPanel` ergänzen die Erklärungen. `domain/foundations` enthält Grundlagenkatalog, numerische Modelle und unabhängige R-Referenzen; `components/foundations` enthält die dazugehörigen Experimente.
 
-Aktive Kernmodule: `survey.ts` (Codebuch, Datensatz, Auswahlregeln), `descriptive.ts` (Ränge, Median, Häufigkeiten), `learning.ts` und `formulas.ts` (Baukasten und Formeln), `network.ts` und `exploration.ts` (Karte und Verlauf). `NetworkMap`, `ConceptInspector`, `ColumnPicker`, `SurveyData`, `SurveyAnalysis` und `SurveyExperiment` bilden die Oberfläche. Frühere Komponenten und Fünf-Fall-Referenztests bleiben als Bestand erhalten.
+Aktive Kernmodule: `survey.ts` (Codebuch, Datensatz, Auswahlregeln), `descriptive.ts` (Ränge, Median, Häufigkeiten), `learning.ts` und `formulas.ts` (Baukasten und Formeln), `network.ts`, `visibleNetwork.ts`, `gravitySolver.ts`, `mapLayout.ts` und `exploration.ts` (Beziehungsprojektion, gewichtete Anordnung und Verlauf). `NetworkMap`, `ConceptInspector`, `ColumnPicker`, `SurveyData`, `SurveyAnalysis` und `SurveyExperiment` bilden die Oberfläche. Frühere Komponenten und Fünf-Fall-Referenztests bleiben als Bestand erhalten.
 
 Der aktuelle Prüfstand steht in `UMSETZUNG-Pruefstand.md`. Frühere Browserberichte unter `artifacts/` beziehen sich auf ältere Oberflächen.

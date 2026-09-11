@@ -12,5 +12,5 @@ export function Recipe({reference,context,onSelect,onHover}:{reference:Ref;conte
    {open&&children.length>0&&<div className={`recipe-inputs ${children.length===1?'single':''}`}>{children.map(child=>render(child,depth+1))}</div>}
   </div>;
  }
- return <div className="recipe-tree"><p className="small-copy">Öffne mit + die nächsten Eingänge. Jeder Baustein führt zurück zu seiner Stelle in der Karte.</p>{render(reference)}</div>;
+ return <div className="recipe-tree"><p className="small-copy">Öffne mit + die nächsten Eingänge. Statistische Bausteine führen zu ihrer Stelle in der Karte. Rechenschritte öffnest du hier in der Erklärung.</p>{render(reference)}</div>;
 }
