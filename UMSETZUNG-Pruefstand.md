@@ -1,3 +1,12 @@
+## 11. September 2026 – Richtungsfarben
+
+- Blau für eingehende und Orange für ausgehende Kanten und Nachbarknoten, Violett für den aktuellen Hover-/Auswahlfokus. Ein zweifarbiger Knoten kennzeichnet direkte Bezüge in beide Richtungen.
+- Legende nennt den aktuellen Bezugspunkt. Bei Hover wird die gespeicherte Voraussetzungsspur vorübergehend durch die Spur des überfahrenen Begriffs ersetzt; Rückkehr zur Auswahl bleibt erhalten.
+- Ausgehende Einordnungskanten bleiben orange, obwohl die Kontextspur sie enthält. Alternative Rechenwege erhalten keine aktive Richtungsfarbe. Gleichgerichtete parallele und gegenläufige Kanten werden leicht versetzt gezeichnet.
+- 25 betroffene Karten-, Kontext- und Datensatztests bestanden; darunter drei neue Prüfungen der Richtungszuordnung, Fokuswechsel und alternativer Pearson-Wege. Produktions- und Offline-Build erfolgreich. Keine neue Browser-Bildprüfung.
+
+---
+
 ## 11. September 2026 – organische Karte mit visueller Lesetiefe
 
 - 24 redaktionell gesetzte echte Begriffe und 26 fachlich geprüfte Hauptverbindungen. Weitere Punkte liegen nach ihren tatsächlichen Nachbarschaften im selben Netz; keine Themeninseln. Alle 144 sichtbaren Konzepte bilden weiterhin eine zusammenhängende Komponente.

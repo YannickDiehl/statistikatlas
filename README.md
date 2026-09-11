@@ -6,6 +6,10 @@ Die große Karte ist die Start- und Arbeitsfläche. 24 echte Begriffe bilden ein
 
 Alle 144 statistischen Punkte bleiben auf der Karte. Große Begriffe werden zuerst beschriftet; weitere Namen erscheinen beim Zoomen, Überfahren und Auswählen. Beschriftungen behalten ihre Schriftgröße auf dem Bildschirm und weichen einander aus. Wo der Platz nicht reicht, bleibt der Punkt sichtbar und sein Name ist durch Auswahl erreichbar. Es gibt keine Themenflächen, Kategoriezentren oder Verfahrensreiter. Alle 159 Begriffe und alle 80 öffentlichen mariposa-Funktionen bleiben über Erklärungen und Suche erreichbar.
 
+## Farben lesen
+
+Beim Überfahren oder Auswählen beziehen sich die Farben auf den in der Legende genannten Begriff: **Blau** kennzeichnet eingehende, **Orange** ausgehende Bezüge; **Violett** markiert den aktuellen Fokus. Knoten mit Bezügen in beide Richtungen sind zweifarbig. Weiter zurückliegende Eingänge erscheinen schwächer blau. Pfeile behalten ihre Richtung; Linienarten unterscheiden weiterhin Aufbau, Voraussetzungen und Einordnung. Gegenläufige und parallele Verbindungen laufen leicht versetzt, damit sie einander nicht verdecken. Die Farben bilden keine Themenkategorien.
+
 ## Erkunden
 
 1. Einen Begriffspunkt oder Namen anklicken. Beim Darüberfahren oder Tastaturfokus erscheinen der Name, unmittelbare Bezüge und schwächer die weiter zurückliegenden Eingänge. Kanten erklären ihre Beziehung in einem kurzen Satz. Ein normaler Klick erhält den Zoom und verschiebt die Kamera nur, wenn der ausgewählte Punkt sonst vom Inspector verdeckt wäre.

@@ -104,3 +104,31 @@
 .map-invitation .eyebrow{font-size:9px}.map-invitation h1{font-size:22px;margin:6px 0 7px}.map-invitation p{font-size:12px;line-height:1.45;margin:0 0 6px}.map-invitation .small-copy{font-size:11px}
 .network-map-note{pointer-events:none}.network-map-note button{pointer-events:auto}
 @media(max-width:760px){.map-invitation{left:12px;top:12px;width:235px;padding:10px 13px}.map-invitation h1{font-size:19px}.map-invitation .small-copy{display:none}.organic-zoom-note{right:12px;bottom:12px;font-size:10px}.has-inspector .organic-zoom-note{right:12px;bottom:53%}.has-inspector .organic-edge-caption{left:50%;bottom:54%;max-width:85%}.has-inspector .organic-map .react-flow__controls{bottom:calc(51% + 14px)}}
+
+/* Color describes direction around the current focus, never a topic region. */
+.organic-map{--flow-incoming:#2869a2;--flow-outgoing:#b35e21;--flow-focus:#7950a3}
+.organic-node.flow-incoming,.organic-node.flow-ancestor{--node-flow:var(--flow-incoming);--node-wash:#edf4fb}
+.organic-node.flow-outgoing{--node-flow:var(--flow-outgoing);--node-wash:#fff2e7}
+.organic-node.flow-focus{--node-flow:var(--flow-focus);--node-wash:#f1eafa}
+.organic-node.flow-both{--node-flow:#4d6170;--node-wash:#f7f3ef}
+.organic-node:not(.flow-neutral) .organic-point span{background:var(--node-flow);box-shadow:0 0 0 3px #faf8f3,0 0 0 4px color-mix(in srgb,var(--node-flow) 55%,transparent)}
+.organic-node.detail-point:not(.flow-neutral):not(.flow-ancestor) .organic-point span{width:8px;height:8px}
+.organic-node.flow-focus .organic-point span{box-shadow:0 0 0 4px #faf8f3,0 0 0 6px #7950a399}
+.organic-node.flow-both .organic-point span{background:linear-gradient(90deg,var(--flow-incoming) 50%,var(--flow-outgoing) 50%);box-shadow:0 0 0 3px #faf8f3,0 0 0 4px #687c8a88}
+.organic-node:not(.flow-neutral) .organic-label{color:var(--node-flow);background:var(--node-wash);box-shadow:0 0 0 1px color-mix(in srgb,var(--node-flow) 15%,transparent)}
+.organic-node:not(.flow-neutral) .organic-label-stem path{stroke:var(--node-flow);opacity:.6}
+.organic-node.flow-ancestor .organic-point span{background:#76a4c8;box-shadow:0 0 0 2px #faf8f3}
+.organic-node.flow-ancestor .organic-label{background:#faf8f3e8;color:#477393;box-shadow:none}
+.organic-node.flow-neutral.selected .organic-point span{background:#a3ad99;box-shadow:0 0 0 3px #faf8f3,0 0 0 4px #727b6c}
+.organic-node.flow-neutral.selected .organic-label{color:#677460;background:#faf8f3;box-shadow:0 0 0 1px #c3cbb9}
+.organic-point:focus-visible{outline-color:var(--flow-focus)}
+.map-direction-key{position:absolute;right:22px;bottom:44px;max-width:calc(100% - 110px);background:#faf8f3f2;border:1px solid #d9ddcf;border-radius:7px;padding:10px 13px;pointer-events:none;color:#4f5b49;z-index:3}
+.map-direction-key p{font:12px/1.45 var(--sans);margin:0 0 7px}.map-direction-key p strong{font-weight:600;color:var(--flow-focus)}
+.map-direction-key>div{display:flex;gap:8px 15px;flex-wrap:wrap}.map-direction-key>div>span{display:inline-flex;align-items:center;gap:6px;font:12px/1.4 var(--sans);white-space:nowrap}
+.map-direction-key i{font:20px/12px var(--sans);font-style:normal;display:inline-block;width:19px;text-align:center}.map-direction-key .key-focus i,.map-direction-key .key-both i{width:9px;height:9px;border-radius:50%;margin:0 4px;background:var(--flow-focus)}
+.map-direction-key .key-incoming{color:var(--flow-incoming)}.map-direction-key .key-outgoing{color:var(--flow-outgoing)}.map-direction-key .key-focus{color:var(--flow-focus)}.map-direction-key .key-both i{background:linear-gradient(90deg,var(--flow-incoming) 50%,var(--flow-outgoing) 50%)}
+.has-inspector .map-direction-key{right:434px;max-width:calc(100% - 460px)}
+.organic-edge-caption{bottom:138px}.organic-edge-caption.flow-incoming,.organic-edge-caption.flow-ancestor{border-color:#8db3d3}.organic-edge-caption.flow-outgoing{border-color:#ceaa86}
+.organic-edge-caption.flow-incoming span,.organic-edge-caption.flow-ancestor span{color:var(--flow-incoming)}.organic-edge-caption.flow-outgoing span{color:var(--flow-outgoing)}
+.network-legend i,.network-legend i.condition,.network-legend i.optional,.network-legend i.meaning{border-color:#7b8775}
+@media(max-width:760px){.map-direction-key{right:12px;bottom:44px;max-width:calc(100% - 74px);padding:8px 10px}.map-direction-key>div{gap:7px 12px}.map-direction-key p{margin-bottom:5px}.has-inspector .map-direction-key{right:12px;bottom:calc(51% + 49px);max-width:calc(100% - 74px)}.has-inspector .organic-edge-caption{bottom:calc(51% + 155px)}}
