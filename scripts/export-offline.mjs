@@ -18,7 +18,4 @@ for (const match of sheets) {
 }
 await fs.writeFile(path.join(root, 'Statistikatlas-Prototyp.html'), html);
 await fs.writeFile(path.join(dist, 'Statistikatlas-offline.html'), html);
-const explorationHtml=html.replace('<html ', '<html data-atlas-view="prototyp" ');
-await fs.writeFile(path.join(root, 'Statistikatlas-Exploration-Prototyp.html'), explorationHtml);
-await fs.writeFile(path.join(dist, 'Statistikatlas-Exploration-offline.html'), explorationHtml);
 console.log(`Offline-Prototyp erstellt: ${Math.round(Buffer.byteLength(html)/1024)} KB, alle Skripte und Stile eingebettet.`);

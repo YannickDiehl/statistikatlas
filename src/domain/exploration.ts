@@ -1,10 +1,9 @@
-import type { FocusMode } from './prototypeMap';
 import type { RSettings } from './mariposa';
 import type { Viewport } from '@xyflow/react';
 import { defaultSelection, type ColumnSelection } from './survey';
 import { keyOf, type Ref, type Route, type Variable } from './learning';
 import { gravityLayout, type MapLayout } from './mapLayout';
-export type ExplorationView={selected:Ref|null;variable:Variable;caseId:string;route:Route;trace:boolean;panelOpen:boolean;detailOpen?:boolean;focusMode?:FocusMode;guideId?:string;columns:ColumnSelection;rSettings?:Record<string,RSettings>;contextAnchor?:Ref;gravity?:boolean;layout?:MapLayout;viewport?:Viewport};
+export type ExplorationView={selected:Ref|null;variable:Variable;caseId:string;route:Route;trace:boolean;panelOpen:boolean;columns:ColumnSelection;rSettings?:Record<string,RSettings>;contextAnchor?:Ref;gravity?:boolean;layout?:MapLayout;viewport?:Viewport};
 export type ExplorationHistory={present:ExplorationView;past:ExplorationView[];future:ExplorationView[]};
 export function initialExploration(caseId:string,columns:ColumnSelection={...defaultSelection}):ExplorationHistory{return {present:{selected:null,variable:'x',caseId,columns,route:'covariance',trace:false,panelOpen:false},past:[],future:[]};}
 export function visit(history:ExplorationHistory,next:ExplorationView,viewport?:Viewport,displayedLayout?:MapLayout):ExplorationHistory{
