@@ -132,3 +132,6 @@
 .organic-edge-caption.flow-incoming span,.organic-edge-caption.flow-ancestor span{color:var(--flow-incoming)}.organic-edge-caption.flow-outgoing span{color:var(--flow-outgoing)}
 .network-legend i,.network-legend i.condition,.network-legend i.optional,.network-legend i.meaning{border-color:#7b8775}
 @media(max-width:760px){.map-direction-key{right:12px;bottom:44px;max-width:calc(100% - 74px);padding:8px 10px}.map-direction-key>div{gap:7px 12px}.map-direction-key p{margin-bottom:5px}.has-inspector .map-direction-key{right:12px;bottom:calc(51% + 49px);max-width:calc(100% - 74px)}.has-inspector .organic-edge-caption{bottom:calc(51% + 155px)}}
+
+/* Hit targets and arrows stay screen-sized without graph-wide zoom updates. */
+.organic-map .react-flow__edge-interaction{stroke-width:14px;vector-effect:non-scaling-stroke}

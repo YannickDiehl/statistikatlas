@@ -41,15 +41,29 @@ export function organicLayout(ids:string[],allEdges:NetworkEdge[]):Positions{
 
 export type LabelPlacement={x:number;y:number;width:number;height:number};
 function labelSize(title:string){const font=14,max=160,words=title.split(/\s+/),lines=[''];for(const word of words){const line=lines[lines.length-1];if(line&&(line+' '+word).length*font*.57>max)lines.push(word);else lines[lines.length-1]=(line+' '+word).trim();}return {width:Math.min(230,Math.max(...lines.map(line=>line.length*font*.61))+8),height:lines.length*18+6};}
+const candidateCache=new Map<string,LabelPlacement[]>();
+function labelCandidates(title:string){
+ const cached=candidateCache.get(title);if(cached)return cached;
+ const {width,height}=labelSize(title),candidates:LabelPlacement[]=[];
+ for(const gap of [15,30,50,75,105])candidates.push({x:-width/2,y:-height-gap,width,height},{x:-width/2,y:gap,width,height},{x:gap,y:-height/2,width,height},{x:-width-gap,y:-height/2,width,height},{x:gap,y:gap,width,height},{x:-width-gap,y:gap,width,height},{x:gap,y:-height-gap,width,height},{x:-width-gap,y:-height-gap,width,height});
+ if(candidateCache.size>=512)candidateCache.delete(candidateCache.keys().next().value!);
+ candidates.forEach(Object.freeze);candidateCache.set(title,candidates);return candidates;
+}
 // Labels stay legible in screen pixels. Resolve overlaps without moving nodes.
 export function placeLabels(positions:Positions,zoom:number,titles:Record<string,string>,priority:string[],forced:string[]=[]):Record<string,LabelPlacement>{
- const placed:Record<string,LabelPlacement>={},boxes:{x:number;y:number;width:number;height:number}[]=Object.values(positions).map(p=>({x:p.x*zoom-8,y:p.y*zoom-8,width:16,height:16}));
- for(const id of priority){const p=positions[id];if(!p)continue;const {width,height}=labelSize(titles[id]),cx=p.x*zoom,cy=p.y*zoom;
-  const candidates:LabelPlacement[]=[];
-  for(const gap of [15,30,50,75,105])candidates.push({x:-width/2,y:-height-gap,width,height},{x:-width/2,y:gap,width,height},{x:gap,y:-height/2,width,height},{x:-width-gap,y:-height/2,width,height},{x:gap,y:gap,width,height},{x:-width-gap,y:gap,width,height},{x:gap,y:-height-gap,width,height},{x:-width-gap,y:-height-gap,width,height});
-  const candidate=candidates.find(c=>boxes.every(b=>cx+c.x+width+5<b.x||cx+c.x>b.x+b.width+5||cy+c.y+height+4<b.y||cy+c.y>b.y+b.height+4));
+ const placed:Record<string,LabelPlacement>={},boxes:LabelPlacement[]=[],grid=new Map<string,number[]>(),seen:number[]=[];let stamp=0;
+ function add(box:LabelPlacement){const index=boxes.push(box)-1;for(let x=Math.floor(box.x/64);x<=Math.floor((box.x+box.width)/64);x++)for(let y=Math.floor(box.y/64);y<=Math.floor((box.y+box.height)/64);y++){const key=`${x}/${y}`,cell=grid.get(key);if(cell)cell.push(index);else grid.set(key,[index]);}}
+ for(const p of Object.values(positions))add({x:p.x*zoom-8,y:p.y*zoom-8,width:16,height:16});
+ function free(c:LabelPlacement,cx:number,cy:number){stamp++;const left=cx+c.x,top=cy+c.y;
+  for(let x=Math.floor((left-5)/64);x<=Math.floor((left+c.width+5)/64);x++)for(let y=Math.floor((top-4)/64);y<=Math.floor((top+c.height+4)/64);y++)for(const index of grid.get(`${x}/${y}`)||[]){
+   if(seen[index]===stamp)continue;seen[index]=stamp;const b=boxes[index];
+   if(!(left+c.width+5<b.x||left>b.x+b.width+5||top+c.height+4<b.y||top>b.y+b.height+4))return false;
+  }return true;
+ }
+ for(const id of priority){const p=positions[id];if(!p)continue;const cx=p.x*zoom,cy=p.y*zoom,candidates=labelCandidates(titles[id]);
+  const candidate=candidates.find(c=>free(c,cx,cy));
   if(!candidate&&!forced.includes(id))continue;
-  const c=candidate||candidates[0];placed[id]=c;boxes.push({x:cx+c.x,y:cy+c.y,width,height});
+  const c=candidate||candidates[0];placed[id]=c;add({x:cx+c.x,y:cy+c.y,width:c.width,height:c.height});
  }
  return placed;
 }

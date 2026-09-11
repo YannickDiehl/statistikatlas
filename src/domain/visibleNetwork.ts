@@ -9,8 +9,12 @@ export const arithmeticIds = new Set(['count','add','subtract','multiply','divid
 export const detailIds = new Set([...arithmeticIds,'sum','deviation','squared_deviation','crossproduct','crossproduct_sum','sd_product','df','positive_sd']);
 export const mapConcepts = concepts.filter(c => !detailIds.has(c.id));
 export const mapIds = new Set(mapConcepts.map(c => c.id));
+const relationCache=new Map<string,NetworkEdge[]>();
+const refParts=(r?:Ref|null)=>r?[r.id,r.variable,r.use??null,r.basis??null]:null;
 
 export function visibleRelations(selected:Ref|null, route:Route, anchor?:Ref|null):NetworkEdge[] {
+ const cacheKey=JSON.stringify([refParts(selected),route,refParts(anchor)]),cached=relationCache.get(cacheKey);
+ if(cached){relationCache.delete(cacheKey);relationCache.set(cacheKey,cached);return cached;}
  const raw = mapRelations(selected,route,anchor), incoming = new Map<string,NetworkEdge[]>();
  for(const e of raw) incoming.set(e.target,[...(incoming.get(e.target)||[]),e]);
  const result = new Map<string,NetworkEdge>();
@@ -36,7 +40,12 @@ export function visibleRelations(selected:Ref|null, route:Route, anchor?:Ref|nul
   }
   for(const e of incoming.get(target.id)||[])walk(e,[],new Set(),e.kind,!!e.alternative);
  }
- return explainRelations([...result.values()]);
+ const projected=explainRelations([...result.values()]);
+ // Shared results are read-only; the bounded cache cannot retain the whole
+ // navigation history. Numeric data/case changes do not change this graph.
+ projected.forEach(Object.freeze);Object.freeze(projected);
+ if(relationCache.size>=48)relationCache.delete(relationCache.keys().next().value!);
+ relationCache.set(cacheKey,projected);return projected;
 }
 
 // A selected calculation opens in the inspector while its statistical result

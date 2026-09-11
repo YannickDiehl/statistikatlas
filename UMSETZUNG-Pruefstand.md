@@ -1,3 +1,14 @@
+## 11. September 2026 – technische Optimierung
+
+- Live-Zoom von React-Neuberechnungen der gesamten Karte getrennt. CSS hält Knoten, Pfeile und Trefferflächen in Bildschirmgröße; nur versetzte parallele Kurven abonnieren den Live-Zoom. Beschriftungen werden am Gestenende bzw. nach 100 ms Ruhe geplant. Beim Ziehen folgt die Beschriftungsplanung erst dem abgeschlossenen Layout.
+- Stabile Knoten-/Kantenobjekte und Ereignisfunktionen; Karte, Inspector und Grundlagenexperimente sind voneinander entkoppelt. Suche wird vorindiziert. Unveränderte Spalten lösen keine erneute Datenprojektion oder lokale Speicherung aus; der Lehrdatensatz wird beim Start nur einmal eingelesen.
+- Begrenzter, gegen Mutation geschützter Beziehungscache mit vollständigem Kontext. Räumliches Raster und wiederverwendete Beschriftungskandidaten ersetzen die wiederholte Prüfung gegen sämtliche Begriffe.
+- 83 Tests bestanden. 48 vor der Optimierung gesicherte Kontextfälle und zwölf Beschriftungsansichten bleiben exakt gleich. Zusätzlich geprüft: 100 schnelle Zoomänderungen mit einer abschließenden Layoutberechnung, unmittelbares Gestenende, Timerbereinigung, identische Objektwiederverwendung und Änderungen an Positionen/Callbacks. Produktions- und eigenständiger Offline-Build erfolgreich.
+- Lokaler Node-CPU-Vergleich mit jeweils 30 Aufwärm- und 300 Messdurchläufen: Hover-Vorbereitung im Median 1,322 → 0,396 ms (ca. 70 % weniger), Detailbeschriftung 1,257 → 0,439 ms (ca. 65 % weniger), wiederholte Beziehungsprojektion 0,990 → 0,001 ms. P95: Hover 1,593 → 0,575 ms; Detailbeschriftung 1,451 → 0,594 ms. Gesamtergebnis-Prüfsumme unverändert: 1248499. Ausgangsstand: Commit `9c5bd4311a14b651f8c1fb5c9376ff138a122e6f`.
+- Diese Werte messen reine Vorbereitungsarbeit bei aufgewärmtem Cache, keine Bildrate oder Gesamtreaktionszeit im Browser. Quelltextgegenprüfung durch zweiten Agenten; keine neue Browser-Interaktions- oder Bildprüfung. Das einzelne JavaScript-Bundle bleibt für den eigenständigen Offline-Export erhalten.
+
+---
+
 ## 11. September 2026 – Richtungsfarben
 
 - Blau für eingehende und Orange für ausgehende Kanten und Nachbarknoten, Violett für den aktuellen Hover-/Auswahlfokus. Ein zweifarbiger Knoten kennzeichnet direkte Bezüge in beide Richtungen.
