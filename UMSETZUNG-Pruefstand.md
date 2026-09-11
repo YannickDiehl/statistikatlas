@@ -1,4 +1,12 @@
-# Aktueller Prüfstand · Grundlagen und Ergebnisdeutung
+# Aktueller Prüfstand · Explorationsprototyp
+
+11. September 2026: Alternative Ansicht unter `?ansicht=prototyp` mit fester Geografie, semantischem Zoom, priorisierten Beschriftungen, abgestuften Hoverpfaden und kompakter Erklärung. Zwei Frage-Einstiege erschließen vorhandene Rechenwege; Anwendungen sind bei dicht vernetzten Begriffen nach Themen aufklappbar. Die bisherige Ansicht bleibt unter der Hauptadresse erhalten.
+
+78 automatisierte Tests bestehen. Produktionsbuild und beide Offline-Fassungen bestehen. Keine Browser-Interaktions- oder visuelle Geräteprüfung. Einzelheiten und Grenzen: [PROTOTYP-EXPLORATION.md](PROTOTYP-EXPLORATION.md).
+
+---
+
+# Früherer Prüfstand · Grundlagen und Ergebnisdeutung
 
 10. September 2026: 55 neue Grundlagen mit verknüpften Formeln, Quellen und interaktiven Experimenten. Insgesamt 159 Bausteine, 486 Verbindungen und zwölf transparente Themenbereiche. Alle 80 öffentlichen mariposa-Exporte bleiben erschlossen. Vollständige neue Abdeckung: [GRUNDLAGEN-ABDECKUNG.md](GRUNDLAGEN-ABDECKUNG.md).
 

@@ -4,6 +4,14 @@ Stand: 10. September 2026 · 55 zusätzliche Grundlagen mit interaktiven Experim
 
 Die große Karte ist die Start- und Arbeitsfläche. 159 Bausteine liegen in zwölf durchlässigen, transparenten Themenellipsen. Die Grundanordnung bleibt reproduzierbar; neue Themen rücken leicht zu ihren gemeinsamen Bausteinen. Dezente Themenüberschriften öffnen den jeweiligen Ausschnitt. Verbindungen bleiben über Themenfelder hinweg sichtbar. Alle 80 öffentlichen mariposa-Funktionen sind auffindbar. Es gibt keine Verfahrensreiter. Die Kurslandkarte außerhalb dieses Projekts bleibt unberührt.
 
+## Neuer Explorationsprototyp
+
+Unter `?ansicht=prototyp` lässt sich eine alternative Exploration vergleichen. Die normale Adresse öffnet weiterhin die bisherige Ansicht. Im Prototyp bleiben alle 159 Knoten an festen Positionen. Drei Zoomstufen zeigen Orientierung, Begriffe oder vollständige Karten; die Übersicht zeichnet 38 repräsentative vorhandene Verbindungen statt aller 486. Hover ergänzt immer die vollständigen eingehenden Pfade. Direkte Bezüge, Voraussetzungen und Anwendungen lassen sich getrennt betonen.
+
+Ein Klick öffnet eine kompakte Erklärung. Von dort führen „Formeln & Experimente öffnen“ zur bestehenden ausführlichen Ansicht und „Umfeld ansehen“ zum passenden Kartenausschnitt. Dichte Anschlüsse werden in der kompakten Erklärung nach Themen aufklappbar. Zwei Frage-Einstiege markieren vorhandene Wege durch die Karte. Der Verlauf bewahrt Frageweg, Fokus, Erklärungstiefe und fachlichen Kontext. Der zusätzliche Offline-Export heißt `Statistikatlas-Exploration-Prototyp.html`.
+
+Prüfung und Grenzen: [PROTOTYP-EXPLORATION.md](PROTOTYP-EXPLORATION.md).
+
 ## Erkunden
 
 1. Eine Karte an beliebiger Stelle anklicken. Beim Darüberfahren oder Tastaturfokus werden sämtliche eingehenden Pfade hervorgehoben; beim Verlassen kehrt die bisherige Auswahl zurück.

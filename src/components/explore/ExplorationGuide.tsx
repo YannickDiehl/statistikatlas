@@ -1,0 +1,4 @@
+import { ArrowRight,X } from 'lucide-react';
+import { ref,titleFor } from '../../domain/learning';
+import type { ExplorationGuide } from '../../domain/prototypeMap';
+export function GuideTrail({guide,selected,onStep,onClose}:{guide:ExplorationGuide;selected:string|null;onStep:(id:string)=>void;onClose:()=>void}){return <section className="explorer-guide" aria-label="Frage in der Karte verfolgen"><header><strong>{guide.title}</strong><button onClick={onClose} aria-label="Frageweg verlassen"><X size={16}/></button></header><div className="explorer-guide-path">{guide.path.map((id,i)=><span key={id}>{i>0&&<ArrowRight size={14}/>}<button aria-current={selected===id?'step':undefined} onClick={()=>onStep(id)}>{titleFor(ref(id))}</button></span>)}</div><details><summary>So hängt es zusammen</summary><p>{guide.note}</p></details></section>;}
