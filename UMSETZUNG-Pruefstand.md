@@ -1,3 +1,15 @@
+## 11. September 2026 – organische Karte mit visueller Lesetiefe
+
+- 24 redaktionell gesetzte echte Begriffe und 26 fachlich geprüfte Hauptverbindungen. Weitere Punkte liegen nach ihren tatsächlichen Nachbarschaften im selben Netz; keine Themeninseln. Alle 144 sichtbaren Konzepte bilden weiterhin eine zusammenhängende Komponente.
+- Kurven und Richtungspfeile behalten ihre sichtbare Strichstärke. Kleine Begriffe erhalten größere Klickflächen; Namen sind im Überblick, bei Detailzoom sowie bei Hover/Auswahl gestaffelt. Ein kollisionsbewusster Beschriftungsplan verändert keine Knotenpositionen.
+- Normale Auswahl erzwingt keinen Mindestzoom mehr. Der Inspector darf einen verdeckten Punkt durch minimale Kameraverschiebung sichtbar halten. Ganzer-Karten-Überblick und Zurücksetzen der Anordnung sind getrennt.
+- Geprüfte Beziehungssätze unterscheiden Aufbau und Einordnung. Drei zusammenfassende Verbindungen ergänzt; die irreführende Rechenkante Daten → Stichprobenziehung entfernt. Pearson-Alternativen, positive Streuung, Rangbasis und Verfahrenvarianten bleiben erhalten.
+- Automatisierte Prüfung: 72 Tests; insbesondere getrennte Punkte, deterministisches Grundgerüst, aktive Varianten, explizite Anziehung, Verlauf und Bildschirmbeschriftungen. Produktionsbuild und eigenständige Offline-HTML erstellt.
+- Eine visuelle Prüfung der ersten Fassung bei ca. 1515 × 1200 zeigte eine zu früh erreichte Detailstufe. Daraufhin wurde die Stufengrenze relativ zum anfänglichen Gesamtzoom gesetzt und die Beschriftung weiter angepasst. Diese letzten Anpassungen wurden rechnerisch geprüft; keine abschließende Browser-Interaktionsprüfung oder FPS-Messung.
+- Fachlicher Gegencheck durch zweiten Agenten: zusammenhängendes Hauptgerüst, keine neue falsche Voraussetzung, keine Überschreibung des Pearson-z-Wegs.
+
+---
+
 ## 11. September 2026 – zusammenhängendes Gravitationsnetz
 
 - 144 sichtbare statistische Begriffe bilden eine einzige zusammenhängende Komponente. 15 Rechenbegriffe bleiben in Suche, interaktiven Formeln und der rechten Detailansicht erhalten.

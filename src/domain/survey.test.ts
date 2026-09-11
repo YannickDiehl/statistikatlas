@@ -79,7 +79,7 @@ test('hover follows only incoming paths, including distant ancestors and the cur
 });
 
 test('React Flow wrappers retain pointer hit-testing when selection and dragging are disabled',()=>{
- const node={id:'mean',type:'concept',position:{x:0,y:0},width:196,height:112,...nodeInteraction,data:{reference:ref('mean'),context:context(),active:false,related:true,hovered:false,visited:false,onSelect:noop,onHover:noop}};
+ const node={id:'mean',type:'concept',position:{x:0,y:0},width:196,height:112,...nodeInteraction,data:{zoom:1,reference:ref('mean'),context:context(),active:false,related:true,hovered:false,visited:false,onSelect:noop,onHover:noop}};
  const html=renderToStaticMarkup(createElement(ReactFlowProvider,{initialNodes:[node],initialWidth:800,initialHeight:600,children:createElement(ReactFlow,{nodes:[node],nodeTypes,nodesDraggable:false,elementsSelectable:false})}));
  assert.match(html,/pointer-events:all/);assert.match(html,/z-index:3/);assert.match(html,/Mittelwert im Netzwerk erkunden/);
 });

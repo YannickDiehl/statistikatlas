@@ -1,6 +1,7 @@
 import { concepts, conceptById } from './concepts';
 import { mapRelations, incomingPaths, type NetworkEdge } from './network';
 import { outputRef, type Ref, type Route } from './learning';
+import { explainRelations } from './organicStructure';
 
 export const arithmeticIds = new Set(['count','add','subtract','multiply','divide','square','sqrt']);
 // These remain searchable, selectable and fully explained in the inspector.
@@ -35,7 +36,7 @@ export function visibleRelations(selected:Ref|null, route:Route, anchor?:Ref|nul
   }
   for(const e of incoming.get(target.id)||[])walk(e,[],new Set(),e.kind,!!e.alternative);
  }
- return [...result.values()];
+ return explainRelations([...result.values()]);
 }
 
 // A selected calculation opens in the inspector while its statistical result

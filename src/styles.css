@@ -73,3 +73,34 @@
 .network-canvas .react-flow__edge:hover{cursor:pointer}
 @media(prefers-reduced-motion:reduce){.network-canvas .react-flow__node-concept{transition:none}}
 .network-node-dot{top:auto;bottom:8px}
+
+/* A continuous map: visual depth changes, statistical locations stay put. */
+.organic-map{background:radial-gradient(ellipse at 44% 42%,#f1f3e9 0%,#faf8f3 76%)}
+.organic-map .react-flow__node-concept{background:transparent;border:0;box-shadow:none}
+.organic-node{width:16px;height:16px;position:relative}
+.organic-node .react-flow__handle{left:50%;top:50%;right:auto;transform:translate(-50%,-50%);opacity:0;pointer-events:none}
+.organic-node-face{position:absolute;left:8px;top:8px;transform-origin:0 0;color:#344731}
+.organic-point{position:absolute;left:-12px;top:-12px;width:24px;height:24px;border:0;background:none;border-radius:50%;padding:0;display:grid;place-items:center;z-index:2}
+.organic-point span{width:5px;height:5px;border-radius:50%;background:#9da991;box-shadow:0 0 0 2px #faf8f3;transition:background .15s,box-shadow .15s}
+.core-point .organic-point span{width:11px;height:11px;background:#718565;box-shadow:0 0 0 3px #faf8f3,0 0 0 4px #9baa8b66}
+.organic-label{position:absolute;padding:2px 3px;border:0;background:#faf8f3ec;color:inherit;text-align:center;font:14px/18px Georgia,serif;border-radius:3px;z-index:1;word-break:normal;overflow-wrap:normal;box-shadow:0 0 5px 2px #faf8f377}
+.detail-point .organic-label{font:14px/18px var(--sans)}
+.organic-node.muted .organic-point span{background:#b9c1b0}.organic-node.muted .organic-label{color:#84917b}
+.organic-node.hovered .organic-point span,.organic-node.selected .organic-point span{background:var(--red);box-shadow:0 0 0 4px #faf8f3,0 0 0 5px #8b2e2e77}
+.organic-node.hovered .organic-label,.organic-node.selected .organic-label{color:var(--red);background:#faf4e9;box-shadow:0 0 0 1px #bc9c8155}
+.organic-point:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.organic-node.visited:not(.selected) .organic-point span{box-shadow:0 0 0 2px #faf8f3,0 0 0 3px #91a380}
+.organic-label-stem{position:absolute;left:0;top:0;width:1px;height:1px;overflow:visible;pointer-events:none}
+.organic-label-stem path{stroke:#bac3b1;stroke-width:.6;fill:none}
+.organic-drag{position:absolute;left:12px;top:5px;opacity:0;font:17px var(--sans);cursor:grab;pointer-events:none}
+.organic-node:hover .organic-drag{opacity:.65;pointer-events:auto}.organic-drag:active{cursor:grabbing}
+.organic-edge-caption{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);width:max-content;max-width:min(520px,70%);padding:12px 18px;background:#faf8f3f5;border:1px solid #c8cebe;border-radius:5px;box-shadow:0 5px 18px #39432b12;pointer-events:none;z-index:4;text-align:center}
+.organic-edge-caption span{display:block;font:11px/1.4 var(--sans);color:#718565;margin-bottom:4px}.organic-edge-caption strong{font:15px/1.35 Georgia,serif}.organic-edge-caption b{margin:0 6px}
+.has-inspector .organic-edge-caption{left:calc((100% - 434px)/2);max-width:calc(100% - 480px)}
+.organic-zoom-note{position:absolute;right:22px;bottom:16px;font:11px/1.4 var(--sans);color:#7e8976;pointer-events:none}
+.has-inspector .organic-zoom-note{right:434px}
+.organic-map .react-flow__controls{bottom:14px;left:10px}
+.map-invitation{top:18px;bottom:auto;left:24px;width:300px;padding:14px 18px;background:#faf8f3e8;border:0;border-left:2px solid #9aaa88;box-shadow:none}
+.map-invitation .eyebrow{font-size:9px}.map-invitation h1{font-size:22px;margin:6px 0 7px}.map-invitation p{font-size:12px;line-height:1.45;margin:0 0 6px}.map-invitation .small-copy{font-size:11px}
+.network-map-note{pointer-events:none}.network-map-note button{pointer-events:auto}
+@media(max-width:760px){.map-invitation{left:12px;top:12px;width:235px;padding:10px 13px}.map-invitation h1{font-size:19px}.map-invitation .small-copy{display:none}.organic-zoom-note{right:12px;bottom:12px;font-size:10px}.has-inspector .organic-zoom-note{right:12px;bottom:53%}.has-inspector .organic-edge-caption{left:50%;bottom:54%;max-width:85%}.has-inspector .organic-map .react-flow__controls{bottom:calc(51% + 14px)}}

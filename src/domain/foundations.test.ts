@@ -1,4 +1,5 @@
 import { mapIds } from './visibleNetwork';
+import { pointGap } from './organicLayout';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -55,7 +56,7 @@ test('meaning edges are direct explanations, never recursive computational input
  assert.ok(relatedIds(ref('confidence'),false).has('linear_regression'));
 });
 test('gravity and home positions remain finite and separate with all visible foundations',()=>{
- for(const layout of [restingPlaces,gravityLayout(ref('p_value'),'covariance'),gravityLayout(ref('normal_distribution'),'covariance',true)]){const entries=Object.entries(layout);assert.equal(entries.length,mapIds.size);for(let i=0;i<entries.length;i++){const [id,p]=entries[i];assert.ok(Number.isFinite(p.x)&&Number.isFinite(p.y),id);for(let j=i+1;j<entries.length;j++){const [other,q]=entries[j];assert.ok(Math.abs(p.x-q.x)>=226||Math.abs(p.y-q.y)>=146,`${id}/${other}`);}}}
+ for(const layout of [restingPlaces,gravityLayout(ref('p_value'),'covariance'),gravityLayout(ref('normal_distribution'),'covariance',true)]){const entries=Object.entries(layout);assert.equal(entries.length,mapIds.size);for(let i=0;i<entries.length;i++){const [id,p]=entries[i];assert.ok(Number.isFinite(p.x)&&Number.isFinite(p.y),id);for(let j=i+1;j<entries.length;j++){const [other,q]=entries[j];assert.ok(Math.hypot(p.x-q.x,p.y-q.y)>=pointGap-1e-7,`${id}/${other}`);}}}
 });
 test('every foundation renders its experiment with accessible controls and finite geometry',()=>{
  const rows=createSurvey();for(const entry of foundationEntries){const html=renderToStaticMarkup(createElement(FoundationLab,{id:entry.id,rows,selection:defaultSelection}));assert.ok(html.includes('foundation-lab'),entry.id);assert.doesNotMatch(html,/NaN|Infinity|height="-/);assert.match(html,/input|select|button/,entry.id);}

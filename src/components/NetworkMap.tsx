@@ -1,54 +1,82 @@
-import { entryById } from '../domain/mariposaCatalog';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ReactFlow, Background, Controls, MiniMap, Handle, Position, MarkerType, useReactFlow, useStore, type Node, type NodeProps, type Viewport } from '@xyflow/react';
-import { conceptById } from '../domain/concepts';
-import { isOperation, titleFor, valueFor, displayValue, unitFor, type Ref, type LessonContext } from '../domain/learning';
-import { landmarks, mapTitles, referenceInMap, incomingPaths, routeAfterSelection } from '../domain/network';
-
+import { ReactFlow, Controls, Handle, Position, BaseEdge, useReactFlow, useStore, type Node, type NodeProps, type EdgeProps, type Viewport } from '@xyflow/react';
+import { titleFor, type Ref, type LessonContext } from '../domain/learning';
+import { referenceInMap, incomingPaths, routeAfterSelection } from '../domain/network';
 import { restingPlaces, gravityMembers, dragLayout, type MapLayout } from '../domain/mapLayout';
 import { mapConcepts, mapIds, mapAnchor, visibleRelations, visibleRelated } from '../domain/visibleNetwork';
+import { coreIds, coreLabelOrder, overviewTitles, spineFor } from '../domain/organicStructure';
+import { placeLabels, type LabelPlacement } from '../domain/organicLayout';
 
-type MapData={reference:Ref;context:LessonContext;active:boolean;related:boolean;hovered:boolean;visited:boolean;onSelect:(r:Ref)=>void;onHover:(id:string|null)=>void};
+type MapData={reference:Ref;active:boolean;related:boolean;hovered:boolean;visited:boolean;zoom:number;label?:LabelPlacement;onSelect:(r:Ref)=>void;onHover:(id:string|null)=>void};
 type MapNode=Node<MapData,'concept'>;
-const sides=[['left',Position.Left],['right',Position.Right],['top',Position.Top],['bottom',Position.Bottom]] as const;
-function Concept({data:d}:NodeProps<MapNode>){const r=d.reference,c=conceptById[r.id];return <article className={`network-node ${entryById[r.id]&&!entryById[r.id].existing?'package-node':''} concept-${r.id} ${landmarks.has(r.id)?'landmark':''} category-${c.category} ${d.active?'selected':''} ${d.related?'related':'muted'} ${d.hovered?'hovered':''} ${d.visited?'visited':''}`}>
- {sides.map(([side,position])=><Handle key={`in-${side}`} id={`in-${side}`} type="target" position={position}/>)}
- <span className="node-drag-grip" title="Ziehen, um diesen Begriff zu verschieben" aria-hidden="true">⠿</span><button className="nodrag" onClick={()=>d.onSelect(r)} onPointerEnter={()=>d.onHover(r.id)} onPointerLeave={()=>d.onHover(null)} onFocus={()=>d.onHover(r.id)} onBlur={()=>d.onHover(null)} aria-label={`${titleFor(r)} im Netzwerk erkunden`} aria-pressed={d.active}><span className="network-node-kind">{entryById[r.id]?.variants.length?'Verfahren':c.category==='operation'?'Transformation':c.category==='data'?'Grundlage':'Baustein'}</span><strong>{r.use==='z'&&['crossproduct','crossproduct_sum'].includes(r.id)?(r.id==='crossproduct'?'z-Produkte':'z-Produktsumme'):mapTitles[r.id]||titleFor(r)}</strong><span className="network-node-value">{!isOperation(r)&&valueFor(r,d.context)!==null?`${['validn','count','df','crossproduct','crossproduct_sum','covariance','sd_product','pearson'].includes(r.id)?'':r.variable.toUpperCase()+' · '}${displayValue(r,d.context)} ${unitFor(r,d.context)}`:c.short}</span><span className="network-node-dot" aria-hidden="true"/></button>
- {sides.map(([side,position])=><Handle key={`out-${side}`} id={`out-${side}`} type="source" position={position}/>)}</article>;}
-const MemoConcept=memo(Concept,(a,b)=>a.data.context===b.data.context&&JSON.stringify(a.data.reference)===JSON.stringify(b.data.reference)&&['active','related','hovered','visited'].every(key=>a.data[key as 'active']===b.data[key as 'active']));
-export const nodeTypes={concept:MemoConcept};
-export const nodeInteraction={style:{pointerEvents:'all' as const},zIndex:3,draggable:true,selectable:false,focusable:false};
+function Concept({data:d}:NodeProps<MapNode>){const r=d.reference,core=coreIds.has(r.id),title=overviewTitles[r.id]||titleFor(r);return <article className={`organic-node ${core?'core-point':'detail-point'} ${d.active?'selected':''} ${d.related?'related':'muted'} ${d.hovered?'hovered':''} ${d.visited?'visited':''}`}>
+ <Handle id="in" type="target" position={Position.Left}/><Handle id="out" type="source" position={Position.Right}/>
+ <div className="organic-node-face" style={{transform:`scale(${1/d.zoom})`}}>
+  <button className="organic-point nodrag" onClick={()=>d.onSelect(r)} onPointerEnter={()=>d.onHover(r.id)} onPointerLeave={()=>d.onHover(null)} onFocus={()=>d.onHover(r.id)} onBlur={()=>d.onHover(null)} aria-label={`${titleFor(r)} im Netzwerk erkunden`} aria-pressed={d.active}><span/></button>
+  {d.label&&<><svg className="organic-label-stem" aria-hidden="true"><path d={`M 0 0 L ${d.label.x+d.label.width/2} ${d.label.y+d.label.height/2}`}/></svg><button className="organic-label nodrag" style={{left:d.label.x,top:d.label.y,width:d.label.width,minHeight:d.label.height}} onClick={()=>d.onSelect(r)} onPointerEnter={()=>d.onHover(r.id)} onPointerLeave={()=>d.onHover(null)} onFocus={()=>d.onHover(r.id)} onBlur={()=>d.onHover(null)} tabIndex={-1} aria-hidden="true">{title}</button></>}
+  <span className="organic-drag" title="Begriff verschieben" aria-hidden="true">⠿</span>
+ </div>
+ </article>;}
+export const nodeTypes={concept:memo(Concept,(a,b)=>{
+ const x=a.data,y=b.data;
+ return x.zoom===y.zoom&&x.active===y.active&&x.related===y.related&&x.hovered===y.hovered&&x.visited===y.visited&&JSON.stringify(x.reference)===JSON.stringify(y.reference)&&JSON.stringify(x.label)===JSON.stringify(y.label);
+})};
+export const nodeInteraction={style:{pointerEvents:'all' as const,width:16,height:16},zIndex:3,draggable:true,selectable:false,focusable:false};
+function OrganicEdge({id,sourceX:sx,sourceY:sy,targetX:tx,targetY:ty,style,data}:EdgeProps){
+ const dx=tx-sx,dy=ty-sy,vertical=Math.abs(dy)>Math.abs(dx)*1.2;
+ // Tangents soften each actual connection; curves are never merged into fake junctions.
+ const bend=Math.min(310,Math.max(60,(vertical?Math.abs(dy):Math.abs(dx))*.48)),sign=(vertical?dy:dx)>=0?1:-1;
+ const c1=vertical?{x:sx,y:sy+bend*sign}:{x:sx+bend*sign,y:sy},c2=vertical?{x:tx,y:ty-bend*sign}:{x:tx-bend*sign,y:ty};
+ const path=`M ${sx} ${sy} C ${c1.x} ${c1.y}, ${c2.x} ${c2.y}, ${tx} ${ty}`,t=.82,u=1-t;
+ const x=u*u*u*sx+3*u*u*t*c1.x+3*u*t*t*c2.x+t*t*t*tx,y=u*u*u*sy+3*u*u*t*c1.y+3*u*t*t*c2.y+t*t*t*ty;
+ const vx=3*u*u*(c1.x-sx)+6*u*t*(c2.x-c1.x)+3*t*t*(tx-c2.x),vy=3*u*u*(c1.y-sy)+6*u*t*(c2.y-c1.y)+3*t*t*(ty-c2.y);
+ const z=Number(data?.zoom)||1;
+ return <><BaseEdge id={id} path={path} style={{...style,vectorEffect:'non-scaling-stroke'}} interactionWidth={14/z}/>{data?.arrow===true&&<path d="M -5 -3 L 0 0 L -5 3" transform={`translate(${x} ${y}) rotate(${Math.atan2(vy,vx)*180/Math.PI}) scale(${1/z})`} style={{stroke:style?.stroke,opacity:style?.opacity,strokeWidth:1.3,fill:'none',pointerEvents:'none'}}/>}</>;
+}
+const edgeTypes={organic:OrganicEdge};
 export type CameraRequest={id:number;kind:'all'|'focus'|'restore'|'ensure'|'none';viewport?:Viewport};
 export function NetworkMap({selected,context,hovered,visited,onSelect,onHover,onViewport,onViewportReader,camera,trace=false,inspectorOpen=false,onBackground,highlightRef,layout,onLayoutReader,contextAnchor,gravity=false,onLayoutChange}:{selected:Ref|null;context:LessonContext;hovered:string|null;visited:Set<string>;onSelect:(r:Ref)=>void;onHover:(id:string|null)=>void;onViewport:(v:Viewport)=>void;onViewportReader:(read:()=>Viewport)=>void;camera:CameraRequest;trace?:boolean;inspectorOpen?:boolean;onBackground?:()=>void;highlightRef?:Ref;layout?:MapLayout;contextAnchor?:Ref;onLayoutReader?:(read:()=>MapLayout)=>void;gravity?:boolean;onLayoutChange?:(layout:MapLayout)=>void}){
- const destinations=layout||restingPlaces,positions=destinations;
- const [edgeHover,setEdgeHover]=useState<string|null>(null);
- const [dragged,setDragged]=useState<{id:string;position:{x:number;y:number}}|null>(null);
+ const destinations=layout||restingPlaces;
+ const [edgeHover,setEdgeHover]=useState<string|null>(null),[dragged,setDragged]=useState<{id:string;position:{x:number;y:number}}|null>(null),[overviewZoom,setOverviewZoom]=useState(.6);
+ const positions=useMemo(()=>dragged?{...destinations,[dragged.id]:dragged.position}:destinations,[destinations,dragged]);
  const handlers=useRef({onSelect,onHover,onLayoutChange});handlers.current={onSelect,onHover,onLayoutChange};
- const selectNode=useCallback((r:Ref)=>handlers.current.onSelect(r),[]),hoverNode=useCallback((id:string|null)=>handlers.current.onHover(id),[]);
- const focus=mapAnchor(selected,contextAnchor);
- const drawn=useRef(positions);drawn.current=positions;
+ const hoverTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
+ const selectNode=useCallback((r:Ref)=>{clearTimeout(hoverTimer.current);handlers.current.onSelect(r);},[]);
+ const hoverNode=useCallback((id:string|null)=>{clearTimeout(hoverTimer.current);if(id)handlers.current.onHover(id);else hoverTimer.current=setTimeout(()=>handlers.current.onHover(null),130);},[]);
+ useEffect(()=>()=>clearTimeout(hoverTimer.current),[]);
+ const focus=mapAnchor(selected,contextAnchor),drawn=useRef(positions);drawn.current=positions;
  useEffect(()=>{onLayoutReader?.(()=>drawn.current);},[onLayoutReader]);
  const zoom=useStore(s=>s.transform[2]);
+ const detail=zoom>overviewZoom*1.5;
  const flow=useReactFlow(),container=useRef<HTMLDivElement>(null),mounted=useRef(false);
  const mapReference=highlightRef||(hovered?referenceInMap(hovered,selected,context.route,contextAnchor):selected),hoverRoute=mapReference?routeAfterSelection(selected,mapReference,context.route):context.route;
  const relations=useMemo(()=>visibleRelations(mapReference,hoverRoute,contextAnchor||selected),[mapReference?.id,mapReference?.use,mapReference?.variable,mapReference?.basis,hoverRoute,contextAnchor,selected]);
  const hoveredAnchor=hovered?mapAnchor(mapReference,contextAnchor||selected):null;
  const hoverPath=useMemo(()=>hoveredAnchor?incomingPaths(hoveredAnchor.id,relations):null,[hoveredAnchor?.id,relations]);
- const related=hoverPath?.nodes||visibleRelated(selected,trace,context.route,contextAnchor),hoverNeighbors=hoverPath?.nodes;
+ const activeId=hoveredAnchor?.id||focus?.id,related=hoverPath?.nodes||visibleRelated(selected,trace,context.route,contextAnchor);
+ const directNodes=useMemo(()=>new Set(activeId?[activeId,...relations.filter(e=>!e.alternative&&(e.source===activeId||e.target===activeId)).flatMap(e=>[e.source,e.target])]:[]),[relations,activeId]);
  const tracedEdges=trace&&focus?incomingPaths(focus.id,relations).edges:undefined;
- const conceptNodes:MapNode[]=mapConcepts.map(c=>({id:c.id,type:'concept',position:dragged?.id===c.id?dragged.position:positions[c.id],...nodeInteraction,data:{reference:highlightRef?.id===c.id?highlightRef:referenceInMap(c.id,mapReference,context.route,contextAnchor),context,active:focus?.id===c.id,related:related.has(c.id)||!!hoverNeighbors?.has(c.id),hovered:hoveredAnchor?.id===c.id,visited:visited.has(c.id),onSelect:selectNode,onHover:hoverNode}}));
- const edges=relations.filter(e=>!e.alternative).map(e=>{const a=positions[e.source],b=positions[e.target],dx=b.x-a.x,dy=b.y-a.y,vertical=Math.abs(dy)>Math.abs(dx),sourceSide=vertical?(dy>0?'bottom':'top'):(dx>0?'right':'left'),targetSide=vertical?(dy>0?'top':'bottom'):(dx>0?'left':'right'),direct=e.source===focus?.id||e.target===focus?.id,hover=hoverPath?.edges.has(e.id),traced=tracedEdges?.has(e.id),strong=!e.alternative&&(hoverPath?hover:direct||traced);return {id:e.id,source:e.source,target:e.target,sourceHandle:`out-${sourceSide}`,targetHandle:`in-${targetSide}`,type:'default',label:edgeHover===e.id?e.label:undefined,style:{stroke:e.kind==='meaning'?'#718798':e.kind==='condition'?'#98714e':strong?'#6b8266':'#bfc7b6',strokeWidth:strong?2.1:.9,opacity:(selected||hovered)&&!strong?.18:strong?1:e.kind==='meaning'?.14:e.kind==='condition'?.24:.35,strokeDasharray:e.alternative?'3 7':e.kind==='meaning'?'2 6':e.kind==='condition'?'7 4':e.kind==='optional'?'2 5':undefined},markerEnd:{type:MarkerType.ArrowClosed,color:strong?'#6b8266':'#bfc7b6',width:16,height:16},labelStyle:{fontSize:12,fill:'#43553e'},labelBgStyle:{fill:'#faf8f3',fillOpacity:.94},labelBgPadding:[6,4] as [number,number],labelBgBorderRadius:3,focusable:false,zIndex:strong?2:0};});
- const nodes=conceptNodes;
+ const titles=useMemo(()=>Object.fromEntries(mapConcepts.map(c=>[c.id,overviewTitles[c.id]||titleFor({id:c.id,variable:'x'})])),[]);
+ const labels=useMemo(()=>{const priority=[...new Set([activeId,focus?.id,...coreLabelOrder,...(activeId?[...directNodes]:[]),...(detail?[...mapIds]:[])].filter((id):id is string=>!!id))];return placeLabels(positions,zoom,titles,priority,[activeId,focus?.id].filter((id):id is string=>!!id));},[positions,zoom,titles,activeId,focus?.id,directNodes,detail]);
+ const nodes:MapNode[]=mapConcepts.map(c=>({id:c.id,type:'concept',position:positions[c.id],...nodeInteraction,zIndex:c.id===activeId?8:coreIds.has(c.id)?4:3,data:{reference:highlightRef?.id===c.id?highlightRef:referenceInMap(c.id,mapReference,context.route,contextAnchor),zoom,label:labels[c.id],active:focus?.id===c.id,related:related.has(c.id),hovered:hoveredAnchor?.id===c.id,visited:visited.has(c.id),onSelect:selectNode,onHover:hoverNode}}));
+ const edges=relations.filter(e=>!e.alternative).map(e=>{
+  const direct=e.source===activeId||e.target===activeId,path=!!hoverPath?.edges.has(e.id)||!!tracedEdges?.has(e.id),spine=spineFor(e)?.kind===e.kind,pointed=edgeHover===e.id,strong=direct||pointed;
+  const color=e.kind==='meaning'?'#788c9a':e.kind==='condition'?'#a28062':'#718565';
+  return {id:e.id,source:e.source,target:e.target,sourceHandle:'out',targetHandle:'in',type:'organic',data:{zoom,arrow:strong||spine},style:{stroke:pointed?'#8b2e2e':color,strokeWidth:strong?1.9:path?1.1:spine?1.3:.65,opacity:pointed?1:activeId?(direct?.9:path?.4:spine?.2:.045):spine?.75:detail?.16:.07,strokeDasharray:e.kind==='meaning'?'2 5':e.kind==='condition'?'7 4':e.kind==='optional'?'2 7':undefined},focusable:false,zIndex:strong?2:spine?1:0};
+ });
+ const hoveredEdge=relations.find(e=>e.id===edgeHover);
  function bounds(){const width=container.current?.clientWidth||800,height=container.current?.clientHeight||600,mobile=width<=760;return {width:width-(inspectorOpen&&!mobile?434:0),height:height-(inspectorOpen&&mobile?height*.51:0),mobile};}
- function fit(ids:string[],duration:number,readable=false){const b=bounds(),points=ids.map(id=>destinations[id]).filter(Boolean),left=Math.min(...points.map(p=>p.x)),right=Math.max(...points.map(p=>p.x+196)),top=Math.min(...points.map(p=>p.y))-120,bottom=Math.max(...points.map(p=>p.y+112)),zoom=Math.max(.05,Math.min(1.1,(b.width-80)/(right-left),(b.height-190)/(bottom-top)));if(readable&&zoom<(b.mobile?.8:.85)){ensure(duration,true);return;}void flow.setViewport({x:b.width/2-(left+right)/2*zoom,y:(b.height+100)/2-(top+bottom)/2*zoom,zoom},{duration});}
- function ensure(duration:number,center=false){
-  if(!focus)return;const p=destinations[focus.id],b=bounds(),v=flow.getViewport(),zoom=Math.max(v.zoom,b.mobile?.8:.85),cx=(p.x+98)*v.zoom+v.x,cy=(p.y+56)*v.zoom+v.y;
-  const left=48,right=b.width-20,top=b.mobile&&inspectorOpen?18:125,bottom=b.height-60,px=Math.min(108*zoom,(right-left)/2),py=Math.min(65*zoom,(bottom-top)/2);
-  const tx=center?(left+right)/2:Math.max(left+px,Math.min(right-px,cx)),ty=center?(top+bottom)/2:Math.max(top+py,Math.min(bottom-py,cy));
-  if(zoom!==v.zoom||Math.abs(tx-cx)>1||Math.abs(ty-cy)>1)void flow.setViewport({zoom,x:tx-(p.x+98)*zoom,y:ty-(p.y+56)*zoom},{duration});else void flow.setViewport(v,{duration:0});
+ function fit(ids:string[],duration:number){const b=bounds(),points=ids.map(id=>destinations[id]).filter(Boolean);if(!points.length)return overviewZoom;const left=Math.min(...points.map(p=>p.x)),right=Math.max(...points.map(p=>p.x)),top=Math.min(...points.map(p=>p.y)),bottom=Math.max(...points.map(p=>p.y)),z=Math.max(.1,Math.min(1.2,(b.width-200)/Math.max(1,right-left),(b.height-150)/Math.max(1,bottom-top)));void flow.setViewport({x:b.width/2-(left+right)/2*z,y:b.height/2-(top+bottom)/2*z,zoom:z},{duration});return z;}
+ function ensure(duration:number){
+  if(!focus)return;const p=destinations[focus.id],b=bounds(),v=flow.getViewport(),cx=p.x*v.zoom+v.x,cy=p.y*v.zoom+v.y;
+  const marginX=Math.min(90,b.width/3),marginY=65,tx=Math.max(marginX,Math.min(b.width-marginX,cx)),ty=Math.max(marginY,Math.min(b.height-marginY,cy));
+  if(Math.abs(tx-cx)>1||Math.abs(ty-cy)>1)void flow.setViewport({...v,x:v.x+tx-cx,y:v.y+ty-cy},{duration});
  }
  useEffect(()=>{onViewportReader(()=>flow.getViewport());},[flow,onViewportReader]);
- useEffect(()=>{const timer=setTimeout(()=>{if(!container.current?.clientWidth)return;fit([...mapIds],0);mounted.current=true;},80);return ()=>clearTimeout(timer);},[flow]);
- useEffect(()=>{if(!mounted.current)return;const duration=matchMedia('(prefers-reduced-motion: reduce)').matches?0:320;if(camera.kind==='restore'&&camera.viewport)void flow.setViewport(camera.viewport,{duration});else if(camera.kind==='all')fit([...mapIds],duration);else if(camera.kind==='focus'&&selected)fit([...(gravity?gravityMembers(selected,context.route,trace,contextAnchor):visibleRelated(selected,false,context.route,contextAnchor))],duration,!gravity);else if(camera.kind==='ensure')ensure(duration);},[camera.id]);
- return <div ref={container} className={`network-canvas ${zoom<.48?'map-overview':'map-detail'} ${gravity?'gravity-active':''}`} aria-label="Statistikatlas – gesamte interaktive Netzkarte"><ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} minZoom={.05} maxZoom={1.5} nodesConnectable={false} nodesDraggable={true} onNodeDrag={(_,node)=>setDragged({id:node.id,position:node.position})} onNodeDragStop={(_,node)=>{setDragged(null);handlers.current.onLayoutChange?.(dragLayout(node.id,node.position,positions,selected,context.route));}} elementsSelectable={false} onEdgeMouseEnter={(_,edge)=>setEdgeHover(edge.id)} onEdgeMouseLeave={()=>setEdgeHover(null)} onPaneClick={onBackground} onMoveEnd={(_,v)=>onViewport(v)} onEdgeClick={(_,e)=>onSelect(referenceInMap(e.source===focus?.id?e.target:e.source,mapReference,context.route,contextAnchor))} onlyRenderVisibleElements zoomOnDoubleClick={false} ariaLabelConfig={{'controls.zoomIn.ariaLabel':'Karte vergrößern','controls.zoomOut.ariaLabel':'Karte verkleinern','controls.fitView.ariaLabel':'Ganze Karte zeigen'}}><Background color="#cdd4c3" gap={24} size={1}/><Controls showInteractive={false} showFitView={false}/><MiniMap nodeColor={n=>n.type==='region'?'transparent':n.id===selected?.id?'#8b2e2e':hoverNeighbors?.has(n.id)?'#7a8f6e':'#bcc8b1'} maskColor="rgba(250,248,243,.8)" pannable zoomable ariaLabel="Orientierung in der gesamten Karte"/></ReactFlow></div>;
+ useEffect(()=>{const timer=setTimeout(()=>{if(!container.current?.clientWidth)return;setOverviewZoom(fit([...mapIds],0));mounted.current=true;},80);return ()=>clearTimeout(timer);},[flow]);
+ useEffect(()=>{if(!mounted.current)return;const duration=matchMedia('(prefers-reduced-motion: reduce)').matches?0:320;if(camera.kind==='restore'&&camera.viewport)void flow.setViewport(camera.viewport,{duration});else if(camera.kind==='all')fit([...mapIds],duration);else if(camera.kind==='focus'&&selected)fit([...(gravity?gravityMembers(selected,context.route,trace,contextAnchor):visibleRelated(selected,false,context.route,contextAnchor))],duration);else if(camera.kind==='ensure')ensure(duration);},[camera.id]);
+ return <div ref={container} className={`network-canvas organic-map ${detail?'map-detail':'map-overview'} ${gravity?'gravity-active':''}`} aria-label="Statistikatlas – gesamte interaktive Netzkarte"><ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} edgeTypes={edgeTypes} nodeOrigin={[.5,.5]} minZoom={.1} maxZoom={2} nodesConnectable={false} nodesDraggable onNodeDrag={(_,node)=>setDragged({id:node.id,position:node.position})} onNodeDragStop={(_,node)=>{setDragged(null);handlers.current.onLayoutChange?.(dragLayout(node.id,node.position,destinations,selected,context.route));}} elementsSelectable={false} onEdgeMouseEnter={(_,edge)=>setEdgeHover(edge.id)} onEdgeMouseLeave={()=>setEdgeHover(null)} onPaneClick={onBackground} onMoveEnd={(_,v)=>onViewport(v)} onEdgeClick={(_,e)=>selectNode(referenceInMap(e.source===focus?.id?e.target:e.source,mapReference,context.route,contextAnchor))} zoomOnDoubleClick={false} ariaLabelConfig={{'controls.zoomIn.ariaLabel':'Karte vergrößern','controls.zoomOut.ariaLabel':'Karte verkleinern','controls.fitView.ariaLabel':'Ganze Karte zeigen'}}><Controls showInteractive={false} showFitView={false}/></ReactFlow>
+  {hoveredEdge&&<div className="organic-edge-caption" role="status"><span>{overviewTitles[hoveredEdge.source]||titles[hoveredEdge.source]} <b>→</b> {overviewTitles[hoveredEdge.target]||titles[hoveredEdge.target]}</span><strong>{hoveredEdge.label}</strong></div>}
+  <div className="organic-zoom-note">{detail?'Detailansicht · jeder Punkt ist ein Begriff':'Überblick · kleine Punkte beim Zoomen entdecken'}</div>
+ </div>;
 }
