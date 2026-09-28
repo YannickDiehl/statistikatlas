@@ -1,3 +1,14 @@
+## 28. September 2026 – Aufgaben und Atlas eng verknüpft
+
+- Alle zwölf Sitzungen besitzen je drei ausgearbeitete Aufgaben (Erkunden, Anwenden, Übertragen; Richtwerte 20 + 25 + 20 Minuten). Insgesamt 36 Aufgaben mit konkreten Schritten, eigener Beobachtungsfrage, jeweils zwei Hinweisen, begründeter Musterlösung und zwei Selbstchecks. Individuelle Bearbeitung; ALLBUS-Musterlösungen nennen Antwortgerüste, keine erfundenen empirischen Zahlen.
+- 108 aufgabenspezifische Atlas-Verweise. Ein gemeinsamer Aufruf verbindet Begriff und Aufgabenherkunft. Der einklappbare Arbeitsauftrag bleibt über der Karte sichtbar; die Rückkehr setzt Scrollposition und Tastaturfokus auf die konkrete Aufgabe. Das freie Netz bleibt frei erkundbar. z-Lehrlabore, t-/Welch-Versuche und echte ALLBUS-Beschreibungen sind ausdrücklich unterschieden.
+- Aufgabenbezogene Notizen und Selbstchecks werden nur in diesem Browser gespeichert und als Markdown-Arbeitsheft exportiert. Defensive Wiederherstellung behandelt beschädigte oder veraltete Speicherwerte. Bei Speicherfehlern bleibt die Arbeit für die Sitzung nutzbar und der Download erreichbar. Keine automatische Bewertung.
+- R-Einstieg mit konkreter Bedienhilfe; direkter Sprung von Aufgabe 2 zum Sitzungsskript und zurück. Häufigkeits-, Kreuztabellen- und Codebuchausgaben wurden an die aktuelle mariposa-0.7.3-Ausgabe angepasst, damit benötigte Kategorien/Zellen mit summary() sichtbar werden. Gruppenvergleiche nennen ausdrücklich die Welch-Zeile.
+- 89 automatisierte Tests bestanden. Neue Prüfungen sichern alle Aufgaben/Atlas-Ziele, lokale Wiederherstellung und Aufgabenherkunft. Alle zwölf R-Skripte gegen synthetische Prüfdaten ausgeführt; ausführliche Kreuztabellen einschließlich beider Prozentbasen geprüft. Kein echter ALLBUS-Datensatz geladen.
+- Browserprüfung bei 1515 × 1200: Hinweise und Musterlösung öffnen, Notiz eingeben, Aufgabenauftrag im Atlas, exakte Rückkehr mit erhaltenem Text und Fokus, Wiederherstellung nach Neuladen, R-Sprung sowie Abschlussaufgaben in Sitzung 12. Eigene Prüfnotiz anschließend entfernt. Keine neue mobile Geräteprüfung oder Erprobung mit Studierenden.
+
+---
+
 ## 28. September 2026 – politikwissenschaftlicher Lernpfad
 
 - Neuer Startreiter mit zwölf frei anwählbaren Sitzungsentwürfen à 90 Minuten, kurzen Vor-/Nachbereitungen und einer eigenen kleinen Analyse als Ziel. Politische Leitfragen, Vermutungen mit erklärendem Feedback, Arbeitsaufträge und Projektprodukte verbinden die Sitzungen.
