@@ -4,6 +4,7 @@ import { ReactFlowProvider } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import App from './App';
 import './styles.css';
+import './learning-path.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode><ReactFlowProvider><App /></ReactFlowProvider></React.StrictMode>,

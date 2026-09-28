@@ -1,3 +1,14 @@
+## 28. September 2026 – politikwissenschaftlicher Lernpfad
+
+- Neuer Startreiter mit zwölf frei anwählbaren Sitzungsentwürfen à 90 Minuten, kurzen Vor-/Nachbereitungen und einer eigenen kleinen Analyse als Ziel. Politische Leitfragen, Vermutungen mit erklärendem Feedback, Arbeitsaufträge und Projektprodukte verbinden die Sitzungen.
+- Eigenständige politische Modellübung in Sitzung 3: fünf veränderbare Links-Rechts-Antworten, Mittelwert, Median, Stichproben-Standardabweichung und anklickbare Formelzeichen. Die übrigen Sitzungen skizzieren Versuche und R-Arbeit; sie sind noch keine vollständig ausgearbeiteten interaktiven 90-Minuten-Einheiten.
+- Freie Karte als zweiter Reiter und verknüpfte Orientierungshilfe. Sitzung, Antworten, Versuch sowie nach erstem Öffnen die Karte bleiben beim Tabwechsel innerhalb der laufenden Sitzung erhalten. Tastaturbedienbare Reiter und Fokusübergaben; Initialisierung der Karte wird nach einem frühen Tabwechsel wiederaufgenommen. Integrierte Atlas-Werkzeuge öffnen die sichtbare Karte auch aus dem Lernpfad.
+- ALLBUScompact 2023 (ZA8831), Codebuch 1.3.0: politisches Interesse pa02a, Links-Rechts-Selbsteinstufung pa01 und eastwest. Sondercodes −42 und −9 werden explizit behandelt; wghtpew wird für geeignete deskriptive Tabellen gezeigt. Spearman wird ungewichtet und ohne gewöhnliche, nicht designgerechte p-Werte ausgegeben. Keine Originalfälle eingebettet; getrennte Modellversuche zur Inferenz und unveränderter synthetischer Atlasdatensatz.
+- Alle zwölf R-Skripte syntaktisch geprüft und mit lokalen mariposa-0.7.3-Funktionen gegen synthetische Testdaten ausgeführt. Der tatsächliche GESIS-Import und eine reale ALLBUS-Auswertung wurden nicht durchgeführt. Datenzugang, Codebuchseiten und passende Kapitel des R-Workshops sind verlinkt.
+- 86 automatisierte Tests bestanden, TypeScript und Produktions-/Offline-Build erfolgreich. Browserprüfung bei 1515 × 1200: Sitzungsauswahl, erklärendes Antwortfeedback, Slider, dynamische Kennwerte, Formelzeichen, Sprung zur Standardabweichung und Rückkehr mit erhaltenem Versuchsstand und Tastaturfokus sowie Erreichbarkeit von Sitzung 12. Keine mobile Geräteprüfung oder Erprobung mit Studierenden.
+
+---
+
 ## 11. September 2026 – technische Optimierung
 
 - Live-Zoom von React-Neuberechnungen der gesamten Karte getrennt. CSS hält Knoten, Pfeile und Trefferflächen in Bildschirmgröße; nur versetzte parallele Kurven abonnieren den Live-Zoom. Beschriftungen werden am Gestenende bzw. nach 100 ms Ruhe geplant. Beim Ziehen folgt die Beschriftungsplanung erst dem abgeschlossenen Layout.

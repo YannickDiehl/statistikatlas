@@ -47,7 +47,7 @@ const nodeOrigin:[number,number]=[.5,.5];
 const ariaLabelConfig={'controls.zoomIn.ariaLabel':'Karte vergrößern','controls.zoomOut.ariaLabel':'Karte verkleinern','controls.fitView.ariaLabel':'Ganze Karte zeigen'};
 const titles=Object.fromEntries(mapConcepts.map(c=>[c.id,overviewTitles[c.id]||titleFor({id:c.id,variable:'x'})]));
 export type CameraRequest={id:number;kind:'all'|'focus'|'restore'|'ensure'|'none';viewport?:Viewport};
-function NetworkMapImpl({selected,context,hovered,visited,onSelect,onHover,onViewport,onViewportReader,camera,trace=false,inspectorOpen=false,onBackground,highlightRef,layout,onLayoutReader,contextAnchor,gravity=false,onLayoutChange}:{selected:Ref|null;context:LessonContext;hovered:string|null;visited:Set<string>;onSelect:(r:Ref)=>void;onHover:(id:string|null)=>void;onViewport:(v:Viewport)=>void;onViewportReader:(read:()=>Viewport)=>void;camera:CameraRequest;trace?:boolean;inspectorOpen?:boolean;onBackground?:()=>void;highlightRef?:Ref;layout?:MapLayout;contextAnchor?:Ref;onLayoutReader?:(read:()=>MapLayout)=>void;gravity?:boolean;onLayoutChange?:(layout:MapLayout)=>void}){
+function NetworkMapImpl({selected,context,hovered,visited,onSelect,onHover,onViewport,onViewportReader,camera,trace=false,inspectorOpen=false,onBackground,highlightRef,layout,onLayoutReader,contextAnchor,gravity=false,onLayoutChange,visible=true}:{selected:Ref|null;context:LessonContext;hovered:string|null;visited:Set<string>;onSelect:(r:Ref)=>void;onHover:(id:string|null)=>void;onViewport:(v:Viewport)=>void;onViewportReader:(read:()=>Viewport)=>void;camera:CameraRequest;trace?:boolean;inspectorOpen?:boolean;onBackground?:()=>void;highlightRef?:Ref;layout?:MapLayout;contextAnchor?:Ref;onLayoutReader?:(read:()=>MapLayout)=>void;gravity?:boolean;onLayoutChange?:(layout:MapLayout)=>void;visible?:boolean}){
  const destinations=layout||restingPlaces;
  const [edgeHover,setEdgeHover]=useState<string|null>(null),[dragged,setDragged]=useState<{id:string;position:{x:number;y:number}}|null>(null),[overviewZoom,setOverviewZoom]=useState(.6);
  const positions=useMemo(()=>dragged?{...destinations,[dragged.id]:dragged.position}:destinations,[destinations,dragged]);
@@ -91,7 +91,7 @@ function NetworkMapImpl({selected,context,hovered,visited,onSelect,onHover,onVie
   if(Math.abs(tx-cx)>1||Math.abs(ty-cy)>1)void flow.setViewport({...v,x:v.x+tx-cx,y:v.y+ty-cy},{duration});
  }
  useEffect(()=>{onViewportReader(()=>flow.getViewport());},[flow,onViewportReader]);
- useEffect(()=>{const timer=setTimeout(()=>{if(!container.current?.clientWidth)return;setOverviewZoom(fit([...mapIds],0));mounted.current=true;},80);return ()=>clearTimeout(timer);},[flow]);
+ useEffect(()=>{if(!visible||mounted.current)return;const timer=setTimeout(()=>{if(!container.current?.clientWidth)return;setOverviewZoom(fit([...mapIds],0));mounted.current=true;},80);return ()=>clearTimeout(timer);},[flow,visible]);
  useEffect(()=>{if(!mounted.current)return;const duration=matchMedia('(prefers-reduced-motion: reduce)').matches?0:320;if(camera.kind==='restore'&&camera.viewport)void flow.setViewport(camera.viewport,{duration});else if(camera.kind==='all')fit([...mapIds],duration);else if(camera.kind==='focus'&&selected)fit([...(gravity?gravityMembers(selected,context.route,trace,contextAnchor):visibleRelated(selected,false,context.route,contextAnchor))],duration);else if(camera.kind==='ensure')ensure(duration);},[camera.id]);
  const flowActions=useStableActions({
   onNodeDrag:(_:unknown,node:MapNode)=>setDragged({id:node.id,position:node.position}),

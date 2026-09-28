@@ -1,8 +1,14 @@
 # Statistikatlas – interaktiver Baukasten
 
-Stand: 11. September 2026 · organisches, zusammenhängendes Netz mit 24 hervorgehobenen Grundbegriffen, insgesamt 144 sichtbaren Begriffspunkten und 15 Rechenbegriffen in der Detailansicht.
+Stand: 28. September 2026 · politikwissenschaftlicher Lernpfad für zwölf Sitzungen und freie Karte zur Orientierung.
 
-Die große Karte ist die Start- und Arbeitsfläche. 24 echte Begriffe bilden ein redaktionell angeordnetes, verbundenes Grundgerüst. Rechenwege verzweigen sich; der statistische Schluss wird über Stichprobe, Schätzung, Stichprobenverteilung und Unsicherheit ebenfalls sichtbar. Organische Kurven verbinden die tatsächlichen Endpunkte. Durchgehende Linien stehen für Aufbau, gestrichelte für Voraussetzungen, gepunktete für Einordnung. Die Anordnung ist weder eine historische Zeitleiste noch eine vorgeschriebene Lernfolge.
+Der Reiter **Lernpfad** ist die Startansicht. Zwölf frei anwählbare Sitzungsentwürfe führen ohne Statistik- und R-Vorkenntnisse zu einer eigenen, begründeten Analyse. Jede Sitzung umfasst eine politische Leitfrage, eine Vermutung mit erklärendem Feedback, Arbeitsaufträge, ein Projektprodukt, ein mariposa-R-Skript sowie kurze Vor- und Nachbereitung. Sitzung 3 enthält zusätzlich einen direkt veränderbaren Modellversuch mit interaktiver Mittelwertformel.
+
+Die Beispiele beziehen sich auf politisches Interesse, Links-Rechts-Selbsteinstufung und Ost/West in ALLBUScompact 2023 (ZA8831). Die Originaldaten sind nicht eingebettet: Die Skripte lesen eine selbst bezogene SPSS-Datei ein. Modellversuche zur Inferenz verwenden ausdrücklich erfundene politische Antworten. Quellen und Kapitel des [R-Workshops von Diehl und Moosdorf](https://rloesung.github.io/RWorkshop/) sind direkt verlinkt. Die Sitzungen sind ein ausbaufähiger Kursentwurf, keine vollständig ausgearbeiteten 90-Minuten-Lerneinheiten.
+
+Der zweite Reiter **Freie Karte** ergänzt den Lernpfad als Orientierungshilfe. Begriffslinks öffnen direkt die passende Erklärung; ein Rückkehrknopf führt zur aktuellen Sitzung. Aufgabenantworten und Kartenansicht bleiben beim Tabwechsel innerhalb der laufenden Sitzung erhalten. `?ansicht=karte` öffnet weiterhin direkt das Netz.
+
+Die organische Karte besitzt 24 hervorgehobene Grundbegriffe, insgesamt 144 sichtbare Begriffspunkte und 15 Rechenbegriffe in der Detailansicht. 24 echte Begriffe bilden ein redaktionell angeordnetes, verbundenes Grundgerüst. Rechenwege verzweigen sich; der statistische Schluss wird über Stichprobe, Schätzung, Stichprobenverteilung und Unsicherheit ebenfalls sichtbar. Organische Kurven verbinden die tatsächlichen Endpunkte. Durchgehende Linien stehen für Aufbau, gestrichelte für Voraussetzungen, gepunktete für Einordnung. Die Anordnung ist weder eine historische Zeitleiste noch eine vorgeschriebene Lernfolge.
 
 Alle 144 statistischen Punkte bleiben auf der Karte. Große Begriffe werden zuerst beschriftet; weitere Namen erscheinen beim Zoomen, Überfahren und Auswählen. Beschriftungen behalten ihre Schriftgröße auf dem Bildschirm und weichen einander aus. Wo der Platz nicht reicht, bleibt der Punkt sichtbar und sein Name ist durch Auswahl erreichbar. Es gibt keine Themenflächen, Kategoriezentren oder Verfahrensreiter. Alle 159 Begriffe und alle 80 öffentlichen mariposa-Funktionen bleiben über Erklärungen und Suche erreichbar.
 
