@@ -36,7 +36,7 @@ function EntryGrid({ sav, state, set }: { sav: SavFile; state: S02State; set: (p
         <th scope="row"><code>{v}</code></th>
         {SHEET_IDS.map(id => {
           const grade = state.graded ? gradeCell(sav, sheetById[id], v, state.entries[id][v]).status : '';
-          return <td key={id}><input type="text" inputMode="numeric" className={grade ? `grade-${grade}` : ''} aria-label={`Bogen ${id}, ${v}`}
+          return <td key={id}><input type="text" className={grade ? `grade-${grade}` : ''} aria-label={`Bogen ${id}, ${v}`}
             value={state.entries[id][v]} onChange={e => setCell(id, v, e.target.value)} /></td>;
         })}
       </tr>)}</tbody>
@@ -60,13 +60,23 @@ function DoubleEntry({ sav, state, set }: { sav: SavFile; state: S02State; set: 
   const partner = state.mode === 'pair' ? decodeRow(state.partnerCode) : null;
   const other: Entries | null = state.mode === 'pair' ? partner : benEntries(sav);
   const who = state.mode === 'pair' ? 'Partner:in' : 'Ben';
-  const diffs = other ? diffEntries(state.entries, other) : [];
-  const settle = (sheet: SheetId, variable: S02Var, choice: 'mine' | 'other') => {
+  const current = other ? diffEntries(state.entries, other) : [];
+  // Geschlichtete Zeilen bleiben stehen, auch wenn die Zahlen nach „Übernehmen“ übereinstimmen.
+  const settledRows = Object.keys(state.settled).map(k => { const [sheet, variable] = k.split('.') as [SheetId, S02Var]; return { sheet, variable }; });
+  const diffs = [...current, ...settledRows.filter(r => !current.some(c => c.sheet === r.sheet && c.variable === r.variable))]
+    .sort((a, b) => SHEET_IDS.indexOf(a.sheet) - SHEET_IDS.indexOf(b.sheet) || S02_VARS.indexOf(a.variable) - S02_VARS.indexOf(b.variable));
+  const mineOf = (sheet: SheetId, variable: S02Var) => {
     const key = cellKey(sheet, variable);
-    const entries = choice === 'other' && other
-      ? { ...state.entries, [sheet]: { ...state.entries[sheet], [variable]: other[sheet][variable] } }
-      : state.entries;
-    set({ entries, settled: { ...state.settled, [key]: choice } });
+    return state.settled[key] === 'other' ? state.kept[key] ?? '' : state.entries[sheet][variable];
+  };
+  const settle = (sheet: SheetId, variable: S02Var, choice: 'mine' | 'other') => {
+    const key = cellKey(sheet, variable), mine = mineOf(sheet, variable);
+    const value = choice === 'other' && other ? other[sheet][variable] : mine;
+    set({
+      entries: { ...state.entries, [sheet]: { ...state.entries[sheet], [variable]: value } },
+      settled: { ...state.settled, [key]: choice },
+      kept: { ...state.kept, [key]: mine },
+    });
   };
   return <>
     {state.mode === 'pair' && <div className="task-grid">
@@ -80,10 +90,10 @@ function DoubleEntry({ sav, state, set }: { sav: SavFile; state: S02State; set: 
           const key = cellKey(sheet, variable);
           const settled = state.settled[key];
           return <li key={key}>
-            <span>Bogen {sheet}, <code>{variable}</code>: du {state.entries[sheet][variable] || 'leer'} · {who} {other[sheet][variable] || 'leer'}</span>
+            <span>Bogen {sheet}, <code>{variable}</code>: du {mineOf(sheet, variable) || 'leer'} · {who} {other[sheet][variable] || 'leer'}</span>
             <span className="sandbox-chips">
-              <button aria-pressed={settled === 'mine'} onClick={() => settle(sheet, variable, 'mine')}>Meine Zahl bleibt</button>
-              <button aria-pressed={settled === 'other'} onClick={() => settle(sheet, variable, 'other')}>Übernehmen</button>
+              <button aria-pressed={settled === 'mine'} aria-label={`Bogen ${sheet}, ${variable}: deine Zahl behalten`} onClick={() => settle(sheet, variable, 'mine')}>Meine Zahl bleibt</button>
+              <button aria-pressed={settled === 'other'} aria-label={`Bogen ${sheet}, ${variable}: Zahl von ${who} übernehmen`} onClick={() => settle(sheet, variable, 'other')}>Übernehmen</button>
             </span>
             {settled && state.mode === 'solo' && benNotes[key] && <small>{benNotes[key]}</small>}
           </li>;

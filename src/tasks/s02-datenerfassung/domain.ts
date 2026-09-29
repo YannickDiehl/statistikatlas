@@ -14,6 +14,8 @@ export type S02State = {
   rules: Record<string, string>;
   /** Schlichtung der Doppelerfassung, Schlüssel „Bogen.Variable“. */
   settled: Record<string, 'mine' | 'other'>;
+  /** Eigene Zahl vor „Übernehmen“, damit die Entscheidung umkehrbar bleibt. */
+  kept: Record<string, string>;
   partnerCode: string;
   numbers: { mfn: string; dk: string; afd: string };
   plenumRule: string;
@@ -24,7 +26,7 @@ export type S02State = {
 
 export const emptyEntries = (): Entries => Object.fromEntries(SHEET_IDS.map(id => [id, Object.fromEntries(S02_VARS.map(v => [v, '']))])) as Entries;
 export const initialS02 = (): S02State => ({
-  mode: 'solo', entries: emptyEntries(), rules: {}, settled: {}, partnerCode: '', numbers: { mfn: '', dk: '', afd: '' }, plenumRule: '', graded: false, revealed: false,
+  mode: 'solo', entries: emptyEntries(), rules: {}, settled: {}, kept: {}, partnerCode: '', numbers: { mfn: '', dk: '', afd: '' }, plenumRule: '', graded: false, revealed: false,
 });
 const cellKey = (sheet: SheetId, variable: S02Var) => `${sheet}.${variable}`;
 const KEY = /^[123]\.(pa02a|pa01|pt03|st01|pv01|ls01)$/;
@@ -33,11 +35,12 @@ export function parseS02(raw: unknown): S02State {
   const r = record(raw), e = record(r.entries), n = record(r.numbers);
   const entries = emptyEntries();
   for (const id of SHEET_IDS) { const row = record(e[id]); for (const v of S02_VARS) entries[id][v] = str(row[v], 8); }
-  const rules: Record<string, string> = {}, settled: Record<string, 'mine' | 'other'> = {};
+  const rules: Record<string, string> = {}, settled: Record<string, 'mine' | 'other'> = {}, kept: Record<string, string> = {};
   for (const [k, v] of Object.entries(record(r.rules))) if (KEY.test(k)) rules[k] = str(v, 300);
   for (const [k, v] of Object.entries(record(r.settled))) if (KEY.test(k) && (v === 'mine' || v === 'other')) settled[k] = v;
+  for (const [k, v] of Object.entries(record(r.kept))) if (KEY.test(k)) kept[k] = str(v, 8);
   return {
-    mode: oneOf(r.mode, WORK_MODES, 'solo'), entries, rules, settled, partnerCode: str(r.partnerCode, 400),
+    mode: oneOf(r.mode, WORK_MODES, 'solo'), entries, rules, settled, kept, partnerCode: str(r.partnerCode, 400),
     numbers: { mfn: str(n.mfn, 12), dk: str(n.dk, 12), afd: str(n.afd, 12) }, plenumRule: str(r.plenumRule, 300),
     graded: bool(r.graded), revealed: bool(r.revealed),
   };
