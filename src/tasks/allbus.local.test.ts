@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readSav, type SavFile } from '../sandbox/readSav';
 import { askedCount, findVar } from './s01-schon-gefragt/domain';
-import { sheets } from './s02-datenerfassung/content';
+import { S02_VARS, sheets } from './s02-datenerfassung/content';
 import { countCode, factorPosition, gradeCell, scanCode } from './s02-datenerfassung/domain';
 import { describeHours, diagnoseSeats, hoursFor, rawCounts, seatsFor, validCodes } from './s03-stuehle/domain';
 
@@ -47,6 +47,13 @@ test('session 2: paper-only codes, factor positions and sheet grading', { skip }
   assert.equal(gradeCell(sav, sheets[1], 'pt03', '-11').status, 'match');
   assert.equal(gradeCell(sav, sheets[2], 'pt03', '1').status, 'match');
   assert.equal(gradeCell(sav, sheets[2], 'pv01', '-9').status, 'match');
+  for (const sheet of sheets) for (const v of S02_VARS) {
+    const soll = sheet.cells[v].soll;
+    if (soll.kind === 'open') continue;
+    const code = soll.kind === 'value' ? soll.value : [...sav.byName.get(v)!.valueLabels].find(([, l]) => l.toUpperCase() === soll.label.toUpperCase())?.[0];
+    assert.notEqual(code, undefined, `Bogen ${sheet.id}, ${v}`);
+    assert.equal(gradeCell(sav, sheet, v, String(code)).status, 'match', `Bogen ${sheet.id}, ${v}`);
+  }
 });
 
 test('session 3: chairs per rule, diagnoses and hours match the concept', { skip }, () => {

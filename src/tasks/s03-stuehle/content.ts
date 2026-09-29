@@ -40,7 +40,7 @@ export const hints: Record<'hall' | 'row', Hint> = {
     concept: { id: 'missing_tools', label: 'Missing-Codes aufbereiten' },
     workshop: '4.8 Fehlende Werte, 4.5.2 Fälle filtern',
     scaffold: 'saal <- allbus %>%\n  mutate(wahl = untag_na(___)) %>%\n  filter(wahl != ___, wahl != ___)\nsaal %>% fre(___) %>% summary()',
-    solution: 'saal <- allbus %>%\n  mutate(wahl = untag_na(pv01)) %>%\n  filter(wahl != -50, wahl != -42, wahl != -9, wahl != -7)\nsaal %>% fre(wahl) %>% summary()',
+    solution: '# Beispielregel – deine Regel kann anders aussehen\nsaal <- allbus %>%\n  mutate(wahl = untag_na(pv01)) %>%\n  filter(wahl != -50, wahl != -42, wahl != -9, wahl != -7)\nsaal %>% fre(wahl) %>% summary()',
   },
   row: {
     think: 'Wer bekam die Stundenfrage gar nicht? Und wo sitzt in der Reihe der Mensch in der Mitte?',

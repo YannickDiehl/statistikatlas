@@ -74,7 +74,7 @@ function resolve(sav: SavFile, variable: S02Var, e: Soll | Entry): number | null
   return hit ? hit[0] : null;
 }
 
-export type CellGrade = { status: 'match' | 'mismatch' | 'open' | 'invalid' | 'empty'; message?: string };
+export type CellGrade = { status: 'match' | 'mismatch' | 'open' | 'invalid' | 'empty' | 'unchecked'; message?: string };
 
 export function gradeCell(sav: SavFile, sheet: Sheet, variable: S02Var, input: string): CellGrade {
   const check = checkCell(sav, variable, input);
@@ -82,6 +82,7 @@ export function gradeCell(sav: SavFile, sheet: Sheet, variable: S02Var, input: s
   const soll = sheet.cells[variable].soll;
   if (soll.kind === 'open') return { status: 'open', message: 'Hier musst du entscheiden. Schreib deine Regel dazu, damit die nächste Person genauso erfasst.' };
   const want = resolve(sav, variable, soll);
+  if (want === null) return { status: 'unchecked', message: `Das Label „${soll.kind === 'label' ? soll.label : ''}“ finde ich in deiner Datei nicht – vergleiche diese Zelle selbst mit codebook().` };
   if (want === check.code) return { status: 'match' };
   const v = sav.byName.get(variable)!;
   if (soll.kind === 'label' && /^TNZ/i.test(soll.label)) return { status: 'mismatch', message: `Diese Frage stand in Version ${sheet.version} gar nicht auf dem Bogen. Welcher Code sagt „nicht gefragt“?` };
@@ -185,3 +186,28 @@ export function plenumLines(s: S02State): [string, string][] {
 }
 
 export { cellKey };
+
+/** Eigene Zahl einer Zelle – nach „Übernehmen“ die gemerkte, sonst der Eintrag. */
+export function mineOf(state: S02State, sheet: SheetId, variable: S02Var): string {
+  const key = cellKey(sheet, variable);
+  return state.settled[key] === 'other' ? state.kept[key] ?? state.entries[sheet][variable] : state.entries[sheet][variable];
+}
+
+/** Schlichtet eine Abweichung umkehrbar: Die eigene Zahl bleibt gemerkt. */
+export function settleCell(state: S02State, other: Entries | null, sheet: SheetId, variable: S02Var, choice: 'mine' | 'other'): Partial<S02State> {
+  const key = cellKey(sheet, variable), mine = mineOf(state, sheet, variable);
+  const value = choice === 'other' && other ? other[sheet][variable] : mine;
+  return {
+    entries: { ...state.entries, [sheet]: { ...state.entries[sheet], [variable]: value } },
+    settled: { ...state.settled, [key]: choice },
+    kept: { ...state.kept, [key]: mine },
+  };
+}
+
+/** Ein neuer Eintrag hebt die Schlichtung dieser Zelle auf – sonst ginge die neue Zahl beim nächsten Klick verloren. */
+export function editCell(state: S02State, sheet: SheetId, variable: S02Var, value: string): Partial<S02State> {
+  const key = cellKey(sheet, variable), settled = { ...state.settled }, kept = { ...state.kept };
+  delete settled[key];
+  delete kept[key];
+  return { entries: { ...state.entries, [sheet]: { ...state.entries[sheet], [variable]: value } }, settled, kept };
+}

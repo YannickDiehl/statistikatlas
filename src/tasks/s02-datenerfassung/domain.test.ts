@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeSav, fixtureSav } from '../../sandbox/testData';
 import { ben, S02_VARS, sheets, type S02Var } from './content';
-import { benEntries, checkCell, checkNumbers, countCode, decodeRow, diffEntries, emptyEntries, encodeRow, factorPosition, gradeCell, initialS02, parseS02, plenumLines, scanCode, statusS02 } from './domain';
+import { benEntries, checkCell, checkNumbers, countCode, decodeRow, diffEntries, editCell, emptyEntries, encodeRow, factorPosition, gradeCell, initialS02, mineOf, parseS02, plenumLines, scanCode, settleCell, statusS02 } from './domain';
 
 const labels = {
   pa02a: { [-9]: 'KEINE ANGABE', 1: 'SEHR STARK', 2: 'STARK', 3: 'MITTEL', 4: 'WENIG', 5: 'UEBERHAUPT NICHT' },
@@ -89,4 +89,33 @@ test('restores state defensively and reports status and plenum line', () => {
   assert.equal(statusS02(s), 'running');
   assert.deepEqual(plenumLines(s)[0], ['Zeile für Bogen 2', '4 | – | – | – | – | –']);
   assert.equal(plenumLines(s)[1][1], 'Bei zwei Kreuzen: −42.');
+});
+
+test('settling is reversible and an edit after settling starts over', () => {
+  const row = (pa02a: string) => ({ ...emptyEntries(), '1': { ...emptyEntries()['1'], pa02a } });
+  const start = { ...initialS02(), entries: row('1') }, other = row('5');
+  const taken = { ...start, ...settleCell(start, other, '1', 'pa02a', 'other') };
+  assert.equal(taken.entries['1'].pa02a, '5');
+  assert.equal(mineOf(taken, '1', 'pa02a'), '1');
+  const twice = { ...taken, ...settleCell(taken, other, '1', 'pa02a', 'other') };
+  assert.equal(twice.kept['1.pa02a'], '1');
+  assert.equal({ ...twice, ...settleCell(twice, other, '1', 'pa02a', 'mine') }.entries['1'].pa02a, '1');
+  const edited = { ...taken, ...editCell(taken, '1', 'pa02a', '4') };
+  assert.equal(edited.settled['1.pa02a'], undefined);
+  assert.equal(mineOf(edited, '1', 'pa02a'), '4');
+  assert.equal({ ...edited, ...settleCell(edited, other, '1', 'pa02a', 'mine') }.entries['1'].pa02a, '4');
+  assert.equal(mineOf({ ...taken, kept: {} }, '1', 'pa02a'), '5');
+});
+
+test('every clear cell grades as match with its correct code; unknown labels stay unchecked', () => {
+  const sav = fixtureSav();
+  for (const sheet of sheets) for (const v of S02_VARS) {
+    const soll = sheet.cells[v].soll;
+    if (soll.kind === 'open') continue;
+    const code = soll.kind === 'value' ? soll.value : [...sav.byName.get(v)!.valueLabels].find(([, l]) => l.toUpperCase() === soll.label.toUpperCase())?.[0];
+    assert.notEqual(code, undefined, `Bogen ${sheet.id}, ${v}`);
+    assert.equal(gradeCell(sav, sheet, v, String(code)).status, 'match', `Bogen ${sheet.id}, ${v}`);
+  }
+  const odd = fakeSav({ pt03: { values: [1], labels: { 1: 'EINS' } } });
+  assert.equal(gradeCell(odd, sheets[2], 'pt03', '1').status, 'unchecked');
 });

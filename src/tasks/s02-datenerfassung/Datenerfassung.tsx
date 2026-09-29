@@ -7,14 +7,13 @@ import { RBlock } from '../kit/RBlock';
 import { RoleBrief } from '../kit/RoleBrief';
 import type { TaskProps } from '../types';
 import { benNotes, hints, R_SOLUTION, S02_VARS, SHEET_IDS, sheets, type S02Var, type SheetId } from './content';
-import { benEntries, cellKey, checkCell, checkNumbers, decodeRow, diffEntries, encodeRow, gradeCell, plenumLines, scanCode, type Entries, type S02State } from './domain';
+import { benEntries, cellKey, checkCell, checkNumbers, decodeRow, diffEntries, editCell, encodeRow, gradeCell, mineOf, plenumLines, scanCode, settleCell, type Entries, type S02State } from './domain';
 import { PaperSheet } from './PaperSheet';
 
 const sheetById = Object.fromEntries(sheets.map(s => [s.id, s])) as Record<SheetId, (typeof sheets)[number]>;
 
 function EntryGrid({ sav, state, set }: { sav: SavFile; state: S02State; set: (patch: Partial<S02State>) => void }) {
-  const setCell = (sheet: SheetId, v: S02Var, value: string) =>
-    set({ entries: { ...state.entries, [sheet]: { ...state.entries[sheet], [v]: value } } });
+  const setCell = (sheet: SheetId, v: S02Var, value: string) => set(editCell(state, sheet, v, value));
   const messages: string[] = [];
   const open: { sheet: SheetId; variable: S02Var }[] = [];
   for (const sheet of SHEET_IDS) for (const v of S02_VARS) {
@@ -65,19 +64,8 @@ function DoubleEntry({ sav, state, set }: { sav: SavFile; state: S02State; set: 
   const settledRows = Object.keys(state.settled).map(k => { const [sheet, variable] = k.split('.') as [SheetId, S02Var]; return { sheet, variable }; });
   const diffs = [...current, ...settledRows.filter(r => !current.some(c => c.sheet === r.sheet && c.variable === r.variable))]
     .sort((a, b) => SHEET_IDS.indexOf(a.sheet) - SHEET_IDS.indexOf(b.sheet) || S02_VARS.indexOf(a.variable) - S02_VARS.indexOf(b.variable));
-  const mineOf = (sheet: SheetId, variable: S02Var) => {
-    const key = cellKey(sheet, variable);
-    return state.settled[key] === 'other' ? state.kept[key] ?? '' : state.entries[sheet][variable];
-  };
-  const settle = (sheet: SheetId, variable: S02Var, choice: 'mine' | 'other') => {
-    const key = cellKey(sheet, variable), mine = mineOf(sheet, variable);
-    const value = choice === 'other' && other ? other[sheet][variable] : mine;
-    set({
-      entries: { ...state.entries, [sheet]: { ...state.entries[sheet], [variable]: value } },
-      settled: { ...state.settled, [key]: choice },
-      kept: { ...state.kept, [key]: mine },
-    });
-  };
+  const mine = (sheet: SheetId, variable: S02Var) => mineOf(state, sheet, variable);
+  const settle = (sheet: SheetId, variable: S02Var, choice: 'mine' | 'other') => set(settleCell(state, other, sheet, variable, choice));
   return <>
     {state.mode === 'pair' && <div className="task-grid">
       <label>Dein Zeilencode (zum Abtippen für die andere Person)<input type="text" readOnly value={encodeRow(state.entries)} /></label>
@@ -90,10 +78,10 @@ function DoubleEntry({ sav, state, set }: { sav: SavFile; state: S02State; set: 
           const key = cellKey(sheet, variable);
           const settled = state.settled[key];
           return <li key={key}>
-            <span>Bogen {sheet}, <code>{variable}</code>: du {mineOf(sheet, variable) || 'leer'} · {who} {other[sheet][variable] || 'leer'}</span>
+            <span>Bogen {sheet}, <code>{variable}</code>: du {mine(sheet, variable) || 'leer'} · {who} {other[sheet][variable] || 'leer'}</span>
             <span className="sandbox-chips">
-              <button aria-pressed={settled === 'mine'} aria-label={`Bogen ${sheet}, ${variable}: deine Zahl behalten`} onClick={() => settle(sheet, variable, 'mine')}>Meine Zahl bleibt</button>
-              <button aria-pressed={settled === 'other'} aria-label={`Bogen ${sheet}, ${variable}: Zahl von ${who} übernehmen`} onClick={() => settle(sheet, variable, 'other')}>Übernehmen</button>
+              <button aria-pressed={settled === 'mine'} aria-label={`Meine Zahl bleibt – Bogen ${sheet}, ${variable}`} onClick={() => settle(sheet, variable, 'mine')}>Meine Zahl bleibt</button>
+              <button aria-pressed={settled === 'other'} aria-label={`Übernehmen – Bogen ${sheet}, ${variable}, Zahl von ${who}`} onClick={() => settle(sheet, variable, 'other')}>Übernehmen</button>
             </span>
             {settled && state.mode === 'solo' && benNotes[key] && <small>{benNotes[key]}</small>}
           </li>;

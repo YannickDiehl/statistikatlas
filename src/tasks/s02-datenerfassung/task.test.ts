@@ -33,7 +33,7 @@ test('settling a difference keeps the row, shows the note and remembers the own 
   const html = renderSession(1, true, undefined, { tasks: { s02: taken } });
   assert.match(html, /Bogen 1, <code>pa02a<\/code>: du 1 · Ben 5/);
   assert.match(html, /Ben hat die Richtung der Skala verwechselt/);
-  assert.match(html, /aria-label="Bogen 1, pa02a: Zahl von Ben übernehmen"/);
+  assert.match(html, /aria-label="Übernehmen – Bogen 1, pa02a, Zahl von Ben"/);
 });
 
 test('R code for blocks 2 and 3 stays hidden until all three numbers are right', () => {

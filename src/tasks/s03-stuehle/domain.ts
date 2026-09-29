@@ -189,13 +189,17 @@ export function checkSign(sav: SavFile, sign: Sign): Note[] {
   if (value === null) return [];
   const notes: Note[] = [];
   const stats = Object.fromEntries(SELECTIONS.map(s => [s.id, describeHours(hoursFor(sav, s.id))])) as Record<Selection, Describe>;
-  const match = SELECTIONS.flatMap(s => (['median', 'mean'] as Measure[]).map(m => ({ s: s.id, m }))).find(({ s, m }) => near(value, stats[s][m], 0.05));
+  // Ganze Stunden sind das übliche Schildformat: 38 gilt als gerundeter Mittelwert 37,9.
+  const exact = (stat: number) => near(value, stat, 0.05);
+  const fits = (stat: number) => exact(stat) || (Number.isInteger(value) && Math.round(stat) === value);
+  const candidates = SELECTIONS.flatMap(s => (['median', 'mean'] as Measure[]).map(m => ({ s: s.id, m })));
+  const match = candidates.find(({ s, m }) => exact(stats[s][m])) ?? candidates.find(({ s, m }) => fits(stats[s][m]));
   notes.push(match
-    ? { tone: 'hint', text: `${de(value, Number.isInteger(value) ? 0 : 1)} ist der ${measureName(match.m)} ${selectionShort(match.s)}.` }
+    ? { tone: 'hint', text: `${de(value, Number.isInteger(value) ? 0 : 1)} ist der ${exact(stats[match.s][match.m]) ? '' : 'gerundete '}${measureName(match.m)} ${selectionShort(match.s)}.` }
     : { tone: 'warn', text: 'Diese Zahl finde ich unter keiner Fallauswahl. Prüf in R Filter und Maß.' });
   if (sign.measure && sign.selection) {
     const want = stats[sign.selection][sign.measure];
-    notes.push(near(value, want, 0.05)
+    notes.push(fits(want)
       ? { tone: 'ok', text: `Passt zu deiner Angabe: ${measureName(sign.measure)} ${selectionShort(sign.selection)}.` }
       : { tone: 'warn', text: `Deine Zahl ist nicht der ${measureName(sign.measure)} ${selectionShort(sign.selection)} – der liegt bei ${de(want)}.` });
     const right = parseNumber(sign.right);

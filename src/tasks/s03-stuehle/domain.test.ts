@@ -75,6 +75,13 @@ test('names the number on the sign and checks the chairs right of the mean', () 
   assert.deepEqual(checkSign(sav, { value: '', measure: '', selection: '', right: '' }), []);
 });
 
+test('accepts a whole-hour sign as the rounded value', () => {
+  const notes = checkSign(sav, { value: '36', measure: 'mean', selection: 'gefragt', right: '' });
+  assert.deepEqual(notes.map(n => n.tone), ['hint', 'ok']);
+  assert.match(notes[0].text, /^36 ist der gerundete Mittelwert/);
+  assert.equal(checkSign(sav, { value: '37', measure: 'mean', selection: 'gefragt', right: '' })[1].tone, 'warn');
+});
+
 test('restores state and reports status and plenum lines', () => {
   assert.deepEqual(parseS03(null), initialS03());
   const s = parseS03({ rule: [-8, 99, 'x'], seats: { '1': '25', '-8': '13', bad: '1' }, built: true, hallText: 'Ein Stuhl ist ein Prozent.', sign: { value: '40', measure: 'median', selection: 'gefragt', right: '66' } });

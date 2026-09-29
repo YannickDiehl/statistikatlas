@@ -63,6 +63,9 @@ d$work <- lab(pick(1:4, c(.4, .15, .05, .4)), c("KEINE ANGABE" = -9, "VOLLZEIT, 
 d$dw15 <- lab(ifelse(d$work %in% 1:2, sample(c(10, 20, 25, 30, 35, 38.5, 40, 40, 40, 45, 50, 60), n, replace = TRUE), -10),
               c("DATENFEHLER" = -41, "TNZ: FILTER" = -10, "KEINE ANGABE" = -9), "BEFRAGTER: ARBEITSSTUNDEN PRO WOCHE")
 
+# Sitzung 2 erfasst pt03 = 6: Labels wie im echten ALLBUS (2–6 als „..“), Werte unverändert.
+d$pt03 <- lab(as.numeric(d$pt03), c("TNZ: SPLIT" = -11, "KEINE ANGABE" = -9, scale_labels(1, 7, "GAR KEIN VERTRAUEN", "GROSSES VERTRAUEN")), "VERTRAUEN pt03")
+
 write_sav(d, file.path(out, "sandbox-fixture.sav"), compress = "byte")
 write_sav(d, file.path(out, "sandbox-fixture-uncompressed.sav"), compress = "none")
 
