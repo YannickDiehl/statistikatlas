@@ -1,38 +1,139 @@
-import { ArrowUpRight, BookOpen, Map, ArrowRight, ArrowLeft, Copy, Download, Clock3, RotateCcw, ChevronDown } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { learningSessions, learningScript, politicalSummary, workshopUrl, allbusSource, allbusCodebook } from '../domain/learningPath';
-import { LearningTaskCard } from './LearningTaskCard';
-import {tasksFor,taskKey,taskAnchor,parseWorkbook,workbookMarkdown,workbookStorageKey,type Workbook,type AtlasTaskContext} from '../domain/learningTasks';
-import { titleFor, ref } from '../domain/learning';
-import { downloadText } from '../domain/mariposa';
+import { ArrowLeft, ArrowRight, BookOpen, Check, ExternalLink } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { sessions, setupScript, workshopUrl, type Session, type Term } from '../domain/curriculum';
+import { allbusCodebook } from '../sandbox/allbus';
+import { claimById } from '../sandbox/claims';
+import { emptyStore, initialWork, missionStatus, missionStorageKey, parseStore, type ClaimWork, type MissionStore } from '../sandbox/state';
+import { ClaimWorkspace } from '../sandbox/ui/ClaimWorkspace';
+import { DataDrop, type LoadedData } from '../sandbox/ui/DataDrop';
 
-const format=(value:number)=>value.toLocaleString('de-DE',{maximumFractionDigits:2});
-function PoliticalSandbox({onConcept}:{onConcept:(id:string)=>void}){
- const [last,setLast]=useState(6),[symbol,setSymbol]=useState<'sum'|'n'|'mean'>('mean');
- const values=[2,3,4,5,last],summary=politicalSummary(values);
- return <section className="political-sandbox" aria-labelledby="sandbox-title"><span className="learning-eyebrow">KLEINER MODELLVERSUCH · ERFUNDENE ANTWORTEN</span><h3 id="sandbox-title" tabIndex={-1}>Eine Antwort verändert das Bild.</h3><p>Fünf fiktive Befragte ordnen sich auf einer Skala von 1 (links) bis 10 (rechts) ein. Ändere die fünfte Antwort und beobachte die Kennwerte.</p><div className="political-values" aria-label={`Die fünf Antworten: ${values.join(', ')}`}>{values.map((value,i)=><span key={i} className={i===4?'editable':''}><small>Person {i+1}</small><strong>{value}</strong></span>)}</div><label className="political-slider" htmlFor="political-answer"><span>Antwort von Person 5 <output>{last}</output></span><input id="political-answer" type="range" min="1" max="10" step="1" value={last} onChange={e=>setLast(Number(e.target.value))}/><span className="scale-ends"><span>1 · links</span><span>10 · rechts</span></span></label><div className="political-results" aria-live="polite"><div><span>Mittelwert</span><strong>{format(summary.mean)}</strong></div><div><span>Median</span><strong>{format(summary.median)}</strong></div><div><span>Standardabweichung s</span><strong>{format(summary.sd)}</strong></div></div><div className="learning-formula" role="group" aria-label="Bestandteile der Mittelwertformel"><button aria-pressed={symbol==='mean'} onClick={()=>setSymbol('mean')}>x̄</button><span>=</span><button aria-pressed={symbol==='sum'} onClick={()=>setSymbol('sum')}>Σ xᵢ</button><span>÷</span><button aria-pressed={symbol==='n'} onClick={()=>setSymbol('n')}>n</button><span>= {values.reduce((a,b)=>a+b,0)} ÷ 5 = {format(summary.mean)}</span></div><p className="formula-explanation" role="status">{symbol==='mean'?'x̄ ist der Mittelwert: die Summe, gleichmäßig auf alle fünf Antworten verteilt.':symbol==='sum'?`Σ fordert uns auf, alle Antworten zu addieren: ${values.join(' + ')} = ${values.reduce((a,b)=>a+b,0)}.`:'n zählt die gültigen Antworten. Hier sind es fünf. Die Anzahl ändert sich nicht, wenn eine Person anders antwortet.'}</p><p className="learning-small">Für diese Rechenübung nehmen wir gleich große Skalenabstände an. Der Median verwendet die Reihenfolge. s wird mit dem Teiler n − 1 berechnet.</p><div className="learning-inline-actions"><button onClick={()=>{setLast(6);setSymbol('mean');}}><RotateCcw size={15}/>Versuch zurücksetzen</button><button onClick={()=>onConcept('sd')}>Streuung in der Karte<ArrowUpRight size={15}/></button></div></section>;
+const STORAGE_WARNING = 'Dein Browser erlaubt keine lokale Speicherung. Deine Arbeit bleibt nur erhalten, solange dieser Tab offen ist.';
+const STATUS_TEXT = { open: 'Mission offen', running: 'Mission läuft', done: 'Mission abgeschlossen' } as const;
+
+function readStore(): { store: MissionStore; warning: string } {
+  if (typeof localStorage === 'undefined') return { store: emptyStore(), warning: '' };
+  try {
+    return { store: parseStore(localStorage.getItem(missionStorageKey)), warning: '' };
+  } catch {
+    return { store: emptyStore(), warning: STORAGE_WARNING };
+  }
 }
 
-export function LearningPath({onConcept,sessionIndex=0,onSessionChange,returnRequest}:{onConcept:(id:string,context?:AtlasTaskContext)=>void;sessionIndex?:number;onSessionChange:(index:number)=>void;returnRequest?:{context:AtlasTaskContext;sequence:number}|null}){
- const session=learningSessions[sessionIndex]||learningSessions[0],container=useRef<HTMLElement>(null),heading=useRef<HTMLHeadingElement>(null),previousSession=useRef(session.id),handledReturn=useRef<number|undefined>(undefined),rSection=useRef<HTMLDetailsElement>(null);
- const tasks=tasksFor(session.id);
- const [workbook,setWorkbook]=useState<Workbook>(()=>{try{return parseWorkbook(localStorage.getItem(workbookStorageKey));}catch{return {};}}),[storageError,setStorageError]=useState(false);
- useEffect(()=>{try{localStorage.setItem(workbookStorageKey,JSON.stringify(workbook));setStorageError(false);}catch{setStorageError(true);}},[workbook]);
- const [answers,setAnswers]=useState<Record<number,number>>({}),[copyStatus,setCopyStatus]=useState('');
- const answer=answers[session.id];
- useEffect(()=>{setCopyStatus('');const changed=previousSession.current!==session.id;previousSession.current=session.id;if(returnRequest&&returnRequest.context.sessionId===session.id&&handledReturn.current!==returnRequest.sequence){handledReturn.current=returnRequest.sequence;const node=document.getElementById(taskAnchor(session.id,returnRequest.context.taskIndex));node?.scrollIntoView({block:'start',behavior:'instant'});node?.focus({preventScroll:true});}else if(changed){container.current?.scrollTo({top:0,behavior:'instant'});heading.current?.focus({preventScroll:true});}},[session.id,returnRequest]);
- function openR(){if(!rSection.current)return;rSection.current.open=true;rSection.current.scrollIntoView({block:'start',behavior:'instant'});rSection.current.querySelector('summary')?.focus({preventScroll:true});}
- function openSandbox(){const node=document.getElementById('sandbox-title');node?.scrollIntoView({block:'start',behavior:'instant'});node?.focus({preventScroll:true});}
- async function copy(){try{await navigator.clipboard.writeText(learningScript(session));setCopyStatus('Das vollständige R-Skript ist kopiert.');}catch{setCopyStatus('Bitte lade das R-Skript herunter; Kopieren ist hier nicht verfügbar.');}}
- function move(index:number){if(index>=0&&index<learningSessions.length)onSessionChange(index);}
- return <main ref={container} className="learning-path" id="learning-main"><aside className="learning-rail"><a className="learning-brand" href="#learning-main">Statistikatlas<span>.</span></a><p className="learning-eyebrow">DEIN LERNWEG · ENTWURF</p><h1>Politik mit Daten verstehen.</h1><p>12 Sitzungen · je 90 Minuten<br/>Vom ersten Blick zur eigenen Analyse.</p><nav aria-label="Zwölf Sitzungen"><ol>{learningSessions.map((s,i)=><li key={s.id} className={i===sessionIndex?'current':''}><button aria-current={i===sessionIndex?'step':undefined} onClick={()=>move(i)}><span>{String(s.id).padStart(2,'0')}</span><strong>{s.title}</strong>{i===sessionIndex&&<ArrowRight size={15}/>}</button></li>)}</ol></nav><a className="learning-source" href={workshopUrl} target="_blank" rel="noreferrer"><BookOpen size={17}/>Zum R-Workshop<ArrowUpRight size={15}/></a><p className="learning-rail-note">Jede Sitzung verbindet eine Frage, einen Versuch und einen nächsten Schritt für dein Projekt. Du kannst die Reihenfolge frei erkunden.</p></aside>
- <article className="learning-lesson"><div className="learning-meta"><span>Sitzung {String(session.id).padStart(2,'0')} / 12</span><span>{session.phase}</span><span><Clock3 size={14}/>90 Min.</span></div><h2 id="learning-heading" ref={heading} tabIndex={-1}>{session.question}</h2><p className="learning-lead">{session.intro}</p><div className="learning-dataset-label">{session.model?'Modellversuch · ausdrücklich erfundene politische Antworten':'Datenbezug · ALLBUScompact 2023'}</div>
- <section className="learning-prompt"><span className="learning-eyebrow">ERST EINMAL VERMUTEN</span><h3>{session.prediction.question}</h3><div className="learning-answers">{session.prediction.options.map((text,i)=><button key={`${session.id}-${i}`} aria-pressed={answer===i} onClick={()=>setAnswers(previous=>({...previous,[session.id]:i}))}><span>{text}</span><ArrowRight size={18}/></button>)}</div>{answer!==undefined&&<p className="learning-feedback" role="status">{session.prediction.feedback[answer]}</p>}</section>
- {session.id===3&&<PoliticalSandbox onConcept={onConcept}/>}
- <section className="learning-body"><div className="learning-workbook-heading"><span className="learning-eyebrow">DEIN ARBEITSHEFT</span><button onClick={()=>downloadText('Mein-Statistikatlas-Arbeitsheft.md',workbookMarkdown(workbook))}><Download size={16}/>Notizen herunterladen</button></div><h3>In drei Aufgaben zur eigenen Erklärung</h3><p className="learning-small">Arbeite in deinem Tempo. Notiere erst deine Idee, erkunde die Bausteine und prüfe dann deine Begründung. Die Zeiten sind Richtwerte.</p><p className="workbook-storage" role={storageError?'status':undefined}>{storageError?'Deine Notizen bleiben gerade nur bis zum Schließen dieser Seite erhalten. Lade sie zur Sicherung herunter.':'Notizen und Selbstchecks werden nur in diesem Browser gespeichert. Du kannst sie als Arbeitsheft herunterladen.'}</p><nav className="task-jump-links" aria-label="Aufgaben dieser Sitzung">{tasks.map((task,index)=><a href={`#${taskAnchor(session.id,index)}`} key={task.title} onClick={e=>{e.preventDefault();const target=document.getElementById(taskAnchor(session.id,index));target?.scrollIntoView({block:'start',behavior:'instant'});target?.focus({preventScroll:true});}}>{index+1} · {task.title}</a>)}</nav>{tasks.map((task,index)=><LearningTaskCard key={taskKey(session.id,index)} sessionId={session.id} index={index} task={task} work={workbook[taskKey(session.id,index)]||{note:'',checked:[]}} onWork={work=>setWorkbook(previous=>({...previous,[taskKey(session.id,index)]:work}))} onConcept={onConcept} onR={openR} onSandbox={session.id===3?openSandbox:undefined}/>)}<div className="learning-insight"><strong>Der Gedanke dahinter</strong><p>{session.insight}</p></div><div className="learning-result"><strong>Das nimmst du für dein Projekt mit</strong><p>{session.product}</p></div></section>
- <details ref={rSection} className="learning-r" key={`r-${session.id}`}><summary><span><span className="learning-eyebrow">DIE IDEE IN R WEITERFÜHREN</span><strong>Mit mariposa untersuchen</strong></span><ChevronDown size={21}/></summary><div className="learning-r-body"><details className="learning-r-start"><summary>Zum ersten Mal mit R arbeiten</summary><ol><li>R, RStudio und mariposa müssen eingerichtet sein. Nutze dafür die Vorbereitung aus dem verlinkten R-Workshop.</li><li>Lade unten das vollständige Sitzungsskript herunter und öffne die R-Datei in RStudio.</li><li>Führe die Zeilen von oben nach unten aus: Cursor in eine Zeile setzen und Strg + Enter (Mac: Cmd + Enter) drücken. Beginne mit dem Startteil.</li><li>Bei ALLBUS-Sitzungen wählst du deine selbst bezogene SPSS-Datei aus. Modell-Sitzungen erzeugen ihre erfundenen Daten selbst.</li><li>Lies die Ausgabe in der Konsole und halte deine Interpretation im Aufgabenfeld fest. Bei einer Fehlermeldung zuerst die betroffene Zeile und den Startteil prüfen.</li></ol></details><p>{session.model?'Das Skript erzeugt einen eigenständigen Modellversuch. Die Zahlen sind erfunden; sie berichten keine politischen Befunde.':'Für dieses Skript brauchst du deine eigene SPSS-Datei von ALLBUScompact 2023. Der Startteil hilft beim Einlesen und kennzeichnet die dokumentierten Sondercodes.'}</p><pre className="learning-code"><code>{session.code}</code></pre><div className="learning-inline-actions"><button onClick={copy}><Copy size={16}/>Ganzes Skript kopieren</button><button onClick={()=>downloadText(`Statistikatlas-Sitzung-${String(session.id).padStart(2,'0')}.R`,learningScript(session))}><Download size={16}/>R-Skript herunterladen</button><button onClick={()=>{const node=document.getElementById(taskAnchor(session.id,1));node?.scrollIntoView({block:'start',behavior:'instant'});node?.focus({preventScroll:true});}}><ArrowLeft size={16}/>Zurück zu Aufgabe 2</button></div>{copyStatus&&<p role="status" className="learning-small">{copyStatus}</p>}<details className="learning-start-code"><summary>Startteil und Datenvorbereitung ansehen</summary><pre className="learning-code"><code>{learningScript(session).split(session.code)[0]}</code></pre></details><p className="learning-small">Führe das Skript in R aus. Der Lernpfad zeigt keine aus ALLBUS berechneten Ergebnisse. Die Modellrechnungen zur Inferenz ersetzen keine Auswertung des komplexen Stichprobendesigns.</p><a className="learning-source" href={workshopUrl+session.chapter.path} target="_blank" rel="noreferrer">Im Workshop nachlesen: {session.chapter.title}<ArrowUpRight size={15}/></a></div></details>
- <aside className="learning-map-help"><Map size={22}/><div><strong>Diese Bausteine helfen dir beim Einordnen.</strong><p>Öffne einen Begriff in der freien Karte. Dein Platz im Lernpfad bleibt erhalten.</p><div>{session.concepts.map(id=><button key={id} onClick={()=>onConcept(id)}>{titleFor(ref(id))}<ArrowUpRight size={15}/></button>)}</div></div></aside>
- <details className="learning-preparation"><summary>Für davor und danach · etwa 15 Minuten</summary><p>{session.preparation}</p><p>Als Orientierung für 90 Minuten: 10 Min. Rückblick · 10 Min. Einstiegsfrage · etwa 65 Min. für die drei Aufgaben · 5 Min. Abschluss. Du kannst jederzeit unterbrechen und später mit deinen Notizen weiterarbeiten.</p></details>
- <details className="learning-data"><summary>Datenbasis und hilfreiche Quellen</summary><p>Der Lernpfad verwendet politisches Interesse (<code>pa02a</code>), Links-Rechts-Selbsteinstufung (<code>pa01</code>) und Wohngebiet (<code>eastwest</code>) aus ALLBUScompact 2023. Frage und Kodierung wurden im GESIS-Codebuch zu Version 1.3.0 geprüft.</p><dl><dt>Politisches Interesse · pa02a</dt><dd>1 = sehr stark bis 5 = überhaupt nicht. Fehlcodes: −42 und −9. <a href={allbusCodebook+'#page=392'} target="_blank" rel="noreferrer">Frage nachlesen</a></dd><dt>Links–rechts · pa01</dt><dd>1 = links bis 10 = rechts. Fehlcodes: −42 und −9. <a href={allbusCodebook+'#page=402'} target="_blank" rel="noreferrer">Frage nachlesen</a></dd><dt>Wohngebiet · eastwest</dt><dd>West einschließlich West-Berlin / Ost einschließlich Ost-Berlin. <a href={allbusCodebook+'#page=71'} target="_blank" rel="noreferrer">Kodierung nachlesen</a></dd></dl><p>Originaldaten erhältst du nach Registrierung bei GESIS. Im Lernpfad sind keine ALLBUS-Einzelfälle hinterlegt. Die Modellversuche und die 200 synthetischen Befragten der freien Karte sind eigenständige Lehrbeispiele.</p><a className="learning-source" href={allbusSource} target="_blank" rel="noreferrer">ALLBUScompact 2023 · ZA8831 bei GESIS<ArrowUpRight size={15}/></a><a className="learning-source" href={workshopUrl} target="_blank" rel="noreferrer">R Workshop – Sozialwissenschaften · Diehl & Moosdorf<ArrowUpRight size={15}/></a><p>Faktorenanalyse, Skalenbildung, ANOVA sowie multiple und logistische Regression bleiben als Vertiefungen in der Karte erreichbar. Für den Einstieg genügt ein begründeter, überschaubarer Analyseweg.</p></details>
- <nav className="learning-pagination" aria-label="Zwischen Sitzungen wechseln"><button disabled={sessionIndex===0} onClick={()=>move(sessionIndex-1)}><ArrowLeft size={17}/>Vorherige Sitzung</button>{sessionIndex<11?<button onClick={()=>move(sessionIndex+1)}>Weiter zu Sitzung {session.id+1}<ArrowRight size={17}/></button>:<button onClick={()=>move(0)}>Zum Anfang des Lernwegs<RotateCcw size={16}/></button>}</nav></article></main>;
+function sessionStatus(session: Session, store: MissionStore, data: LoadedData | null): string {
+  if (session.mission === 'setup') return data ? 'ALLBUS geladen' : 'Einrichtung';
+  if (!session.mission) return 'Mission folgt';
+  return STATUS_TEXT[missionStatus(store.work[session.mission])];
+}
+
+function Terms({ label, terms, onConcept }: { label: string; terms: Term[]; onConcept: (id: string) => void }) {
+  if (!terms.length) return null;
+  return <>
+    <span className="learning-eyebrow">{label}</span>
+    <ul className="learning-term-list">
+      {terms.map(term => <li key={term.label}>{term.concept
+        ? <button onClick={() => onConcept(term.concept!)}>{term.label}</button>
+        : <span title="Steht im Sitzungsplan, fehlt der Karte noch">{term.label}</span>}</li>)}
+    </ul>
+  </>;
+}
+
+export function LearningPath({ onConcept, sessionIndex = 0, onSessionChange, initialData = null, initialStore }: {
+  onConcept: (id: string) => void;
+  sessionIndex?: number;
+  onSessionChange: (index: number) => void;
+  initialData?: LoadedData | null;
+  initialStore?: MissionStore;
+}) {
+  const [data, setData] = useState<LoadedData | null>(initialData);
+  const [{ store: loaded, warning: loadWarning }] = useState(readStore);
+  const [store, setStore] = useState<MissionStore>(initialStore ?? loaded);
+  const [warning, setWarning] = useState(loadWarning);
+  const index = Math.min(Math.max(sessionIndex, 0), sessions.length - 1);
+  const session = sessions[index];
+
+  useEffect(() => {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(missionStorageKey, JSON.stringify(store));
+    } catch {
+      setWarning(STORAGE_WARNING);
+    }
+  }, [store]);
+
+  const choose = (next: number) => {
+    onSessionChange(next);
+    requestAnimationFrame(() => document.getElementById('learning-heading')?.focus({ preventScroll: true }));
+    document.getElementById('learning-main')?.scrollTo({ top: 0 });
+  };
+  const claim = session.mission && session.mission !== 'setup' ? claimById[session.mission] : null;
+  const work = claim ? store.work[claim.id] ?? initialWork(claim) : null;
+  const updateWork = (next: ClaimWork) => { if (claim) setStore(s => ({ ...s, work: { ...s.work, [claim.id]: next } })); };
+  const dataLine = data ? `ALLBUScompact 2023 · ${data.version || 'Version unbekannt'} · ${data.sav.nCases.toLocaleString('de-DE')} Befragte` : 'ALLBUS noch nicht geladen';
+
+  return <main className="learning-path" id="learning-main">
+    <aside className="learning-rail">
+      <a className="learning-brand" href="#learning-main">Statistikatlas<span>.</span></a>
+      <span className="learning-eyebrow">LERNPFAD · STATISTIK IB</span>
+      <h1>Statistik als Entscheidungshilfe</h1>
+      <p>Zehn Sitzungen nach dem Sitzungsplan. In den Missionen prüfst du öffentliche Behauptungen mit dem echten ALLBUS – und entscheidest selbst, was die Daten tragen.</p>
+      <p className="learning-data-status">{dataLine}</p>
+      <nav aria-label="Sitzungen"><ol>
+        {sessions.map((s, i) => {
+          const status = sessionStatus(s, store, data);
+          return <li key={s.id} className={`${i === index ? 'current' : ''}${status === STATUS_TEXT.done ? ' done' : ''}`}>
+            <button aria-current={i === index ? 'page' : undefined} onClick={() => choose(i)}>
+              <span>{s.id}</span><strong>{s.title}<small>{status}</small></strong>
+              {status === STATUS_TEXT.done && <Check size={16} aria-hidden="true" />}
+            </button>
+          </li>;
+        })}
+      </ol></nav>
+      <a className="learning-source" href={workshopUrl} target="_blank" rel="noreferrer"><BookOpen size={16} aria-hidden="true" /> R-Workshop von Diehl und Moosdorf</a>
+    </aside>
+
+    <article className="learning-lesson" aria-labelledby="learning-heading">
+      <div className="learning-meta"><span>Sitzung {session.id}</span><span>{session.short}</span><span>{session.plan}</span></div>
+      <h2 id="learning-heading" tabIndex={-1}>{session.title}</h2>
+      <p className="learning-lead">{session.question}</p>
+      {warning && <p className="sandbox-warning" role="status">{warning}</p>}
+
+      <section className="learning-terms" aria-label="Begriffe dieser Sitzung">
+        <Terms label="WIEDERHOLUNG" terms={session.repetition} onConcept={onConcept} />
+        <Terms label="NEU IN DIESER SITZUNG" terms={session.introduced} onConcept={onConcept} />
+        <p className="learning-term-note">Begriffe öffnen die freie Karte. Gestrichelte stehen im Sitzungsplan und fehlen der Karte noch.</p>
+      </section>
+
+      <section className="sandbox learning-mission" aria-label="Mission">
+        {session.mission === 'setup' && <>
+          <span className="learning-eyebrow">EINRICHTUNG</span>
+          <p>Bezieh den ALLBUScompact 2023 bei GESIS, öffne ihn in R mit mariposa – und zieh dieselbe Datei hier in den Lernpfad. Sie gilt dann für alle Missionen.</p>
+          {data
+            ? <p className="sandbox-data">{dataLine} · {data.fileName} <button className="sandbox-link" onClick={() => setData(null)}>Andere Datei laden</button></p>
+            : <DataDrop onLoaded={setData} />}
+          <span className="learning-eyebrow">IN R</span>
+          <pre className="sandbox-code">{setupScript}</pre>
+          <p className="sandbox-note"><a href={allbusCodebook} target="_blank" rel="noreferrer">Codebuch ZA8831 <ExternalLink size={13} aria-hidden="true" /></a></p>
+        </>}
+        {claim && work && (data
+          ? <>
+              <span className="learning-eyebrow">MISSION · BELEGE ES!</span>
+              <ClaimWorkspace key={claim.id} sav={data.sav} fileName={data.fileName} claim={claim} work={work} onChange={updateWork} onConcept={onConcept} />
+            </>
+          : <>
+              <span className="learning-eyebrow">MISSION · BELEGE ES!</span>
+              <p>In dieser Mission prüfst du die Behauptung „{claim.quote}“ mit dem echten ALLBUS. Lade dafür zuerst deine Datei.</p>
+              <DataDrop onLoaded={setData} />
+            </>)}
+        {!session.mission && <div className="learning-mission-soon">
+          <span className="learning-eyebrow">MISSION FOLGT</span>
+          <p>Für diese Sitzung entsteht eine eigene Mission mit echten ALLBUS-Daten. Bis dahin: Begriffe oben in der Karte erkunden und im Seminar in R arbeiten.</p>
+        </div>}
+      </section>
+
+      <nav className="learning-pagination" aria-label="Sitzung wechseln">
+        <button disabled={index === 0} onClick={() => choose(index - 1)}><ArrowLeft size={17} aria-hidden="true" /> {index > 0 ? `Sitzung ${sessions[index - 1].id}: ${sessions[index - 1].title}` : 'Anfang'}</button>
+        <button disabled={index === sessions.length - 1} onClick={() => choose(index + 1)}>{index < sessions.length - 1 ? `Sitzung ${sessions[index + 1].id}: ${sessions[index + 1].title}` : 'Ende'} <ArrowRight size={17} aria-hidden="true" /></button>
+      </nav>
+    </article>
+  </main>;
 }

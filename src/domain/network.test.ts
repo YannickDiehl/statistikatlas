@@ -72,13 +72,13 @@ test('back and forward restore the complete view and actual viewport without sto
  const removed=step(second,'back',undefined,['a','b']);assert.equal(removed.present.caseId,'a');
 });
 
-test('the initial surface starts on the political learning path with a separate map tool',()=>{
+test('the initial surface starts on the learning path with a separate map tool',()=>{
  const html=renderToStaticMarkup(createElement(ReactFlowProvider,null,createElement(App)));
- assert.match(html,/Politik mit Daten verstehen/);assert.match(html,/ALLBUScompact 2023/);
+ assert.match(html,/Statistik als Entscheidungshilfe/);assert.match(html,/ALLBUScompact 2023/);
  assert.match(html,/id="tab-learn" role="tab" aria-selected="true"/);
  assert.match(html,/id="tab-map" role="tab" aria-selected="false"/);
  assert.doesNotMatch(html,/gesamte interaktive Netzkarte|id="inspector-title"/);
- assert.match(html,/Ergebnisse erklären/);
+ assert.match(html,/Logistische Regression/);
 });
 
 test('inspectors render every concept, distinguish other uses and hide irrelevant X/Y switches',()=>{

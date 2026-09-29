@@ -1,3 +1,13 @@
+## 29. September 2026 – Lernpfad nach Sitzungsplan mit Missionen „Belege es!“
+
+- Neuer Lernpfad mit zehn Sitzungen nach dem Sitzungsplan WiSe 24/25, Begriffen zur Wiederholung und neuen Begriffen je Sitzung sowie drei Missionen (Sitzungen 3–5) auf echten ALLBUS-Daten. Der bisherige Lernpfad mit zwölf Politik-Sitzungen, Vermutungsfragen, 36 Aufgaben, Arbeitsheft und Aufgabenbrücke entfällt.
+- Missionen: Zerlegen, Werkbank mit Live-Kreuztabelle und Variablensuche, Urteil, elf Gegenfragen-Regeln, Robustheitsspiegel (72/24/24 Wege), Faktencheck-Karte und mariposa-Skript. Eigener SPSS-Leser im Browser; die ALLBUS-Datei wird nicht gespeichert.
+- Rechenkern und erzeugter mariposa-Code stimmen auf synthetischen Daten und auf ZA8831 v1.3.0 in 120 von 120 Wegen überein (`verify-sandbox-r.R`, mariposa 0.7.3). Alle Referenzwerte der Spezifikation im Echtdaten-Test reproduziert.
+- 125 automatisierte Tests: 124 bestanden, ein Echtdaten-Test ohne Datei übersprungen. TypeScript, Produktions- und Offline-Build erfolgreich. Browserprüfung mit echter Datei: Laden, Sitzungsstatus, Schrittprüfung, Werkbank, Kartenweg und Rückkehr, Spiegel, Wiederherstellung; keine Konsolenfehler.
+- Bekannt, nicht Teil dieser Änderung: doppelter React-Key beim Öffnen von „Gewichte“ in der freien Karte; mariposa `crosstab()` bricht bei gelabeltem Gewicht mit NA ab.
+
+---
+
 ## 28. September 2026 – Aufgaben und Atlas eng verknüpft
 
 - Alle zwölf Sitzungen besitzen je drei ausgearbeitete Aufgaben (Erkunden, Anwenden, Übertragen; Richtwerte 20 + 25 + 20 Minuten). Insgesamt 36 Aufgaben mit konkreten Schritten, eigener Beobachtungsfrage, jeweils zwei Hinweisen, begründeter Musterlösung und zwei Selbstchecks. Individuelle Bearbeitung; ALLBUS-Musterlösungen nennen Antwortgerüste, keine erfundenen empirischen Zahlen.

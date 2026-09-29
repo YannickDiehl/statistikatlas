@@ -7,3 +7,6 @@ tmp/
 Statistikatlas-Prototyp.html
 .env
 .env.*
+*.sav
+*.zsav
+!src/sandbox/fixtures/*.sav
