@@ -1,0 +1,8 @@
+suppressPackageStartupMessages(library(mariposa))
+cat("pipe nach library(mariposa):", exists("%>%"), "\n")
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+n <- names(allbus)
+fam <- c(haushalt = "^hh[0-9]", kinder_ausser_haus = "^kh[0-9]", ehepartner = "^sc", lebenspartner = "^p(yborn|age|educ|de|isc|work|dw|isco|siops|isei|eseg)", eltern = "^(f|m)(dm|dw|isco|siops|isei|eseg|educ|de|iscd)", interview = "^x[stix]", gewichte = "^wght", vertrauen = "^pt", religion = "^r[abdehpru]", migration = "^m[acginpm]")
+for (f in names(fam)) cat(sprintf("%-20s %3d\n", f, sum(grepl(fam[f], n))))
+x <- find_var(allbus, "horoskop")
+print(x)

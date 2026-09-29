@@ -1,0 +1,10 @@
+suppressPackageStartupMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+sub <- allbus %>% filter(!is.na(ps03), !is.na(ep01))
+s8 <- sub[1:800,]
+t1 <- system.time(a <- s8 %>% unlabel(ps03, ep01, wghtpew) %>% kendall_tau(ps03, ep01, weights = wghtpew))
+cat("unlabelled weighted n=800 secs:", t1[3], "tau", a$correlations$tau, "\n")
+t2 <- system.time(b <- allbus %>% unlabel(ps03, ep01, wghtpew) %>% kendall_tau(ps03, ep01, weights = wghtpew))
+cat("unlabelled weighted full secs:", t2[3], "tau", b$correlations$tau, "n", b$correlations$n, "\n")
+t3 <- system.time(c <- allbus %>% unlabel(ps03, ep01) %>% kendall_tau(ps03, ep01))
+cat("unlabelled unweighted full secs:", t3[3], "tau", c$correlations$tau, "n", c$correlations$n, "\n")

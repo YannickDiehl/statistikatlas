@@ -1,0 +1,8 @@
+suppressMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+papier <- allbus %>% filter(mode == 4)
+nrow(papier)
+papier %>% codebook(pa01, st01, pt03, pv01, view = FALSE) %>% summary()
+online <- allbus %>% filter(mode == 3)
+online %>% codebook(pa01, st01, view = FALSE) %>% summary()
+r <- try(allbus %>% group_by(mode) %>% codebook(pa01, view = FALSE) %>% summary())

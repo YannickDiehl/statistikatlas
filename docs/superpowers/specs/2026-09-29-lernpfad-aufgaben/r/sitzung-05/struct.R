@@ -1,0 +1,8 @@
+suppressPackageStartupMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+p <- allbus %>% pearson_cor(ps03, ep01, weights = wghtpew); print(names(p)); print(p$correlations)
+s <- allbus %>% spearman_rho(ps03, ep01, weights = wghtpew); print(names(s)); print(s$correlations)
+k <- allbus[1:300,] %>% kendall_tau(ps03, ep01); print(names(k)); print(k$correlations)
+g <- allbus %>% group_by(eastwest) %>% pearson_cor(ps03, ep01, weights = wghtpew); print(g$correlations)
+print(allbus %>% cramers_v(ps03, ep01, weights = wghtpew))
+print(allbus %>% group_by(eastwest) %>% goodman_gamma(ps03, ep01))

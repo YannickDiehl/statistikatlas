@@ -1,0 +1,5 @@
+suppressMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+allbus %>% group_by(mode) %>% frequency(st01) %>% summary()
+allbus %>% filter(mode == 4) %>% frequency(splt23_1) %>% summary()
+allbus %>% filter(mode == 4, splt23_1 == 2) %>% frequency(pt03) %>% summary()

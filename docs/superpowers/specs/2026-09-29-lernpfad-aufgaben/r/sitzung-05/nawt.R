@@ -1,0 +1,11 @@
+suppressPackageStartupMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+cat("NA in wghtpew:", sum(is.na(allbus$wghtpew)), "\n")
+x <- allbus %>% select(ps03, ep01, wghtpew)
+x$wghtpew[1:5] <- NA
+r1 <- tryCatch({ x %>% crosstab(ep01, ps03, weights = wghtpew); "ok" }, error = function(e) paste("ERROR:", conditionMessage(e)))
+cat("labelled weight with NA:", r1, "\n")
+r2 <- tryCatch({ x %>% filter(!is.na(wghtpew)) %>% crosstab(ep01, ps03, weights = wghtpew); "ok" }, error = function(e) paste("ERROR:", conditionMessage(e)))
+cat("after filter:", r2, "\n")
+r3 <- tryCatch({ x %>% unlabel(wghtpew) %>% crosstab(ep01, ps03, weights = wghtpew); "ok" }, error = function(e) paste("ERROR:", conditionMessage(e)))
+cat("after unlabel:", r3, "\n")

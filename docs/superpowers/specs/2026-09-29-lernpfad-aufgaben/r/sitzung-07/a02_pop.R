@@ -1,0 +1,7 @@
+suppressPackageStartupMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+r7 <- allbus %>% reliability(pa29, pa30, pa31, pa32, pa33, pa34, pa35)
+print(r7)
+summary(r7)
+r7w <- allbus %>% reliability(pa29, pa30, pa31, pa32, pa33, pa34, pa35, weights = wghtpew)
+print(r7w)

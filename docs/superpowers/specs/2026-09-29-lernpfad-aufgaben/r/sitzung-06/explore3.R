@@ -1,0 +1,8 @@
+suppressPackageStartupMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+d <- allbus %>% mutate(m = as.numeric(mode), s = as.numeric(splt23_3), s1 = as.numeric(splt23_1), sub = as.numeric(substudy))
+cat("splt23_3 x splt23_1 by mode\n"); print(with(d %>% filter(!is.na(s)), table(s, s1, m)))
+cat("splt23_3 x substudy by mode\n"); print(with(d %>% filter(!is.na(s)), table(s, sub, m)))
+cat("chisq equal distribution CAWI\n"); print(chisq.test(table(d$s[d$m==3])))
+cat("chisq MAIL A1 vs B1\n"); print(chisq.test(table(d$s[d$m==4])))
+cat("eastwest x s in CAWI\n"); print(with(d %>% filter(m==3), table(s, as.numeric(eastwest))))

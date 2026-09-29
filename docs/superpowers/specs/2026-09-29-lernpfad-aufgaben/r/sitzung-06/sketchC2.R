@@ -1,0 +1,5 @@
+suppressPackageStartupMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+d <- allbus %>% mutate(selbst = rec(mode, rules = "2=0 [Interview]; 3:4=1 [selbst ausgefuellt]"))
+a <- d %>% oneway_anova(ls01, age, group = mode)
+summary(a)

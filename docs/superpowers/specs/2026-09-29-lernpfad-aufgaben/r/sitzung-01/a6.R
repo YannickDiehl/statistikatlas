@@ -1,0 +1,6 @@
+suppressPackageStartupMessages(library(mariposa))
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+print(find_var(allbus, "^rh", search = "name"))
+print(find_var(allbus, "tarot"))
+print(nrow(find_var(allbus, "^x[sti]", search = "name")))
+print(val_labels(allbus$li04))

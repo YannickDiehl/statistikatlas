@@ -1,0 +1,7 @@
+suppressPackageStartupMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+print(na_frequencies(allbus$pt03)); cat("valid", sum(!is.na(allbus$pt03)), "\n")
+x <- allbus$dw15[!is.na(allbus$dw15)]; s <- sort(as.numeric(x)); ch <- sapply(1:100, function(k) s[ceiling(k/100*length(s))])
+cat("chair values:", ch, "\n")
+cat("first chair with 40:", which(ch==40)[1], " last:", tail(which(ch==40),1), "\n")
+cat("pa02a sehr stark/stark valid %:", round(mean(allbus$pa02a <= 2, na.rm=TRUE)*100,1), " n missing", sum(is.na(allbus$pa02a)), "\n")

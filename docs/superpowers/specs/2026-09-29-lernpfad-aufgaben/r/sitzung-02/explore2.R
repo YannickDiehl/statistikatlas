@@ -1,0 +1,15 @@
+suppressMessages({library(haven); library(dplyr)})
+d <- read_sav("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav", user_na = TRUE)
+m <- as.numeric(d$mode)
+modes <- c(capi = 2, cawi = 3, mail = 4)
+res <- bind_rows(lapply(names(d), function(v) {
+  x <- suppressWarnings(as.numeric(d[[v]]))
+  out <- data.frame(var = v)
+  for (code in c(-42, -9, -8, -15, -11, -10, -41)) for (mo in names(modes)) out[[paste0("c", abs(code), "_", mo)]] <- sum(x == code & m == modes[[mo]], na.rm = TRUE)
+  out
+}))
+write.csv(res, "missing_by_mode.csv", row.names = FALSE)
+cat("Top -42 (MFN):\n"); print(res %>% mutate(t = c42_capi + c42_cawi + c42_mail) %>% arrange(desc(t)) %>% select(var, starts_with("c42"), starts_with("c9_")) %>% head(30))
+cat("\nSum -42 by mode:\n"); print(colSums(res[, c("c42_capi","c42_cawi","c42_mail")]))
+cat("\nSum -9 by mode:\n"); print(colSums(res[, c("c9_capi","c9_cawi","c9_mail")]))
+cat("\nSum -8 by mode:\n"); print(colSums(res[, c("c8_capi","c8_cawi","c8_mail")]))

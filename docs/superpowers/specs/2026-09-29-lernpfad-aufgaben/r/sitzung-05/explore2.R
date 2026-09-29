@@ -1,0 +1,6 @@
+suppressPackageStartupMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+print(allbus %>% group_by(eastwest) %>% summarise(n=n(), wmin=min(wghtpew), wmax=max(wghtpew), wsum=sum(wghtpew)))
+print(table(allbus$splt23_1, useNA="ifany")); print(table(allbus$splt23_2, useNA="ifany")); print(attr(allbus$splt23_1,"labels")); print(attr(allbus$splt23_2,"labels"))
+cands <- c("pt03","pt09","ep01","ep03","pa02a","pa01","st01","id02","gs01","rp01","lp05","hs01","ls01","pe01","pa35","pr04","pr10","rb08","age","sex","rd01","educ","iscd11","di08c","eastwest","pn16","pd11","ps01","pd12","xr20","incc")
+for (v in cands) cat(v, "joint n with ps03:", sum(!is.na(allbus$ps03) & !is.na(allbus[[v]])), "\n")

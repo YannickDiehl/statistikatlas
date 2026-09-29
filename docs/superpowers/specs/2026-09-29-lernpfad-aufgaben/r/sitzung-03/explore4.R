@@ -1,0 +1,6 @@
+suppressPackageStartupMessages({library(mariposa); library(dplyr)})
+allbus <- read_spss("/Users/yannickdiehl/Documents/Universität Marburg/Lehre/Methoden Ib B.A./ZA8831_v1-3-0.sav")
+allbus %>% describe(dw15, age, ls01, dh04, pa01, incc, hhincc, di08c, show = "all") %>% print()
+allbus %>% fre(work) %>% summary()
+print(table(cut(allbus$dw15, c(-1,0,10,15,20,25,30,34,35,38,39,40,41,45,50,60,90))))
+print(val_labels(allbus$di08c)[1:5])
