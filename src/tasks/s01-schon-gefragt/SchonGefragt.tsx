@@ -1,5 +1,5 @@
 import { Download, Search } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { downloadText } from '../../domain/mariposa';
 import type { SavFile } from '../../sandbox/readSav';
 import { Feedback } from '../kit/Feedback';
@@ -10,14 +10,24 @@ import { RBlock } from '../kit/RBlock';
 import { RoleBrief } from '../kit/RoleBrief';
 import type { TaskProps } from '../types';
 import { antraege, handshakeHint, SETUP_SCRIPT, type Antrag, type AntragId } from './content';
-import { checkHandshake, checkStamp, decodeError, findVar, plenumLines, reportMarkdown, rScript, type S01State, type Stamp } from './domain';
+import { checkHandshake, checkStamp, decodeError, findVar, plenumLines, reportMarkdown, rScript, type S01State, type SearchResult, type Stamp } from './domain';
 
 const splitWords = (text: string) => text.split(/[,;\n]/).map(w => w.trim()).filter(Boolean);
 
+/** Freitext für Suchwörter: Der Rohtext bleibt beim Tippen erhalten (Komma, Leerzeichen); übernommen werden die getrennten Wörter. */
+function SearchWordsInput({ words, onChange }: { words: string[]; onChange: (words: string[]) => void }) {
+  const [text, setText] = useState(words.join(', '));
+  useEffect(() => {
+    if (splitWords(text).join('|') !== words.join('|')) setText(words.join(', '));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [words.join('|')]);
+  return <input type="text" value={text} onChange={e => { setText(e.target.value); onChange(splitWords(e.target.value)); }} />;
+}
+
 function SearchTester({ sav, onSearched }: { sav: SavFile; onSearched: (word: string) => void }) {
   const [word, setWord] = useState('');
-  const [result, setResult] = useState<ReturnType<typeof findVar> | null>(null);
-  const run = () => { const r = findVar(sav, word); setResult(r); if (r.ok) onSearched(word.trim()); };
+  const [result, setResult] = useState<{ word: string; r: SearchResult } | null>(null);
+  const run = () => { const r = findVar(sav, word); setResult({ word: word.trim(), r }); if (r.ok) onSearched(word.trim()); };
   return <div className="s01-tester">
     <label className="sandbox-search">
       <Search size={16} aria-hidden="true" />
@@ -25,9 +35,9 @@ function SearchTester({ sav, onSearched }: { sav: SavFile; onSearched: (word: st
         onChange={e => setWord(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') run(); }} />
       <button onClick={run}>Treffer zählen</button>
     </label>
-    {result && (result.ok
-      ? <><p className="sandbox-note" role="status">{result.hits.length} Treffer für „{word.trim()}“. Namen und Labels liest du in R.</p><Feedback notes={result.notes} /></>
-      : <p className="sandbox-error" role="status">{result.message}</p>)}
+    {result && (result.r.ok
+      ? <><p className="sandbox-note" role="status">{result.r.hits.length} Treffer für „{result.word}“. Namen und Labels liest du in R.</p><Feedback notes={result.r.notes} /></>
+      : <p className="sandbox-error" role="status">{result.r.message}</p>)}
   </div>;
 }
 
@@ -44,7 +54,7 @@ function StampEditor({ sav, antrag, stamp, onChange }: { sav: SavFile; antrag: A
       <label>Wie vielen wurde die Frage gestellt?<input type="text" inputMode="numeric" value={stamp.asked} onChange={e => set({ asked: e.target.value })} /></label>
     </div>}
     {stamp.decision === 'ask' && <div className="task-grid">
-      <label>Deine Suchwörter in R (mit Komma getrennt)<input type="text" value={stamp.searches.join(', ')} onChange={e => set({ searches: splitWords(e.target.value) })} /></label>
+      <label>Deine Suchwörter in R (mit Komma getrennt)<SearchWordsInput words={stamp.searches} onChange={searches => set({ searches })} /></label>
       <label>Begründung (ein Satz)<input type="text" value={stamp.note} onChange={e => set({ note: e.target.value })} /></label>
     </div>}
     <Feedback notes={checkStamp(sav, antrag, stamp)} />
