@@ -1,3 +1,14 @@
+## 29. September 2026 – Lernpfad: eigene Aufgaben für die Sitzungen 1–3
+
+- Der Lernpfad zeigt je Sitzung eine eigene Aufgabe (`src/tasks/`, Register und Aufgabenrahmen). Gemeinsam sind nur Hilfsbausteine: Datei laden, vierstufige Hilfe bis zum vollständigen R-Code, Plenumskarte, Partnerschalter, Speicherung unter `statistikatlas.aufgaben.v1`.
+- Sitzung 1 „Schon gefragt?“: Handschlag mit R (Fälle, Variablen), vier Frageideen mit Suche wie `find_var()` (Umlaut- und Wortteil-Hinweise), Stempel übernehmen/beauftragen mit Spiegelung aus dem Codebuch, Einspruch der Kollegin, Fehler-Decoder, Notfallkonsole, Prüfbericht und R-Skript.
+- Sitzung 2 „Erster Tag in der Datenerfassung“: drei HTML-Faksimiles mit mehrdeutigen Kreuzen, Erfassungsraster mit Codebuch-Prüfung, Bewertung erst nach „Erfassung abschließen“, Regeln für offene Zellen, Doppelerfassung mit Ben oder per Zeilencode (geschlichtete Zeilen bleiben stehen, Entscheidung umkehrbar), drei R-Zahlen (AfD nach dem Umwandeln: 6 in mariposa 0.7.3, 42 in neueren Versionen – beides mit Erklärung), Suche nach −42 im ganzen Datensatz.
+- Sitzung 3 „Deutschland in 100 Stühlen“: Stuhlregel für die Missing-Codes der Wahlabsicht, Sitzplan nach größten Resten, Diagnose über alle 32 Regeln (Rohprozente, gerundete 101, falsche Summe, andere Regel), Reststühle ganzzahlig nach größten Resten, Saal als 10×10-Raster; Stuhlreihe nach Arbeitsstunden mit Quartilen nach SPSS (wie `describe()`), Schild-Prüfung und Stühle rechts vom Durchschnitt.
+- Sitzung 4 behält vorerst die Mission „Belege es!“; die Mission aus Sitzung 3 entfällt, Sitzung 5 zeigt „Aufgabe folgt“.
+- 159 automatisierte Tests bestanden (4 Echtdaten-Tests ohne Datei übersprungen); mit ZA8831 v1.3.0 stimmen alle Referenzwerte der Konzepte (u. a. 24/0/6 und 638 Zellen −42 in 202 Variablen, Stühle 25/20/19/12/8/6, Median 40, Mittel 37,9, 66 Stühle rechts). Lösungsskripte laufen mit mariposa 0.7.3 auf Testdatei und echter Datei (3/3), R-Abgleich der Mission 120/120. Browserprüfung mit echter Datei ohne Konsolenfehler, 390 px ohne Überlaufen.
+
+---
+
 ## 29. September 2026 – Erprobungsreife der Missionen
 
 - Texte abgestimmt: Quellenangaben „Gast in einer Polit-Talkshow“, „Social-Media-Post, tausendfach geteilt“, „Pressemitteilung eines Parteivorstands“ (alle fiktiv). Die Gegenfrage zu Kausalsprache hat je Behauptung einen eigenen Denkanstoß: Lebensphase gegen Generation (Jugend), Zusammensetzung der Regionen (Osten), Drittvariablen und umgekehrte Richtung (Nichtwahl). „Beides erklären“ steht nur noch dort, wo eine Drittvariable beides beeinflussen kann.
