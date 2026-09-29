@@ -60,3 +60,15 @@
 .s02-diffs small{flex-basis:100%;color:var(--muted)}
 .s02-reveal{background:var(--soft);border-radius:8px;padding:10px 14px;font-size:14px}
 .s02-solution{margin:12px 0}
+
+/* Sitzung 3 · Deutschland in 100 Stühlen */
+.s03-hall{margin:14px 0;display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:16px;align-items:start}
+.s03-hall svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+.s03-hall figcaption{display:flex;flex-direction:column;gap:4px;font-size:14px}
+.s03-hall figcaption i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.s03-row-scroll{overflow-x:auto;margin:12px 0}
+.s03-row{width:100%;min-width:480px;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+.s03-row text{font:13px var(--sans);fill:var(--muted)}
+.s03-row text.mean{fill:var(--red)}
+.sandbox .task-grid select{width:100%}
+@media(max-width:560px){.s03-hall{grid-template-columns:1fr}}
