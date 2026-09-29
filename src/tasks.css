@@ -28,3 +28,12 @@
 .task-card>h4{font:600 16px/1.4 var(--sans);margin:0 0 8px}
 .learning-data-status .sandbox-link{border:0;background:none;color:var(--green);text-decoration:underline;text-underline-offset:3px;padding:0;font:inherit;cursor:pointer}
 @media(max-width:560px){.task-plenum dl{grid-template-columns:1fr}.task-plenum dd{margin-bottom:6px}}
+
+/* Sitzung 1 · Schon gefragt? */
+.s01-tester{margin:0 0 6px}
+.s01-stamp{border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+.s01-decoder,.s01-emergency{margin:12px 0;font-size:15px}
+.s01-decoder summary,.s01-emergency summary{cursor:pointer;color:var(--green)}
+.s01-decoder textarea{margin-top:8px}
+.s01-emergency input{margin:8px 0}
+.s01-emergency code{font-size:13px}
