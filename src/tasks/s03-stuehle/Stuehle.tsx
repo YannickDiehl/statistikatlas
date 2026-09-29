@@ -9,7 +9,7 @@ import { RoleBrief } from '../kit/RoleBrief';
 import type { TaskProps } from '../types';
 import { ChairRow, Hall } from './Charts';
 import { CHAIR_CODES, hints, R_SOLUTION, SELECTIONS, type Selection } from './content';
-import { codeName, describeHours, diagnoseSeats, hoursFor, plenumLines, rawCounts, validCodes, checkSign, type Measure, type S03State } from './domain';
+import { codeName, describeHours, diagnoseSeats, hoursFor, plenumLines, rawCounts, statusS03, validCodes, checkSign, type Measure, type S03State } from './domain';
 
 export function Stuehle({ data, state, onChange, onConcept }: TaskProps<S03State>) {
   const set = (patch: Partial<S03State>) => onChange({ ...state, ...patch });
@@ -20,7 +20,13 @@ export function Stuehle({ data, state, onChange, onConcept }: TaskProps<S03State
   const included = [...valid, ...CHAIR_CODES.filter(c => state.rule.includes(c))];
   const entered = new Map(included.map(c => [c, parseNumber(state.seats[String(c)] ?? '') ?? 0]));
   const diagnosis = state.built ? diagnoseSeats(pv, state.rule, entered) : null;
-  const toggle = (code: number) => set({ rule: state.rule.includes(code) ? state.rule.filter(c => c !== code) : [...state.rule, code] });
+  // Neue Regel = neuer Saal: neu bauen, Stühle einer abgewählten Lücke verwerfen.
+  const toggle = (code: number) => {
+    const on = state.rule.includes(code), seats = { ...state.seats };
+    if (on) delete seats[String(code)];
+    set({ rule: on ? state.rule.filter(c => c !== code) : [...state.rule, code], seats, built: false });
+  };
+  const signDone = Boolean(state.sign.value.trim() && state.sign.measure && state.sign.selection && state.sign.right.trim());
   const rowSelection: Selection = state.sign.selection || 'gefragt';
   const rowValues = useMemo(() => hoursFor(data.sav, rowSelection), [data.sav, rowSelection]);
   const rowStats = useMemo(() => describeHours(rowValues), [rowValues]);
@@ -86,11 +92,11 @@ export function Stuehle({ data, state, onChange, onConcept }: TaskProps<S03State
         <label>Stühle rechts vom Durchschnitt<input type="text" inputMode="numeric" value={state.sign.right} onChange={e => set({ sign: { ...state.sign, right: e.target.value } })} /></label>
       </div>
       <Feedback notes={checkSign(data.sav, state.sign)} />
-      {state.sign.value.trim() && state.sign.selection && <ChairRow values={rowValues} stats={rowStats} />}
+      {signDone && <ChairRow values={rowValues} stats={rowStats} />}
       <HintLadder hint={hints.row} onConcept={onConcept} file="stuehle.R" />
     </section>
 
     <PlenumCard title="Deutschland in 100 Stühlen" lines={plenumLines(state)} file="stuehle-plenum.md" />
-    {state.built && state.sign.right.trim() && <details className="s02-solution"><summary>Ein vollständiges R-Skript zum Mitnehmen</summary><RBlock code={R_SOLUTION} file="stuehle.R" /></details>}
+    {statusS03(state) === 'done' && <details className="s02-solution"><summary>Ein vollständiges R-Skript zum Mitnehmen</summary><RBlock code={R_SOLUTION} file="stuehle.R" /></details>}
   </div>;
 }

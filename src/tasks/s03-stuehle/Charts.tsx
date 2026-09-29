@@ -13,12 +13,14 @@ export function Hall({ groups }: { groups: HallGroup[] }) {
   let k = 0;
   groups.forEach(g => {
     const color = g.missing ? MISSING : PALETTE[k++ % PALETTE.length];
-    for (let i = 0; i < Math.max(0, g.seats); i++) cells.push({ group: g, color });
+    for (let i = 0; i < Math.min(Math.max(0, g.seats), 120); i++) cells.push({ group: g, color });
   });
+  const shown = cells.slice(0, 120), rows = Math.max(10, Math.ceil(shown.length / 10));
+  const total = groups.reduce((a, g) => a + Math.max(0, g.seats), 0);
   const summary = groups.map(g => `${g.label} ${g.seats}`).join(', ');
   return <figure className="s03-hall">
-    <svg viewBox="0 0 300 300" role="img" aria-label={`Saal mit ${cells.length} Stühlen: ${summary}`}>
-      {cells.slice(0, 120).map((c, i) => <rect key={i} x={(i % 10) * 30 + 4} y={Math.floor(i / 10) * 30 + 4} width={22} height={22} rx={5} fill={c.color} />)}
+    <svg viewBox={`0 0 300 ${rows * 30}`} role="img" aria-label={`Saal mit ${total} Stühlen: ${summary}`}>
+      {shown.map((c, i) => <rect key={i} x={(i % 10) * 30 + 4} y={Math.floor(i / 10) * 30 + 4} width={22} height={22} rx={5} fill={c.color} />)}
     </svg>
     <figcaption>
       {groups.map((g, i) => {

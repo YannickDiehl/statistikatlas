@@ -212,7 +212,7 @@ export function checkSign(sav: SavFile, sign: Sign): Note[] {
 /* ---------- Ergebnis ---------- */
 
 export function plenumLines(s: S03State): [string, string][] {
-  const seat = (code: number) => s.seats[String(code)]?.trim() || '–';
+  const seat = (code: number) => (code < 0 && !s.rule.includes(code) ? '' : s.seats[String(code)]?.trim()) || '–';
   const sign = s.sign.value.trim() && s.sign.measure
     ? `${s.sign.value.trim()} Stunden (${measureName(s.sign.measure)} ${selectionShort(s.sign.selection)})`.replace(' )', ')')
     : '';

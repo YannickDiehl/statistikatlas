@@ -88,6 +88,7 @@ test('restores state and reports status and plenum lines', () => {
   const lines = plenumLines(s);
   assert.deepEqual(lines[0], ['Stuhlregel', 'mit „weiß nicht“']);
   assert.equal(lines[1][1], '25 · 13 · –');
+  assert.equal(plenumLines({ ...s, rule: [] })[1][1], '25 · – · –');
   assert.equal(lines[2][1], '40 Stunden (Median aller Voll- und Teilzeitbeschäftigten)');
   const real = fixtureSav();
   assert.ok(hoursFor(real, 'gefragt').every(h => h > 0));
