@@ -45,8 +45,9 @@ export function parseS03(raw: unknown): S03State {
 }
 
 export function statusS03(s: S03State): TaskStatus {
-  if (s.built && s.hallText.trim() && s.sign.value.trim() && s.sign.right.trim()) return 'done';
-  return s.built || s.rule.length || Object.keys(s.seats).length || s.sign.value ? 'running' : 'open';
+  if (s.built && s.hallText.trim() && s.sign.value.trim() && s.sign.measure && s.sign.selection && s.sign.right.trim()) return 'done';
+  const texts = [...Object.values(s.who), ...Object.values(s.seats), s.reasons.dk, s.reasons.nw, s.hallText, s.sign.value, s.sign.right];
+  return s.built || s.rule.length || texts.some(t => t.trim()) || s.sign.measure || s.sign.selection ? 'running' : 'open';
 }
 
 /* ---------- Saal 1: Stühle ---------- */
@@ -63,14 +64,15 @@ export function validCodes(v: SavVariable): number[] {
   return [...v.valueLabels.keys()].filter(c => !isMissingCode(v, c) && counts.has(c)).sort((a, b) => a - b);
 }
 
-/** Hare-Verfahren: ganze Anteile, Reststühle nach größten Resten (bei Gleichstand die größere Gruppe). */
+/** Hare-Verfahren: ganze Anteile, Reststühle nach größten Resten (bei Gleichstand die größere Gruppe).
+ *  Ganzzahlig gerechnet, damit Gleichstände exakt erkannt werden. */
 export function largestRemainder(groups: [number, number][], total = 100): Map<number, number> {
   const sum = groups.reduce((a, [, n]) => a + n, 0);
   if (!sum) return new Map(groups.map(([c]) => [c, 0]));
-  const quotas = groups.map(([code, n]) => ({ code, n, q: n / sum * total }));
-  const out = new Map(quotas.map(g => [g.code, Math.floor(g.q)]));
+  const quotas = groups.map(([code, n]) => ({ code, n, whole: Math.floor(n * total / sum), remainder: n * total % sum }));
+  const out = new Map(quotas.map(g => [g.code, g.whole]));
   let rest = total - [...out.values()].reduce((a, b) => a + b, 0);
-  for (const g of [...quotas].sort((a, b) => (b.q - Math.floor(b.q)) - (a.q - Math.floor(a.q)) || b.n - a.n || a.code - b.code)) {
+  for (const g of [...quotas].sort((a, b) => b.remainder - a.remainder || b.n - a.n || a.code - b.code)) {
     if (rest-- <= 0) break;
     out.set(g.code, out.get(g.code)! + 1);
   }
@@ -94,7 +96,7 @@ function subsets(codes: readonly number[]): number[][] {
   return Array.from({ length: 1 << codes.length }, (_, mask) => codes.filter((_, i) => mask & (1 << i)));
 }
 
-export type SeatDiagnosis = { kind: 'ok' | 'raw' | 'rounded' | 'otherRule' | 'nomatch'; sum: number; notes: Note[] };
+export type SeatDiagnosis = { kind: 'ok' | 'raw' | 'rounded' | 'sum' | 'otherRule' | 'nomatch'; sum: number; notes: Note[] };
 
 export function diagnoseSeats(v: SavVariable, ticked: readonly number[], entered: Map<number, number>): SeatDiagnosis {
   const counts = rawCounts(v), valid = validCodes(v);
@@ -120,6 +122,14 @@ export function diagnoseSeats(v: SavVariable, ticked: readonly number[], entered
       ? `${sum} Stühle – einer muss aufstehen. Nach größten Resten wäre es ${who}. Parlamente streiten über solche Verfahren.`
       : `${sum} Stühle – einer bleibt frei. Nach größten Resten bekäme ${who} ihn.`;
     return { kind: 'rounded', sum, notes: [{ tone: 'hint', text }] };
+  }
+
+  // Nah an der angekreuzten Regel, aber die Summe stimmt nicht (z. B. Prozente abgeschnitten statt gerundet).
+  if (within(expected, 1)) {
+    const off = sum < 100
+      ? `${100 - sum === 1 ? 'einer bleibt' : `${100 - sum} bleiben`} frei. Hast du Prozente abgeschnitten statt gerundet?`
+      : `${sum - 100} zu viel. Prüf die Summe.`;
+    return { kind: 'sum', sum, notes: [{ tone: 'warn', text: `${sum} Stühle statt 100 – ${off} Deine Zahlen liegen nah an der Regel „${nested(describeRule(ticked))}"; jeder Stuhl steht für ein Prozent, zusammen sind es genau 100.` }] };
   }
 
   let best: { rule: number[]; distance: number } | null = null;

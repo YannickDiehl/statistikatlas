@@ -18,6 +18,21 @@ test('distributes 100 chairs by largest remainders', () => {
   assert.deepEqual(Object.fromEntries(withDk), { 1: 42, 2: 25, 6: 11, 42: 6, [-8]: 16 });
 });
 
+test('breaks ties in remainders exactly: the larger group first', () => {
+  assert.deepEqual(Object.fromEntries(largestRemainder([[1, 1], [2, 1], [3, 4]])), { 1: 17, 2: 16, 3: 67 });
+});
+
+test('names an off sum instead of a rule mix-up when the numbers are close to the ticked rule', () => {
+  const v = sav.byName.get('pv01')!;
+  const over = diagnoseSeats(v, [-8], seats({ 1: 43, 2: 25, 6: 11, 42: 6, [-8]: 16 }));
+  assert.equal(over.kind, 'sum');
+  assert.match(over.notes[0].text, /^101 Stühle statt 100 – 1 zu viel\./);
+  const under = diagnoseSeats(v, [], seats({ 1: 49, 2: 30, 6: 13, 42: 6 }));
+  assert.equal(under.kind, 'sum');
+  assert.match(under.notes[0].text, /2 bleiben frei\. Hast du Prozente abgeschnitten/);
+  assert.doesNotMatch(under.notes[0].text, /angekreuzt/);
+});
+
 test('diagnoses which chair rule the entered numbers follow', () => {
   const v = sav.byName.get('pv01')!;
   assert.equal(diagnoseSeats(v, [], seats({ 1: 50, 2: 30, 6: 13, 42: 7 })).kind, 'ok');
@@ -66,6 +81,9 @@ test('restores state and reports status and plenum lines', () => {
   assert.deepEqual(s.rule, [-8]);
   assert.deepEqual(s.seats, { '1': '25', '-8': '13' });
   assert.equal(statusS03(initialS03()), 'open');
+  assert.equal(statusS03({ ...initialS03(), seats: { '1': '' } }), 'open');
+  assert.equal(statusS03({ ...initialS03(), hallText: 'Ein Stuhl ist ein Prozent.' }), 'running');
+  assert.equal(statusS03({ ...s, sign: { ...s.sign, measure: '' } }), 'running');
   assert.equal(statusS03(s), 'done');
   const lines = plenumLines(s);
   assert.deepEqual(lines[0], ['Stuhlregel', 'mit „weiß nicht“']);
