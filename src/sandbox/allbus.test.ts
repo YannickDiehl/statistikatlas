@@ -35,7 +35,7 @@ test('turns labelled numeric variables with 2 to 11 valid categories into items'
 
 test('searches names and labels and resolves claim items before custom ones', () => {
   const sav = fixtureSav();
-  assert.deepEqual(searchVariables(sav, 'vertrauen', 'outcome').map(i => i.variable), ['pt03', 'pt12', 'pt15']);
+  assert.deepEqual(searchVariables(sav, 'vertrauen', 'outcome').map(i => i.variable), ['pt03', 'pt12', 'pt15', 'st01']);
   assert.deepEqual(searchVariables(sav, 'x', 'outcome'), []);
   assert.equal(resolveItem(jugend, sav, 'pa02a'), jugend.items[0]);
   assert.equal(resolveItem(nichtwahl, sav, 'pt03').yes, 'ausgewählt');

@@ -36,6 +36,33 @@ d$pv01 <- lab(pick(c(1, 2, 3, 4, 6, 42, 90, 91, -8, -7, -50), c(.15, .12, .05, .
 d$vertrauen_bundestag_lang <- lab(as.numeric(d$pt03), c("TNZ: SPLIT" = -11), "Langer Variablenname zum Test")
 d$kommentar <- sample(c("", "ja", "Ümläute & Ärger", "ein sehr langer Kommentar mit mehr als acht Zeichen"), n, replace = TRUE)
 
+# Lernpfad-Aufgaben 1–3: Variablen mit den Labels und Missing-Codes des echten ALLBUS (Werte synthetisch).
+# Neue Zufallsziehungen stehen hinter allen bisherigen, damit deren Werte gleich bleiben.
+scale_labels <- function(from, to, first, last) setNames(from:to, c(first, rep("..", to - from - 1), last))
+d$pv01 <- labelled_spss(as.numeric(d$pv01), label = "BEFR.: WAHLABSICHT BUNDESTAGSWAHL", na_range = miss,
+  labels = c("NICHT WAHLBERECHTIGT" = -50, "DATENFEHLER: MFN" = -42, "KEINE ANGABE" = -9, "WEISS NICHT" = -8, "VERWEIGERT" = -7,
+             "CDU-CSU" = 1, "SPD" = 2, "FDP" = 3, "DIE GRUENEN" = 4, "DIE LINKE" = 6, "AFD" = 42, "ANDERE PARTEI" = 90, "WUERDE NICHT WAEHLEN" = 91))
+d$mode <- labelled(pick(2:4, c(.4, .3, .3)), c("PAPI" = 1, "CAPI" = 2, "CAWI" = 3, "MAIL" = 4), label = "ERHEBUNGSMODUS DER ALLBUS-HAUPTBEFRAGUNG")
+d$splt23_1 <- lab(ifelse(d$mode == 2, -15, pick(1:2, c(.5, .5))), c("TNZ: MODE" = -15, "SPLIT A" = 1, "SPLIT B" = 2), "FRAGEBOGENSPLIT 2023: FRABO-ERWEITERUNG")
+d$rh08b <- lab(pick(c(1:3, -6, -9), c(.1, .3, .5, .07, .03)), c("KEINE ANGABE" = -9, "KENNE ICH NICHT" = -6, "VIEL" = 1, "ETWAS" = 2, "GAR NICHTS" = 3), "HALTE VON: ASTROLOGIE, HOROSKOPE")
+d$mi05 <- lab(pick(c(1:3, -11, -8), c(.2, .35, .1, .3, .05)), c("TNZ: SPLIT" = -11, "WEISS NICHT" = -8, "UNEINGESCHRAENKT" = 1, "ZUZUG BEGRENZEN" = 2, "GANZ UNTERBINDEN" = 3), "ZUZUG VON: KRIEGSFLUECHTLINGEN")
+for (v in c("mp16", "mp17", "mp18", "mp19")) {
+  d[[v]] <- lab(pick(c(1:5, -11), c(rep(.14, 5), .3)), c("TNZ: SPLIT" = -11, "RISIKO UEBERWIEGT" = 1, "EHER RISIKO" = 2, "WEDER NOCH" = 3, "EHER CHANCE" = 4, "CHANCE UEBERWIEGT" = 5),
+                paste("FLUECHTL. CHANCE O.RISIKO:", c(mp16 = "SOZIALSTAAT", mp17 = "SICHERHEIT", mp18 = "ZUSAMMENLEB", mp19 = "WIRTSCHAFT")[[v]]))
+}
+d$st01 <- lab(ifelse(d$splt23_1 == 1, -11, pick(c(1:4, -8, -9, -42), c(.3, .35, .25, .02, .03, .02, .03))),
+              c("DATENFEHLER: MFN" = -42, "TNZ: SPLIT" = -11, "KEINE ANGABE" = -9, "WEISS NICHT" = -8,
+                "MAN KANN TRAUEN" = 1, "MUSS VORSICHTIG SEIN" = 2, "KOMMT DARAUF AN" = 3, "SONSTIGES" = 4), "VERTRAUEN ZU MITMENSCHEN")
+d$li04 <- lab(pick(1:7, NULL), scale_labels(1, 7, "1 - UNWICHTIG", "7 - SEHR WICHTIG"), "WICHTIGKEIT: FREUNDE UND BEKANNTE")
+d$dp03 <- lab(pick(c(1, 2, -10), c(.4, .1, .5)), c("TNZ: FILTER" = -10, "KEINE ANGABE" = -9, "JA" = 1, "NEIN" = 2), "LEBENSPARTNER: GEMEINSAMER HAUSHALT?")
+d$xs01 <- lab(pick(c(0, 1, -9), c(.3, .65, .05)), c("KEINE ANGABE" = -9, "NEIN" = 0, "JA" = 1), "INTERVIEW: ALLEINE DURCHGEFUEHRT")
+d$pa01 <- lab(ifelse(d$mode == 4 & runif(n) < .15, -42, pick(c(1:10, -9), c(rep(.095, 10), .05))),
+              c("DATENFEHLER: MFN" = -42, "KEINE ANGABE" = -9, scale_labels(1, 10, "LINKS", "RECHTS")), "LINKS-RECHTS-SELBSTEINSTUFUNG, BEFR.")
+d$ls01 <- lab(pick(c(0:10, -9), c(rep(.09, 11), .01)), c("KEINE ANGABE" = -9, scale_labels(0, 10, "GANZ UNZUFRIEDEN", "GANZ ZUFRIEDEN")), "ALLGEMEINE LEBENSZUFRIEDENHEIT")
+d$work <- lab(pick(1:4, c(.4, .15, .05, .4)), c("KEINE ANGABE" = -9, "VOLLZEIT, GANZTAGS" = 1, "TEILZEIT" = 2, "NEBENHER BERUFSTAE." = 3, "NICHT ERWERBSTAETIG" = 4), "BEFRAGTE(R) BERUFSTAETIG?")
+d$dw15 <- lab(ifelse(d$work %in% 1:2, sample(c(10, 20, 25, 30, 35, 38.5, 40, 40, 40, 45, 50, 60), n, replace = TRUE), -10),
+              c("DATENFEHLER" = -41, "TNZ: FILTER" = -10, "KEINE ANGABE" = -9), "BEFRAGTER: ARBEITSSTUNDEN PRO WOCHE")
+
 write_sav(d, file.path(out, "sandbox-fixture.sav"), compress = "byte")
 write_sav(d, file.path(out, "sandbox-fixture-uncompressed.sav"), compress = "none")
 
