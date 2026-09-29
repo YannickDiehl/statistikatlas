@@ -52,6 +52,7 @@ test('asks for documented searches and lets a reason overrule an objection', () 
   const ask = { ...emptyStamp(), decision: 'ask' as const, searches: ['angst'] };
   assert.match(checkStamp(sav, antragById.politik, ask)[0].text, /mindestens zwei Suchwörter/);
   const two = { ...ask, searches: ['angst', 'furcht'] };
+  assert.doesNotMatch(checkStamp(sav, antragById.horoskop, two)[0].text, /begründe/);
   assert.match(checkStamp(sav, antragById.gefluechtete, two)[0].text, /Einspruch/);
   assert.equal(checkStamp(sav, antragById.gefluechtete, { ...two, note: 'Risiko ist nicht dasselbe wie Angst.' })[0].tone, 'ok');
   assert.equal(checkStamp(sav, antragById.einsamkeit, two)[0].tone, 'ok');

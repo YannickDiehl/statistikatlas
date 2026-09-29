@@ -37,7 +37,7 @@ export const antraege: Antrag[] = [
     id: 'horoskop',
     text: 'Halten die Leute eigentlich etwas von Horoskopen?',
     catalog: { rh08b: 'Passt: Die Frage misst genau, was man von Astrologie und Horoskopen hält.' },
-    onAsk: { tone: 'hint', text: 'Die Kollegin zögert: „Such mal nach ‚astro‘ – ich meine, der ALLBUS fragt danach.“', needsReason: true },
+    onAsk: { tone: 'hint', text: 'Die Kollegin: „Such aus Neugier noch nach ‚tarot’ – der ALLBUS fragt Überraschendes.”', needsReason: false },
     hint: {
       think: 'find_var() findet auch Wortteile. Ein kurzes Suchwort reicht.',
       pointer: 'find_var() durchsucht Namen und Labels, codebook() zeigt Fragetext, Werte und fehlende Angaben.',
