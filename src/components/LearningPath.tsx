@@ -125,7 +125,7 @@ export function LearningPath({ onConcept, sessionIndex = 0, onSessionChange, ini
             </>
           : <>
               <span className="learning-eyebrow">MISSION · BELEGE ES!</span>
-              <p>In dieser Mission prüfst du die Behauptung „{claim.quote}" mit dem echten ALLBUS. Lade dafür zuerst deine Datei.</p>
+              <p>In dieser Mission prüfst du die Behauptung „{claim.quote}“ mit dem echten ALLBUS. Lade dafür zuerst deine Datei.</p>
               <DataDrop onLoaded={setData} />
             </>)}
         {!taskDef && !claim && <div className="learning-mission-soon">

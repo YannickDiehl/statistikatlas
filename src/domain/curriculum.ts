@@ -15,13 +15,13 @@ export type Session = {
   introduced: Term[];
   /** Die Aufgabe der Sitzung (Einzelanfertigung, `src/tasks/`). */
   task: TaskId | null;
-  /** Übergangsweise: Mission „Belege es!" bis zum Umbau von Sitzung 4. */
+  /** Übergangsweise: Mission „Belege es!“ bis zum Umbau von Sitzung 4. */
   mission: Claim['id'] | null;
 };
 
 const t = (label: string, concept?: string): Term => ({ label, concept });
 
-// Gliederung nach „Statistik im WiSe 24/25"; die gestrichenen Sitzungen 7–8 (EFA) entfallen.
+// Gliederung nach „Statistik im WiSe 24/25“; die gestrichenen Sitzungen 7–8 (EFA) entfallen.
 export const sessions: Session[] = [
   {
     id: 1, plan: 'Sitzungsplan 1', title: 'Einstieg', short: 'R, RStudio, ALLBUS',
@@ -94,3 +94,4 @@ export const sessions: Session[] = [
     task: null, mission: null,
   },
 ];
+

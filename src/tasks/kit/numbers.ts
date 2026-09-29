@@ -1,4 +1,4 @@
-/** Liest „37,9", „37.9", „1.656" (Tausenderpunkt), „5 246" und „−8". Gibt null zurück, wenn es keine Zahl ist. */
+/** Liest „37,9”, „37.9”, „1.656” (Tausenderpunkt), „5 246” und „−8”. Gibt null zurück, wenn es keine Zahl ist. */
 export function parseNumber(input: string): number | null {
   const s = input.trim().replace(/\s/g, '').replace(/[−–]/g, '-');
   if (!s) return null;
