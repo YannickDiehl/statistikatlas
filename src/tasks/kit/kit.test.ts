@@ -15,6 +15,9 @@ test('reads German and English number formats', () => {
   assert.equal(parseNumber('5 246'), 5246);
   assert.equal(parseNumber('−8'), -8);
   assert.equal(parseNumber('-0,5'), -0.5);
+  assert.equal(parseNumber('0.500'), 0.5);
+  assert.equal(parseNumber('0.123'), 0.123);
+  assert.equal(parseNumber('-0.250'), -0.25);
   for (const bad of ['', 'abc', '1,2,3', '5,5 %']) assert.equal(parseNumber(bad), null, bad);
   assert.ok(near(37.94, 37.9, 0.05));
   assert.ok(!near(38, 37.9, 0.05));

@@ -4,7 +4,7 @@ export function parseNumber(input: string): number | null {
   if (!s) return null;
   let t = s;
   if (s.includes(',')) t = s.replace(/\./g, '').replace(',', '.');
-  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) t = s.replace(/\./g, '');
+  else if (/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(s)) t = s.replace(/\./g, '');
   if (!/^-?(\d+\.?\d*|\.\d+)$/.test(t)) return null;
   return Number(t);
 }
