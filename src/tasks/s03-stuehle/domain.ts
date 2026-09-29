@@ -129,7 +129,7 @@ export function diagnoseSeats(v: SavVariable, ticked: readonly number[], entered
     const off = sum < 100
       ? `${100 - sum === 1 ? 'einer bleibt' : `${100 - sum} bleiben`} frei. Hast du Prozente abgeschnitten statt gerundet?`
       : `${sum - 100} zu viel. Prüf die Summe.`;
-    return { kind: 'sum', sum, notes: [{ tone: 'warn', text: `${sum} Stühle statt 100 – ${off} Deine Zahlen liegen nah an der Regel „${nested(describeRule(ticked))}"; jeder Stuhl steht für ein Prozent, zusammen sind es genau 100.` }] };
+    return { kind: 'sum', sum, notes: [{ tone: 'warn', text: `${sum} Stühle statt 100 – ${off} Deine Zahlen liegen nah an der Regel „${nested(describeRule(ticked))}“; jeder Stuhl steht für ein Prozent, zusammen sind es genau 100.` }] };
   }
 
   let best: { rule: number[]; distance: number } | null = null;
