@@ -2,7 +2,8 @@ import { registerAtlasTools, type AtlasTool } from './atlasTools';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {createElement} from 'react';
+import {Children,createElement,isValidElement,type ReactElement,type ReactNode} from 'react';
+import {PackageInspector} from '../components/PackageInspector';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {mariposaExports,mariposaEntries,entryById,functionToConcept,formulaParts,formulaTargets} from './mariposaCatalog';
 import {exampleVariants,analysisCode,bootstrapCode,initialRSettings,validateRSettings,eligible,surveyCsv,rolesFor} from './mariposa';
@@ -62,4 +63,12 @@ test('optional atlas tools use the same navigation action and reject unknown con
  const registered:AtlasTool[]=[],signals:AbortSignal[]=[];let selected='mean';const stop=registerAtlasTools({registerTool:(tool,options)=>{registered.push(tool);signals.push(options.signal);}},{read:()=>({selected}),open:id=>{selected=id;}});
  assert.equal(registered.length,2);assert.equal(registered[0].annotations.readOnlyHint,true);assert.equal(registered[1].annotations.readOnlyHint,false);
  registered[1].execute({id:'std'});assert.deepEqual(registered[0].execute({}),{selected:'z'});assert.throws(()=>registered[1].execute({id:'made_up'}));assert.equal(selected,'z');stop();assert.ok(signals.every(s=>s.aborted));
+});
+test('package inspector gives its sibling panels distinct keys',()=>{
+ for(const id of ['weights','se','logit','t_test']){
+  let keys:string[]=[];
+  function Probe(){const tree=PackageInspector({onSelect:noop,onHover:noop,rows,selection:defaultSelection,entry:entryById[id],selected:ref(id),onClose:noop,onFocusMap:noop,trace:false,onTrace:noop}) as ReactElement<{children:ReactNode}>;keys=Children.toArray(tree.props.children).filter(isValidElement).map(c=>String(c.key));return null;}
+  renderToStaticMarkup(createElement(Probe));
+  assert.ok(keys.length>3,id);assert.equal(new Set(keys).size,keys.length,`${id}: ${keys.join(' ')}`);
+ }
 });

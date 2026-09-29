@@ -49,7 +49,8 @@ export type Claim = {
   temporal: boolean;
   intention: boolean;
   midpoint: number | null;
-  thirdVariables: string;
+  /** Denkanstoß der Gegenfrage „Du nennst eine Ursache.“ */
+  causalHint: string;
   core: { label: string; test: (r: AnalysisResult) => boolean };
 };
 
@@ -105,20 +106,20 @@ const trustItems: ItemOption[] = [
   ['pt15', 'Vertrauen in die Parteien'],
 ].map(([variable, title]) => ({
   variable, title,
-  question: `${title}: 1 gar kein Vertrauen bis 7 großes Vertrauen. Nur einer Hälfte der Befragten gestellt.`,
+  question: `${title}: 1 gar kein Vertrauen bis 7 großes Vertrauen. Nur einem Teil der Befragten gestellt (Fragebogensplit).`,
   categories: trustScale, strict: [6, 7], wide: [5, 6, 7], split: true, yes: 'vertraut', no: 'vertraut nicht',
 }));
 
 const distrustItems: ItemOption[] = [
   {
     variable: 'pe01', title: 'Politiker kümmern sich nicht um meine Gedanken',
-    question: '„Die Politiker kümmern sich nicht viel darum, was Leute wie ich denken.“ Stimme voll zu bis stimme gar nicht zu.',
+    question: '„Die Politiker kümmern sich nicht viel darum, was Leute wie ich denken.“ Stimme voll zu bis stimme gar nicht zu. Nur einem Teil der Befragten gestellt (Fragebogensplit).',
     categories: scale(1, 4, { 1: 'stimme voll zu', 2: 'stimme eher zu', 3: 'stimme eher nicht zu', 4: 'stimme gar nicht zu' }),
     strict: [1], wide: [1, 2], split: true, yes: 'misstraut', no: 'übrige',
   },
   {
     variable: 'pa35', title: 'Politiker vertreten nur die Reichen',
-    question: '„Politiker vertreten nur die Interessen der Reichen.“ Stimme voll zu bis lehne ganz ab.',
+    question: '„Politiker vertreten nur die Interessen der Reichen.“ Stimme voll zu bis lehne ganz ab. Nur einem Teil der Befragten gestellt (Fragebogensplit).',
     categories: scale(1, 5, { 1: 'stimme voll zu', 2: 'stimme eher zu', 3: 'teils/teils', 4: 'lehne eher ab', 5: 'lehne ganz ab' }),
     strict: [1], wide: [1, 2], split: true, yes: 'misstraut', no: 'übrige',
   },
@@ -138,7 +139,7 @@ const ageLabel: Record<string, (cut: number) => string> = {
 export const jugend: Claim = {
   id: 'jugend',
   quote: 'Die Jungen interessieren sich doch gar nicht mehr für Politik.',
-  source: 'Talkshow, Gast (fiktiv)',
+  source: 'Gast in einer Polit-Talkshow (fiktiv)',
   gaps: [
     ['Wer genau?', 'die Jungen = ?'],
     ['Was genau?', 'Interesse = ?'],
@@ -170,7 +171,7 @@ export const jugend: Claim = {
   temporal: true,
   intention: false,
   midpoint: null,
-  thirdVariables: 'etwa Bildung, Lebensphase oder Erwerbstätigkeit',
+  causalHint: 'Liegt es an der Lebensphase (Ausbildung, Umzug, Berufseinstieg), oder ist diese Generation anders und bleibt es? Eine einzige Befragung kann Alter und Generation nicht trennen.',
   core: { label: '„Die meisten Jungen interessieren sich nicht“', test: r => r.target < 0.5 },
 };
 jugend.dimensions = [
@@ -184,7 +185,7 @@ jugend.dimensions = [
 export const osten: Claim = {
   id: 'osten',
   quote: 'Im Osten vertraut kaum noch jemand dem Bundestag.',
-  source: 'Social-Media-Post (fiktiv)',
+  source: 'Social-Media-Post, tausendfach geteilt (fiktiv)',
   gaps: [
     ['Wer genau?', '„der Osten“ = ?'],
     ['Was genau?', 'Vertrauen = ?'],
@@ -216,7 +217,7 @@ export const osten: Claim = {
   temporal: true,
   intention: false,
   midpoint: 4,
-  thirdVariables: 'etwa Alter, Einkommen oder Erfahrungen mit Arbeitslosigkeit',
+  causalHint: 'Osten und Westen unterscheiden sich auch in Alter, Einkommen und Erfahrungen mit Arbeitslosigkeit. Wie viel vom Unterschied bliebe, wenn man Gleichaltrige mit gleichem Einkommen vergleicht?',
   core: { label: '„Kaum jemand im Osten vertraut“ (unter 20 %)', test: r => r.target < 0.2 },
 };
 osten.dimensions = [
@@ -234,7 +235,7 @@ osten.dimensions = [
 export const nichtwahl: Claim = {
   id: 'nichtwahl',
   quote: 'Wer Politikern misstraut, geht gar nicht mehr wählen.',
-  source: 'Pressemitteilung (fiktiv)',
+  source: 'Pressemitteilung eines Parteivorstands (fiktiv)',
   gaps: [
     ['Wer genau?', '„wer misstraut“ = ?'],
     ['Was genau?', '„nicht wählen“ = ?'],
@@ -270,7 +271,7 @@ export const nichtwahl: Claim = {
   temporal: true,
   intention: true,
   midpoint: null,
-  thirdVariables: 'etwa Bildung, politisches Interesse oder Alter',
+  causalHint: 'Bildung, politisches Interesse oder Alter könnten beides erklären. Und vielleicht läuft es umgekehrt: Wer ohnehin nicht wählt, begründet das mit Misstrauen.',
   core: { label: '„Die meisten Misstrauenden wollen nicht wählen“', test: r => r.target > 0.5 },
 };
 nichtwahl.dimensions = [

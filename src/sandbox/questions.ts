@@ -41,7 +41,7 @@ export function questionsFor(ctx: QuestionContext): Question[] {
     const then = colBased ? columnShare(alt.table, ctx.evidence!.row, ctx.evidence!.cell) : alt.target;
     out.push(Math.abs(now - then) < 0.01
       ? { id: 'weight', title: 'Du hast ungewichtet gerechnet.', concept: 'weights',
-          text: `Gewichtet ändert sich dein Wert kaum (${pct(then)} statt ${pct(now)}). Warum wirkt das Gewicht hier so wenig – und bei welcher Aussage würde es viel ändern? Tipp: wghtpew gleicht vor allem aus, dass der Osten überproportional befragt wurde.` }
+          text: `${pct(then) === pct(now) ? `Gewichtet bleibt dein Wert bei ${pct(now)}.` : `Gewichtet ändert sich dein Wert kaum (${pct(then)} statt ${pct(now)}).`} Warum wirkt das Gewicht hier so wenig – und bei welcher Aussage würde es viel ändern? Tipp: wghtpew gleicht vor allem aus, dass der Osten überproportional befragt wurde.` }
       : { id: 'weight', title: 'Du hast ungewichtet gerechnet.', concept: 'weights',
           text: `Im ALLBUS stammen ${pct(eastShare)} der Befragten aus dem Osten, in der Bevölkerung sind es deutlich weniger. Gewichtet mit wghtpew wären es ${pct(then)} statt ${pct(now)}. Ändert das dein Urteil?` });
   }
@@ -72,7 +72,7 @@ export function questionsFor(ctx: QuestionContext): Question[] {
 
   if (CAUSAL_WORDS.test(ctx.reason)) {
     out.push({ id: 'causal', title: 'Du nennst eine Ursache.', concept: 'causality',
-      text: `Zeigen die Daten, warum sich die Gruppen unterscheiden – oder nur, dass sie es tun? Welche Drittvariable, ${claim.thirdVariables}, könnte beides erklären?` });
+      text: `Zeigen die Daten, warum sich die Gruppen unterscheiden – oder nur, dass sie es tun? ${claim.causalHint}` });
   }
 
   const other = claim.items.find(i => i.variable !== choice.item);

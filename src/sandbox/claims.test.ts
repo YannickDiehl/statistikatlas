@@ -43,3 +43,10 @@ test('matches mariposa on the synthetic fixture', () => {
   assert.equal(j.target.toFixed(6), '0.246710');
   assert.equal(j.comparison.toFixed(6), '0.381749');
 });
+
+test('split items say that only part of the sample was asked', () => {
+  for (const claim of claims) for (const item of claim.items) {
+    assert.doesNotMatch(item.question, /Hälfte/, item.variable);
+    if (item.split) assert.match(item.question, /Nur einem Teil der Befragten gestellt \(Fragebogensplit\)\./, item.variable);
+  }
+});

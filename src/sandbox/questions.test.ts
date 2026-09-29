@@ -43,10 +43,29 @@ test('recognises causal language without false alarms', () => {
   for (const s of ['Die Grundgesamtheit', 'Ein Drittel vertraut', 'Anteil']) assert.ok(!CAUSAL_WORDS.test(s), s);
 });
 
+test('the causal question fits each claim', () => {
+  const causal = (claim: typeof jugend) => questionsFor(ctx(claim, { reason: 'weil es so ist' })).find(q => q.id === 'causal')!.text;
+  assert.match(causal(jugend), /Alter und Generation nicht trennen/);
+  assert.match(causal(osten), /Gleichaltrige mit gleichem Einkommen/);
+  assert.match(causal(nichtwahl), /beides erklären/);
+  assert.match(causal(nichtwahl), /umgekehrt/);
+  // Alter und Region werden von keiner Drittvariable verursacht.
+  for (const claim of [jugend, osten]) assert.doesNotMatch(causal(claim), /beides erklären/);
+});
+
 test('questions quote recomputed numbers', () => {
   const split = questionsFor(ctx(osten, { choice: { ...osten.defaults, missing: { mode: 'allAsNo' } } })).find(q => q.id === 'split')!;
   assert.match(split.text, /Nicht-Gefragten als „nein“/);
   const threshold = questionsFor(ctx(osten)).find(q => q.id === 'threshold')!;
   assert.match(threshold.text, /\d+,\d %/);
   assert.equal(threshold.concept, 'operationalization');
+});
+
+test('the weight question never compares a number with itself', () => {
+  for (const claim of claims) for (const p of enumeratePaths(claim)) for (const base of ['row', 'col'] as const) {
+    const choice = { ...p.choice, weighted: false };
+    const q = questionsFor(ctx(claim, { choice, item: itemOf(claim, choice.item), evidence: { row: 0, cell: 'yes', base } })).find(x => x.id === 'weight')!;
+    const m = q.text.match(/\(([\d,]+ %) statt ([\d,]+ %)\)/);
+    assert.ok(!m || m[1] !== m[2], q.text);
+  }
 });

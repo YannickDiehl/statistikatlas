@@ -25,11 +25,11 @@ export function PackageInspector(p:RPanelProps&{selected:Ref;onClose:()=>void;on
  return <aside className="network-inspector package-inspector" ref={scroll} aria-labelledby="inspector-title"><div className="inspector-top"><span className="eyebrow">{e.variants.length?'Verfahren & Werkzeuge':'Gemeinsamer Baustein'}</span><button className="inspector-close" onClick={p.onClose} aria-label="Erklärung einklappen"><X size={18}/></button></div><h1 id="inspector-title" tabIndex={-1}>{e.title}</h1><p className="concept-intro">{e.intro}</p><button className="map-focus-link" onClick={p.onFocusMap}><Focus size={15}/>Bezüge in der Karte zeigen</button>
  <LinkedFormula key={`${e.id}-${p.settings?.variant||0}`} contextAnchor={p.contextAnchor} route={p.route} formula={v?.formula||e.formula} reference={p.selected} onSelect={p.onSelect} onHover={p.onHover}/>
  <CalculationSteps reference={p.selected} route={p.route||'covariance'} formula={v?.formula||e.formula} onSelect={p.onSelect} onHover={p.onHover}/>
- <FoundationLab key={e.id} id={e.id} rows={p.rows} selection={p.selection}/>
- {e.lab&&<PrincipleLab key={e.id} id={e.lab}/>}
+ <FoundationLab key={`foundation-${e.id}`} id={e.id} rows={p.rows} selection={p.selection}/>
+ {e.lab&&<PrincipleLab key={`principle-${e.id}`} id={e.lab}/>}
  <section className="package-meaning"><h2>Was sagt das Ergebnis?</h2><p>{e.output}</p></section>
  <section className="package-conditions"><h2>Voraussetzungen & Einordnung</h2>{e.requires.map(r=>link(r.id,r.reason))}<ul>{e.notes.map((text,i)=><li key={i}>{text}</li>)}</ul></section>
- {e.variants.length>0&&<MariposaPanel key={e.id} {...p}/>}
+ {e.variants.length>0&&<MariposaPanel key={`mariposa-${e.id}`} {...p}/>}
  <MeaningLinks contextAnchor={p.contextAnchor} reference={p.selected} route={p.route||'covariance'} onSelect={p.onSelect} onHover={p.onHover}/>
  {e.sources?.length&&<details className="foundation-sources"><summary>Fachlich nachlesen</summary>{e.sources.map(source=><a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.title}</a>)}</details>}
  <section className="inspector-relations"><div className="relations-heading"><h2>Von hier aus weiter</h2><button onClick={p.onTrace} aria-pressed={p.trace}>{p.trace?'Direkte Bezüge':'Alle Voraussetzungen'}</button></div>{before.length>0&&<div className="relation-group"><h3>Das geht voraus →</h3>{before.map(r=>link(r.source,r.label))}</div>}{after.length>0&&<div className="relation-group"><h3>Daraus entsteht →</h3>{after.map(r=>link(r.target,r.label))}</div>}</section>

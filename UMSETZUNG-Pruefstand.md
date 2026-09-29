@@ -1,3 +1,13 @@
+## 29. September 2026 – Erprobungsreife der Missionen
+
+- Texte abgestimmt: Quellenangaben „Gast in einer Polit-Talkshow“, „Social-Media-Post, tausendfach geteilt“, „Pressemitteilung eines Parteivorstands“ (alle fiktiv). Die Gegenfrage zu Kausalsprache hat je Behauptung einen eigenen Denkanstoß: Lebensphase gegen Generation (Jugend), Zusammensetzung der Regionen (Osten), Drittvariablen und umgekehrte Richtung (Nichtwahl). „Beides erklären“ steht nur noch dort, wo eine Drittvariable beides beeinflussen kann.
+- Sachkorrektur: Split-Items wurden 69,6 % der Befragten gestellt, nicht „einer Hälfte“. Alle fünf Split-Items (pt03, pt12, pt15, pe01, pa35) sagen jetzt „Nur einem Teil der Befragten gestellt (Fragebogensplit)“. Die Gewichtungsfrage vergleicht keine gleich gerundeten Werte mehr („41,5 % statt 41,5 %“).
+- Behoben: doppelter React-Key im Inspector (FoundationLab, PrincipleLab und MariposaPanel teilten `e.id`; betraf „Gewichte“, Standardfehler, Logit und 46 Verfahren mit R-Varianten) und die `<title>`-Warnung im Robustheitsspiegel. Der Spiegel behält auf schmalen Bildschirmen seine Schriftgröße, lässt sich seitlich verschieben und zeigt den eigenen Weg mittig.
+- 130 automatisierte Tests: 129 bestanden, der Echtdaten-Test ohne Datei übersprungen, mit ZA8831 v1.3.0 bestanden. Typprüfung, Produktions- und Offline-Build erfolgreich.
+- Browserprüfung mit echter Datei bei 1440, 820 und 390 px: alle drei Missionen sauber und „schlampig“ durchgespielt; Referenzwerte reproduziert (Jugend gewichtet 33,1/40,9 %, Osten 34,6/43,0 %, Nichtwahl mit „weiß nicht“ 23,0 %, ohne 8,8 %); alle elf Gegenfragen ausgelöst; Karte und Rückkehr ohne Konsolenwarnung; Wiederherstellung nach Neuladen; beide Downloads; Schrittleiste und Schieberegler per Tastatur; kein horizontales Überlaufen. Im Browser-Speicher stehen nur Entscheidungen und eigene Texte.
+
+---
+
 ## 29. September 2026 – Lernpfad nach Sitzungsplan mit Missionen „Belege es!“
 
 - Neuer Lernpfad mit zehn Sitzungen nach dem Sitzungsplan WiSe 24/25, Begriffen zur Wiederholung und neuen Begriffen je Sitzung sowie drei Missionen (Sitzungen 3–5) auf echten ALLBUS-Daten. Der bisherige Lernpfad mit zwölf Politik-Sitzungen, Vermutungsfragen, 36 Aufgaben, Arbeitsheft und Aufgabenbrücke entfällt.

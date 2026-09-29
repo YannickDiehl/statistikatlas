@@ -49,3 +49,12 @@ test('the workbench shows the evidence sentence and the midpoint switch only whe
   assert.match(east, /Mittelkategorie 4 ausschließen/);
   assert.doesNotMatch(renderClaim(claims[0], { step: 1, reached: 1 }), /Mittelkategorie/);
 });
+
+test('the mirror renders without React warnings', () => {
+  const errors: string[] = [], original = console.error;
+  console.error = (...args: unknown[]) => { errors.push(args.map(String).join(' ')); };
+  try {
+    for (const claim of claims) renderClaim(claim, { step: 4, reached: 4, verdict: 1, reason: 'Siehe Tabelle.', evidence: { row: 0, cell: 'yes', base: 'row' } });
+  } finally { console.error = original; }
+  assert.deepEqual(errors, []);
+});

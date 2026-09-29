@@ -1,4 +1,5 @@
 import { Download } from 'lucide-react';
+import { useEffect, useRef } from 'react';
 import { downloadText } from '../../domain/mariposa';
 import type { Claim } from '../claims';
 import { num1, pct } from '../format';
@@ -16,6 +17,7 @@ export function MirrorStep({ claim, work, mirror, ownVariable, evidence, script 
   evidence: string;
   script: string;
 }) {
+  const scroller = useRef<HTMLDivElement>(null);
   const rows = claim.items.map(i => i.variable);
   if (!rows.includes(ownVariable)) rows.push(ownVariable);
   const diffs = mirror.paths.map(p => p.result.difference);
@@ -27,22 +29,30 @@ export function MirrorStep({ claim, work, mirror, ownVariable, evidence, script 
   const ticks = Array.from({ length: Math.floor(hi / 5) - Math.ceil(lo / 5) + 1 }, (_, i) => (Math.ceil(lo / 5) + i) * 5);
   const total = mirror.paths.length;
   const maxWeight = Math.max(...mirror.weights.map(w => w.spread), 0.1);
+  // Auf schmalen Bildschirmen den eigenen Weg in die Mitte des sichtbaren Ausschnitts rücken.
+  const ownX = x(mirror.own.difference) / WIDTH;
+  useEffect(() => {
+    const el = scroller.current;
+    if (el && el.scrollWidth > el.clientWidth) el.scrollLeft = ownX * el.scrollWidth - el.clientWidth / 2;
+  }, [ownX]);
   const summary = `Abstand zwischen den Gruppen in ${total} Auswertungswegen, von ${num1(Math.min(...diffs))} bis ${num1(Math.max(...diffs))} Prozentpunkten. Dein Weg: ${num1(mirror.own.difference)} Punkte.`;
 
   return <>
     <section className="sandbox-card">
       <h3>Robustheitsspiegel: {total} vertretbare Auswertungswege</h3>
+      <div className="sandbox-mirror-scroll" ref={scroller} tabIndex={0} aria-label="Diagramm des Robustheitsspiegels">
       <svg className="sandbox-mirror" viewBox={`0 0 ${WIDTH} ${height}`} role="img" aria-label={summary}>
         <line x1={x(0)} x2={x(0)} y1={TOP - 12} y2={height - 26} className="zero" />
         <text x={x(0)} y={TOP - 18} textAnchor="middle">kein Unterschied</text>
         {rows.map(r => <text key={r} x={0} y={y(r) + 4}>{r}</text>)}
         {mirror.paths.map((p, i) => <circle key={i} cx={x(p.result.difference)} cy={y(p.choice.item) + ((i % 5) - 2) * 4} r={4} className="path">
-          <title>{p.levels.join(' · ')}: {num1(p.result.difference)} Punkte</title>
+          <title>{`${p.levels.join(' · ')}: ${num1(p.result.difference)} Punkte`}</title>
         </circle>)}
         <circle cx={x(mirror.own.difference)} cy={y(ownVariable)} r={9} className="own" />
         <text x={x(mirror.own.difference)} y={y(ownVariable) - 13} textAnchor="middle" className="own-label">dein Weg</text>
         {ticks.map(t => <text key={t} x={x(t)} y={height - 8} textAnchor="middle">{t}</text>)}
       </svg>
+      </div>
       <p className="sandbox-note">Jeder Punkt ist ein Weg aus {claim.dimensions.map(d => d.label).join(' × ')}. Werte: Abstand in Prozentpunkten.{mirror.ownInGrid ? '' : ' Dein Weg liegt außerhalb der vorbereiteten Wege.'}</p>
     </section>
 

@@ -87,7 +87,7 @@ Alle Zahlen: ALLBUScompact 2023, v1.3.0, geprüft mit mariposa 0.7.3 bzw. haven.
 
 - Items: `pt03` Vertrauen Bundestag (1–7); Alternativen `pt12` Bundesregierung, `pt15` Parteien.
 - Gruppen: `eastwest`.
-- Hauptfallen: „kaum noch jemand“ gegen die Daten; Mittelkategorie 4 (Ost 21,5 %) zählt wohin?; Split: nur rund die Hälfte wurde gefragt (3.592 Gültige); Gewichtung wirkt nicht bei Anteilen innerhalb der Regionen, aber stark bei Spaltenaussagen.
+- Hauptfallen: „kaum noch jemand“ gegen die Daten; Mittelkategorie 4 (Ost 21,5 %) zählt wohin?; Split: nur 69,6 % wurden gefragt (3.592 Gültige); Gewichtung wirkt nicht bei Anteilen innerhalb der Regionen, aber stark bei Spaltenaussagen.
 - Referenz: vertrauen (5–7) Ost 34,6 %, West 43,0 %; Anteil Ost an den stark Misstrauenden (≤ 2) ungewichtet 41,8 %, gewichtet 23,4 %. `pt12`: 31,9 / 40,9 %; `pt15`: 15,8 / 20,6 %.
 - Spiegel: Item {pt03, pt12, pt15} × Schwelle {5–7, 6–7} × Mitte 4 {ausgeschlossen, als „nicht vertrauend“} × Gewichtung {ja, nein} = 24 Wege.
 
@@ -256,5 +256,5 @@ Missionen für die Sitzungen 2 und 6–10; Spin-Doktor, Vorregistrieren & aufdec
 
 ## 12. Offene Punkte
 
-- Wortlaut der fiktiven Quellenangaben und der Drittvariablen-Beispiele je Behauptung wird bei der Umsetzung redaktionell ausformuliert und dir zur Durchsicht vorgelegt.
+- ~~Wortlaut der fiktiven Quellenangaben und der Drittvariablen-Beispiele~~ – am 29. September 2026 abgestimmt. Die Gegenfrage „Du nennst eine Ursache.“ hat je Behauptung einen eigenen Denkanstoß (`causalHint`): Alter gegen Generation (Jugend), Zusammensetzung der Regionen (Osten), Drittvariablen und umgekehrte Richtung (Nichtwahl). Alter und Region werden von keiner Drittvariable verursacht.
 - Ob die Faktencheck-Karte zusätzlich als Bild exportiert werden soll, entscheiden wir nach der ersten Erprobung.
