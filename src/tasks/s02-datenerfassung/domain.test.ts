@@ -71,7 +71,10 @@ test('counts codes by mode, scans for paper-only codes and mirrors to_numeric(to
   assert.equal(factorPosition(sav, 'pv01').get(42), 4);
   const notes = checkNumbers(sav, { mfn: '2', dk: '1', afd: '4' });
   assert.deepEqual(notes.map(n => n.tone), ['ok', 'ok', 'ok']);
-  assert.equal(checkNumbers(sav, { mfn: '9', dk: '', afd: '42' }).map(n => n.tone).join(), 'warn,warn');
+  assert.equal(checkNumbers(sav, { mfn: '9', dk: '', afd: '41' }).map(n => n.tone).join(), 'warn,warn');
+  const newer = checkNumbers(sav, { mfn: '', dk: '', afd: '42' });
+  assert.equal(newer[0].tone, 'ok');
+  assert.match(newer[0].text, /Originalcodes/);
   const real = fixtureSav();
   assert.equal(factorPosition(real, 'pv01').get(1), 1);
 });

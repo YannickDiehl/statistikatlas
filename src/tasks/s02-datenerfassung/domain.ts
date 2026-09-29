@@ -143,7 +143,8 @@ export function scanCode(sav: SavFile, code: number) {
   return { total, variables, byMode };
 }
 
-/** Position eines Codes nach to_numeric(to_label(x)): gültige Codes, die vorkommen, fortlaufend nummeriert. */
+/** Position eines Codes nach to_numeric(to_label(x)) in mariposa 0.7.3: gültige Codes, die vorkommen, fortlaufend nummeriert
+ *  (so erscheint es für den ALLBUS, in dem alle Missing-Codes vorkommen). Neuere mariposa-Versionen behalten die Originalcodes. */
 export function factorPosition(sav: SavFile, variable: string): Map<number, number> {
   const v = sav.byName.get(variable);
   if (!v) return new Map();
@@ -166,7 +167,9 @@ export function checkNumbers(sav: SavFile, numbers: S02State['numbers']): Note[]
   const wantAfd = factorPosition(sav, 'pv01').get(42);
   if (afd !== null && wantAfd !== undefined) notes.push(afd === wantAfd
     ? { tone: 'ok', text: `Stimmt: Nach dem Umwandeln trägt die AfD die ${wantAfd}. Codes sind Namen, keine Rangplätze – beim Umwandeln wird neu durchnummeriert.` }
-    : { tone: 'warn', text: 'Vergleich in der Häufigkeitstabelle die Zeile der AfD in pv01 und in partei_zahl.' });
+    : afd === 42
+      ? { tone: 'ok', text: `Stimmt für deine mariposa-Version: Sie stellt beim Umwandeln die Originalcodes wieder her. Ältere Versionen nummerieren neu durch – dann trägt die AfD die ${wantAfd}. Codes sind Namen, keine Rangplätze.` }
+      : { tone: 'warn', text: 'Vergleiche in der Häufigkeitstabelle die Zeile der AfD in pv01 und in partei_zahl.' });
   return notes;
 }
 
