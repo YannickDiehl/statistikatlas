@@ -1,7 +1,8 @@
 # Führt die Lösungsskripte der Lernpfad-Aufgaben aus und meldet Fehler. Aufruf:
 #   Rscript --vanilla scripts/verify-task-scripts.R <ordner>
 args <- commandArgs(trailingOnly = TRUE)
-files <- list.files(args[1], pattern = "\\.R$", full.names = TRUE)
+files <- if (length(args)) list.files(args[1], pattern = "\\.R$", full.names = TRUE) else character(0)
+if (!length(files)) { cat("Keine R-Skripte gefunden – Ordner angeben.\n"); quit(status = 1) }
 failures <- 0
 for (f in files) {
   env <- new.env()

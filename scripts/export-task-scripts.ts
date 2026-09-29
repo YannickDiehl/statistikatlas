@@ -11,7 +11,7 @@ if (!sav || !out) {
   console.error('Aufruf: node --import tsx scripts/export-task-scripts.ts <datei.sav> <ordner>');
   process.exit(1);
 }
-const withFile = (code: string) => code.replaceAll('file.choose()', JSON.stringify(sav));
+const withFile = (code: string) => code.replaceAll('file.choose()', () => JSON.stringify(sav));
 const scripts: Record<string, string> = {
   's01-schon-gefragt.R': `${SETUP_SCRIPT}\n${antraege.map(a => a.hint.solution).join('\n')}\n`,
   's02-datenerfassung.R': S02,
