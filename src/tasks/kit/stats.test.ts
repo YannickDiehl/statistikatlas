@@ -58,3 +58,18 @@ test('the permutation V is reproducible and smaller than a real association', ()
   assert.equal(a, b);
   assert.ok(a < cramersV(ps03, x, w));
 });
+
+test('drops categories that round to zero and returns NaN for tables with one row or column', () => {
+  // Kategorie 3 hat nur Gewicht 0,3 – gerundet leer; V wie ohne sie.
+  const x = [...Array(9).fill(1), ...Array(9).fill(2), 3], y = [1, 1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, 1];
+  close(cramersV(x, y, [...Array(18).fill(1), 0.3]), cramersV(x.slice(0, 18), y.slice(0, 18)));
+  assert.ok(Number.isNaN(phi([1, 1, 1], [1, 2, 1])));
+  assert.ok(Number.isNaN(cramersV([1, 1, 1], [1, 2, 1])));
+});
+
+test('selects cases by weight like mariposa (NaN and 0 excluded) and computes χ²', () => {
+  const x = [1, 2, 3, 4, 5], y = [2, 1, 4, 3, 5];
+  close(spearman(x, y, [1, NaN, 0, 2, 1]), spearman([1, 4, 5], [2, 3, 5]));
+  close(tauB(x, y, [1, NaN, 0, 1, 1]), tauB([1, 4, 5], [2, 3, 5]));
+  close(chiSquare([[10, 20], [30, 40]]).chi2, 0.79365079, 7);
+});

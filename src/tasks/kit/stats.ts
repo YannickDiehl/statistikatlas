@@ -11,7 +11,9 @@ type Nums = ArrayLike<number>;
 const usable = (x: Nums, y: Nums, w: Nums | null, i: number) =>
   Number.isFinite(x[i]) && Number.isFinite(y[i]) && (w === null || w[i] > 0);
 
-/** Kreuztabelle über alle Fälle mit gültigem x und y (und Gewicht > 0), Zeilen = x, Spalten = y – wie xtabs(). */
+/** Kreuztabelle über alle Fälle mit gültigem x und y (und Gewicht > 0), Zeilen = x, Spalten = y.
+ *  Die Kategorien stammen aus den vollständigen Paaren. (mariposa 0.7.3 bildet sie je Variable und liefert NA, wenn eine
+ *  Kategorie nur bei fehlendem Partner vorkommt – auf dem ALLBUS kommt das bei keiner Aufgabe vor.) */
 export function crosstab(x: Nums, y: Nums, w: Nums | null = null): Table {
   const rowSet = new Set<number>(), colSet = new Set<number>();
   for (let i = 0; i < x.length; i++) if (usable(x, y, w, i)) { rowSet.add(x[i]); colSet.add(y[i]); }
@@ -34,10 +36,13 @@ export function roundHalfEven(v: number): number {
   return Math.abs(v % 1) === 0.5 && r % 2 !== 0 ? r - 1 : r;
 }
 
-/** mariposa rundet gewichtete Zellen vor χ² und Gamma auf ganze Zahlen (wie SPSS). */
+/** mariposa rundet gewichtete Zellen vor χ² und Gamma auf ganze Zahlen (wie SPSS); Zeilen und Spalten, die dabei leer werden, fallen weg (wie mariposa ab 0.7.4). */
 export function roundTable(t: Table): Table {
-  const cells = t.cells.map(row => row.map(roundHalfEven));
-  return { ...t, cells, n: cells.flat().reduce((a, b) => a + b, 0) };
+  const rounded = t.cells.map(row => row.map(roundHalfEven));
+  const keepRow = rounded.map(row => row.some(c => c > 0));
+  const keepCol = t.cols.map((_, j) => rounded.some(row => row[j] > 0));
+  const cells = rounded.filter((_, i) => keepRow[i]).map(row => row.filter((_, j) => keepCol[j]));
+  return { rows: t.rows.filter((_, i) => keepRow[i]), cols: t.cols.filter((_, j) => keepCol[j]), cells, n: cells.flat().reduce((a, b) => a + b, 0) };
 }
 
 export function chiSquare(cells: number[][]): { chi2: number; df: number; n: number } {
@@ -62,7 +67,9 @@ export function cramersV(x: Nums, y: Nums, w: Nums | null = null): number {
 
 /** Phi wie mariposa::phi(): √(χ²/n), ohne Vorzeichen, auch für größere Tabellen. */
 export function phi(x: Nums, y: Nums, w: Nums | null = null): number {
-  const { chi2, n } = chiSquare(tableFor(x, y, w).cells);
+  const t = tableFor(x, y, w);
+  if (Math.min(t.rows.length, t.cols.length) < 2) return NaN;
+  const { chi2, n } = chiSquare(t.cells);
   return Math.sqrt(chi2 / n);
 }
 
