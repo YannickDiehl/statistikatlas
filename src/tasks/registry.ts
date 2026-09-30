@@ -5,6 +5,8 @@ import { nennerCheck } from './s04-nenner-check';
 import { treiber } from './s05-treiber';
 import { letzteFrage } from './s06-letzte-frage';
 import { dreiFragen } from './s07-drei-fragen';
+import { automat } from './s08-automat';
+import { mitgenommen } from './s09-mitgenommen';
 import { buergerrat } from './s10-buergerrat';
 import type { TaskDef, TaskId } from './types';
 
@@ -18,5 +20,7 @@ export const taskRegistry: Partial<Record<TaskId, TaskDef<any>>> = {
   s05: treiber,
   s06: letzteFrage,
   s07: dreiFragen,
+  s08: automat,
+  s09: mitgenommen,
   s10: buergerrat,
 };
