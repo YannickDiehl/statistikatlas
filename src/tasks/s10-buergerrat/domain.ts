@@ -1,7 +1,7 @@
 import type { SavFile } from '../../sandbox/readSav';
 import type { Note } from '../kit/Feedback';
 import { averageMarginalEffects, linkinv, logistic, logitOf, LOGIT_PROBLEMS, type LogitFit, type LogitResult } from '../kit/logit';
-import { de, parseNumber } from '../kit/numbers';
+import { de, halfUnit, numberReadings } from '../kit/numbers';
 import { WORK_MODES, type WorkMode } from '../kit/PartnerToggle';
 import { crosstab, validValues } from '../kit/stats';
 import { oneOf, record, str } from '../kit/storage';
@@ -92,19 +92,13 @@ export function personNumbers(fit: LogitFit, x: Profile): PersonNumbers {
 /* ---------- Wertedetektor ---------- */
 
 export type Reading = { x: number; tol: number; percent: boolean };
-const reading = (x: number, decimals: number, percent: boolean): Reading => ({ x, tol: 0.5 * 10 ** -decimals + 1e-9, percent });
-/** Liest eine Eingabe; „%“ am Ende markiert Prozent. Toleranz = eine halbe Einheit der letzten eingegebenen Stelle.
- *  „3.765“ ist mehrdeutig: R druckt so Dezimalzahlen, im Deutschen ist es ein Tausenderpunkt – dann gibt es beide Lesarten, die aus R zuerst. */
+/** Liest eine Eingabe mit numberReadings() aus dem Kit („3.765“ wie in R und als Tausenderpunkt, vorangestelltes „+“/„×“ erlaubt);
+ *  „%“ oder „Prozent“ am Ende markiert Prozent, eine angehängte Einheit („Pp.“, „Prozentpunkte“, „-fach“) wird überlesen.
+ *  Toleranz = eine halbe Einheit der letzten eingegebenen Stelle. */
 export function readEntries(input: string): Reading[] {
-  const t = input.trim(), percent = /%$/.test(t);
-  const core = t.replace(/%$/, '').trim();
-  const x = parseNumber(core);
-  if (x === null) return [];
-  const s = core.replace(/\s/g, '').replace(/[−–]/g, '-');
-  if (s.includes(',')) return [reading(x, s.split(',')[1].length, percent)];
-  if (/^-?\d{1,3}\.\d{3}$/.test(s)) return [reading(Number(s), 3, percent), ...(/^-?[1-9]/.test(s) ? [reading(x, 0, percent)] : [])];
-  if (/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(s)) return [reading(x, 0, percent)];
-  return [reading(x, (s.split('.')[1] ?? '').length, percent)];
+  const t = input.trim().replace(/\s*(Pp\.?|Prozentpunkte|-?fach|x)$/i, ''), percent = /(%|Prozent)$/i.test(t);
+  const core = t.replace(/\s*(%|Prozent)$/i, '').trim();
+  return numberReadings(core).map(({ x, decimals }) => ({ x, tol: halfUnit(decimals), percent }));
 }
 export const readEntry = (input: string): Reading | null => readEntries(input)[0] ?? null;
 
@@ -241,6 +235,10 @@ export function janaCandidates(p: Prepared): Record<keyof Chain, Candidate[]> {
   // von Hand mit den B-Werten, wie summary() sie druckt (drei Nachkommastellen)
   const r3 = (v: number) => Math.round(v * 1000) / 1000;
   const Lh = r3(m.coef[0]) + r3(m.coef[1]) * x[0] + r3(m.coef[2]) * x[1];
+  // B schon auf zwei Stellen gerundet – der Logit weicht dann spürbar ab
+  const r2 = (v: number) => Math.round(v * 100) / 100;
+  const L2 = r2(m.coef[0]) + r2(m.coef[1]) * x[0] + r2(m.coef[2]) * x[1];
+  const early = 'B zu früh gerundet? Rechne mit drei Nachkommastellen, so wie summary() sie zeigt – sonst weicht der Logit schon merklich ab.';
   const Lraw = logitOf(m, raw), Lp = logitOf(m, [raw[0], x[1]]), Li = logitOf(m, [x[0], raw[1]]);
   const u = fitOf(p, 'unweighted'), Lu = u ? logitOf(u, x) : NaN;
   const rawText = RAW_TEXT(p, 'jana');
@@ -249,6 +247,7 @@ export function janaCandidates(p: Prepared): Record<keyof Chain, Candidate[]> {
     logit: [
       cand('ok', L, 'ok', 'stimmt.'),
       cand('ok', Lh, 'ok', 'stimmt.'),
+      cand('earlyRound', L2, 'hint', early),
       cand('rawCodes', Lraw, 'warn', rawText),
       cand('rawPflicht', Lp, 'warn', 'Beim Pflichtgefühl steht der Originalcode von pe09. Im Modell zählt der umgepolte Wert.'),
       cand('rawInteresse', Li, 'warn', 'Beim Interesse steht der Originalcode von pa02a. Im Modell zählt der umgepolte Wert.'),
@@ -263,6 +262,7 @@ export function janaCandidates(p: Prepared): Record<keyof Chain, Candidate[]> {
     odds: [
       slack(cand('ok', O, 'ok', 'stimmt.'), HAND_SLACK.odds),
       slack(cand('ok', Math.exp(Lh), 'ok', 'stimmt.'), HAND_SLACK.odds),
+      cand('earlyRound', Math.exp(L2), 'hint', early),
       cand('isLogit', L, 'warn', 'Das ist der Logit. Die Chance ist exp(Logit).'),
       cand('isProb', P, 'warn', 'Das ist die Wahrscheinlichkeit. Chance = p / (1 − p).', true),
       cand('inverse', 1 / O, 'hint', 'Das ist die Chance, nicht zu wählen (1 geteilt durch Janas Chance).'),
@@ -272,6 +272,7 @@ export function janaCandidates(p: Prepared): Record<keyof Chain, Candidate[]> {
     prob: [
       slack(cand('ok', P, 'ok', 'stimmt.', true), HAND_SLACK.prob),
       slack(cand('ok', linkinv(Lh), 'ok', 'stimmt.', true), HAND_SLACK.prob),
+      cand('earlyRound', linkinv(L2), 'hint', early, true),
       cand('isOdds', O, 'warn', 'Das ist die Chance, nicht die Wahrscheinlichkeit. Wahrscheinlichkeiten liegen zwischen 0 und 1 (0 bis 100 %): p = Chance / (1 + Chance).'),
       cand('isLogit', L, 'warn', 'Das ist der Logit. Erst exp(Logit) ergibt die Chance, dann p = Chance / (1 + Chance).'),
       cand('complement', 1 - P, 'warn', 'Das ist die Wahrscheinlichkeit, nicht zu wählen.', true),
@@ -300,13 +301,25 @@ export const janaProbOk = (p: Prepared, input: string) => Boolean(p.main) && isO
 /* ---------- Station 3 und Sätze: regelbasierte Gegenfragen ---------- */
 
 const MULTIPLIER = String.raw`(\d+([.,]\d+)?|zwei|drei|vier|fünf|doppelt)\s*-?\s*(mal|fach\w*)`;
-export const TIMES_LIKELY = new RegExp(String.raw`${MULTIPLIER}\s+(so\s+)?(hohe\s+|große\s+)?wahrscheinlich|wahrscheinlich\w*\s+(\S+\s+){0,3}?${MULTIPLIER}`, 'i');
+export const TIMES_LIKELY = new RegExp(String.raw`${MULTIPLIER}\s+(so\s+)?(hohe\s+|große\s+)?wahrscheinlich|wahrscheinlich\w*\s+(\S+\s+){0,4}?${MULTIPLIER}|${MULTIPLIER}\s+(so\s+)?(oft|häufig\w*|öfter)`, 'i');
 export const ODDS_WORDS = /(Chance|Odds|Wettquote|Verhältnis|\bzu\s*1\b)/i;
 export const PROB_WORDS = /(Wahrscheinlichkeit|Prozentpunkt|Prozent|%|\bPp\b|von\s+100\b)/i;
 export const LOGIT_WORDS = /\b(Logit\w*|log)\b/i;
 export const CAUSAL_WORDS = /\b(bewirk\w*|verursach\w*|führ(t|en)\s+(dazu|zu)|sorg(t|en)|wirk(t|en)|Wirkung|weil|deshalb|dadurch)\b/i;
 export const DETERMINISTIC = /\b(Jana|sie|er|Herr\s+Wiegand)\s+(wird|würde|geht)\s+(\w+\s+)?(wählen|zur\s+Wahl)/i;
-const NEGATION = /\b(nein|nicht|kein\w*)\b/i;
+const NEGATION = /\b(nein|nicht|kein\w*|falsch)\b/i;
+/** Abgeschwächte Sätze („würde wahrscheinlich wählen“) sind keine deterministische Aussage. */
+const HEDGE = /(wahrscheinlich|eher|vermutlich|vielleicht|möglicherweise|wohl|eventuell|tendenziell)/i;
+/** Lehnt der Satz die „x-mal so wahrscheinlich“-Lesart ab? „Nein“ am Anfang, eine Verneinung kurz davor oder darin,
+ *  oder gleich danach „falsch“ / „stimmt nicht“ / „nein“. */
+function rejectsTimes(text: string): boolean {
+  const m = TIMES_LIKELY.exec(text);
+  if (!m) return false;
+  const end = m.index + m[0].length;
+  return /^\W*nein\b/i.test(text) || NEGATION.test(text.slice(Math.max(0, m.index - 40), end))
+    || /\b(falsch|stimmt\s+nicht|nein)\b/i.test(text.slice(end, end + 25));
+}
+const deterministic = (text: string) => { const m = DETERMINISTIC.exec(text); return Boolean(m) && !HEDGE.test(m![0]); };
 
 /** Zahlen, die eine Gegenfrage nennen darf – nur solche, die die Person schon selbst richtig eingetragen hat. */
 export type Known = { or: number | null; pJana: number | null };
@@ -317,13 +330,17 @@ export function known(p: Prepared, s: { or: OrEntry; jana: Chain }): Known {
 export function answerNotes(text: string, k: Known): Note[] {
   if (!text.trim()) return [];
   const notes: Note[] = [];
-  const times = TIMES_LIKELY.test(text) && !(NEGATION.test(text) && ODDS_WORDS.test(text));
-  if (times) notes.push({ tone: 'warn', text: k.or !== null && k.pJana !== null
-    ? `Probier es an Jana: ${pct(k.pJana)} × ${f2(k.or)} = ${de(100 * k.pJana * k.or, 0)} % – geht das? Exp(B) vervielfacht die Chance (wählen : nicht wählen), nicht die Wahrscheinlichkeit.`
+  const times = TIMES_LIKELY.test(text), rejected = times && rejectsTimes(text);
+  const probe = k.or !== null && k.pJana !== null ? `${pct(k.pJana)} × ${f2(k.or)} = ${de(100 * k.pJana * k.or, 0)} %` : null;
+  if (rejected) notes.push({ tone: 'ok', text: probe
+    ? `Richtig abgelehnt – die Probe an Jana zeigt, warum: ${probe}. Exp(B) vervielfacht die Chance (wählen : nicht wählen), nicht die Wahrscheinlichkeit.`
+    : 'Richtig abgelehnt. Exp(B) vervielfacht die Chance (wählen : nicht wählen), nicht die Wahrscheinlichkeit – die Probe an Jana (ihre Wahrscheinlichkeit mal Exp(B)) zeigt, warum.' });
+  else if (times) notes.push({ tone: 'warn', text: probe
+    ? `Probier es an Jana: ${probe} – geht das? Exp(B) vervielfacht die Chance (wählen : nicht wählen), nicht die Wahrscheinlichkeit.`
     : 'Probier es an Jana aus: Nimm ihre Wahrscheinlichkeit aus Station 2 mal Exp(B) – was kommt heraus? Exp(B) vervielfacht die Chance (wählen : nicht wählen), nicht die Wahrscheinlichkeit.' });
   else if (ODDS_WORDS.test(text)) notes.push({ tone: 'ok', text: 'Du sprichst von Chancen – genau darauf bezieht sich Exp(B): Je Stufe Pflichtgefühl wird die Chance (wählen : nicht wählen) mit Exp(B) multipliziert.' });
   if (CAUSAL_WORDS.test(text)) notes.push({ tone: 'hint', text: 'Du schreibst von einer Wirkung. Das Modell vergleicht Menschen mit mehr und weniger Pflichtgefühl – was eine Kampagne bewirkt, zeigt es nicht (Sitzung 9). Wie klingt dein Satz als Vergleich?' });
-  if (DETERMINISTIC.test(text)) notes.push({ tone: 'hint', text: k.pJana !== null
+  if (deterministic(text)) notes.push({ tone: 'hint', text: k.pJana !== null
     ? `Das Modell sagt nichts über Jana persönlich: Von 100 Menschen, die so antworten wie Jana, würden etwa ${de(100 * k.pJana, 0)} wählen gehen.`
     : 'Das Modell sagt nichts über Jana persönlich, sondern über Menschen wie sie: Von 100 Menschen, die so antworten wie Jana, …' });
   if (!notes.length) notes.push({ tone: 'hint', text: 'Gegenprobe: Gilt dein Satz auch für Herrn Wiegand? Station 4 zeigt es.' });
@@ -497,8 +514,10 @@ export function reportCandidates(p: Prepared): ReportCandidate[] {
 }
 
 /** Größenabgleich: Welche Größe steckt hinter der Berichtszahl? Die Einheit entscheidet bei Gleichstand. */
-export function recogniseReport(p: Prepared, input: string, unit: Unit | ''): { kind: ReportKind; reading: Reading } | null {
-  const cands = reportCandidates(p);
+/** Größen der Ratsmitglieder: Sie werden erst erkannt, wenn die Dolmetscher-Tafel offen ist – sonst wäre das Feld ein Orakel für Station 2 und 4. */
+const BOARD_KINDS: ReportKind[] = ['jana', 'janaShare', 'wiegand', 'wiegandShare', 'riskJana', 'riskWiegand', 'level', 'levelPct'];
+export function recogniseReport(p: Prepared, input: string, unit: Unit | '', revealed = false): { kind: ReportKind; reading: Reading } | null {
+  const cands = reportCandidates(p).filter(c => revealed || !BOARD_KINDS.includes(c.kind));
   for (const r of readEntries(input)) {
     const hits = cands.map(c => ({ c, d: Math.abs((c.abs ? Math.abs(r.x) : r.x) - c.value) / r.tol })).filter(h => h.d <= 1);
     hits.sort((a, b) => Number(unit !== '' && b.c.units.includes(unit)) - Number(unit !== '' && a.c.units.includes(unit)) || a.d - b.d);
@@ -552,8 +571,9 @@ function showsHides(p: Prepared, kind: ReportKind, r: Reading, revealed: boolean
 
 export function checkReport(p: Prepared, number: string, unit: Unit | '', revealed: boolean): Note[] {
   if (!p.main || !number.trim()) return [];
-  const hit = recogniseReport(p, number, unit);
-  if (!hit) return [{ tone: 'warn', text: readEntry(number) ? 'Diese Zahl erkenne ich nicht. Nimm eine Zahl aus deinem Modell, aus marginal_effects() oder von deiner Tafel.' : 'Das ist keine Zahl.' }];
+  const hit = recogniseReport(p, number, unit, revealed);
+  const later = revealed ? '' : ' Zahlen zu Jana und Herrn Wiegand ordne ich erst ein, wenn die Dolmetscher-Tafel offen ist (Station 4).';
+  if (!hit) return [{ tone: 'warn', text: readEntry(number) ? `Diese Zahl erkenne ich nicht. Nimm eine Zahl aus deinem Modell, aus marginal_effects() oder von deiner Tafel.${later}` : 'Das ist keine Zahl.' }];
   const notes: Note[] = [{ tone: 'hint', text: `Das ist ${KIND_LABELS[hit.kind]}.` }, showsHides(p, hit.kind, hit.reading, revealed)];
   const unitHint = unit ? UNIT_HINTS[hit.kind]?.[unit]?.(hit.reading) : undefined;
   if (!unit) notes.push({ tone: 'hint', text: 'Wähl eine Einheit – ohne Einheit versteht der Rat die Zahl nicht.' });
@@ -687,13 +707,13 @@ export const tafelReady = (p: Prepared, s: S10State) =>
 
 export function plenumLines(s: S10State, p: Prepared | null = null): [string, string][] {
   const campaign = CAMPAIGN_ANSWERS.find(a => a.id === s.campaign)?.label ?? '';
-  const unit = UNITS.find(u => u.id === s.report.unit)?.label ?? '';
-  const kind = p && s.report.number.trim() ? recogniseReport(p, s.report.number, s.report.unit)?.kind : undefined;
+  const suffix = UNITS.find(u => u.id === s.report.unit)?.suffix ?? '';
+  const kind = p && s.report.number.trim() ? recogniseReport(p, s.report.number, s.report.unit, tafelReady(p, s))?.kind : undefined;
   const ll = s.likelihood, bare = (x: string) => x.trim().replace(/\s*%$/, '');
   return [
     ['Frage 3 · Bei wem bewirkt die Kampagne mehr?', [campaign, s.answer3.trim()].filter(Boolean).join(' – ')],
     ['Gemeinsamer Satz für den Rat', s.joint.trim()],
-    ['Die eine Zahl für den Bericht', s.report.number.trim() ? `${s.report.number.trim()}${unit && s.report.unit !== 'none' ? ` ${unit}` : ''}${kind ? ` · ${KIND_SHORT[kind]}` : ''}` : ''],
+    ['Die eine Zahl für den Bericht', s.report.number.trim() ? `${s.report.number.trim()}${suffix}${kind ? ` · ${KIND_SHORT[kind]}` : ''}` : ''],
     ['Satz für den Bericht', s.report.sentence.trim()],
     ['Frage 1 · „3,77-mal so wahrscheinlich?“', s.answer1.trim()],
     ['Zusatz · Trefferquote gegen −2LL', filled(ll.hitModel, ll.hitAll) ? `Modell ${bare(ll.hitModel)} % · „alle wählen“ ${bare(ll.hitAll)} %${filled(ll.nullLL, ll.modelLL) ? ` · −2LL ${ll.nullLL.trim()} → ${ll.modelLL.trim()}` : ''}` : ''],

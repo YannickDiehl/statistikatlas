@@ -78,6 +78,10 @@ test('reads entries with a tolerance of half a unit of the last digit', () => {
   assert.equal(readEntry('−0,27')!.x, -0.27);
   assert.equal(readEntry('0.764')!.tol, 0.0005 + 1e-9);
   assert.equal(readEntry('abc'), null);
+  // angehängte Einheiten
+  assert.deepEqual(readEntry('22,2 Pp.'), { x: 22.2, tol: 0.05 + 1e-9, percent: false });
+  assert.equal(readEntry('2,61-fach')!.x, 2.61);
+  assert.equal(readEntry('68 Prozent')!.percent, true);
   assert.equal(readEntry(''), null);
   // Prozent und Anteil werden beide als Wahrscheinlichkeit gelesen, eine Chance nie als Prozent
   const probs = janaCandidates(p).prob;
@@ -141,13 +145,19 @@ test('station 2: the chain logit → odds → probability and its detours', () =
   assert.match(note('prob', 'rawCodes'), /Originalcodes/);
   assert.match(texts(checkChain(p, { logit: '', odds: '', prob: fmt(100 * jana.prob[0], 1) })), /^Wahrscheinlichkeit: stimmt/);
   assert.match(texts(checkChain(p, { logit: '9,99', odds: '', prob: '' })), /finde ich auf keinem Weg/);
+  // B schon auf zwei Stellen gerundet (−3,67 + 0,96·2 + 0,88·2 = 0,01): eigener Hinweis statt „auf keinem Weg“
+  const b2 = m.coef.map(v => Math.round(v * 100) / 100), L2 = b2[0] + 2 * b2[1] + 2 * b2[2];
+  const early = checkChain(p, { logit: fmt(L2, 2), odds: fmt(Math.exp(L2), 3), prob: fmt(linkinv(L2), 3) });
+  assert.deepEqual(early.map(n => n.tone), ['hint', 'hint', 'hint']);
+  for (const n of early) assert.match(n.text, /B zu früh gerundet\? Rechne mit drei Nachkommastellen/);
   assert.equal(chainOk(p, { ...right.jana, odds: '9,99' }), false);
 });
 
 test('rule-based counter-questions to written answers', () => {
   for (const t of ['3,77-mal so wahrscheinlich', 'fast viermal so wahrscheinlich', 'die 3,77-fache Wahrscheinlichkeit', 'Die Wahrscheinlichkeit ist 3,77-mal so hoch', '3,77 mal wahrscheinlicher'])
     assert.ok(TIMES_LIKELY.test(t), t);
-  for (const t of ['manchmal wahrscheinlich', 'Die Chance ist 3,77-mal so hoch', 'wahrscheinlich nicht']) assert.ok(!TIMES_LIKELY.test(t), t);
+  for (const t of ['3,77-mal so oft wählen', 'Ja, 3,77-mal häufiger.', 'viermal öfter']) assert.ok(TIMES_LIKELY.test(t), t);
+  for (const t of ['manchmal wahrscheinlich', 'Die Chance ist 3,77-mal so hoch', 'wahrscheinlich nicht', 'Sie gehen oft wählen']) assert.ok(!TIMES_LIKELY.test(t), t);
   const none = { or: null, pJana: null }, some = known(p, { or: right.or, jana: right.jana });
   assert.ok(some.or !== null && some.pJana !== null);
   const times = answerNotes('Ja, 3,77-mal so wahrscheinlich.', none);
@@ -155,9 +165,26 @@ test('rule-based counter-questions to written answers', () => {
   assert.doesNotMatch(times[0].text, /\d+,\d/);
   assert.match(answerNotes('Ja, 3,77-mal so wahrscheinlich.', some)[0].text, /^Probier es an Jana: 50,5 % × 2,61 = 132 % – geht das\?/);
   assert.equal(answerNotes('Nein, nicht 3,77-mal so wahrscheinlich – die Chance ist 3,77-mal so hoch.', some)[0].tone, 'ok');
+  // Richtig abgelehnt – auch ohne das Wort „Chance“; mit Zahlen erst, wenn die eigenen Werte stimmen
+  for (const t of ['Nein, das heißt nicht 3,77-mal so wahrscheinlich.', 'Nein. Nicht 3,77-mal so wahrscheinlich – Wahrscheinlichkeiten können nicht über 100 % steigen.',
+    'Die Wahrscheinlichkeit steigt nicht um das 3,77-fache.', '3,77-mal so wahrscheinlich? Das ist falsch.']) {
+    const [first] = answerNotes(t, some);
+    assert.equal(first.tone, 'ok', t);
+    assert.match(first.text, /^Richtig abgelehnt – die Probe an Jana zeigt, warum: 50,5 % × 2,61 = 132 %\./, t);
+    assert.match(answerNotes(t, none)[0].text, /^Richtig abgelehnt\. /);
+    assert.doesNotMatch(answerNotes(t, none)[0].text, /\d+,\d/);
+  }
+  // Zustimmung bleibt eine Warnung, auch mit einem „nicht“ weiter hinten oder mit „oft/häufiger“
+  for (const t of ['Ja, 3,77-mal so wahrscheinlich, man kann es nicht anders sagen.', 'Ja, sie gehen 3,77-mal so oft wählen.', 'Ja, 3,77-mal häufiger.'])
+    assert.equal(answerNotes(t, some)[0].tone, 'warn', t);
+  assert.match(texts(sentenceNotes('Nein, nicht 3,77-mal so wahrscheinlich.', 'times', some)), /^Richtig abgelehnt/);
   assert.match(texts(answerNotes('Die Kampagne bewirkt, dass mehr wählen.', none)), /vergleicht Menschen/);
   assert.match(texts(answerNotes('Jana wird wählen.', some)), /Von 100 Menschen, die so antworten wie Jana, würden etwa 50 wählen gehen/);
   assert.doesNotMatch(texts(answerNotes('Jana wird wählen.', none)), /etwa \d/);
+  // abgeschwächte Sätze sind keine deterministische Aussage
+  for (const t of ['Jana würde wahrscheinlich wählen.', 'Menschen wie Jana: sie geht eher wählen.', 'Herr Wiegand wird vermutlich wählen.'])
+    assert.doesNotMatch(texts(answerNotes(t, some)), /sagt nichts über Jana persönlich/, t);
+  assert.match(texts(answerNotes('Herr Wiegand wird sicher wählen.', some)), /sagt nichts über Jana persönlich/);
   assert.match(texts(answerNotes('Das ist so.', none)), /Gegenprobe/);
   assert.deepEqual(answerNotes('  ', none), []);
   assert.deepEqual(sentenceNotes('Das ist so.', 'pp', none), []);
@@ -211,7 +238,7 @@ test('station 5: the AME and the size behind the report number', () => {
   assert.match(texts(checkAme(p, fmt(m.coef[1]))), /Das ist B/);
   assert.match(texts(checkAme(p, '0,1')), /genauer/);
   assert.equal(ameCandidates(p)[0].id, 'ok');
-  const kind = (x: string, unit: Parameters<typeof recogniseReport>[2]) => recogniseReport(p, x, unit)?.kind;
+  const kind = (x: string, unit: Parameters<typeof recogniseReport>[2], revealed = true) => recogniseReport(p, x, unit, revealed)?.kind;
   assert.equal(kind(fmt(m.expB[1], 2), 'times'), 'or');
   assert.equal(kind(fmt(100 * (m.expB[1] - 1), 0), 'pct'), 'orPct');
   assert.equal(kind(fmt(m.coef[1], 2), 'logit'), 'b');
@@ -222,6 +249,19 @@ test('station 5: the AME and the size behind the report number', () => {
   const [j] = tafel(p);
   assert.equal(kind(fmt(100 * (j.risk[1] - j.risk[0]) / j.risk[0], 0), 'pct'), 'riskJana');
   assert.equal(kind(fmt(m.expB[2], 2), 'times'), 'orInt');
+  // Vor der Tafel ordnet das Feld Zahlen der Ratsmitglieder nicht ein – sonst wäre es ein Orakel für Station 2 und 4
+  for (const [x, unit] of [[fmt(100 * (jana.prob[1] - jana.prob[0]), 1), 'pp'], [fmt(100 * wiegand.prob[0], 0), 'pct'], [fmt(100 * jana.prob[0], 0), 'pct'],
+    [fmt(100 * (j.risk[1] - j.risk[0]) / j.risk[0], 0), 'pct']] as const) assert.equal(kind(x, unit, false), undefined, x);
+  assert.equal(kind(fmt(100 * p.ame[0], 1), 'pp', false), 'amePp');
+  assert.match(texts(checkReport(p, fmt(100 * wiegand.prob[0], 0), 'pct', false)), /erkenne ich nicht.*erst ein, wenn die Dolmetscher-Tafel offen ist/);
+  assert.doesNotMatch(texts(checkReport(p, fmt(100 * wiegand.prob[0], 0), 'pct', false)), /Wahrscheinlichkeit, kein Effekt/);
+  assert.match(texts(checkReport(p, fmt(100 * wiegand.prob[0], 0), 'pct', true)), /Wahrscheinlichkeit, kein Effekt/);
+  // So wie die App Zuwächse und Faktoren druckt: „+22,2“ und „×2,61“
+  assert.equal(kind(`+${fmt(100 * (jana.prob[1] - jana.prob[0]), 1)}`, 'pp'), 'jana');
+  assert.equal(kind(`×${fmt(m.expB[1], 2)}`, 'times'), 'or');
+  assert.match(texts(checkReport(p, `×${fmt(m.expB[1], 2)}`, 'times', true)), /^Das ist Exp\(B\), das Chancenverhältnis\./);
+  assert.match(texts(checkAme(p, `+${fmt(p.ame[0])}`)), /^Stimmt/);
+  assert.match(texts(checkAme(p, `+${fmt(100 * p.ame[0], 1)}`)), /^Stimmt/);
   assert.equal(kind('12345', 'pp'), undefined);
   // Einheit falsch gewählt: Prozent statt Prozentpunkte, Faktor als Prozentpunkte, Anteil als Prozentpunkte
   const amePp = fmt(100 * p.ame[0], 1);
@@ -285,6 +325,12 @@ test('restores state defensively, reports status and builds the council card', (
     ['Zusatz · Trefferquote gegen −2LL', 'Modell 84,9 % · „alle wählen“ 80,5 % · −2LL 27,4 → 19,4'],
   ]);
   assert.equal(plenumLines(initialS10())[2][1], '');
+  assert.equal(plenumLines({ ...done, report: { ...done.report, number: '2,61', unit: 'times' } }, p)[2][1], '2,61-fach · Exp(B)');
+  assert.equal(plenumLines({ ...done, report: { ...done.report, number: '2,61', unit: 'none' } }, p)[2][1], '2,61 · Exp(B)');
+  // Größen der Ratsmitglieder erscheinen auf der Karte erst mit offener Tafel
+  const jPp = fmt(100 * (jana.prob[1] - jana.prob[0]), 1);
+  assert.equal(plenumLines({ ...done, report: { ...done.report, number: jPp, unit: 'pp' } }, p)[2][1], `${jPp} Prozentpunkte · Jana`);
+  assert.equal(plenumLines({ ...done, campaign: '', report: { ...done.report, number: jPp, unit: 'pp' } }, p)[2][1], `${jPp} Prozentpunkte`);
 });
 
 test('predicted probabilities are the logistic of the linear predictor', () => {

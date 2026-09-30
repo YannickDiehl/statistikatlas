@@ -27,12 +27,13 @@ export const CAMPAIGN_ANSWERS = [
 ] as const;
 export type CampaignAnswer = typeof CAMPAIGN_ANSWERS[number]['id'];
 
+/** label: Auswahlliste; suffix: hinter der Zahl auf der Ratskarte („2,61-fach“, „5,4 Prozentpunkte“). */
 export const UNITS = [
-  { id: 'pp', label: 'Prozentpunkte' },
-  { id: 'pct', label: 'Prozent' },
-  { id: 'times', label: '-fach (Faktor)' },
-  { id: 'logit', label: 'Logit-Einheiten' },
-  { id: 'none', label: 'ohne Einheit' },
+  { id: 'pp', label: 'Prozentpunkte', suffix: ' Prozentpunkte' },
+  { id: 'pct', label: 'Prozent', suffix: ' Prozent' },
+  { id: 'times', label: '-fach (Faktor)', suffix: '-fach' },
+  { id: 'logit', label: 'Logit-Einheiten', suffix: ' Logit-Einheiten' },
+  { id: 'none', label: 'ohne Einheit', suffix: '' },
 ] as const;
 export type Unit = typeof UNITS[number]['id'];
 
@@ -108,7 +109,7 @@ export const R_SOLUTION = {
   profiles: join(R_START, R_RECODE, R_MODEL, R_PROFILES),
   ame: join(R_START, R_RECODE, R_MODEL, R_AME),
   likelihood: join(R_START, R_RECODE, R_MODEL, R_LIKELIHOOD),
-  full: join(R_START, R_RECODE, R_MODEL, R_JANA, R_PROFILES, R_AME),
+  full: join(R_START, R_RECODE, R_MODEL, R_JANA, R_PROFILES, R_AME, `# ---- Zusatz (optional) ----\n${R_LIKELIHOOD}`),
 };
 
 export const hints: Record<'model' | 'jana' | 'profiles' | 'ame' | 'likelihood', Hint> = {
@@ -151,7 +152,7 @@ profile %>% mutate(p_waehlen = predict(modell, newdata = profile, type = "___"))
   },
   ame: {
     think: 'Welche Zahl gilt für alle – und welche versteht jemand ohne Statistik? Der durchschnittliche marginale Effekt (AME) mittelt die Änderung der Wahrscheinlichkeit über alle Befragten.',
-    pointer: 'marginal_effects() berechnet den AME je Prädiktor als Anteil: 0,05 heißt 5 Prozentpunkte. Prozentpunkte sind Differenzen von Prozentwerten, keine Prozente.',
+    pointer: 'marginal_effects() berechnet den AME je Prädiktor als Anteil: 0,12 hieße 12 Prozentpunkte. Prozentpunkte sind Differenzen von Prozentwerten, keine Prozente.',
     concept: { id: 'marginal_effects', label: 'Marginale Effekte' },
     scaffold: 'modell %>% ___() %>% summary()',
     solution: R_SOLUTION.ame,
