@@ -129,7 +129,7 @@ Die Konzeptdateien enthalten Rollenauftrag im Wortlaut, Minutenplan, vollständi
 - **R:** `rec()` (Wählen 0/1 aus `pv01`, −50 ausgeschlossen; Pflichtgefühl aus `pe09`; Interesse aus `pa02a`), `logistic_regression(..., weights = wghtpew)`, `marginal_effects()`, `predict()` für die zwei Profile.
 - **Browser:** gewichtete Logit-Schätzung per IRLS, vorhergesagte Wahrscheinlichkeiten, Odds-Ratio, AME, sechs Fehlervarianten zur Diagnose (z. B. OR als „x-mal so wahrscheinlich“ gelesen).
 - **Plenum/Partner:** verschiedene richtige Zahlen aus einem Modell, Abstimmung über die Berichtszahl. Partner: eine Person rechnet in Chancen, die andere in Wahrscheinlichkeiten.
-- **Referenz (gewichtet, n = 2.758):** Exp(B) Pflichtgefühl 3,77, AME 5,4 Pp.; Jana 76,4 → 92,4 % (+16,0), Herr Brandt 96,0 → 98,9 % (+2,9); Trefferquote 95,1 % gegen 94,8 % („alle wählen“); −2LL 1.122 → 856.
+- **Referenz (gewichtet, n = 2.758):** Exp(B) Pflichtgefühl 3,77, AME 5,4 Pp.; Jana 76,4 → 92,4 % (+16,0), Herr Wiegand 96,0 → 98,9 % (+2,9); Trefferquote 95,1 % gegen 94,8 % („alle wählen“); −2LL 1.122 → 856.
 - **Festgelegt:** `pe09` trotz Split als Kernprädiktor; `predict()` aus Base R für die Profile; die deutsche GLM-Warnung wird in den Hilfen als harmlos erklärt, bis mariposa sie unterdrückt; Likelihood-Station optional.
 
 ## 5. Übergreifende Festlegungen
