@@ -81,7 +81,7 @@ export const sessions: Session[] = [
     question: 'Was bleibt, wenn man mehr berücksichtigt?',
     repetition: [],
     introduced: [t('Dummyvariablen', 'dummy'), t('Multikollinearität', 'multicollinearity'), t('Ausreißer & Einfluss', 'outliers_influence'), t('Interaktion', 'interaction'), t('Confounding · gemeinsame Ursachen', 'confounding')],
-    task: null,
+    task: 's09',
   },
   {
     id: 10, plan: 'Sitzungsplan 12', title: 'Logistische Regression', short: 'Odds, Logit',

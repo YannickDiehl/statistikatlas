@@ -4,6 +4,7 @@ import { stuehle } from './s03-stuehle';
 import { nennerCheck } from './s04-nenner-check';
 import { treiber } from './s05-treiber';
 import { automat } from './s08-automat';
+import { mitgenommen } from './s09-mitgenommen';
 import type { TaskDef, TaskId } from './types';
 
 /** Alle gebauten Aufgaben. Sitzungen, deren Aufgabe hier fehlt, zeigen „Aufgabe folgt“. */
@@ -15,4 +16,5 @@ export const taskRegistry: Partial<Record<TaskId, TaskDef<any>>> = {
   s04: nennerCheck,
   s05: treiber,
   s08: automat,
+  s09: mitgenommen,
 };

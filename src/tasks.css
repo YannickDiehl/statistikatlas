@@ -151,3 +151,33 @@
 .s08-notes{margin:10px 0;padding-left:20px;font-size:15px}
 .s08-notes li{margin:0 0 6px}
 @media(max-width:560px){.s08-table{font-size:12px}.s08-table th,.s08-table td{padding:3px 4px}}
+
+/* Sitzung 9 · Mitgenommen */
+.s09-scroll{overflow-x:auto}
+.s09-table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+.s09-table caption{text-align:left;color:var(--muted);margin-bottom:4px}
+.s09-table th,.s09-table td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.s09-table th small{font-weight:400;color:var(--muted)}
+.s09-table tr.ref{background:var(--soft)}
+.s09-board th,.s09-board td{text-align:right;white-space:nowrap}
+.s09-board th[scope=row]{text-align:left}
+.s09-board .own{background:var(--soft);font-weight:600}
+.s09-template{margin:12px 0}
+.s09-template svg{width:100%;min-width:520px;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+.s09-template svg text{font:12px var(--sans);fill:var(--muted)}
+.s09-template svg text.head{fill:var(--ink);font-weight:600}
+.s09-template svg text.ghost{font-size:11px;font-style:italic}
+.s09-template figcaption{font-size:14px;color:var(--muted);margin-top:6px}
+.s09-sub{font:600 15px/1.4 var(--sans);margin:18px 0 6px}
+.s09-cards{list-style:none;padding:0;margin:8px 0}
+.s09-cards>li{border-bottom:1px solid var(--line);padding:8px 0}
+.s09-card-title{display:block;font-weight:600;font-size:15px;margin-bottom:4px}
+.s09-cards .sandbox-chips{margin:0}
+.s09-cards .task-feedback{margin:6px 0 0}
+.s09-controls{border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin:12px 0}
+.s09-controls legend{font-size:14px;color:var(--muted);padding:0 4px}
+.s09-extra{margin:4px 0;font-size:15px}
+.s09-extra summary{cursor:pointer;font:600 16px/1.4 var(--sans)}
+.s09-wobble{margin:8px 0 12px;padding-left:20px;font-size:15px}
+.s09-wobble li{margin:0 0 6px}
+@media(max-width:560px){.s09-table{font-size:12px}.s09-table th,.s09-table td{padding:3px 4px}}
