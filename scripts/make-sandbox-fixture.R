@@ -94,6 +94,20 @@ d$gs01 <- lab(pick(c(1:5, -9), c(.21, .13, .36, .27, .01, .02)),
               c("KEINE ANGABE" = -9, "GROSSSTADT" = 1, "VORORT GROSSSTADT" = 2, "MITTEL-, KLEINSTADT" = 3, "LAENDL. DORF" = 4, "EINZELHAUS, LAND" = 5),
               "SELBSTBESCHREIBUNG DES WOHNORTS")
 
+# Lernpfad-Aufgabe 10: Bürgerpflicht (pe09) mit Label und Missing-Codes des echten ALLBUS (Werte synthetisch).
+# pe09 hängt an der Wahlabsicht pv01 (Nichtwählende stimmen seltener zu), damit das Logit-Modell schätzbar ist;
+# Nichtwählende liegen nie im Split, sonst blieben zu wenige für das Modell.
+set.seed(8810)
+d$pe09 <- local({
+  pv <- as.numeric(d$pv01)
+  prob <- function(v) if (v == 91) c(.1, .2, .35, .35) else if (v >= 1) c(.45, .3, .15, .1) else c(.35, .3, .2, .15)
+  x <- vapply(pv, function(v) sample(1:4, 1, prob = prob(v)), numeric(1))
+  x <- ifelse(pv != 91 & runif(n) < .25, -11, x)
+  x[pv != 91 & x > 0 & runif(n) < .05] <- -8
+  lab(x, c("TNZ: SPLIT" = -11, "KEINE ANGABE" = -9, "WEISS NICHT" = -8, "STIMME VOLL ZU" = 1, "STIMME EHER ZU" = 2,
+           "STIMME EHER NICHT ZU" = 3, "STIMME GAR NICHT ZU" = 4), "WAHLBETEILIGUNG IST BUERGERPFLICHT")
+})
+
 write_sav(d, file.path(out, "sandbox-fixture.sav"), compress = "byte")
 write_sav(d, file.path(out, "sandbox-fixture-uncompressed.sav"), compress = "none")
 

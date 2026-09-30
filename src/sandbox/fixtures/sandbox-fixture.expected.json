@@ -1332,6 +1332,45 @@
           "label": "EINZELHAUS, LAND"
         }
       ]
+    },
+    {
+      "name": "pe09",
+      "label": "WAHLBETEILIGUNG IST BUERGERPFLICHT",
+      "kind": "numeric",
+      "values": [1, 1, -11, -11, 1, 2, -8, -11, -11, 2, -11, 2, -11, 1, -11, 3, 4, -11, 4, -11, 3, 1, 1, -8, 2, 1, 3, 1, 1, 4, 2, 2, 3, -11, 2, 2, -11, 2, -11, 2, 1, 2, 1, -11, 2, 2, 2, 1, -11, -11, 1, -11, 3, -8, 3, 2, 1, 3, 3, 1],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -11,
+          "label": "TNZ: SPLIT"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "STIMME VOLL ZU"
+        },
+        {
+          "value": 2,
+          "label": "STIMME EHER ZU"
+        },
+        {
+          "value": 3,
+          "label": "STIMME EHER NICHT ZU"
+        },
+        {
+          "value": 4,
+          "label": "STIMME GAR NICHT ZU"
+        }
+      ]
     }
   ]
 }
