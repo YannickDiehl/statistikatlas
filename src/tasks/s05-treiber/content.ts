@@ -81,4 +81,4 @@ export const hintTexts: Record<Level, { think: string; pointer: string; concept:
     concept: { id: 'pearson', label: 'Pearson-Korrelation' },
   },
 };
-export const WORKSHOP = '7 Bivariate Analyse (Gewichtung, Zusammenhangsmaße)';
+export const WORKSHOP = '7 Uni- und Bivariate Analyse (Gewichtung, Zusammenhangsmaße)';

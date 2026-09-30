@@ -108,7 +108,7 @@ experiment %>% t_test(zusage, group = ___) %>% summary()`,
     think: 'Das Los weiß nichts über Alter oder Papier. Welche Zellen der Matrix müssten also nahe 0 liegen?',
     pointer: 'pearson_cor() mit mehreren Variablen liefert eine Matrix. Jede Zelle nutzt alle Fälle, bei denen beide Variablen gültig sind (paarweises n). Für papier bildest du mit rec() aus mode eine 0/1-Variable.',
     concept: { id: 'correlation_matrix', label: 'Korrelationsmatrix' },
-    workshop: '7 Bivariate Analyse (7.5.3 Korrelation)',
+    workshop: '7 Uni- und Bivariate Analyse (7.5.3 Korrelation)',
     scaffold: `experiment <- experiment %>%
   mutate(papier = rec(mode, rules = "3=___ [online]; 4=___ [Papier]; else=NA"))
 experiment %>% pearson_cor(wiederholung, betrag, ___, age, zusage) %>%
