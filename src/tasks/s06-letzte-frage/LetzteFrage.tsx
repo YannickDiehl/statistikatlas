@@ -8,8 +8,8 @@ import { RoleBrief } from '../kit/RoleBrief';
 import type { TaskProps } from '../types';
 import { hints, INSTITUTE, PLACEHOLDERS, R_SETUP, R_WEIGHTED, ROLE, ROLES, TEXTS, VERSIONS } from './content';
 import {
-  becauseNotes, checkEntry, meansDone, checkF, checkP, checkR, checkShare, checkTukey, compute, lockMarks, markNotes, matrixReady, plenumLines, pp, prepare,
-  rScriptFor, statusS06, toggleMark, toggleTukey, trap, trapReady, TUKEY_KEYS, unlockMarks, versionPair, weightedNotes, weightedReady, type S06State, type TEntry,
+  anovaDone, becauseNotes, checkEntry, checkF, checkP, checkR, checkShare, checkTukey, computeFor, gutLocked, lockMarks, markNotes, matrixReady, meansDone, plenumLines, pp,
+  rScriptFor, statusS06, toggleMark, toggleTukey, trap, trapReady, tryTukey, TUKEY_KEYS, unlockMarks, versionPair, weightedNotes, type S06State, type TEntry,
 } from './domain';
 import { MatrixMarks, MatrixReveal } from './Matrix';
 import { CellTable, TrapChart, TTestFields, TukeyTable, VersionChips, VersionTable } from './Parts';
@@ -21,15 +21,15 @@ const diffText = (grouping: 'rep' | 'amt', diff: number | null) =>
 
 export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06State>) {
   const set = (patch: Partial<S06State>) => onChange({ ...state, ...patch });
-  const c = useMemo(() => compute(prepare(data.sav)), [data.sav]);
+  const c = useMemo(() => computeFor(data.sav), [data.sav]);
   const role = (r: keyof typeof ROLES) => <span className="s06-role">{roleLabel(r, state.mode)}</span>;
   const setEntry = (station: 's1' | 's3', key: 'rep' | 'amt', e: TEntry) => set({ [station]: { ...state[station], [key]: e } } as Partial<S06State>);
   const s1rep = checkEntry(c, 'all', 'rep', state.s1.rep), s1amt = checkEntry(c, 'all', 'amt', state.s1.amt);
   const s3rep = checkEntry(c, 'online', 'rep', state.s3.rep), s3amt = checkEntry(c, 'online', 'amt', state.s3.amt);
   const rRep = checkR(c, 'wiederholung-papier', state.r.repPaper), rAmt = checkR(c, 'betrag-papier', state.r.amtPaper);
   const means = VERSIONS.map((v, i) => checkShare(c, { scope: 'online', grouping: 'version', level: v.code }, state.anova.means[i]));
-  const tukey = checkTukey(c, state.tukey);
-  const showMatrix = matrixReady(c, state), showTrap = trapReady(c, state), showWeighted = weightedReady(c, state);
+  const tukey = checkTukey(c, state), anova = anovaDone(c, state), gutFixed = gutLocked(c, state);
+  const showMatrix = matrixReady(c, state), showTrap = trapReady(c, state), showWeighted = anova;
   const trapData = showTrap ? trap(c) : null;
   const matrix = state.matrixView === 'weighted' ? c.matrix.weighted : c.matrix.unweighted;
   const ownPoints = s1rep.valid && s1rep.diff !== null ? pp(s1rep.diff).replace(' Pp.', '') : null;
@@ -48,11 +48,13 @@ export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06S
     <section className="task-step">
       <h3>Vorab · Dein Bauchgefühl</h3>
       <p>Welche Fassung würdest du programmieren, und welche Zusagequote erwartest du online?</p>
-      <VersionChips label="Fassung nach Bauchgefühl" value={state.gut.version} onChange={v => set({ gut: { ...state.gut, version: v } })} />
+      <VersionChips label="Fassung nach Bauchgefühl" value={state.gut.version} disabled={gutFixed} onChange={v => set({ gut: { ...state.gut, version: v } })} />
       <div className="task-grid">
-        <label>Erwartete Zusagequote (%)<input type="text" inputMode="decimal" maxLength={12} value={state.gut.rate} onChange={e => set({ gut: { ...state.gut, rate: e.target.value } })} /></label>
+        <label>Erwartete Zusagequote (%)<input type="text" inputMode="decimal" maxLength={12} value={state.gut.rate} disabled={gutFixed} onChange={e => set({ gut: { ...state.gut, rate: e.target.value } })} /></label>
       </div>
-      <p className="sandbox-note">Dein Bauchgefühl wird nicht geprüft – es steht am Ende zum Vergleich auf deiner Freigabe-Karte.</p>
+      <p className="sandbox-note">{gutFixed
+        ? 'Dein Bauchgefühl ist festgehalten, seit deine erste Zahl aus Station 1 erkannt ist – es bleibt ein Vorher.'
+        : 'Dein Bauchgefühl wird nicht geprüft – es steht am Ende zum Vergleich auf deiner Freigabe-Karte. Sobald deine erste Zahl aus Station 1 erkannt ist, wird es festgehalten.'}</p>
     </section>
 
     <section className="task-step">
@@ -105,7 +107,7 @@ export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06S
 
     <section className="task-step">
       <h3>Station 3a · Der saubere Vergleich: nur online {role('panel')}</h3>
-      <p>Das Institut befragt ausschließlich online – und nur online gab es alle vier Fassungen. Wiederhole die beiden t-Tests nur für die Online-Befragten.</p>
+      <p>Das Institut befragt ausschließlich online. Wiederhole die beiden t-Tests nur für die Online-Befragten.</p>
       <TTestFields id="s06-s3-rep" legend="Wiederholung · nur online" labels={['Zusagequote „ohne“ (%)', 'Zusagequote „mit“ (%)']}
         entry={state.s3.rep} onChange={e => setEntry('s3', 'rep', e)} notes={s3rep.notes} diff={diffText('rep', s3rep.diff)} />
       <TTestFields id="s06-s3-amt" legend="Betrag · nur online" labels={['Zusagequote 5 € (%)', 'Zusagequote 10 € (%)']}
@@ -132,16 +134,18 @@ export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06S
         </div>
         <Feedback notes={[...means.flatMap(m => m.notes), ...checkF(c, state.anova.F).notes, ...checkP(c, state.anova.p).notes]} />
       </fieldset>
-      <p>Welche Paare unterscheiden sich nach Tukey signifikant (p &lt; 0,05)?</p>
+      <p>Welche Paare unterscheiden sich nach Tukey signifikant (p &lt; 0,05)? Wähle alle aus und prüfe die Auswahl als Ganzes.</p>
+      {!anova && <p className="sandbox-note">Die Auswahl öffnet sich, sobald oben F oder p deiner ANOVA erkannt ist.</p>}
       <div className="sandbox-chips" role="group" aria-label="Signifikante Tukey-Paare">
-        {TUKEY_KEYS.map(k => <button key={k} aria-pressed={state.tukey.includes(k)} onClick={() => onChange(toggleTukey(state, k))}>{versionPair(k)}</button>)}
-        <button aria-pressed={state.tukey.includes('none')} onClick={() => onChange(toggleTukey(state, 'none'))}>kein Paar</button>
+        {TUKEY_KEYS.map(k => <button key={k} disabled={!anova} aria-pressed={state.tukey.includes(k)} onClick={() => onChange(toggleTukey(state, k))}>{versionPair(k)}</button>)}
+        <button disabled={!anova} aria-pressed={state.tukey.includes('none')} onClick={() => onChange(toggleTukey(state, 'none'))}>kein Paar</button>
+        <button className="primary" disabled={!anova || !state.tukey.length} onClick={() => onChange(tryTukey(state))}>Auswahl prüfen</button>
       </div>
       <Feedback notes={tukey.notes} />
       {tukey.correct && c.tukey.online && <TukeyTable rows={c.tukey.online} weighted={showWeighted ? c.tukey.onlineW : null} />}
       {showWeighted && <div className="s06-reveal">
         <h4>Zweite Enthüllung · mit Gewicht</h4>
-        <ul className="s06-notes">{weightedNotes(c).map(n => <li key={n}>{n}</li>)}</ul>
+        <ul className="s06-notes">{weightedNotes(c, { rep: s3rep.valid, amt: s3amt.valid, tukey: tukey.correct }).map(n => <li key={n}>{n}</li>)}</ul>
         <p>{TEXTS.weighted}</p>
         <RBlock code={R_WEIGHTED} />
       </div>}
