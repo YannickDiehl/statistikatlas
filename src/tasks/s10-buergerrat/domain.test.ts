@@ -166,17 +166,32 @@ test('rule-based counter-questions to written answers', () => {
   assert.match(answerNotes('Ja, 3,77-mal so wahrscheinlich.', some)[0].text, /^Probier es an Jana: 50,5 % × 2,61 = 132 % – geht das\?/);
   assert.equal(answerNotes('Nein, nicht 3,77-mal so wahrscheinlich – die Chance ist 3,77-mal so hoch.', some)[0].tone, 'ok');
   // Richtig abgelehnt – auch ohne das Wort „Chance“; mit Zahlen erst, wenn die eigenen Werte stimmen
-  for (const t of ['Nein, das heißt nicht 3,77-mal so wahrscheinlich.', 'Nein. Nicht 3,77-mal so wahrscheinlich – Wahrscheinlichkeiten können nicht über 100 % steigen.',
-    'Die Wahrscheinlichkeit steigt nicht um das 3,77-fache.', '3,77-mal so wahrscheinlich? Das ist falsch.']) {
+  const rejections = ['Nein, das heißt nicht 3,77-mal so wahrscheinlich.', 'Nein. Nicht 3,77-mal so wahrscheinlich – Wahrscheinlichkeiten können nicht über 100 % steigen.',
+    'Nicht 3,77-mal so wahrscheinlich – die Chance ist 3,77-mal so hoch.', '3,77-mal so wahrscheinlich? Das stimmt nicht.', '3,77-mal so wahrscheinlich? Das ist falsch.',
+    'Keinesfalls 3,77-mal so wahrscheinlich.', 'Auf keinen Fall 3,77-mal so wahrscheinlich.', 'Sie wählen nicht 3,77-mal so oft.',
+    'Die Wahrscheinlichkeit steigt nicht um das 3,77-fache.', 'Ich glaube nicht, dass sie 3,77-mal so wahrscheinlich wählen.',
+    'Nein, 3,77-mal so wahrscheinlich wäre falsch; es geht um die Odds.', 'Nein, 3,77-mal so wahrscheinlich heißt es nicht.',
+    'Das heißt nicht, dass sie 3,77-mal so wahrscheinlich wählen.', 'Es ist nicht so, dass sie 3,77-mal so wahrscheinlich wählen.'];
+  for (const t of rejections) {
     const [first] = answerNotes(t, some);
     assert.equal(first.tone, 'ok', t);
     assert.match(first.text, /^Richtig abgelehnt – die Probe an Jana zeigt, warum: 50,5 % × 2,61 = 132 %\./, t);
     assert.match(answerNotes(t, none)[0].text, /^Richtig abgelehnt\. /);
     assert.doesNotMatch(answerNotes(t, none)[0].text, /\d+,\d/);
   }
-  // Zustimmung bleibt eine Warnung, auch mit einem „nicht“ weiter hinten oder mit „oft/häufiger“
-  for (const t of ['Ja, 3,77-mal so wahrscheinlich, man kann es nicht anders sagen.', 'Ja, sie gehen 3,77-mal so oft wählen.', 'Ja, 3,77-mal häufiger.'])
-    assert.equal(answerNotes(t, some)[0].tone, 'warn', t);
+  // Zustimmung, doppelte Verneinung, „sondern“ und Unsicherheit bleiben eine Warnung – auch nach „Nein,“ wenn der Satz die Lesart behauptet
+  const misreadings = ['Ja, 3,77-mal so wahrscheinlich, man kann es nicht anders sagen.', 'Ja, sie gehen 3,77-mal so oft wählen.', 'Ja, 3,77-mal häufiger.',
+    'Nein, die Wahrscheinlichkeit ist 3,77-mal so hoch.', 'Ja, das kann man nicht bestreiten: 3,77-mal so wahrscheinlich.',
+    'Das ist kein Zufall: Sie wählen 3,77-mal so wahrscheinlich.', 'Ja, 3,77-mal so wahrscheinlich – falsch ist das nicht.',
+    'Nicht nur doppelt, sondern 3,77-mal so wahrscheinlich.', 'Keine Ahnung, vielleicht 3,77-mal so wahrscheinlich?',
+    'Ich bin nicht sicher, aber vermutlich 3,77-mal so wahrscheinlich.', 'Ich weiß nicht, ob es 3,77-mal so wahrscheinlich heißt.',
+    'Stimmt, 3,77-mal so wahrscheinlich.', 'Nein, 3,77-mal so wahrscheinlich.'];
+  for (const t of misreadings) {
+    const [first] = answerNotes(t, some);
+    assert.equal(first.tone, 'warn', t);
+    assert.match(first.text, /^Probier es an Jana: 50,5 % × 2,61 = 132 % – geht das\?/, t);
+  }
+  assert.equal(sentenceNotes('Nein, die Wahrscheinlichkeit ist 3,77-mal so hoch.', 'times', some)[0].tone, 'warn');
   assert.match(texts(sentenceNotes('Nein, nicht 3,77-mal so wahrscheinlich.', 'times', some)), /^Richtig abgelehnt/);
   assert.match(texts(answerNotes('Die Kampagne bewirkt, dass mehr wählen.', none)), /vergleicht Menschen/);
   assert.match(texts(answerNotes('Jana wird wählen.', some)), /Von 100 Menschen, die so antworten wie Jana, würden etwa 50 wählen gehen/);
@@ -306,7 +321,8 @@ test('restores state defensively, reports status and builds the council card', (
   assert.deepEqual(s.or, { pflicht: '', interesse: '1,405' });
   assert.equal(s.campaign, '');
   assert.equal(s.report.unit, '');
-  assert.equal(s.report.number.length, 16);
+  assert.equal(s.report.number.length, 24);
+  assert.equal(parseS10({ report: { number: '+22,2 Prozentpunkte' } }).report.number, '+22,2 Prozentpunkte');
   assert.deepEqual(s.odds, { janaUp: '12,2', wiegand: '', wiegandUp: '' });
   assert.equal(s.answer1, '');
   assert.equal(statusS10(initialS10()), 'open');
@@ -327,6 +343,15 @@ test('restores state defensively, reports status and builds the council card', (
   assert.equal(plenumLines(initialS10())[2][1], '');
   assert.equal(plenumLines({ ...done, report: { ...done.report, number: '2,61', unit: 'times' } }, p)[2][1], '2,61-fach · Exp(B)');
   assert.equal(plenumLines({ ...done, report: { ...done.report, number: '2,61', unit: 'none' } }, p)[2][1], '2,61 · Exp(B)');
+  // eine eingetippte Einheit wird nicht verdoppelt
+  const line = (number: string, unit: S10State['report']['unit']) => plenumLines({ ...done, report: { ...done.report, number, unit } }, p)[2][1];
+  assert.equal(line('2,61-fach', 'times'), '2,61-fach · Exp(B)');
+  assert.equal(line('×2,61', 'times'), '2,61-fach · Exp(B)');
+  assert.equal(line('10,3 Prozent', 'pct'), '10,3 Prozent · AME');
+  assert.equal(line('10,3 %', 'pct'), '10,3 Prozent · AME');
+  assert.equal(line('10,3 Pp.', 'pp'), '10,3 Prozentpunkte · AME');
+  assert.equal(line('+10,3 Prozentpunkte', 'pp'), '+10,3 Prozentpunkte · AME');
+  assert.equal(line('10,3 %', ''), '10,3 % · AME');
   // Größen der Ratsmitglieder erscheinen auf der Karte erst mit offener Tafel
   const jPp = fmt(100 * (jana.prob[1] - jana.prob[0]), 1);
   assert.equal(plenumLines({ ...done, report: { ...done.report, number: jPp, unit: 'pp' } }, p)[2][1], `${jPp} Prozentpunkte · Jana`);
