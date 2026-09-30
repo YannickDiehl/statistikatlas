@@ -58,7 +58,7 @@ export function TrapChart({ trap, view, onView }: { trap: Trap; view: 'all' | 'o
     <figcaption>
       {same ? '„mit“ bleibt stehen – alle Fälle mit Wiederholung sind online.' : '„mit“ ändert sich kaum.'} „ohne“ {trap.online[0] > trap.all[0] ? 'springt' : 'wechselt'} von {pct(trap.all[0])} auf {pct(trap.online[0])}. <strong>Nicht die Wiederholung hat sich verändert, sondern die Vergleichsgruppe.</strong>
       {trap.nPaperOhne > 0 && <> Unter „ohne“ steckten {trap.nPaperOhne.toLocaleString('de-DE')} Papier-Befragte mit einer Zusagequote von {pct(trap.paperOhne)}.</>}
-      {' '}Der Unterschied „mit“ − „ohne“ schrumpft von {pp(trap.all[1] - trap.all[0])} auf {pp(trap.online[1] - trap.online[0])}.
+      {' '}Der Unterschied „mit“ − „ohne“: über alle {pp(trap.all[1] - trap.all[0])}, nur online {pp(trap.online[1] - trap.online[0])}.
     </figcaption>
   </figure>;
 }

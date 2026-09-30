@@ -57,7 +57,7 @@ export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06S
 
     <section className="task-step">
       <h3>Station 1 · Erste Auswertung {role('panel')}</h3>
-      <p>Rechne in RStudio: Bilde aus <code>xr21</code> eine 0/1-Variable <code>zusage</code> (ihr Mittelwert ist die Zusagequote), fasse die Fassungen zu <code>wiederholung</code> (ohne/mit) und <code>betrag</code> (5/10 €) zusammen und vergleiche mit zwei t-Tests – über alle Selbstausfüller:innen, online und Papier zusammen.</p>
+      <p>Rechne in RStudio: Bilde aus <code>xr21</code> eine 0/1-Variable <code>zusage</code> (ihr Mittelwert ist die Zusagequote), fasse die Fassungen zu <code>wiederholung</code> (ohne/mit) und <code>betrag</code> (5/10 €) zusammen und vergleiche mit zwei t-Tests – über alle Selbstausfüller:innen, online und Papier zusammen. Trag je Test beide Zusagequoten und den Welch-t-Wert ein (Kurzausgabe von <code>t_test()</code> bzw. Zeile „Unequal variances“ in <code>summary()</code>).</p>
       <RBlock code={R_SETUP} file="letzte-frage-start.R" />
       <TTestFields id="s06-s1-rep" legend="Wiederholung · alle Selbstausfüller:innen" labels={['Zusagequote „ohne“ (%)', 'Zusagequote „mit“ (%)']}
         entry={state.s1.rep} onChange={e => setEntry('s1', 'rep', e)} notes={s1rep.notes} diff={diffText('rep', s1rep.diff)} />
