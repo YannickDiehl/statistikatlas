@@ -2,10 +2,10 @@ import type { Hint } from '../kit/HintLadder';
 
 /** Die beiden Ratsmitglieder mit ihren Antworten in den Originalcodes (pe09: 1 voll zu … 4 gar nicht zu; pa02a: 1 sehr stark … 5 überhaupt nicht). */
 export type PersonId = 'jana' | 'wiegand';
-export type Person = { id: PersonId; name: string; dative: string; age: number; quote: string; pe09: number; pa02a: number };
+export type Person = { id: PersonId; name: string; dative: string; age: number; quote: string; pe09: number; pa02a: number; interest: string };
 export const PERSONS: Record<PersonId, Person> = {
-  jana: { id: 'jana', name: 'Jana', dative: 'Jana', age: 24, quote: '„Bürgerpflicht? Stimme eher nicht zu. Politik interessiert mich wenig.“', pe09: 3, pa02a: 4 },
-  wiegand: { id: 'wiegand', name: 'Herr Wiegand', dative: 'Herrn Wiegand', age: 67, quote: '„Bürgerpflicht – stimme eher zu. Politik interessiert mich stark.“', pe09: 2, pa02a: 2 },
+  jana: { id: 'jana', name: 'Jana', dative: 'Jana', age: 24, quote: '„Bürgerpflicht? Stimme eher nicht zu. Politik interessiert mich wenig.“', pe09: 3, pa02a: 4, interest: 'wenig' },
+  wiegand: { id: 'wiegand', name: 'Herr Wiegand', dative: 'Herrn Wiegand', age: 67, quote: '„Bürgerpflicht – stimme eher zu. Politik interessiert mich stark.“', pe09: 2, pa02a: 2, interest: 'stark' },
 };
 
 /** Die Zahl auf der Folie des Sachverständigen. */
