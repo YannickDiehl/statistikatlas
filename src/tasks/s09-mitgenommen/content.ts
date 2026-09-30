@@ -26,26 +26,26 @@ export type Control = {
   /** Umkodierung wie in R (rec(source, rules = …)); ohne: Variable wie sie ist. */
   rules?: string;
   map?: (x: number) => number | null;
-  /** Denkanstoß je nach Sortierung (keine Musterlösung). */
-  onBefore: string;
-  onAfter: string;
-  /** Kann eine Folge des Umzugs sein (heute gemessen). */
+  /** Ein Argument für „stand vor dem Umzug fest“ und eines für „kann Folge des Umzugs sein“ – beide werden gezeigt, keine Musterlösung. */
+  before: string;
+  after: string;
+  /** Heute gemessen, kann eine Folge des Umzugs sein (für die Gegenfrage zum Off-Text). */
   consequence: boolean;
 };
 
 export const CONTROLS: Control[] = [
   { id: 'age', title: 'Alter', source: 'age', consequence: false,
-    onBefore: 'Das Alter steht fest, bevor jemand umzieht – und wer älter ist, hat andere Jahrgänge erlebt.', onAfter: 'Kann ein Umzug das Alter ändern?' },
+    before: 'Das Alter steht fest, bevor jemand umzieht.', after: 'Wann jemand umzieht, hängt am Lebensalter – aber verändert ein Umzug das Alter?' },
   { id: 'frau', title: 'Geschlecht (Frau)', source: 'sex', rules: '1=0 [Mann]; 2=1 [Frau]; else=NA', map: x => (x === 1 ? 0 : x === 2 ? 1 : null), consequence: false,
-    onBefore: 'Das Geschlecht steht vor dem Umzug fest.', onAfter: 'Kann ein Umzug das Geschlecht ändern?' },
+    before: 'Das Geschlecht steht vor dem Umzug fest.', after: 'Frauen und Männer ziehen vielleicht unterschiedlich oft um – macht das das Geschlecht zur Folge des Umzugs?' },
   { id: 'abi', title: 'Abitur', source: 'educ', rules: '1:3=0 [kein Abitur]; 4:5=1 [(Fach-)Abitur]; else=NA', map: x => (x >= 1 && x <= 3 ? 0 : x === 4 || x === 5 ? 1 : null), consequence: false,
-    onBefore: 'Den Schulabschluss macht man meist in der Jugend – also dort, wo man aufgewachsen ist, vor dem Umzug.', onAfter: 'Wo macht man meist den Schulabschluss: vor oder nach einem Umzug im Erwachsenenalter?' },
+    before: 'Den Schulabschluss macht man meist in der Jugend – dort, wo man aufgewachsen ist.', after: 'Manche holen einen Abschluss später nach, auch nach einem Umzug.' },
   { id: 'di08c', title: 'Einkommen heute', source: 'di08c', consequence: true,
-    onBefore: 'Das Einkommen wird heute gemessen – nach dem Umzug. Kann der Umzug es verändert haben?', onAfter: 'Gut begründet: Wer für eine Stelle umzieht, verdient danach oft anders.' },
+    before: 'Wer mehr verdient, kann leichter umziehen – das Einkommen könnte schon vorher eine Rolle gespielt haben.', after: 'Das Einkommen wird heute gemessen; wer für eine Stelle umzieht, verdient danach oft anders.' },
   { id: 'ep03', title: 'Eigene wirtschaftliche Lage', source: 'ep03', consequence: true,
-    onBefore: 'Die eigene Lage wird heute eingeschätzt – nach dem Umzug. Kann der Umzug sie verändert haben?', onAfter: 'Gut begründet: Die heutige Lage kann eine Folge des Umzugs sein.' },
+    before: 'Wer wirtschaftlich gut dasteht, zieht vielleicht eher um.', after: 'Die eigene Lage wird heute eingeschätzt, nach dem Umzug – der Umzug kann sie verändert haben.' },
   { id: 'pt03', title: 'Vertrauen in den Bundestag', source: 'pt03', consequence: true,
-    onBefore: 'Vertrauen wird heute gemessen und hängt eng mit der Demokratiezufriedenheit zusammen. Stand es wirklich vor dem Umzug fest?', onAfter: 'Gut begründet: Vertrauen kann sich mit dem neuen Ort ändern – und misst fast dasselbe wie die Zufriedenheit.' },
+    before: 'Vertrauen in Institutionen bringt man vielleicht aus der Jugend mit.', after: 'Vertrauen wird heute gemessen, kann sich am neuen Ort ändern und misst fast dasselbe wie die Zufriedenheit.' },
 ];
 export const CONTROL_IDS = CONTROLS.map(c => c.id);
 export const controlById = Object.fromEntries(CONTROLS.map(c => [c.id, c])) as Record<ControlId, Control>;
@@ -77,8 +77,13 @@ export const hints = {
   },
   controls: {
     think: 'Was stand fest, bevor jemand umzog? Nur solche Merkmale können gemeinsame Ursache von Umzug und Zufriedenheit sein.',
-    pointer: 'crosstab(dg03, abi, percentages = "row", weights = wghtpew) zeigt, wer umzieht. Kontrollen nimmst du mit + ins Modell auf.',
+    pointer: 'crosstab(dg03, abi, percentages = "row", weights = wghtpew) zeigt, wer umzieht. Kontrollen nimmst du mit + ins Modell auf. Wird die Formel sehr lang (über 60 Zeichen), bricht summary() in mariposa 0.7.3 mit „length = 2 in coercion to logical(1)“ ab – speichere das Modell dann und lass dir as.data.frame(modell$coef_table) zeigen.',
     concept: { id: 'confounding', label: 'Confounding · gemeinsame Ursachen' },
+  },
+  counter: {
+    think: 'Dasselbe Modell, nur eine andere abhängige Variable: Was steht links vom ~?',
+    pointer: 'Die drei Dummies bleiben dieselben wie bei deiner Referenz; links steht pt03 statt demo. pt03 wird nicht umgepolt (höher = mehr Vertrauen).',
+    concept: { id: 'dummy', label: 'Dummyvariablen' },
   },
   interaction: {
     think: 'Zwei Merkmale: im Osten aufgewachsen (ostjugend) und im Osten wohnend (ost). Die Ost-Bleibenden haben beide. Ist ihre Lücke mehr als die Summe der beiden einzelnen?',
