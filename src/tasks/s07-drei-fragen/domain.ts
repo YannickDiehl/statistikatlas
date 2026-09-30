@@ -1,6 +1,6 @@
 import type { SavFile } from '../../sandbox/readSav';
 import type { Note } from '../kit/Feedback';
-import { de, parseNumber } from '../kit/numbers';
+import { de, halfUnit, numberReadings } from '../kit/numbers';
 import { WORK_MODES, type WorkMode } from '../kit/PartnerToggle';
 import { reliability, rowMeans, rowSums, type Reliability } from '../kit/reliability';
 import { pearson, random, validValues } from '../kit/stats';
@@ -33,6 +33,8 @@ export type TripleStats = {
   alpha: number;
   alphaStd: number;
   omega: number;
+  /** ω liegt an der Grenze des Faktormodells (Heywood-Fall): Der Wertedetektor nennt ω dann nicht (mariposa 0.7.4 zeigt es dort nicht mehr). */
+  omegaBoundary: boolean;
   nAlpha: number;
   /** Stellvertreter-Wert: r(Kurzwert mit min_valid = 3, Restwert mit min_valid = 4). */
   r: number;
@@ -100,7 +102,7 @@ export function prepare(sav: SavFile): Prepared {
     const rest = restOf(items), xs = items.map(i => x[i]);
     const rel = reliability(xs);
     const kurz = rowMeans(xs, 3), restMean = rowMeans(rest.map(i => x[i]), 4);
-    return { key: keyOf(items), items, rest, alpha: rel.alpha, alphaStd: rel.alphaStd, omega: rel.omega, nAlpha: rel.n, r: pearson(kurz, restMean), nR: countValid(kurz, restMean) };
+    return { key: keyOf(items), items, rest, alpha: rel.alpha, alphaStd: rel.alphaStd, omega: rel.omega, omegaBoundary: rel.omegaBoundary, nAlpha: rel.n, r: pearson(kurz, restMean), nR: countValid(kurz, restMean) };
   });
   const ra = rankDesc(raw.map(t => t.alpha)), rr = rankDesc(raw.map(t => t.r));
   const triples: TripleStats[] = raw.map((t, i) => ({ ...t, rankAlpha: ra[i], rankR: rr[i] }));
@@ -134,29 +136,31 @@ export function detailOf(p: Prepared, t: TripleStats): TripleDetail {
 
 const f3 = (v: number) => de(v, 3);
 const count = (n: number) => n.toLocaleString('de-DE');
-const decimals = (s: string) => (s.trim().replace(/^[−–-]/, '').split(/[.,]/)[1] ?? '').length;
-/** Toleranz aus den eingetragenen Nachkommastellen (mindestens zwei): 0,76 → ±0,005; 0,759 → ±0,0005. */
-export const tolerance = (input: string) => (decimals(input) >= 2 ? 0.5 * 10 ** -decimals(input) + 1e-9 : null);
-/** Prozentwerte mit mindestens einer Nachkommastelle: 21,7 → ±0,05. */
-export const pctTolerance = (input: string) => (decimals(input) >= 1 ? 0.5 * 10 ** -decimals(input) + 1e-9 : null);
+/** Eine erkennbare Zahl: das Ziel (ok), eine angenommene Variante (accepted) oder eine erklärte Verwechslung.
+ *  also: Die Variante gilt nur, wenn die Eingabe auch zu diesem zweiten Wert passt (zwei Kennzahlen, die gleich gerundet sind). */
+export type Variant = { value: number; also?: number; ok?: boolean; accepted?: boolean; text: string };
 
-/** Eine erkennbare Zahl: das Ziel (ok), eine angenommene Variante (accepted) oder eine erklärte Verwechslung. */
-export type Variant = { value: number; ok?: boolean; accepted?: boolean; text: string };
-
-const hitOf = (vars: Variant[], input: string, tol: (s: string) => number | null) => {
-  const x = parseNumber(input), t = tol(input);
-  if (x === null || t === null) return null;
-  return vars.find(v => Number.isFinite(v.value) && Math.abs(v.value - x) <= t) ?? null;
+/** Lesarten der Eingabe mit genug Nachkommastellen (numberReadings: „0,759“, „.759“, „27.0%“ …); Toleranz = halbe Einheit der letzten Stelle. */
+const readings = (input: string, minDecimals: number) => numberReadings(input).filter(r => r.decimals >= minDecimals);
+const close = (v: number | undefined, x: number, tol: number) => v !== undefined && Number.isFinite(v) && Math.abs(v - x) <= tol;
+const hitOf = (vars: Variant[], input: string, minDecimals: number) => {
+  for (const { x, decimals } of readings(input, minDecimals)) {
+    const tol = halfUnit(decimals);
+    const hit = vars.find(v => close(v.value, x, tol) && (v.also === undefined || close(v.also, x, tol)));
+    if (hit) return hit;
+  }
+  return null;
 };
 
-/** Erkannt heißt: das Ziel oder eine angenommene Variante. Erst dann erscheinen Zahlen aus der Datei. */
-export const recognised = (vars: Variant[], input: string, tol = tolerance) => Boolean(hitOf(vars, input, tol)?.accepted);
+/** Erkannt heißt: das Ziel oder eine angenommene Variante. Erst dann erscheinen Zahlen aus der Datei.
+ *  minDecimals: Kennzahlen mit mindestens zwei, Prozentwerte mit mindestens einer Nachkommastelle. */
+export const recognised = (vars: Variant[], input: string, minDecimals = 2) => Boolean(hitOf(vars, input, minDecimals)?.accepted);
 
-export function checkNumber(vars: Variant[], input: string, notFound: string, tol = tolerance, digitsHint = 'Trag den Wert mit drei Nachkommastellen ein, so wie R ihn zeigt.'): Note[] {
+export function checkNumber(vars: Variant[], input: string, notFound: string, minDecimals = 2, digitsHint = 'Trag den Wert mit drei Nachkommastellen ein, so wie R ihn zeigt.'): Note[] {
   if (!input.trim()) return [];
-  if (parseNumber(input) === null) return [{ tone: 'hint', text: 'Das lese ich nicht als Zahl. Trag den Wert so ein, wie R ihn zeigt.' }];
-  if (tol(input) === null) return [{ tone: 'hint', text: digitsHint }];
-  const hit = hitOf(vars, input, tol);
+  if (!numberReadings(input).length) return [{ tone: 'hint', text: 'Das lese ich nicht als Zahl. Trag den Wert so ein, wie R ihn zeigt.' }];
+  if (!readings(input, minDecimals).length) return [{ tone: 'hint', text: digitsHint }];
+  const hit = hitOf(vars, input, minDecimals);
   if (!hit) return [{ tone: 'warn', text: notFound }];
   return [{ tone: hit.ok ? 'ok' : hit.accepted ? 'hint' : 'warn', text: hit.text }];
 }
@@ -169,8 +173,10 @@ export function batteryVariants(p: Prepared): Variant[] {
     { value: full.alpha, ok: true, accepted: true, text: `Stimmt: Alle sieben Fragen zusammen erreichen α = ${f3(full.alpha)} (n = ${count(full.n)}).${omega}` },
     { value: full.alphaStd, accepted: true, text: `Das ist das standardisierte α (${f3(full.alphaStd)}) – angenommen. Das rohe α steht in der Zeile darüber.` },
     { value: p.fullW.alpha, accepted: true, text: `Das ist das gewichtete α (${f3(p.fullW.alpha)}) – angenommen. Die Aufgabe rechnet ungewichtet.` },
-    { value: full.omega, text: `Das ist McDonalds ω (${f3(full.omega)}). Gesucht ist Cronbachs α, zwei Zeilen darüber.` },
-    { value: full.omegaStd, text: `Das ist das standardisierte ω (${f3(full.omegaStd)}). Gesucht ist Cronbachs α ganz oben.` },
+    ...(full.omegaBoundary ? [] : [
+      { value: full.omega, text: `Das ist McDonalds ω (${f3(full.omega)}). Gesucht ist Cronbachs α, zwei Zeilen darüber.` },
+      { value: full.omegaStd, text: `Das ist das standardisierte ω (${f3(full.omegaStd)}). Gesucht ist Cronbachs α ganz oben.` },
+    ]),
     ...full.items.map((it, i) => ({ value: it.alphaIfDeleted, text: `Das ist „Alpha ohne Item“ für ${ITEM_IDS[i]} (${f3(it.alphaIfDeleted)}). Gesucht ist α aller sieben Fragen oben in der Ausgabe.` })),
     ...p.triples.map(t => ({ value: t.alpha, text: `Das ist das α der Kurzskala ${labelOf(t.items)} (${f3(t.alpha)}). Hier geht es um alle sieben Fragen.` })),
   ];
@@ -203,8 +209,12 @@ export function alphaVariants(p: Prepared, t: TripleStats): Variant[] {
   const mine = labelOf(t.items), d = detailOf(p, t);
   return [
     { value: t.alpha, ok: true, accepted: true, text: `Stimmt: Die Stimmigkeit deiner drei Fragen ist α = ${f3(t.alpha)} (n = ${count(t.nAlpha)}).` },
-    // print() zeigt neben α nur ω: Eine abweichende dritte Stelle ist fast immer ω, nicht das standardisierte α aus summary().
-    { value: t.omega, text: `Das ist McDonalds ω (${f3(t.omega)}). Gesucht ist Cronbachs α aus derselben Zeile.` },
+    // print() zeigt neben α nur ω: Eine abweichende dritte Stelle ist meist ω, nicht das standardisierte α aus summary().
+    // Sind beide gleich gerundet, lässt sich nicht sagen, welches gemeint war – dann eine gemeinsame, angenommene Rückmeldung.
+    ...(t.omegaBoundary ? [] : [
+      { value: t.omega, also: t.alphaStd, accepted: true, text: `Das ist McDonalds ω oder das standardisierte α – beide liegen hier bei ${f3(t.alphaStd)}. Angenommen; gesucht ist eigentlich Cronbachs α, das R direkt vor ω zeigt.` },
+      { value: t.omega, text: `Das ist McDonalds ω (${f3(t.omega)}). Gesucht ist Cronbachs α aus derselben Zeile.` },
+    ]),
     { value: t.alphaStd, accepted: true, text: `Das ist das standardisierte α (${f3(t.alphaStd)}, „Alpha (standardized)“ in summary()) – angenommen. Für die Kurzskala zählt eigentlich das rohe α; beide liegen hier nah beieinander.` },
     { value: d.alphaW, accepted: true, text: `Das ist das gewichtete α (${f3(d.alphaW)}) – angenommen. Die Aufgabe rechnet ungewichtet; für die Stimmigkeit ändert das Gewicht wenig.` },
     { value: d.alphaAll7, accepted: true, text: `Das ist α auf den Fällen mit allen sieben Antworten (${f3(d.alphaAll7)}) – angenommen. reliability() mit deinen drei Fragen nimmt alle, die diese drei beantwortet haben.` },
@@ -289,6 +299,24 @@ const DUTY_ITEMS = shuffled(ITEM_IDS, 807), DUTY_TEXTS = shuffled(DUTY_REASONS, 
 export function dutyFor(group: number): { item: ItemId; reason: string } {
   const k = (Math.max(1, Math.round(group)) - 1) % 7;
   return { item: DUTY_ITEMS[k], reason: DUTY_TEXTS[k % DUTY_TEXTS.length] };
+}
+
+/** Die ausgeloste Pflichtfrage fehlt in der Wahl: allein „du“, zu zweit „ihr“. */
+export function dutyMissing(item: ItemId, final: readonly ItemId[], solo: boolean): Note[] {
+  if (!final.length || final.includes(item)) return [];
+  return [{ tone: 'warn', text: solo
+    ? `Deine Pflichtfrage ${item} fehlt in dieser Auswahl. Wähle eine Kurzskala mit ${item} – in der Landschaft sind sie dunkel.`
+    : `Eure Pflichtfrage ${item} fehlt in dieser Auswahl. Wählt eine Kurzskala mit ${item} – in der Landschaft sind sie dunkel.` }];
+}
+
+export function dutyInstruction(item: ItemId, final: readonly ItemId[], solo: boolean): string {
+  const has = final.includes(item);
+  if (solo) return has
+    ? 'Sie muss in deiner Kurzskala bleiben – deine Wahl enthält sie schon. Begründe, warum du die beiden anderen dazunimmst.'
+    : `Sie muss in deiner Kurzskala bleiben: Wähle oben neu; in der Landschaft sind alle Kurzskalen mit ${item} dunkel.`;
+  return has
+    ? 'Sie muss in eurer Kurzskala bleiben – eure Wahl enthält sie schon. Begründet, warum ihr die beiden anderen dazunehmt.'
+    : `Sie muss in eurer Kurzskala bleiben: Wählt oben neu; in der Landschaft sind alle Kurzskalen mit ${item} dunkel.`;
 }
 
 /* ---------- Kür: Mittelwertindex gegen Kombinationsindex ---------- */
@@ -429,10 +457,13 @@ export function revealReady(p: Prepared, s: S07State): boolean {
   });
 }
 
+/** Eingetragener Prozentwert in deutscher Schreibweise mit einer Stelle („21.7%“ → „21,7 %“); Unlesbares bleibt, wie es ist. */
+export const pctText = (input: string) => { const r = numberReadings(input)[0]; return r ? `${de(r.x, 1)} %` : input.trim(); };
+
 export function plenumLines(s: S07State, final: TripleStats | null): [string, string][] {
   const a = keptOf(s.a.struck), b = keptOf(s.b.struck);
   const duty = s.duty ? dutyFor(s.duty) : null;
-  const k = s.kuer.mean.trim() && s.kuer.all.trim() ? `${s.kuer.mean.trim()} % im Schnitt · ${s.kuer.all.trim()} % durchgehend` : '';
+  const k = s.kuer.mean.trim() && s.kuer.all.trim() ? `${pctText(s.kuer.mean)} im Schnitt · ${pctText(s.kuer.all)} durchgehend` : '';
   return [
     ['Kurzskala', s.final.length === 3 ? labelOf(s.final) : ''],
     ['Punkt im Kreuz (α | r)', final ? `${f3(final.alpha)} | ${f3(final.r)}` : ''],

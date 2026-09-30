@@ -99,20 +99,43 @@ function invert(m: number[][]): number[][] | null {
 
 export type OneFactor = { lambda: number[]; psi: number[]; omega: number; omegaStd: number; boundary: boolean };
 
-/** Ein-Faktor-Maximum-Likelihood-Lösung auf der Korrelationsmatrix wie stats::factanal(factors = 1)
- *  (Einzigartigkeiten in [0,005; 1], Start (1 − 0,5/p) / diag(R⁻¹)), daraus ω wie mariposa .omega_one_factor():
- *  ω_std = (Σλ)² / ((Σλ)² + Σψ); ω roh mit λ·sd und ψ·Varianz aus der Kovarianzmatrix.
- *  Gelöst mit dem EM-Algorithmus bis zur Maschinengenauigkeit; factanal hört mit L-BFGS-B früher auf,
- *  daher weicht R in der sechsten bis achten Nachkommastelle ab. */
-export function omegaOneFactor(cor: number[][], cov: number[][]): OneFactor {
-  const p = cor.length, LOWER = 0.005;
-  const nan: OneFactor = { lambda: [], psi: [], omega: NaN, omegaStd: NaN, boundary: false };
-  if (p < 3) return nan;
-  const inv = invert(cor);
-  if (!inv) return nan;
-  let psi = inv.map((row, i) => Math.min(1, Math.max(LOWER, (1 - 0.5 / p) / row[i])));
-  let lambda = psi.map(s => Math.sqrt(Math.max(1 - s, 0.01)));
-  for (let iter = 0; iter < 100000; iter++) {
+/** Eigenwerte und -vektoren (Spalten) einer kleinen symmetrischen Matrix, zyklisches Jacobi-Verfahren. */
+export function symEigen(m: number[][]): { values: number[]; vectors: number[][] } {
+  const n = m.length, a = m.map(row => [...row]);
+  const v: number[][] = m.map((_, i) => m.map((__, j) => (i === j ? 1 : 0)));
+  for (let sweep = 0; sweep < 100; sweep++) {
+    let off = 0;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) off += a[i][j] ** 2;
+    if (off < 1e-30) break;
+    for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) {
+      if (Math.abs(a[p][q]) < 1e-300) continue;
+      const theta = (a[q][q] - a[p][p]) / (2 * a[p][q]);
+      const t = (theta >= 0 ? 1 : -1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+      const c = 1 / Math.sqrt(t * t + 1), s = t * c;
+      for (let k = 0; k < n; k++) { const kp = a[k][p], kq = a[k][q]; a[k][p] = c * kp - s * kq; a[k][q] = s * kp + c * kq; }
+      for (let k = 0; k < n; k++) { const pk = a[p][k], qk = a[q][k]; a[p][k] = c * pk - s * qk; a[q][k] = s * pk + c * qk; }
+      for (let k = 0; k < n; k++) { const kp = v[k][p], kq = v[k][q]; v[k][p] = c * kp - s * kq; v[k][q] = s * kp + c * kq; }
+    }
+  }
+  return { values: a.map((row, i) => row[i]), vectors: v };
+}
+
+/** Ladungen zu gegebenen Einzigartigkeiten wie factanal (FAout): λ = √ψ · v₁ · √max(e₁ − 1, 0) aus Ψ^−½ R Ψ^−½. */
+function loadingsFor(cor: number[][], psi: number[]): number[] {
+  const d = psi.map(x => 1 / Math.sqrt(x));
+  const { values, vectors } = symEigen(cor.map((row, i) => row.map((r, j) => r * d[i] * d[j])));
+  const top = values.indexOf(Math.max(...values)), f = Math.sqrt(Math.max(values[top] - 1, 0));
+  return psi.map((x, i) => Math.sqrt(x) * vectors[i][top] * f);
+}
+
+const LOWER = 0.005;
+
+/** EM-Schritte (Rubin & Thayer) mit festgehaltenen Einzigartigkeiten. Bricht früh ab, wenn eine freie Einzigartigkeit
+ *  unter 0,05 weiter schrumpft – dann läuft sie auf die Grenze zu (Heywood-Fall), und EM würde dort fast stehen bleiben. */
+function emSteps(cor: number[][], psi: number[], lambda: number[], fixed: boolean[], watch: boolean[], maxIter: number) {
+  const p = cor.length;
+  let last = [...psi];
+  for (let iter = 1; iter <= maxIter; iter++) {
     // E-Schritt über Woodbury: β = Σ⁻¹λ = (λ/ψ) / (1 + λ'Ψ⁻¹λ)
     const a = lambda.map((l, i) => l / psi[i]);
     const c = 1 + lambda.reduce((s, l, i) => s + l * a[i], 0);
@@ -120,18 +143,58 @@ export function omegaOneFactor(cor: number[][], cov: number[][]): OneFactor {
     const sBeta = cor.map(row => row.reduce((s, r, j) => s + r * beta[j], 0));
     const ezz = 1 - beta.reduce((s, b, i) => s + b * lambda[i], 0) + beta.reduce((s, b, i) => s + b * sBeta[i], 0);
     const nextLambda = sBeta.map(x => x / ezz);
-    const nextPsi = nextLambda.map((l, i) => Math.min(1, Math.max(LOWER, cor[i][i] - l * sBeta[i])));
+    const nextPsi = nextLambda.map((l, i) => (fixed[i] ? psi[i] : Math.min(1, Math.max(LOWER, cor[i][i] - l * sBeta[i]))));
     let change = 0;
     for (let i = 0; i < p; i++) change = Math.max(change, Math.abs(nextPsi[i] - psi[i]), Math.abs(nextLambda[i] - lambda[i]));
     lambda = nextLambda; psi = nextPsi;
-    if (!Number.isFinite(change)) return nan;
-    if (change < 1e-15) break;
+    if (!Number.isFinite(change)) return { psi, lambda, converged: false, failed: true, sinking: [] as number[] };
+    if (change < 1e-15) return { psi, lambda, converged: true, failed: false, sinking: [] as number[] };
+    if (iter % 500 === 0) {
+      const sinking = psi.map((x, i) => i).filter(i => !fixed[i] && watch[i] && psi[i] < 0.05 && psi[i] < last[i]);
+      if (sinking.length) return { psi, lambda, converged: false, failed: false, sinking };
+      last = [...psi];
+    }
   }
+  return { psi, lambda, converged: false, failed: false, sinking: [] as number[] };
+}
+
+/** Ein-Faktor-Maximum-Likelihood-Lösung auf der Korrelationsmatrix wie stats::factanal(factors = 1)
+ *  (Einzigartigkeiten in [0,005; 1], Start (1 − 0,5/p) / diag(R⁻¹)), daraus ω wie mariposa .omega_one_factor():
+ *  ω_std = (Σλ)² / ((Σλ)² + Σψ); ω roh mit λ·sd und ψ·Varianz aus der Kovarianzmatrix.
+ *  Innen gelöst mit dem EM-Algorithmus bis zur Maschinengenauigkeit (factanal hört mit L-BFGS-B früher auf, R weicht daher
+ *  in der sechsten bis achten Nachkommastelle ab). Läuft eine Einzigartigkeit auf die Grenze 0,005 zu (Heywood-Fall), wird sie
+ *  dort festgehalten und der Rest neu geschätzt – wie die Randlösung von L-BFGS-B; bleibt sie dort nicht (Kuhn-Tucker-Bedingung
+ *  1 − λᵢ² ≤ 0,005 verletzt), wird sie wieder freigegeben. Die Ladungen am Ende kommen wie in factanal aus der
+ *  Eigenzerlegung. boundary: eine Einzigartigkeit liegt an der Grenze oder das Verfahren kam nicht zum Stillstand. */
+export function omegaOneFactor(cor: number[][], cov: number[][]): OneFactor {
+  const p = cor.length;
+  const nan: OneFactor = { lambda: [], psi: [], omega: NaN, omegaStd: NaN, boundary: false };
+  if (p < 3) return nan;
+  const inv = invert(cor);
+  if (!inv) return nan;
+  let psi = inv.map((row, i) => Math.min(1, Math.max(LOWER, (1 - 0.5 / p) / row[i])));
+  let lambda = psi.map(s => Math.sqrt(Math.max(1 - s, 0.01)));
+  const fixed = psi.map(() => false), watch = psi.map(() => true);
+  let converged = false;
+  for (let round = 0; round < 4 * p; round++) {
+    const res = emSteps(cor, psi, lambda, fixed, watch, 50000);
+    if (res.failed) return nan;
+    ({ psi, lambda, converged } = res);
+    const target = loadingsFor(cor, psi).map(l => 1 - l * l);
+    let changed = false;
+    for (let i = 0; i < p; i++) {
+      if (!fixed[i] && (res.sinking.includes(i) || psi[i] <= LOWER || target[i] < LOWER)) { fixed[i] = true; psi[i] = LOWER; changed = true; }
+      else if (fixed[i] && target[i] > LOWER + 1e-9) { fixed[i] = false; watch[i] = false; changed = true; }
+    }
+    if (!changed && converged) break;
+    converged = false;
+  }
+  lambda = loadingsFor(cor, psi);
   if (sum(lambda) < 0) lambda = lambda.map(l => -l);
   const sl = sum(lambda), omegaStd = sl ** 2 / (sl ** 2 + sum(psi));
   const lr = lambda.map((l, i) => l * Math.sqrt(cov[i][i])), tr = psi.map((s, i) => s * cov[i][i]);
   const omega = sum(lr) ** 2 / (sum(lr) ** 2 + sum(tr));
-  return { lambda, psi, omega, omegaStd, boundary: psi.some(s => s <= LOWER + 1e-4) };
+  return { lambda, psi, omega, omegaStd, boundary: !converged || psi.some(s => s <= LOWER + 1e-4) };
 }
 
 /** mariposa::reliability(): listenweiser Ausschluss (bei Gewichten auch fehlende Gewichte), sonst wie in R.

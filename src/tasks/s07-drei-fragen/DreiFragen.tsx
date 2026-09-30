@@ -9,8 +9,8 @@ import { RoleBrief } from '../kit/RoleBrief';
 import type { TaskProps } from '../types';
 import { FACET_HELP, FACET_IDS, FACETS, hints, ITEM_IDS, ITEMS, R_BATTERY, R_SETUP, ROLE, SCALE, type ItemId } from './content';
 import {
-  BATTERY_NOT_FOUND, batteryVariants, checkNumber, checkWeakest, chooseFinal, DUTY_GROUPS, dutyFor, facetNote, keptOf, keyOf, kuer, KUER_NOT_FOUND,
-  kuerAllVariants, kuerMeanVariants, kuerReveal, labelOf, landscapeNotes, pa29Note, pctTolerance, plenumLines, prepare, recognised, revealReady, rKuer,
+  BATTERY_NOT_FOUND, batteryVariants, checkNumber, checkWeakest, chooseFinal, DUTY_GROUPS, dutyFor, dutyInstruction, dutyMissing, facetNote, keptOf, keyOf, kuer, KUER_NOT_FOUND,
+  kuerAllVariants, kuerMeanVariants, kuerReveal, labelOf, landscapeNotes, pa29Note, plenumLines, prepare, recognised, revealReady, rKuer,
   rScript, scaffoldKuer, statusS07, toggleStrike, TRIPLES, type Proposal, type S07State,
 } from './domain';
 import { Landscape } from './Landscape';
@@ -39,13 +39,13 @@ export function DreiFragen({ data, state, onChange, onConcept }: TaskProps<S07St
   const finalNotes: Note[] = finalStats ? [
     ...(facetsShown ? [facetNote(finalStats.items)] : []),
     ...pa29Note(p, finalStats.items),
-    ...(duty && !finalStats.items.includes(duty.item) ? [{ tone: 'warn' as const, text: `Eure Pflichtfrage ${duty.item} fehlt in dieser Auswahl. Wählt eine Kurzskala mit ${duty.item} – in der Landschaft sind sie dunkel.` }] : []),
+    ...(duty ? dutyMissing(duty.item, finalStats.items, solo) : []),
   ] : [];
   const sentenceNotes: Note[] = /^\s*(nichts|alles)\b/i.test(state.sentence)
     ? [{ tone: 'hint', text: 'Jede Kurzskala verliert etwas. Welche Seite des Begriffs ist mit drei Fragen schwächer vertreten als mit sieben – und welche Menschen unterscheidet sie nicht mehr?' }]
     : [];
-  const meanOk = k ? recognised(kuerMeanVariants(k), state.kuer.mean, pctTolerance) : false;
-  const allOk = k ? recognised(kuerAllVariants(k), state.kuer.all, pctTolerance) : false;
+  const meanOk = k ? recognised(kuerMeanVariants(k), state.kuer.mean, 1) : false;
+  const allOk = k ? recognised(kuerAllVariants(k), state.kuer.all, 1) : false;
 
   return <div className="task s07">
     <RoleBrief role="Datenteam einer Nachrichten-App" title="Drei Fragen müssen reichen">
@@ -91,9 +91,9 @@ export function DreiFragen({ data, state, onChange, onConcept }: TaskProps<S07St
       extra={[...contentNotes(a, 'Vorschlag Stimmigkeit'), ...contentNotes(b, 'Vorschlag Inhalt'), ...sameAsA]}>
       <p>{solo ? 'Jetzt vertrittst du den Inhalt:' : 'B vertritt den Inhalt:'} Die Kurzskala soll den ganzen Begriff tragen, nicht nur einen Teil davon. Und sie soll vorhersagen, was die vier gestrichenen Fragen ergeben hätten – das prüft der Stellvertreter-Test. Streiche noch einmal vier Fragen, diesmal mit dieser Brille. Im Skript änderst du nur die Fragen.</p>
       <div className="s07-facets">
-        {state.facetLevel === 0 && <button onClick={() => set({ facetLevel: 1 })} aria-expanded={false}>Welche Seiten hat der Begriff?</button>}
+        {state.facetLevel === 0 && <button onClick={() => set({ facetLevel: 1 })}>Welche Seiten hat der Begriff?</button>}
         {state.facetLevel >= 1 && <p><strong>Denkanstoß.</strong> {FACET_HELP.think}</p>}
-        {state.facetLevel === 1 && <button onClick={() => set({ facetLevel: 2 })} aria-expanded={false}>Die drei Seiten zeigen</button>}
+        {state.facetLevel === 1 && <button onClick={() => set({ facetLevel: 2 })}>Die drei Seiten zeigen</button>}
         {facetsShown && <>
           <p>{FACET_HELP.reveal}</p>
           <ul className="s07-facet-list">{FACET_IDS.map(fid => <li key={fid}>
@@ -143,8 +143,8 @@ export function DreiFragen({ data, state, onChange, onConcept }: TaskProps<S07St
         <label>Allen drei zugestimmt (%)<input type="text" inputMode="decimal" maxLength={12} value={state.kuer.all} onChange={e => setKuer({ all: e.target.value })} /></label>
       </div>
       <Feedback notes={[
-        ...checkNumber(kuerMeanVariants(k), state.kuer.mean, KUER_NOT_FOUND, pctTolerance, 'Trag den Anteil mit einer Nachkommastelle ein, so wie crosstab() ihn zeigt.'),
-        ...checkNumber(kuerAllVariants(k), state.kuer.all, KUER_NOT_FOUND, pctTolerance, 'Trag den Anteil mit einer Nachkommastelle ein, so wie crosstab() ihn zeigt.'),
+        ...checkNumber(kuerMeanVariants(k), state.kuer.mean, KUER_NOT_FOUND, 1, 'Trag den Anteil mit einer Nachkommastelle ein, so wie crosstab() ihn zeigt.'),
+        ...checkNumber(kuerAllVariants(k), state.kuer.all, KUER_NOT_FOUND, 1, 'Trag den Anteil mit einer Nachkommastelle ein, so wie crosstab() ihn zeigt.'),
         ...(meanOk && allOk ? [{ tone: 'ok' as const, text: kuerReveal(k) }] : []),
       ]} />
       <HintLadder key={finalStats.key} hint={{ ...hints.kuer, scaffold: scaffoldKuer, solution: `${R_SETUP}\n\n${rKuer(finalStats.items)}` }} onConcept={onConcept} file="drei-fragen-kuer.R" />
@@ -159,7 +159,7 @@ export function DreiFragen({ data, state, onChange, onConcept }: TaskProps<S07St
           {Array.from({ length: DUTY_GROUPS }, (_, i) => i + 1).map(g => <option key={g} value={g}>Gruppe {g}</option>)}
         </select></label>
       </div>
-      {duty && <p className="s07-duty-draw" aria-live="polite"><strong>Pflichtfrage für Gruppe {state.duty}: {duty.item}</strong> – {ITEMS[duty.item].statement} Grund: {duty.reason} Sie muss in eurer Kurzskala bleiben{state.final.includes(duty.item) ? ' – eure Wahl enthält sie schon. Begründet, warum ihr die beiden anderen dazunehmt.' : `: Wählt oben neu; in der Landschaft sind alle Kurzskalen mit ${duty.item} dunkel.`}</p>}
+      {duty && <p className="s07-duty-draw" aria-live="polite"><strong>Pflichtfrage für Gruppe {state.duty}: {duty.item}</strong> – {ITEMS[duty.item].statement} Grund: {duty.reason} {dutyInstruction(duty.item, state.final, solo)}</p>}
     </section>}
 
     <PlenumCard title="Drei Fragen müssen reichen" lines={plenumLines(state, finalStats)} file="drei-fragen-plenum.md" />

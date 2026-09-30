@@ -14,13 +14,13 @@ export const FACETS: Record<FacetId, { name: string; gist: string }> = {
 
 export type Item = { id: ItemId; short: string; statement: string; facet: FacetId };
 export const ITEMS: Record<ItemId, Item> = {
-  pa29: { id: 'pa29', short: 'Abgeordnete nur dem Volk verpflichtet', statement: '„Die Abgeordneten im Bundestag sollten sich nur dem Willen des Volkes verpflichtet fühlen.“', facet: 'V' },
-  pa30: { id: 'pa30', short: 'Politiker reden zu viel, handeln zu wenig', statement: '„Die Politiker reden zu viel und handeln zu wenig.“', facet: 'E' },
-  pa31: { id: 'pa31', short: 'Einfache Bürger wären bessere Volksvertreter', statement: '„Ein einfacher Bürger würde meine Interessen besser vertreten als ein Berufspolitiker.“', facet: 'E' },
-  pa32: { id: 'pa32', short: 'Kompromiss ist Verrat an Prinzipien', statement: '„Was man in der Politik ‚Kompromiss‘ nennt, ist in Wirklichkeit nur ein Verrat der eigenen Prinzipien.“', facet: 'H' },
-  pa33: { id: 'pa33', short: 'Das Volk sollte entscheiden', statement: '„Das Volk, nicht die Politiker, sollte die wichtigsten politischen Entscheidungen treffen.“', facet: 'V' },
-  pa34: { id: 'pa34', short: 'Das Volk ist sich einig', statement: '„Die Bürger sind sich im Prinzip einig darüber, was politisch passieren muss.“', facet: 'H' },
-  pa35: { id: 'pa35', short: 'Politiker vertreten nur die Reichen', statement: '„Politiker vertreten nur die Interessen der Reichen.“', facet: 'E' },
+  pa29: { id: 'pa29', short: 'Abgeordnete nur dem Volk verpflichtet', statement: 'Die Abgeordneten im Bundestag sollten sich nur dem Willen des Volkes verpflichtet fühlen.', facet: 'V' },
+  pa30: { id: 'pa30', short: 'Politiker reden zu viel, handeln zu wenig', statement: 'Die Politiker reden zu viel und handeln zu wenig.', facet: 'E' },
+  pa31: { id: 'pa31', short: 'Einfache Bürger wären bessere Volksvertreter', statement: 'Ein einfacher Bürger würde meine Interessen besser vertreten als ein Berufspolitiker.', facet: 'E' },
+  pa32: { id: 'pa32', short: 'Kompromiss ist Verrat an Prinzipien', statement: 'Was man in der Politik „Kompromiss“ nennt, ist in Wirklichkeit nur ein Verrat der eigenen Prinzipien.', facet: 'H' },
+  pa33: { id: 'pa33', short: 'Das Volk sollte entscheiden', statement: 'Das Volk, nicht die Politiker, sollte die wichtigsten politischen Entscheidungen treffen.', facet: 'V' },
+  pa34: { id: 'pa34', short: 'Das Volk ist sich einig', statement: 'Die Bürger sind sich im Prinzip einig darüber, was politisch passieren muss.', facet: 'H' },
+  pa35: { id: 'pa35', short: 'Politiker vertreten nur die Reichen', statement: 'Politiker vertreten nur die Interessen der Reichen.', facet: 'E' },
 };
 export const SCALE = '1 stimme voll zu · 2 stimme eher zu · 3 teils/teils · 4 lehne eher ab · 5 lehne ganz ab';
 
@@ -35,7 +35,7 @@ export const DUTY_REASONS = [
   'Die Chefredaktion zitiert sie jede Woche in der Push-Nachricht.',
   'Ein Partnermedium in Österreich stellt genau diese Frage – nur so lassen sich beide Länder vergleichen.',
   'Die Leserschaft hat sie in einer Abstimmung zur wichtigsten Frage gewählt.',
-  'Sie ist am kürzesten und passt als einzige ganz auf den Sperrbildschirm.',
+  'Die App zeigt sie jeden Montag auf dem Sperrbildschirm – viele Leserinnen und Leser kennen sie schon.',
   'Der Beirat der App besteht darauf, weil sie den Kern des Begriffs trifft.',
   'Die Werbekampagne zum Barometer ist mit ihr schon gedruckt.',
 ] as const;
@@ -68,7 +68,7 @@ export const hints: Record<'battery' | 'proposal' | 'kuer', Omit<Hint, 'scaffold
   },
   kuer: {
     think: 'Der Mittelwertindex fragt: Liegt der Durchschnitt auf der Seite der Zustimmung? Der Kombinationsindex fragt: Hat die Person allen drei Aussagen zugestimmt? Bilde für jede Aussage eine 0/1-Variable und zähle.',
-    pointer: 'rec() macht aus 1–2 eine 1 und aus 3–5 eine 0; row_sums() zählt die Zustimmungen je Person. crosstab() mit weights = wghtpew und percentages = "total" zeigt beide Anteile am Rand.',
+    pointer: 'rec() macht aus 1–2 eine 1 und aus 3–5 eine 0; row_sums() zählt die Zustimmungen je Person. crosstab() mit weights = wghtpew und percentages = "total": Den Anteil nach dem Mittelwertindex liest du in der Zeile „im Schnitt Zustimmung“ ganz rechts (Total, total %), den Anteil nach dem Kombinationsindex in der Zelle „im Schnitt Zustimmung“ × „allen drei zugestimmt“ – wer allen dreien zustimmt, stimmt auch im Schnitt zu.',
     concept: { id: 'row_operations', label: 'Rechnen innerhalb einer Person' },
     workshop: '5 Daten transformieren und Skalen bilden (rec, row_sums) · 7 Uni- und Bivariate Analyse (crosstab)',
   },

@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { fakeSav, fixtureSav } from '../../sandbox/testData';
-import type { ItemId } from './content';
+import { DUTY_REASONS, ITEMS, type ItemId } from './content';
 import {
-  ALPHA_NOT_FOUND, alphaVariants, BATTERY_NOT_FOUND, batteryVariants, checkNumber, checkWeakest, chooseFinal, detailOf, dutyFor, facetNote, initialS07,
-  keptOf, keyOf, kuer, KUER_NOT_FOUND, kuerAllVariants, kuerMeanVariants, kuerReveal, labelOf, landscapeNotes, pa29Note, parseS07, pctTolerance, plenumLines,
-  prepare, R_NOT_FOUND, recognised, revealReady, rKuer, rProposal, rScript, rVariants, scaffoldKuer, scaffoldProposal, statusS07, tolerance, toggleStrike,
-  TRIPLES, weakestItem, type S07State,
+  ALPHA_NOT_FOUND, alphaVariants, BATTERY_NOT_FOUND, batteryVariants, checkNumber, checkWeakest, chooseFinal, detailOf, dutyFor, dutyInstruction, dutyMissing,
+  facetNote, initialS07, keptOf, keyOf, kuer, KUER_NOT_FOUND, kuerAllVariants, kuerMeanVariants, kuerReveal, labelOf, landscapeNotes, pa29Note, parseS07,
+  pctText, plenumLines, prepare, R_NOT_FOUND, recognised, revealReady, rKuer, rProposal, rScript, rVariants, scaffoldKuer, scaffoldProposal, statusS07,
+  toggleStrike, TRIPLES, weakestItem, type S07State,
 } from './domain';
 
 const p = prepare(fixtureSav());
@@ -57,10 +57,26 @@ test('the value detector names every alpha variant and accepts only alpha, stand
   assert.match(alpha('0,6').text, /drei Nachkommastellen/);
   assert.match(alpha('abc').text, /nicht als Zahl/);
   assert.deepEqual(checkNumber(alphaVariants(p, t), '  ', ALPHA_NOT_FOUND), []);
-  assert.equal(tolerance('0,76'), 0.005 + 1e-9);
-  assert.equal(tolerance('0,7'), null);
-  assert.equal(pctTolerance('21,7'), 0.05 + 1e-9);
-  assert.equal(pctTolerance('22'), null);
+  // R-Schreibweise mit Punkt und zwei Stellen (halbe Einheit: ±0,005) werden ebenso gelesen
+  assert.equal(alpha(`.${f4(t.alpha).slice(2)}`).tone, 'ok');
+  assert.equal(alpha(t.alpha.toFixed(2)).tone, 'ok');
+  assert.equal(recognised(alphaVariants(p, t), '0,7'), false);
+});
+
+test('omega and standardised alpha: a combined answer when both round alike, no omega at a Heywood boundary', () => {
+  // Kurzskala mit ω und standardisiertem α nah beieinander (Werte gesetzt, Rest aus der Testdatei)
+  const near = { ...t, omega: t.alpha + 0.0103, alphaStd: t.alpha + 0.0101 };
+  const both = one(checkNumber(alphaVariants(p, near), near.alphaStd.toFixed(3).replace('.', ','), ALPHA_NOT_FOUND));
+  assert.match(both.text, /^Das ist McDonalds ω oder das standardisierte α – beide liegen hier bei/);
+  assert.equal(recognised(alphaVariants(p, near), near.alphaStd.toFixed(3).replace('.', ',')), true);
+  assert.match(one(checkNumber(alphaVariants(p, near), f4(near.omega), ALPHA_NOT_FOUND)).text, /^Das ist McDonalds ω \(/);
+  assert.match(one(checkNumber(alphaVariants(p, near), f4(near.alphaStd), ALPHA_NOT_FOUND)).text, /^Das ist das standardisierte α/);
+  // Heywood-Fall der Testdatei: pa29 + pa31 + pa32 (factanal setzt ψ von pa31 auf 0,005) – ω wird nicht genannt
+  const hey = p.byKey['pa29+pa31+pa32'];
+  assert.equal(hey.omegaBoundary, true);
+  assert.equal(t.omegaBoundary, false);
+  assert.doesNotMatch(checkNumber(alphaVariants(p, hey), f4(hey.omega), ALPHA_NOT_FOUND).map(n => n.text).join(' '), /McDonalds ω/);
+  assert.ok(alphaVariants(p, t).some(v => v.text.startsWith('Das ist McDonalds ω (')));
 });
 
 test('the value detector names every r variant: min_valid, weight, overlap with the total index, alpha', () => {
@@ -125,9 +141,20 @@ test('landscape notes come from the data: champions, their proxy ranks, alpha �
   assert.match(more[6], /Steht pa29 in der Kurzskala/);
 });
 
-test('the duty question is a fixed draw per group number', () => {
+test('the duty question is a fixed draw per group number, with reasons that fit any question', () => {
   const items = Array.from({ length: 7 }, (_, g) => dutyFor(g + 1).item);
   assert.equal(new Set(items).size, 7);
+  assert.equal(new Set(Array.from({ length: 7 }, (_, g) => dutyFor(g + 1).reason)).size, 7);
+  // Keine Begründung behauptet etwas über die Länge oder Einzigartigkeit einer bestimmten Frage.
+  for (const reason of DUTY_REASONS) assert.doesNotMatch(reason, /kürzest|längst|als einzige/, reason);
+  const shortest = Object.values(ITEMS).sort((a, b) => a.statement.length - b.statement.length)[0].id;
+  assert.equal(shortest, 'pa30');
+  assert.deepEqual(dutyMissing('pa33', ['pa31', 'pa32', 'pa33'], true), []);
+  assert.deepEqual(dutyMissing('pa33', [], true), []);
+  assert.match(dutyMissing('pa33', ['pa30', 'pa31', 'pa32'], true)[0].text, /^Deine Pflichtfrage pa33 fehlt .* Wähle eine Kurzskala mit pa33/);
+  assert.match(dutyMissing('pa33', ['pa30', 'pa31', 'pa32'], false)[0].text, /^Eure Pflichtfrage pa33 fehlt .* Wählt eine Kurzskala mit pa33/);
+  assert.match(dutyInstruction('pa33', ['pa31', 'pa32', 'pa33'], true), /deiner Kurzskala .* deine Wahl enthält sie schon\. Begründe/);
+  assert.match(dutyInstruction('pa33', ['pa30', 'pa31', 'pa32'], false), /eurer Kurzskala bleiben: Wählt oben neu/);
   assert.deepEqual(dutyFor(8), dutyFor(1));
   assert.deepEqual(dutyFor(3), dutyFor(3));
   assert.ok(dutyFor(2).reason.length > 10);
@@ -152,15 +179,22 @@ test('the bonus task: mean index vs combination index, weighted, with its varian
   assert.equal(k.allAnyW, (100 * 2) / 7);
   const fk = kuer(p, ['pa31', 'pa32', 'pa33']);
   const f1 = (x: number) => x.toFixed(2).replace('.', ',');
-  const mean = (s: string) => one(checkNumber(kuerMeanVariants(fk), s, KUER_NOT_FOUND, pctTolerance));
-  const all = (s: string) => one(checkNumber(kuerAllVariants(fk), s, KUER_NOT_FOUND, pctTolerance));
+  const mean = (s: string) => one(checkNumber(kuerMeanVariants(fk), s, KUER_NOT_FOUND, 1));
+  const all = (s: string) => one(checkNumber(kuerAllVariants(fk), s, KUER_NOT_FOUND, 1));
   assert.equal(mean(f1(fk.meanW)).tone, 'ok');
   assert.match(mean(f1(fk.meanU)).text, /ohne Gewicht/);
   assert.match(mean(f1(fk.allW)).text, /zweite Feld/);
   assert.match(mean(f1(fk.meanW - fk.allW)).text, /Randsumme/);
   assert.equal(all(f1(fk.allW)).tone, 'ok');
   assert.match(all(f1(fk.meanW)).text, /erste Feld/);
-  assert.equal(recognised(kuerMeanVariants(fk), f1(fk.meanU), pctTolerance), false);
+  assert.equal(recognised(kuerMeanVariants(fk), f1(fk.meanU), 1), false);
+  // aus crosstab() kopiert: „27.0%“ – Punkt und Prozentzeichen werden gelesen
+  assert.equal(mean(`${fk.meanW.toFixed(1)}%`).tone, 'ok');
+  assert.equal(all(`${fk.allW.toFixed(1)} %`).tone, 'ok');
+  assert.match(mean('27').text, /einer Nachkommastelle|drei Nachkommastellen/);
+  assert.equal(pctText('21.7%'), '21,7 %');
+  assert.equal(pctText(' 14,2 '), '14,2 %');
+  assert.equal(pctText('abc'), 'abc');
   assert.match(kuerReveal(fk), /gelten nur nach der Mittelwertlogik als populistisch/);
 });
 
@@ -204,12 +238,13 @@ test('status and reveal: both proposals entered and recognised open the landscap
   assert.equal(statusS07(full), 'running');
   const done = { ...full, final: ['pa31', 'pa32', 'pa33'] as ItemId[], sentence: 'die Einheit des Volkes' };
   assert.equal(statusS07(done), 'done');
-  const lines = plenumLines({ ...done, duty: 3, reason: 'Grund', kuer: { mean: '21,7', all: '14,2' } }, t);
+  const lines = plenumLines({ ...done, duty: 3, reason: 'Grund', kuer: { mean: '21.7%', all: '14,2' } }, t);
   assert.deepEqual(lines.map(l => l[0]), ['Kurzskala', 'Punkt im Kreuz (α | r)', 'Was sie nicht mehr misst', 'Begründung', 'Vorschläge', 'Pflichtfrage (Gruppe 3)', 'Kür']);
   assert.equal(lines[0][1], 'pa31 + pa32 + pa33');
   assert.equal(lines[1][1], '0,599 | 0,685');
   assert.equal(lines[4][1], 'Stimmigkeit: pa31 + pa32 + pa33 · Inhalt: pa29 + pa30 + pa33');
   assert.match(lines[5][1], new RegExp(`^${dutyFor(3).item} – `));
+  assert.equal(lines[6][1], '21,7 % im Schnitt · 14,2 % durchgehend');
   assert.equal(plenumLines(done, null)[1][1], '', 'no point before the reveal');
 });
 
