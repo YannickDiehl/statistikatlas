@@ -85,8 +85,8 @@
 .xw-open{margin-top:10px!important}
 
 .xw-table-wrap{overflow-x:auto}
-.xw-table{width:100%;border-collapse:collapse;font:14px/1.4 Georgia,serif;font-variant-numeric:tabular-nums}
-.xw-table th,.xw-table td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:right;font-weight:400}
+.xw-table{width:auto;min-width:min(100%,360px);border-collapse:collapse;font:14px/1.4 Georgia,serif;font-variant-numeric:tabular-nums}
+.xw-table th,.xw-table td{padding:4px 12px;min-width:56px;border-bottom:1px solid var(--line);text-align:right;font-weight:400}
 .xw-table thead th{font:12px var(--sans);color:var(--muted)}
 .xw-table th:first-child{text-align:left}
 .xw-table th button{border:0;background:none;padding:0;font:14px Georgia,serif}
@@ -157,8 +157,9 @@
 .xw-worked-steps small,.xw-walk small{font-size:11px;color:var(--muted);min-width:58px}
 .xw-worked-steps strong{font-size:13px;min-width:0}
 .xw-worked-steps span{font:15px Georgia,serif;flex-basis:100%;padding-left:68px}
-.xw-slider{display:grid;grid-template-columns:minmax(120px,auto) 1fr 70px;gap:10px;align-items:center;margin:6px 0;font-size:13px}
+.xw-slider{display:grid;grid-template-columns:190px 1fr 70px;gap:10px;align-items:center;margin:6px 0;font-size:13px}
 .xw-slider output{text-align:right;font-weight:600}
+.xw-slider input{accent-color:var(--green)}
 
 /* Stufe 3 */
 .xw-legend.static{margin-bottom:4px}

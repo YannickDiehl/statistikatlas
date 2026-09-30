@@ -78,7 +78,7 @@ export function ThinkQuestions({ items, title = 'Mit der Formel denken', note = 
                 <p><strong className={pick === q.correct ? 'xw-right' : 'xw-wrong'}>{pick === q.correct ? 'Stimmt.' : 'Nicht ganz.'}</strong> {q.explain()}</p>
                 <KurzGesagt text={q.kurz} />
                 <p className="xw-note">{hint}</p>
-                {q.tryIt && <p><button type="button" className="xw-button" onClick={() => setTried(t => ({ ...t, [i]: q.tryIt!.run() }))}>Ausprobieren: {q.tryIt.label}</button> <span className="xw-note">{tried[i]}</span></p>}
+                {q.tryIt && <p><button type="button" className="xw-button" onClick={() => { const message = q.tryIt!.run(); setTried(t => ({ ...t, [i]: message })); }}>Ausprobieren: {q.tryIt.label}</button> <span className="xw-note">{tried[i]}</span></p>}
               </div>
             )}
           </div>

@@ -123,7 +123,7 @@ export function Rectangles({ data, s, step, who, names, bounds, onChange, onWho 
     e.preventDefault(); onWho(i); set(i, clamp(next[0], bounds), clamp(next[1], bounds));
   };
   const ticks = Array.from({ length: bounds.max - bounds.min + 1 }, (_, k) => bounds.min + k);
-  const scale = Math.max(1, s.pos, -s.neg), bar = (v: number) => Math.abs(v) / scale * 200;
+  const scale = Math.max(1, s.pos, -s.neg), bar = (v: number) => Math.abs(v) / scale * 160;
   const typical = Math.sqrt(Math.abs(s.cov)) * u, maxSide = Math.sqrt(s.sxy) * u;
   return (
     <svg ref={svg} className="xw-svg xw-drag" viewBox="0 0 640 372" role="group" aria-label="Streudiagramm mit den fünf Beispielpersonen"
