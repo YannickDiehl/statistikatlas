@@ -114,6 +114,7 @@ repeat {  # jede Fassung hat online mindestens ein Ja und ein Nein, damit ANOVA,
   if (all(sapply(1:4, function(k) all(1:2 %in% s6_x[s6_mode == 3 & s6_version == k])))) break
 }
 d$xr21 <- lab(s6_x, c("TNZ: MODE" = -15, "KEINE ANGABE" = -9, "JA" = 1, "NEIN" = 2), "TEILNAHMEBEREITSCHAFT WEITERE UMFRAGEN")
+
 # Lernpfad-Aufgabe 7: Populismus-Batterie pa29–pa34 zu pa35 (steht schon oben), Labels und Missing-Codes wie im echten ALLBUS.
 # Gestellt nur, wo pa35 gestellt wurde (sonst −11 „TNZ: SPLIT“). Ein gemeinsamer Faktor (an pa35 gekoppelt) und drei Seiten:
 # Volkssouveränität (pa29, pa33), Anti-Elitismus (pa30, pa31, pa35), Einheit des Volkes (pa32, pa34). pa29 stark schief (viel Zustimmung).
@@ -140,6 +141,20 @@ local({
   d$pa32 <<- item(0.65, "H", 0.40, 0.55, mid, "POLIT.KOMPROMISS IST VERRAT V.PRINZIPIEN")
   d$pa33 <<- item(0.60, "V", 0.40, 0.55, mid, "VOLK SOLLTE POLIT.ENTSCHEIDUNGEN TREFFEN", mfn = TRUE)
   d$pa34 <<- item(0.55, "H", 0.40, 0.65, c(.10, .22, .34, .24, .10), "VOLK EINIG WAS POLITISCH PASSIEREN MUSS")
+})
+
+# Lernpfad-Aufgabe 10: Bürgerpflicht (pe09) mit Label und Missing-Codes des echten ALLBUS (Werte synthetisch).
+# pe09 hängt an der Wahlabsicht pv01 (Nichtwählende stimmen seltener zu), damit das Logit-Modell schätzbar ist;
+# Nichtwählende liegen nie im Split, sonst blieben zu wenige für das Modell.
+set.seed(8810)
+d$pe09 <- local({
+  pv <- as.numeric(d$pv01)
+  prob <- function(v) if (v == 91) c(.1, .2, .35, .35) else if (v >= 1) c(.45, .3, .15, .1) else c(.35, .3, .2, .15)
+  x <- vapply(pv, function(v) sample(1:4, 1, prob = prob(v)), numeric(1))
+  x <- ifelse(pv != 91 & runif(n) < .25, -11, x)
+  x[pv != 91 & x > 0 & runif(n) < .05] <- -8
+  lab(x, c("TNZ: SPLIT" = -11, "KEINE ANGABE" = -9, "WEISS NICHT" = -8, "STIMME VOLL ZU" = 1, "STIMME EHER ZU" = 2,
+           "STIMME EHER NICHT ZU" = 3, "STIMME GAR NICHT ZU" = 4), "WAHLBETEILIGUNG IST BUERGERPFLICHT")
 })
 
 write_sav(d, file.path(out, "sandbox-fixture.sav"), compress = "byte")

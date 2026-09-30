@@ -10,6 +10,7 @@ import { CARDS } from '../src/tasks/s05-treiber/content';
 import { rCodeFor } from '../src/tasks/s05-treiber/domain';
 import { hints as S06_HINTS, rSolution as S06 } from '../src/tasks/s06-letzte-frage/content';
 import { rScript as s07Script } from '../src/tasks/s07-drei-fragen/domain';
+import { R_SOLUTION as S10 } from '../src/tasks/s10-buergerrat/content';
 
 const [sav, out] = process.argv.slice(2);
 if (!sav || !out) {
@@ -27,6 +28,12 @@ const scripts: Record<string, string> = {
   ...Object.fromEntries(Object.entries(S06_HINTS).map(([station, h]) => [`s06-letzte-frage-${station}.R`, h.solution])),
   's07-drei-fragen.R': s07Script(['pa31', 'pa32', 'pa35'], ['pa31', 'pa32', 'pa33'], ['pa31', 'pa32', 'pa33']),
   's07-drei-fragen-pa29.R': s07Script(['pa30', 'pa32', 'pa35'], ['pa29', 'pa31', 'pa32'], ['pa29', 'pa33', 'pa34']),
+  's10-buergerrat.R': S10.full,
+  's10-buergerrat-1-modell.R': S10.model,
+  's10-buergerrat-2-jana.R': S10.jana,
+  's10-buergerrat-4-profile.R': S10.profiles,
+  's10-buergerrat-5-ame.R': S10.ame,
+  's10-buergerrat-6-likelihood.R': S10.likelihood,
 };
 mkdirSync(out, { recursive: true });
 for (const [name, code] of Object.entries(scripts)) writeFileSync(join(out, name), withFile(code));
