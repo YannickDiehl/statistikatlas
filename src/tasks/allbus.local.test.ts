@@ -93,6 +93,7 @@ test('session 4: the 87 %, three denominators, 18 readings and the stairs match 
   assert.match(checkP1(tables, joint, '87,0', '127')[0].text, /Genau so hat der Parteivorstand gerechnet/);
   assert.match(checkP1(tables, joint, '3,2', '')[0].text, /Lies pe05 noch einmal/);
   const rd = readings(joint).map(x => x.distrusting);
+  assert.equal(rd.length, 18);
   assert.deepEqual([r1(Math.min(...rd)), r1(Math.max(...rd))], [6.5, 29.2]);
   const example = fourfold(joint, { item: 'pe05', distrust: [3, 4], nonvote: [-8], else0: false, weighted: false });
   assert.deepEqual([r1(percent(example, 'a', 'row')), example.n.a, r1(percent(example, 'c', 'row'))], [21.5, 386, 11.7]);
@@ -107,6 +108,8 @@ test('session 5: measures per card, strata and the ranking match mariposa (ps03 
   assert.deepEqual([get('ep01', 'V', true), get('ep01', 'gamma', true), get('ep01', 'gamma', false), get('ep01', 'tau', true), get('ep01', 'tau', false, 0), get('ep01', 'tau', false, 1)], [0.277, -0.544, -0.553, -0.387, -0.367, -0.436]);
   assert.deepEqual([get('age', 'V', true), get('age', 'r', true), get('age', 'r', false), get('age', 'r', false, 0), get('age', 'r', false, 1)], [0.158, 0.059, 0.031, 0.095, -0.045]);
   assert.deepEqual([get('eastwest', 'V', true), get('eastwest', 'V', false), get('eastwest', 'gamma', true)], [0.186, 0.229, -0.35]);
+  assert.deepEqual([0, 1, 2].map(s => get('eastwest', 'gamma', false, s)), [-0.322, -0.373, -0.299]);
+  assert.deepEqual([0, 1, 2].map(s => get('eastwest', 'gamma', true, s)), [-0.32, -0.375, -0.297]);
   assert.deepEqual([get('konf', 'V', true), get('konf', 'gamma', true)], [0.105, -0.147]);
   assert.equal(get('pt03', 'tau', true), 0.485);
   const r = reveal(p);
