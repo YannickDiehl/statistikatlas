@@ -99,6 +99,8 @@ test('the partner variant splits the two languages and asks for a shared sentenc
   assert.match(solo, /Sprache 2 · Wahrscheinlichkeiten/);
   assert.doesNotMatch(solo, /A · in Chancen/);
   assert.match(solo, /5 · Die eine Zahl für den Bericht/);
+  assert.match(solo, /inputMode="decimal" maxLength="24"/);
+  assert.doesNotMatch(solo, /maxLength="16"/);
 });
 
 test('the report number is recognised, persons’ numbers appear only after the board', () => {

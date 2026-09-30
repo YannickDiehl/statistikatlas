@@ -11,14 +11,14 @@ import type { TaskProps } from '../types';
 import { CAMPAIGN, CAMPAIGN_ANSWERS, DETOURS, hints, PERSONS, QUESTIONS, R_SOLUTION, R_START, UNITS, WORKSHOP, type CampaignAnswer, type Unit } from './content';
 import {
   answerNotes, CELL_LABELS, CELLS, cellsOk, chainOk, checkAme, checkCells, checkChain, checkLikelihood, checkModel, checkReport, known,
-  likelihoodOk, likelihoodReveal, odds3, plenumLines, prepare, sentenceNotes, statusS10, tafel, tafelNotes, tafelReady, type Cells, type S10State,
+  likelihoodOk, likelihoodReveal, NUMBER_MAX, odds3, plenumLines, prepare, sentenceNotes, statusS10, tafel, tafelNotes, tafelReady, type Cells, type S10State,
 } from './domain';
 import { SCurve } from './SCurve';
 import { Tafel } from './Tafel';
 
 const listJoin = (xs: string[]) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} und ${xs[xs.length - 1]}` : xs[0] ?? '');
 const numberInput = (label: string, value: string, onChange: (v: string) => void, key?: string) =>
-  <label key={key}>{label}<input type="text" inputMode="decimal" maxLength={16} value={value} onChange={e => onChange(e.target.value)} /></label>;
+  <label key={key}>{label}<input type="text" inputMode="decimal" maxLength={NUMBER_MAX} value={value} onChange={e => onChange(e.target.value)} /></label>;
 
 export function Buergerrat({ data, state, onChange, onConcept }: TaskProps<S10State>) {
   const p = useMemo(() => prepare(data.sav), [data.sav]);

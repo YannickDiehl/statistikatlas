@@ -307,17 +307,31 @@ export const PROB_WORDS = /(Wahrscheinlichkeit|Prozentpunkt|Prozent|%|\bPp\b|von
 export const LOGIT_WORDS = /\b(Logit\w*|log)\b/i;
 export const CAUSAL_WORDS = /\b(bewirk\w*|verursach\w*|führ(t|en)\s+(dazu|zu)|sorg(t|en)|wirk(t|en)|Wirkung|weil|deshalb|dadurch)\b/i;
 export const DETERMINISTIC = /\b(Jana|sie|er|Herr\s+Wiegand)\s+(wird|würde|geht)\s+(\w+\s+)?(wählen|zur\s+Wahl)/i;
-const NEGATION = /\b(nein|nicht|kein\w*|falsch)\b/i;
 /** Abgeschwächte Sätze („würde wahrscheinlich wählen“) sind keine deterministische Aussage. */
 const HEDGE = /(wahrscheinlich|eher|vermutlich|vielleicht|möglicherweise|wohl|eventuell|tendenziell)/i;
-/** Lehnt der Satz die „x-mal so wahrscheinlich“-Lesart ab? „Nein“ am Anfang, eine Verneinung kurz davor oder darin,
- *  oder gleich danach „falsch“ / „stimmt nicht“ / „nein“. */
+const NEG_TOKEN = /^(nicht|kein\w*|nie|niemals)$/i;
+/** Nach diesen Wörtern hebt sich die Verneinung auf oder gilt nicht der Behauptung („nicht bestreiten“, „kein Zufall“, „nicht nur … sondern“). */
+const NEG_CANCEL = /^(bestreiten|abstreiten|leugnen|zu|nur|falsch|zufall|sicher)$/i;
+const UNSURE = /(Ahnung|nicht\s+sicher|unsicher|weiß\s+(es\s+|ich\s+)?nicht|vielleicht|vermutlich|möglicherweise|eventuell|wohl|tendenziell|eher)/i;
+const AGREE_LEAD = /^\W*(ja|genau|stimmt(?!\s+nicht))\b/i;
+const BELIEVE_NOT = /\b(glaube|denke|meine|finde|heißt|bedeutet|ist)\s+(ich\s+|das\s+|es\s+)?nicht(\s+so)?\s*,?\s*dass\b/i;
+const REJECT_AFTER = /\b(stimmt\s+nicht|(ist|wäre|sind)\s+(das\s+|es\s+)?falsch|(heißt|bedeutet)\s+(das|es)\s+nicht|nein)\b/i;
+/** Die eingetippte Zahl ohne angehängte Einheit und ohne „×“ – für die Ratskarte, die die gewählte Einheit genau einmal anhängt. */
+export const bareNumber = (input: string) => input.trim().replace(/\s*(Pp\.?|Prozentpunkte|Prozent|%|-?fach|x)$/i, '').replace(/^×\s*/, '').trim();
+const words = (s: string) => s.match(/[\p{L}\d]+/gu) ?? [];
+/** Lehnt der Satz die „x-mal so wahrscheinlich“-Lesart ab? Nur wenn eine Verneinung die Behauptung selbst regiert: höchstens zwei
+ *  Wörter davor oder darin („nicht 3,77-mal“, „steigt nicht um das 3,77-fache“), „ich glaube nicht, dass …“ / „das heißt nicht, dass …“, oder gleich danach
+ *  „stimmt nicht“ / „ist falsch“ / „heißt es nicht“. Kein Ablehnen: „Ja“/„Stimmt“ am Anfang, doppelte Verneinung, „sondern“,
+ *  Unsicherheit („keine Ahnung“, „weiß nicht“, „vielleicht“). */
 function rejectsTimes(text: string): boolean {
   const m = TIMES_LIKELY.exec(text);
   if (!m) return false;
-  const end = m.index + m[0].length;
-  return /^\W*nein\b/i.test(text) || NEGATION.test(text.slice(Math.max(0, m.index - 40), end))
-    || /\b(falsch|stimmt\s+nicht|nein)\b/i.test(text.slice(end, end + 25));
+  const before = text.slice(0, m.index), end = m.index + m[0].length;
+  if (AGREE_LEAD.test(text) || UNSURE.test(before)) return false;
+  const tokens = [...words(before).slice(-2), ...words(m[0])];
+  const governs = tokens.some((t, i) => NEG_TOKEN.test(t) && !NEG_CANCEL.test(tokens[i + 1] ?? '') && !tokens.slice(i + 1).some(u => /^sondern$/i.test(u)));
+  const after = text.slice(end, end + 25);
+  return governs || BELIEVE_NOT.test(before) || (REJECT_AFTER.test(after) && !/falsch\s+ist\s+(das|es)\s+nicht|nicht\s+falsch/i.test(after));
 }
 const deterministic = (text: string) => { const m = DETERMINISTIC.exec(text); return Boolean(m) && !HEDGE.test(m![0]); };
 
@@ -513,9 +527,9 @@ export function reportCandidates(p: Prepared): ReportCandidate[] {
   ];
 }
 
-/** Größenabgleich: Welche Größe steckt hinter der Berichtszahl? Die Einheit entscheidet bei Gleichstand. */
 /** Größen der Ratsmitglieder: Sie werden erst erkannt, wenn die Dolmetscher-Tafel offen ist – sonst wäre das Feld ein Orakel für Station 2 und 4. */
 const BOARD_KINDS: ReportKind[] = ['jana', 'janaShare', 'wiegand', 'wiegandShare', 'riskJana', 'riskWiegand', 'level', 'levelPct'];
+/** Größenabgleich: Welche Größe steckt hinter der Berichtszahl? Die Einheit entscheidet bei Gleichstand. */
 export function recogniseReport(p: Prepared, input: string, unit: Unit | '', revealed = false): { kind: ReportKind; reading: Reading } | null {
   const cands = reportCandidates(p).filter(c => revealed || !BOARD_KINDS.includes(c.kind));
   for (const r of readEntries(input)) {
@@ -676,7 +690,9 @@ export const initialS10 = (): S10State => ({
 
 const CAMPAIGN_IDS = CAMPAIGN_ANSWERS.map(a => a.id);
 const UNIT_IDS = UNITS.map(u => u.id);
-const num = (x: unknown) => str(x, 16);
+/** Höchstlänge eines Zahlenfelds – lang genug für „+22,2 Prozentpunkte“. */
+export const NUMBER_MAX = 24;
+const num = (x: unknown) => str(x, NUMBER_MAX);
 export function parseS10(raw: unknown): S10State {
   const r = record(raw), or = record(r.or), jana = record(r.jana), odds = record(r.odds), prob = record(r.prob), rep = record(r.report), ll = record(r.likelihood);
   const cells = (c: Record<string, unknown>) => Object.fromEntries(CELLS.map(k => [k, num(c[k])])) as Cells;
@@ -713,7 +729,7 @@ export function plenumLines(s: S10State, p: Prepared | null = null): [string, st
   return [
     ['Frage 3 · Bei wem bewirkt die Kampagne mehr?', [campaign, s.answer3.trim()].filter(Boolean).join(' – ')],
     ['Gemeinsamer Satz für den Rat', s.joint.trim()],
-    ['Die eine Zahl für den Bericht', s.report.number.trim() ? `${s.report.number.trim()}${suffix}${kind ? ` · ${KIND_SHORT[kind]}` : ''}` : ''],
+    ['Die eine Zahl für den Bericht', s.report.number.trim() ? `${s.report.unit ? bareNumber(s.report.number) + suffix : s.report.number.trim()}${kind ? ` · ${KIND_SHORT[kind]}` : ''}` : ''],
     ['Satz für den Bericht', s.report.sentence.trim()],
     ['Frage 1 · „3,77-mal so wahrscheinlich?“', s.answer1.trim()],
     ['Zusatz · Trefferquote gegen −2LL', filled(ll.hitModel, ll.hitAll) ? `Modell ${bare(ll.hitModel)} % · „alle wählen“ ${bare(ll.hitAll)} %${filled(ll.nullLL, ll.modelLL) ? ` · −2LL ${ll.nullLL.trim()} → ${ll.modelLL.trim()}` : ''}` : ''],
