@@ -11,6 +11,7 @@ export function RankChart({ data, view, own }: { data: Reveal; view: View; own: 
   const leader = (m: number) => cardById[(Object.entries(byCurrency[m]).find(([, r]) => r === 1)?.[0] ?? CARD_IDS[0]) as CardId].title;
   const summary = `Rangliste ${VIEW_LABELS[view]}: ${CURRENCIES.map((m, i) => `${measureLabel(m)} Platz 1 ${leader(i)}`).join('; ')}.${own ? ` Deine Karte ${cardById[own].title}: Plätze ${byCurrency.map(r => r[own] ?? '–').join(', ')}.` : ''}`;
   return <figure className="s05-rank">
+    <div className="s05-scroll" tabIndex={0} role="region" aria-label="Rangverlauf">
     <svg viewBox={`0 0 ${W} ${top + rows * step}`} role="img" aria-label={summary}>
       {CURRENCIES.map((m, i) => <text key={m} x={colX(i)} y={16} textAnchor="middle" className="head">{measureLabel(m)}</text>)}
       {CARD_IDS.map(id => {
@@ -26,8 +27,9 @@ export function RankChart({ data, view, own }: { data: Reveal; view: View; own: 
         </g>;
       })}
     </svg>
+    </div>
     <table className="s05-rank-table">
-      <caption>Werte {VIEW_LABELS[view]} (Platz in Klammern)</caption>
+      <caption>Werte {VIEW_LABELS[view]} (Platz in Klammern; – heißt: ohne sinnvolle Reihenfolge oder im Landesteil nicht berechenbar)</caption>
       <thead><tr><th scope="col">Kandidat</th>{CURRENCIES.map(m => <th key={m} scope="col">{measureLabel(m)}</th>)}</tr></thead>
       <tbody>{CARD_IDS.map(id => <tr key={id} className={id === own ? 'own' : ''}>
         <th scope="row">{cardById[id].title}{cardById[id].joker ? ' (Joker)' : ''}</th>

@@ -112,3 +112,7 @@
 .s05-notes{margin:10px 0;padding-left:20px;font-size:15px}
 .s05-notes li{margin:0 0 6px}
 @media(max-width:560px){.s05-rank-table{font-size:12px}.s05-rank-table th,.s05-rank-table td{padding:3px 4px}}
+.s05-pick{flex-wrap:wrap}
+.s05-scroll{overflow-x:auto}
+.s05-rank .s05-scroll svg{min-width:560px}
+.s05-rank-table td{white-space:nowrap}

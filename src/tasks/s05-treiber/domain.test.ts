@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { fakeSav, fixtureSav } from '../../sandbox/testData';
 import { cardById } from './content';
 import {
-  cardValues, checkEntry, checkLevel, checkStamp, checkStrata, direction, driverQuestion, fitNotes, initialS05, parseS05, plenumLines, prepare,
-  ranks, rCodeFor, reveal, revealNotes, scaffoldFor, stampReading, statusS05, strata, tolerance, variants,
+  cardValues, checkEntry, checkLevel, checkStamp, checkStrata, direction, driverQuestion, fitNotes, initialS05, parseS05, pickCard, plenumLines, prepare,
+  randomCard, ranks, rCodeFor, reveal, revealNotes, scaffoldFor, stampReading, statusS05, strata, tolerance, variants,
 } from './domain';
 
 const p = prepare(fixtureSav());
@@ -64,6 +64,9 @@ test('gives fit prompts without grading', () => {
   assert.match(fitNotes(p, ep01, vars, 'gamma')[0].text, /Bindungen.*dem Betrag nach größer als Tau-b/);
   assert.match(fitNotes(p, ep01, vars, 'r')[0].text, /gleiche Abstände/);
   assert.match(fitNotes(p, cardById.age, variants(p, cardById.age), 'V')[0].text, /Zufalls-V/);
+  assert.doesNotMatch(fitNotes(p, ep01, vars, 'gamma', false)[0].text, /γ|τ/);
+  assert.doesNotMatch(fitNotes(p, cardById.age, variants(p, cardById.age), 'V', false)[0].text, /≈/);
+  assert.doesNotMatch(fitNotes(p, cardById.konf, variants(p, cardById.konf), 'gamma', false)[0].text, /\d,\d{3}/);
   assert.equal(checkLevel(cardById.pa01, 'ordinal')[0].tone, 'ok');
   assert.equal(checkLevel(ep01, 'nominal')[0].tone, 'hint');
   assert.equal(direction(ep01, -0.5), 'Wer die Wirtschaftslage schlechter einschätzt, ist eher unzufriedener mit der Demokratie.');
@@ -76,6 +79,7 @@ test('reveals the ranking in four currencies', () => {
   assert.deepEqual(ranks({ ep01: -0.5, age: 0.1, konf: NaN, pt03: 0.6 }), { pt03: 1, ep01: 2, age: 3 });
   const r = reveal(p);
   assert.ok(Number.isNaN(r.west.eastwest.V));
+  assert.ok(Number.isNaN(r.weighted.konf.gamma) && Number.isNaN(r.weighted.konf.r) && Number.isFinite(r.weighted.konf.V));
   // Die Testdatei hat im Alter in West und Ost dasselbe Vorzeichen – die ALLBUS-Bemerkung darf dann nicht erscheinen.
   const notes = revealNotes(r, 'weighted');
   assert.ok(notes.length >= 1);
@@ -113,4 +117,12 @@ test('the card West oder Ost checks the economy groups with Gamma, whatever meas
   const g = (s: number) => ev.find(v => v.measure === 'gamma' && !v.weighted && v.stratum === s && v.reversed)!.value;
   assert.deepEqual(checkStrata(p, ew, ev, 'V', [fmt(g(0)), fmt(g(1)), fmt(g(2))]).map(n => n.tone), ['ok', 'ok', 'ok']);
   assert.match(checkStamp(p, ew, ev, 'V', 'trägt')[0].text, /Gamma gesamt/);
+});
+
+test('a new card starts the card-bound work from scratch and a draw never repeats the current card', () => {
+  const s = { ...initialS05(), mode: 'pair' as const, card: 'ep01' as const, measure: 'gamma' as const, value: '-0,544', stamp: 'trägt' as const, sentence: 'Satz', recommendation: 'Empfehlung',
+    second: { measure: 'tau' as const, value: '-0,387', unweighted: '-0,553', veto: true }, view: 'ost' as const };
+  assert.deepEqual(pickCard(s, 'age'), { ...initialS05(), mode: 'pair', card: 'age' });
+  for (let i = 0; i < 50; i++) assert.notEqual(randomCard('ep01', () => i / 50), 'ep01');
+  assert.equal(randomCard('ep01', () => 0.9999999), 'pt03');
 });

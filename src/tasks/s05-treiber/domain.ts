@@ -140,23 +140,26 @@ export function checkStamp(p: Prepared, card: Card, vars: Variant[], measure: Me
 }
 
 /** Passung von Maß und Skalenniveau: Denkanstöße, keine Bewertung. */
-export function fitNotes(p: Prepared, card: Card, vars: Variant[], measure: MeasureId | ''): Note[] {
+/** showNumbers: Werte erst nennen, wenn die eigene Rechnung eingetragen ist – vorher nur der Denkanstoß. */
+export function fitNotes(p: Prepared, card: Card, vars: Variant[], measure: MeasureId | '', showNumbers = true): Note[] {
   if (!measure) return [];
   const v = (m: MeasureId, weighted = true) => vars.find(x => x.measure === m && x.weighted === weighted && x.stratum < 0 && x.reversed)!.value;
   const notes: Note[] = [];
   const x = cardValues(p, card), t = crosstab(p.y, x);
-  if (measure === 'V' && card.level !== 'nominal') {
+  if (measure === 'V' && card.level !== 'nominal' && !showNumbers) notes.push({ tone: 'hint', text: 'V nutzt die Reihenfolge der Stufen nicht. Nach deiner Rechnung zeige ich dir, wie groß V schon ohne jeden Zusammenhang wäre (Zufalls-V).' });
+  if (measure === 'V' && card.level !== 'nominal' && showNumbers) {
     const rv = permutationV(p.y, x, p.w);
     notes.push({ tone: 'hint', text: v('V') < 1.5 * rv
       ? `Zufalls-V: Vertauscht man die Zufriedenheit zufällig, ergibt sich schon V ≈ ${fmt(rv)}. Dein V (${fmt(v('V'))}) ist fast nur Tabellengröße.`
       : `V nutzt die Reihenfolge der Stufen nicht. Zum Vergleich: Zufalls-V ≈ ${fmt(rv)}.` });
   }
   if (measure === 'phi' && Math.min(t.rows.length, t.cols.length) > 2) notes.push({ tone: 'hint', text: `Phi ist für Vierfeldertafeln gedacht; diese Tabelle ist ${t.rows.length}×${t.cols.length} groß – Phi kann hier über 1 steigen. Nimm Cramér-V.` });
-  if ((measure === 'gamma' || measure === 'tau') && card.id === 'konf') {
+  if ((measure === 'gamma' || measure === 'tau') && card.id === 'konf' && !showNumbers) notes.push({ tone: 'warn', text: 'Die Reihenfolge der Konfessionen ist willkürlich – Gamma und Tau-b hängen davon ab, wie du die Kategorien anordnest. Nach deiner Rechnung zeige ich dir drei Reihenfolgen.' });
+  if ((measure === 'gamma' || measure === 'tau') && card.id === 'konf' && showNumbers) {
     const gammas = KONF_ORDERS.map(o => MEASURES.gamma.fn(p.y, cardValues(p, card, o.map), p.w));
     notes.push({ tone: 'warn', text: `Die Reihenfolge der Konfessionen ist willkürlich. Gamma je nach Reihenfolge: ${gammas.map(fmt).join(' / ')} (${KONF_ORDERS.map(o => o.label).join(' | ')}).` });
   }
-  if (measure === 'gamma' && card.id !== 'konf') notes.push({ tone: 'hint', text: `Gamma übergeht Paare mit Bindungen und ist deshalb dem Betrag nach größer als Tau-b (γ ${fmt(v('gamma'))}, τ ${fmt(v('tau'))}).` });
+  if (measure === 'gamma' && card.id !== 'konf') notes.push({ tone: 'hint', text: `Gamma übergeht Paare mit Bindungen und ist deshalb dem Betrag nach größer als Tau-b${showNumbers ? ` (γ ${fmt(v('gamma'))}, τ ${fmt(v('tau'))})` : ''}.` });
   if (measure === 'r' && card.level === 'ordinal') notes.push({ tone: 'hint', text: 'Pearson-r setzt gleiche Abstände zwischen den Stufen voraus. Hält das für diese Skala?' });
   return notes;
 }
@@ -183,7 +186,9 @@ export function reveal(p: Prepared): Reveal {
     const y = only(p.y, keep), w = view === 'weighted' ? p.w : null;
     for (const card of CARDS) {
       const x = only(cardValues(p, card), keep);
-      out[view][card.id] = Object.fromEntries(CURRENCIES.map(m => [m, card.id === 'eastwest' && (view === 'west' || view === 'ost') ? NaN : MEASURES[m].fn(y, x, w)])) as Reveal[View][CardId];
+      // Konfession hat keine Reihenfolge: nur V ist sinnvoll. „West oder Ost“ lässt sich nicht innerhalb eines Landesteils rechnen.
+      const unordered = card.level === 'nominal' && card.id !== 'eastwest';
+      out[view][card.id] = Object.fromEntries(CURRENCIES.map(m => [m, (card.id === 'eastwest' && (view === 'west' || view === 'ost')) || (unordered && m !== 'V') ? NaN : MEASURES[m].fn(y, x, w)])) as Reveal[View][CardId];
     }
   }
   return out;
@@ -248,6 +253,15 @@ export const initialS05 = (): S05State => ({
   mode: 'solo', card: null, level: '', measure: '', weighted: true, value: '', strata: ['', '', ''], stamp: '', sentence: '',
   second: { measure: '', value: '', unweighted: '', veto: false }, view: 'weighted', recommendation: '',
 });
+
+/** Neue Karte: alles, was an der Karte hängt, beginnt von vorn; nur die Arbeitsform bleibt. */
+export const pickCard = (s: S05State, card: CardId | null): S05State => ({ ...initialS05(), mode: s.mode, card });
+
+/** Zufällige Karte, nie dieselbe wie gerade – sonst ginge fertige Arbeit verloren. */
+export function randomCard(current: CardId | null, next: () => number = Math.random): CardId {
+  const pool = CARD_IDS.filter(id => id !== current);
+  return pool[Math.min(pool.length - 1, Math.floor(next() * pool.length))];
+}
 
 export function parseS05(raw: unknown): S05State {
   const r = record(raw), sec = record(r.second), strataRaw = Array.isArray(r.strata) ? r.strata : [];

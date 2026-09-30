@@ -2,16 +2,17 @@ import { Shuffle } from 'lucide-react';
 import { useMemo } from 'react';
 import { Feedback } from '../kit/Feedback';
 import { HintLadder } from '../kit/HintLadder';
+import { parseNumber } from '../kit/numbers';
 import { PartnerToggle } from '../kit/PartnerToggle';
 import { PlenumCard } from '../kit/PlenumCard';
 import { RBlock } from '../kit/RBlock';
 import { RoleBrief } from '../kit/RoleBrief';
 import type { MeasureId } from '../kit/stats';
 import type { TaskProps } from '../types';
-import { CARD_IDS, CARDS, cardById, hintTexts, ROLE, STAMPS, WORKSHOP, type CardId, type Level } from './content';
+import { CARDS, cardById, hintTexts, ROLE, STAMPS, WORKSHOP, type CardId, type Level } from './content';
 import {
-  checkEntry, checkLevel, checkStamp, checkStrata, driverQuestion, fitNotes, MEASURE_IDS, measureLabel, plenumLines, prepare,
-  rCodeFor, reveal, revealNotes, rSetupFor, scaffoldFor, STAMP_RULE, statusS05, strata, variants, VIEW_LABELS, VIEWS, type S05State,
+  checkEntry, checkLevel, checkStamp, checkStrata, driverQuestion, fitNotes, MEASURE_IDS, measureLabel, pickCard, plenumLines, prepare,
+  randomCard, rCodeFor, reveal, revealNotes, rSetupFor, scaffoldFor, STAMP_RULE, statusS05, strata, variants, VIEW_LABELS, VIEWS, type S05State,
 } from './domain';
 import { RankChart } from './RankChart';
 
@@ -24,9 +25,12 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
   const vars = useMemo(() => (card ? variants(p, card) : []), [p, card]);
   const groups = card ? strata(p, card) : [];
   const main = card ? checkEntry(p, card, vars, state) : [];
-  const ready = Boolean(card && state.value.trim() && state.stamp);
+  // Die Enthüllung kommt nach dem eigenen Eintrag: Wert, Stempel und Satz.
+  const entered = parseNumber(state.value) !== null;
+  const ready = Boolean(card && entered && state.stamp && state.sentence.trim());
+  const strataDone = groups.length > 0 && state.strata.slice(0, groups.length).every(v => v.trim());
   const rev = useMemo(() => (ready ? reveal(p) : null), [p, ready]);
-  const draw = () => set({ card: CARD_IDS[Math.floor(Math.random() * CARD_IDS.length)], level: '', measure: '', value: '', strata: ['', '', ''], stamp: '' });
+  const draw = () => onChange(pickCard(state, randomCard(state.card)));
   const setSecond = (patch: Partial<S05State['second']>) => set({ second: { ...state.second, ...patch } });
 
   return <div className="task s05">
@@ -49,7 +53,7 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
       <div className="sandbox-chips">
         <button onClick={draw}><Shuffle size={14} aria-hidden="true" /> Karte ziehen</button>
         <label className="s05-pick">oder zugeteilte Karte wählen
-          <select value={state.card ?? ''} onChange={e => set({ card: (e.target.value || null) as CardId | null, level: '', measure: '', value: '', strata: ['', '', ''], stamp: '' })}>
+          <select value={state.card ?? ''} onChange={e => onChange(pickCard(state, (e.target.value || null) as CardId | null))}>
             <option value="">–</option>{CARDS.map(c => <option key={c.id} value={c.id}>{c.title}{c.joker ? ' (Joker)' : ''}</option>)}
           </select>
         </label>
@@ -65,7 +69,7 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
       <section className="task-step">
         <h3>2 · Skalenniveau und Maß</h3>
         <p>Schau mit <code>codebook()</code> nach und entferne Sonderkodes mit <code>rec()</code>. Welches Skalenniveau hat dein Kandidat, welches Maß passt?</p>
-        <RBlock code={rSetupFor(card)} file="treiber.R" />
+        <RBlock code={rSetupFor(card)} file="treiber-start.R" />
         <div className="sandbox-chips" role="group" aria-label="Skalenniveau">
           {LEVELS.map(l => <button key={l} aria-pressed={state.level === l} onClick={() => set({ level: l })}>{l}</button>)}
         </div>
@@ -75,7 +79,7 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
             <option value="">bitte wählen</option>{MEASURE_IDS.map(m => <option key={m} value={m}>{measureLabel(m)}</option>)}
           </select></label>
         </div>
-        <Feedback notes={fitNotes(p, card, vars, state.measure)} />
+        <Feedback notes={fitNotes(p, card, vars, state.measure, entered)} />
       </section>
 
       <section className="task-step">
@@ -85,7 +89,7 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
           <label>Wert (drei Nachkommastellen)<input type="text" inputMode="decimal" maxLength={12} value={state.value} onChange={e => set({ value: e.target.value })} /></label>
         </div>
         <Feedback notes={main} />
-        <HintLadder hint={{ ...hintTexts[card.level], workshop: WORKSHOP, scaffold: scaffoldFor(card), solution: rCodeFor(card) }} onConcept={onConcept} file="treiber.R" />
+        <HintLadder key={card.id} hint={{ ...hintTexts[card.level], workshop: WORKSHOP, scaffold: scaffoldFor(card), solution: rCodeFor(card) }} onConcept={onConcept} file="treiber.R" />
       </section>
 
       <section className="task-step">
@@ -101,14 +105,16 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
         <div className="sandbox-chips" role="group" aria-label="Stempel">
           {STAMPS.map(s => <button key={s} aria-pressed={state.stamp === s} onClick={() => set({ stamp: s })}>{s}</button>)}
         </div>
-        <Feedback notes={checkStamp(p, card, vars, state.measure, state.stamp)} />
+        <Feedback notes={state.stamp && !strataDone
+          ? [{ tone: 'hint', text: `Trag zuerst die Werte für ${groups.map(g => g.label).join(' und ')} ein – dann nenne ich meine Lesart nach der offengelegten Regel.` }]
+          : checkStamp(p, card, vars, state.measure, state.stamp)} />
         <details className="s05-rule"><summary>Die offengelegte Regel</summary><p>{STAMP_RULE}</p></details>
       </section>
 
       <section className="task-step">
         <h3>5 · Dein Eintrag</h3>
         <label className="sandbox-label" htmlFor="s05-sentence">Ein Satz für den Fonds (Maß = Wert, Richtung in Worten, Stempel)</label>
-        <textarea id="s05-sentence" maxLength={600} value={state.sentence} placeholder="Gamma = −0,54: Wer die Wirtschaftslage schlechter einschätzt, ist eher unzufriedener mit der Demokratie – in West und Ost (trägt)."
+        <textarea id="s05-sentence" maxLength={600} value={state.sentence} placeholder="Maß = Wert: Wer …, ist eher … mit der Demokratie – in West und Ost … (Stempel)."
           onChange={e => set({ sentence: e.target.value })} />
         <Feedback notes={driverQuestion(state.sentence)} />
       </section>
@@ -126,7 +132,7 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
         <Feedback notes={[
           ...checkEntry(p, card, vars, { measure: state.second.measure, weighted: true, value: state.second.value }),
           ...checkEntry(p, card, vars, { measure: state.measure, weighted: false, value: state.second.unweighted }),
-          ...fitNotes(p, card, vars, state.second.measure),
+          ...fitNotes(p, card, vars, state.second.measure, parseNumber(state.second.value) !== null),
         ]} />
         <label className="s04-check"><input type="checkbox" checked={state.second.veto} onChange={e => setSecond({ veto: e.target.checked })} /> Veto: Das Wort „Treiber“ trägt hier nicht</label>
       </section>
@@ -145,7 +151,6 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
         <h3>8 · Empfehlung an den Fonds</h3>
         <label className="sandbox-label" htmlFor="s05-rec">Wie sieht eine faire Rangliste aus – und passt das Wort „Treiber“? (2–3 Sätze)</label>
         <textarea id="s05-rec" maxLength={800} value={state.recommendation} onChange={e => set({ recommendation: e.target.value })} />
-        <Feedback notes={driverQuestion(state.recommendation)} />
       </section>}
     </>}
 
