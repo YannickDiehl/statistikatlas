@@ -5,6 +5,9 @@ library(mariposa)
 allbus <- read_spss(file.choose())
 # -> Environment oben rechts: „5246 obs. of 579 variables“
 
+# Das ganze Codebuch des Datensatzes
+codebook(allbus)
+
 # 1 „Halten die Leute etwas von Horoskopen?“
 find_var(allbus, "horoskop")
 codebook(allbus, rh08b)

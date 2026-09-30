@@ -121,7 +121,7 @@ Auch mit Stufe 4 zählt der Antrag als bearbeitet; entscheiden muss man trotzdem
 **Risiken:**
 - Installation: früher Handschlag, Decoder, Partner, Notfallkonsole.
 - Der `file.choose()`-Dialog öffnet sich unter macOS manchmal hinter RStudio; dazu kommt ein Hinweis.
-- `codebook(allbus)` ohne Variablenauswahl dauert hier rund 30 s und wirkt wie ein Absturz; Skript und Hilfen nennen deshalb immer Variablen.
+- `codebook(allbus)` zeigt das ganze Codebuch des Datensatzes – dafür ist die Funktion gedacht; mit Variablennamen schlägt man gezielt einzelne Fragen nach. Beides gehört ins Skript.
 - Regex-Sonderzeichen können sich in R und JS unterscheiden; einfache Wörter empfehlen.
 - Zeitdruck: Antrag 4 oder die eigene Idee ist die Kür.
 - Der Codebuch-Viewer zeigt Häufigkeiten; der Browser nennt bewusst keine Prozente, um Sitzung 3 nichts vorwegzunehmen.

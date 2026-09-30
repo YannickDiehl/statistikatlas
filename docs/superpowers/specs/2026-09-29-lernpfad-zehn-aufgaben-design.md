@@ -45,7 +45,7 @@ Die Konzeptdateien enthalten Rollenauftrag im Wortlaut, Minutenplan, vollständi
 ### 4.1 Sitzung 1 · Schon gefragt?
 
 - **Ablauf (38 Min.):** Auftrag → „Handschlag“ (einlesen, 5.246 Fälle und 579 Variablen im Environment ablesen) → vier Anträge: Horoskope, Angst vor Geflüchteten, Vertrauen in die Politik, Einsamkeit → eigene Idee → Prüfbericht.
-- **R:** `read_spss(file.choose())`, `find_var()`, `codebook()` mit Variablenauswahl, R als Taschenrechner. Ohne Pipe.
+- **R:** `read_spss(file.choose())`, `find_var()`, `codebook()` für den ganzen Datensatz und für einzelne Variablen, R als Taschenrechner. Ohne Pipe.
 - **Browser:** `findVar(pattern)` wie `find_var()` (Regex, ohne Beachtung der Groß-/Kleinschreibung, über Name und Label) mit Trefferzahl, Hinweise bei Umlauten und Wortteil-Treffern; Stempel „übernehmen“: Variable existiert, niedrigster Wert (tolerant gegen Wertelabel), Zahl der Gefragten (n minus TNZ-Codes); Stempel „selbst fragen“: mindestens zwei Suchwörter; Katalog mit Rückmeldungen je Antrag; Fehler-Decoder (ca. acht Muster); gekennzeichnete Notfallkonsole (nur `find_var`-Nachbildung) bei kaputtem R; Prüfbericht als Markdown plus R-Skript.
 - **Plenum/Partner:** Stempelbilanz 0–4 und übernommene Variable für Antrag 3. Partner: Vier-Augen-Prinzip (A: Anträge 1 und 3, B: 2 und 4, dann Gegenprüfung mit neuen Suchwörtern).
 - **Referenz:** „horoskop“ → `rh08b` (1 Treffer, alle 5.246); „flüchtling“/„angst“ → 0; „fluecht“ → 5 (`mi05`, `mp16`–`mp19`; `mp16`–`mp19` gefragt 3.599); „vertrauen“ → 16; `pt03` gefragt 3.650 (−11: 1.596); „einsam“ → `dp03`; 179 Variablen mit −11, 240 mit −10.
@@ -138,7 +138,7 @@ Die Konzeptdateien enthalten Rollenauftrag im Wortlaut, Minutenplan, vollständi
 - **Pipe:** Sitzung 1 ohne Pipe. Ab Sitzung 2 `library(mariposa)` und `library(dplyr)`, Analysen gepiped.
 - **Codestil:** `read_spss()`, `rec()` in `mutate()`, keine `ifelse()`/`%in%`-Umkodierung (siehe mariposa-Codestil).
 - **Demokratiezufriedenheit:** `ps03` wird in den Sitzungen 5, 8 und 9 einheitlich umgepolt (höher = zufriedener). Die Referenzwerte aus 4.9 werden dafür im Plan umgerechnet.
-- **mariposa-Umgehungen bis zur Korrektur:** `unlabel()` vor `kendall_tau()`; kein `group_by()` vor `t_test()`/`describe()` mit getaggten NAs, stattdessen `filter()`; keine vollständigen Dummy-Sätze in gewichteten Regressionen; `codebook()` immer mit Variablenauswahl; die deutsche GLM-Warnung erklären.
+- **mariposa-Umgehungen bis zur Korrektur:** `unlabel()` vor `kendall_tau()`; kein `group_by()` vor `t_test()`/`describe()` mit getaggten NAs, stattdessen `filter()`; keine vollständigen Dummy-Sätze in gewichteten Regressionen; die deutsche GLM-Warnung erklären.
 - **Fiktion:** Alle Personen, Organisationen und Projekte sind erfunden und als fiktiv gekennzeichnet; keine echten Organisationen imitieren; Namen vor dem Einsatz auf Verwechslung prüfen.
 - **Datenschutz:** Keine ALLBUS-Mikrodaten im Repository, Build oder Browser-Speicher. Aggregierte Referenzwerte in Tests und Doku sind erlaubt.
 

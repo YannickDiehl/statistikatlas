@@ -18,7 +18,10 @@ export const SETUP_SCRIPT = `library(mariposa)
 # ZA8831_v1-3-0.sav auswählen (nach Registrierung bei GESIS)
 allbus <- read_spss(file.choose())
 
-# Suchen und nachschlagen – codebook() immer mit Variablen, sonst dauert es lange
+# Das ganze Codebuch: alle Variablen mit Fragetext, Codes und fehlenden Werten
+codebook(allbus)
+
+# Suchen und gezielt nachschlagen
 find_var(allbus, "horoskop")
 codebook(allbus, rh08b)
 `;
