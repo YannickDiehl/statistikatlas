@@ -25,9 +25,10 @@ Der Pilot setzt das Muster für eine zusammenhängende Kette um (Mittelwert → 
 | Ausführlichkeit | Schritt für Schritt, mit vorgerechnetem Beispiel, Vergleich aus dem Alltag, Begründung, typischem Fehler und einer Kontrollfrage je Schritt. |
 | Sandbox | Jede Werkstatt ist veränderbar: Punkte ziehen, Werte setzen, Regeln schreiben. |
 | Staffelung | Drei Stufen: Formelwerkstatt, Formel als Satz, Werkzeug (Abschnitt 5). |
-| Anzeige | Umschalter „Kompakt / Ausführlich“, Standard „Ausführlich“, die Wahl merkt sich der Browser. (Vom Assistenten vorgeschlagen; der Dozent hat nicht widersprochen. Beim Review zu bestätigen.) |
+| Anzeige | Umschalter „Kompakt / Ausführlich“, Standard „Ausführlich“, die Wahl merkt sich der Browser; Ausführlich verbreitert den Inspector. |
 | Schreibweise | Kein Mittelpunkt „·“ als Trennzeichen in der Nähe von Formeln oder Zahlen, weil er als Malzeichen gelesen wird. Schrittangaben stehen getrennt vom Zeichen („Schritt 6“ über „√“). |
 | Umfang | Pilot zuerst (dieses Dokument), Auswertung, dann Ausbau. |
+| mariposa | Referenzversion 0.7.4. |
 
 ## 4. Umfang des Pilots
 
@@ -233,7 +234,7 @@ Parallel arbeiten Agenten auf den Zweigen `etappe34-*` und `lernpfad-etappe-3-4`
 - **Inhaltstests** (`src/explain/*.test.ts`, `pnpm test`): jede Werkstatt hat alle Bausteine; jeder Schritt hat alle Felder; `concept` existiert in `concepts.ts` beziehungsweise in den Katalogen; der angezeigte Fachbegriff entspricht dem Titel; kein „ · “ als Trenner in Titeln, Schrittknöpfen, Legenden und Überschriften (erlaubt nur zwischen Zahlen oder Zeichen als Multiplikation); jedes Kurz gesagt hat höchstens zwei Sätze.
 - **Rechentests:** `math.ts` gegen die bestehenden Funktionen in `statistics.ts` und gegen die Referenzwerte in Abschnitt 7.2 (aus R); Invarianten (Summe der Abweichungen 0, ΣE = n, r = Kovarianz / (sₓ · sᵧ)).
 - **Diagnosetests:** Für jede Kontrollfrage lösen die typischen Fehlantworten ihre Diagnose aus, die richtige Antwort keine.
-- **Regeltests** (`rules.ts`): „rev“, Bereiche, Listen, Labels mit Semikolon, else, NA=, copy, erste passende Regel gewinnt, ungültige Syntax; Verhalten an den in R geprüften Fällen (mariposa 0.7.3): `else=0` erfasst fehlende Werte; Codes ohne Regel werden NA (in 0.7.3 ohne, ab 0.7.4 mit Warnung; der Hinweistext der Werkstatt nennt beides).
+- **Regeltests** (`rules.ts`): „rev“, Bereiche, Listen, Labels mit Semikolon, else, NA=, copy, erste passende Regel gewinnt, ungültige Syntax; Verhalten an den in R geprüften Fällen (mariposa 0.7.4): `else=0` erfasst fehlende Werte; Codes ohne Regel werden NA mit Warnung; `rev(1, 5)` und Listen wie `1,2=1`.
 - **Build:** `tsc --noEmit`, `vite build`, Offline-Export.
 - **Browser:** Mit `scripts/qa-visual.mjs` oder Playwright: je Pilotbegriff Ausführlich und Kompakt bei 1400, 1100 und 390 px; Schritte durchklicken, Punkte ziehen, Kontrollfragen richtig und falsch beantworten, Tastaturbedienung der Punkte (Pfeiltasten), Zurück/Vorwärts.
 
@@ -247,7 +248,7 @@ Parallel arbeiten Agenten auf den Zweigen `etappe34-*` und `lernpfad-etappe-3-4`
 
 Werkstätten für weitere Formeln; Listenansicht der Karte; ALLBUS-Anbindung der Karte; Überarbeitung der Bezugs-Labels (Mittelpunkt als Trenner in Begriffsnamen wie „Chi-Quadrat · Unabhängigkeit“, wiederholte Labels) außerhalb der Pilotbegriffe; Änderungen am Lernpfad.
 
-## 13. Beim Review zu bestätigen
+## 13. Beim Review bestätigt (30. September 2026)
 
 1. Umschalter Kompakt/Ausführlich mit Standard Ausführlich, und dass Ausführlich den Inspector auf dem Desktop verbreitert.
 2. Beispielpersonen A–E mit echten ALLBUS-Fragen und ausgedachten Werten, gekennzeichnet als „Fünf Beispielpersonen“.
@@ -255,4 +256,4 @@ Werkstätten für weitere Formeln; Listenansicht der Karte; ALLBUS-Anbindung der
 4. Der R-Code der Rekodier-Werkstatt im Lernpfad-Stil (`read_spss()`, ALLBUS, Pipe), während das `MariposaPanel` darunter weiter den Lehrdatensatz nutzt.
 5. Wegfall von „Rechenschritte & Zeichen verstehen“ und des alten Tiefen-Aufklappers für die Pilotbegriffe.
 6. Zusammenhang-Werkstatt über die Kovarianz; der Weg über z-Werte nur als Hinweis in „Genau genommen“.
-7. Referenzversion von mariposa für die Studierenden in diesem Semester: 0.7.3 (CRAN) oder 0.7.4. Davon hängen Hinweistexte und Parser der Rekodier-Werkstatt ab (Warnung bei Codes ohne Regel, Kommalisten, Missing-Typen).
+7. Referenzversion von mariposa für die Studierenden: 0.7.4 (Warnung bei Codes ohne Regel, Kommalisten, `rev(lo, hi)`, Missing-Typen bleiben).
