@@ -66,5 +66,7 @@ test('numberReadings reads R-printed decimals and German numbers, both readings 
   assert.deepEqual(numberReadings('2.28'), [{ x: 2.28, decimals: 2 }]);
   assert.deepEqual(numberReadings('67,7 %'), [{ x: 67.7, decimals: 1 }]);
   assert.deepEqual(numberReadings('abc'), []);
+  assert.deepEqual(numberReadings('+16,0'), [{ x: 16, decimals: 1 }]);
+  assert.deepEqual(numberReadings('×3,77'), [{ x: 3.77, decimals: 2 }]);
   assert.ok(Math.abs(halfUnit(3) - 0.0005) < 1e-8);
 });

@@ -13,7 +13,8 @@ export function parseNumber(input: string): number | null {
  *  „3.765“ ist mehrdeutig: So druckt R eine Dezimalzahl, im Deutschen ist es ein Tausenderpunkt. Dann gibt es beide Lesarten,
  *  die aus R zuerst – Statistik-Eingaben (t, F, b, Exp(B) …) prüfen gegen jede Lesart, Zählungen bleiben bei parseNumber(). */
 export function numberReadings(input: string): { x: number; decimals: number }[] {
-  const s = input.trim().replace(/\s/g, '').replace(/[−–]/g, '-').replace(/%$/, '');
+  // Ein vorangestelltes „+“ oder „×“ (so zeigt die App Zuwächse und Faktoren) gehört nicht zur Zahl.
+  const s = input.trim().replace(/\s/g, '').replace(/[−–]/g, '-').replace(/%$/, '').replace(/^[+×]/, '');
   const x = parseNumber(s);
   if (x === null) return [];
   if (s.includes(',')) return [{ x, decimals: s.split(',')[1].length }];
