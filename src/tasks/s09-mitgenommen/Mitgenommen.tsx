@@ -179,7 +179,7 @@ export function Mitgenommen({ data, state, onChange, onConcept }: TaskProps<S09S
       <h3>8 · Der Off-Text{pair ? ' · gemeinsam' : ''}</h3>
       {wob && main && <>
         <h4 className="s09-sub">Wackeltest</h4>
-        <p>Wie stark hängen deine Abstände an einzelnen Befragten? Ich schätze jedes Modell neu – einmal ohne die fünf Fälle, die den Abstand am stärksten nach oben ziehen, einmal ohne die fünf, die ihn nach unten ziehen.</p>
+        <p>Wie stark hängen deine Abstände an einzelnen Befragten? Ich schätze jedes Modell neu – einmal ohne die fünf Fälle, die den Abstand am stärksten nach oben ziehen, einmal ohne die fünf, die ihn nach unten ziehen (DFBETA). <button className="sandbox-link" onClick={() => onConcept('outliers_influence')}>Ausreißer &amp; Einfluss in der Karte</button></p>
         <WobbleList rows={wob} model={main} />
       </>}
       <label className="sandbox-label" htmlFor="s09-off">Der Satz der Sprecherin (höchstens {MAX_WORDS} Wörter) – {wordCount(state.offText)} Wörter</label>
