@@ -139,7 +139,7 @@ Die Konzeptdateien enthalten Rollenauftrag im Wortlaut, Minutenplan, vollständi
 - **Codestil:** `read_spss()`, `rec()` in `mutate()`, keine `ifelse()`/`%in%`-Umkodierung (siehe mariposa-Codestil).
 - **Demokratiezufriedenheit:** `ps03` wird in den Sitzungen 5, 8 und 9 einheitlich umgepolt (höher = zufriedener). Die Referenzwerte aus 4.9 werden dafür im Plan umgerechnet.
 - **mariposa-Umgehungen bis zur Korrektur:** `unlabel()` vor `kendall_tau()`; kein `group_by()` vor `t_test()`/`describe()` mit getaggten NAs, stattdessen `filter()`; keine vollständigen Dummy-Sätze in gewichteten Regressionen; die deutsche GLM-Warnung erklären.
-- **Fiktion:** Alle Personen, Organisationen und Projekte sind erfunden und als fiktiv gekennzeichnet; keine echten Organisationen imitieren; Namen vor dem Einsatz auf Verwechslung prüfen.
+- **Fiktion:** Alle Personen, Organisationen und Projekte sind erfunden; in den Aufgabentexten ohne Zusatz „(fiktiv)“ (Entscheidung vom 30.09.2026); keine echten Organisationen imitieren; Namen vor dem Einsatz auf Verwechslung prüfen.
 - **Datenschutz:** Keine ALLBUS-Mikrodaten im Repository, Build oder Browser-Speicher. Aggregierte Referenzwerte in Tests und Doku sind erlaubt.
 
 ## 6. Architektur

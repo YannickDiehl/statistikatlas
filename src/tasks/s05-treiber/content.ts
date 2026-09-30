@@ -60,8 +60,8 @@ export type Stamp = typeof STAMPS[number];
 export const LAGE = { rules: '1:2=1 [gut]; 3=2 [teils/teils]; 4:5=3 [schlecht]; else=NA', groups: ['gut', 'teils/teils', 'schlecht'] };
 
 export const ROLE = {
-  office: 'Beratungsbüro „Querschnitt“ (fiktiv)',
-  fund: 'Förderfonds „Gemeinsinn“ (fiktiv)',
+  office: 'Beratungsbüro „Querschnitt“',
+  fund: 'Förderfonds „Gemeinsinn“',
 };
 
 export const hintTexts: Record<Level, { think: string; pointer: string; concept: { id: string; label: string } }> = {

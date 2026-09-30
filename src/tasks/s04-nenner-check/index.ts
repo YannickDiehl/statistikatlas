@@ -6,7 +6,7 @@ export const nennerCheck: TaskDef<S04State> = {
   id: 's04',
   title: 'Nenner-Check',
   role: 'Faktenchecker:in',
-  intro: 'Eine (fiktive) Pressemitteilung behauptet: „87 Prozent der Nichtwähler sagen, dass sich Politiker nicht um Leute wie sie kümmern.“ Du rechnest die Zahl in R nach, drehst den Nenner und prüfst eine eigene Lesart. Lade dafür deine ALLBUS-Datei.',
+  intro: 'Eine Pressemitteilung behauptet: „87 Prozent der Nichtwähler sagen, dass sich Politiker nicht um Leute wie sie kümmern.“ Du rechnest die Zahl in R nach, drehst den Nenner und prüfst eine eigene Lesart. Lade dafür deine ALLBUS-Datei.',
   requiredVariables: ['pe01', 'pa35', 'pe05', 'pv01', 'wghtpew'],
   initial: initialS04,
   parse: parseS04,

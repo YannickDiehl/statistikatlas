@@ -190,7 +190,7 @@ export function reportMarkdown(s: S01State): string {
   const parts = [
     '# Prüfbericht „Schon gefragt?“',
     '',
-    'Büro einer Bundestagsabgeordneten (fiktiv) · Daten: ALLBUScompact 2023 (ZA8831), GESIS',
+    'Büro einer Bundestagsabgeordneten · Daten: ALLBUScompact 2023 (ZA8831), GESIS',
     '',
     `Handschlag: ${s.cases.trim() || '–'} Fälle, ${s.vars.trim() || '–'} Variablen`,
     ...antraege.flatMap((a, i) => ['', `## Idee ${i + 1}: „${a.text}“`, stampLine(s.stamps[a.id])]),

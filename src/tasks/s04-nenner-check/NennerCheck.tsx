@@ -30,7 +30,7 @@ export function NennerCheck({ data, state, onChange, onConcept }: TaskProps<S04S
 
   return <div className="task s04">
     <RoleBrief role="Faktenchecker:in" title="Nenner-Check">
-      <p><strong>Faktencheck-Redaktion „Nachgezählt“ (fiktiv) · dein Auftrag.</strong> Auf deinem Tisch liegt die Pressemitteilung eines Parteivorstands (fiktiv):</p>
+      <p><strong>Faktencheck-Redaktion „Nachgezählt“ · dein Auftrag.</strong> Auf deinem Tisch liegt die Pressemitteilung eines Parteivorstands:</p>
       <figure className="sandbox-quote"><blockquote>{PRESS_RELEASE}</blockquote></figure>
       <p>Die Chefredaktion will bis zur Konferenz zwei Dinge wissen: <strong>Stimmt die Zahl? Und trägt sie die Behauptung?</strong> Rechne in RStudio nach, rechne gegen und liefere einen Faktencheck-Satz mit zwei Zahlen und dein Urteil. Hier trägst du deine Ergebnisse ein und bekommst Rückmeldung.</p>
     </RoleBrief>

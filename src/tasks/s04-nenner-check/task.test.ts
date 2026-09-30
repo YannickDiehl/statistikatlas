@@ -13,7 +13,7 @@ const render = (state: object) => renderSession(3, true, { tasks: { s04: { ...in
 
 test('session 4 shows the press release, three checks, the verdict and the plenum card', () => {
   const html = renderSession(3);
-  assert.match(html, /Faktencheck-Redaktion „Nachgezählt“ \(fiktiv\)/);
+  assert.match(html, /Faktencheck-Redaktion „Nachgezählt“ · dein Auftrag/);
   assert.match(html, /87 Prozent der Nichtwähler/);
   for (const step of ['Prüfauftrag 1 · Zahl nachbauen', 'Prüfauftrag 2 · Eine Zelle, drei Nenner', 'Prüfauftrag 3 · Deine Lesart', 'Urteil und Faktencheck-Satz']) assert.match(html, new RegExp(step));
   assert.match(html, /FÜR DAS PLENUM/);

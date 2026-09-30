@@ -33,7 +33,7 @@ export function Stuehle({ data, state, onChange, onConcept }: TaskProps<S03State
 
   return <div className="task s03">
     <RoleBrief role="Szenograf:in einer Ausstellung" title="Deutschland in 100 Stühlen">
-      <p>Die Wanderausstellung „Deutschland in 100 Stühlen“ (fiktiv) braucht deine Baupläne. Die Kuratorin schreibt:</p>
+      <p>Die Wanderausstellung „Deutschland in 100 Stühlen“ braucht deine Baupläne. Die Kuratorin schreibt:</p>
       <p>„Im ersten Saal stehen 100 Stühle. Jeder steht für ein Prozent – nur wovon? Auf jede Lehne kommt eine Antwort auf die Frage, welche Partei man wählen würde, wenn am Sonntag Bundestagswahl wäre. Besucher:innen sollen ihren Stuhl finden können, auch wenn sie keine Partei nennen würden. Im zweiten Saal stellen wir 100 Stühle in eine Reihe, sortiert nach Wochenarbeitsstunden. Darüber hängt ein Schild: ‚Hier arbeitet man im Mittel __ Stunden.‘ Wer einen Stuhl bekommt und was auf dem Schild steht, entscheidest du. Am Freitag gehen die Pläne in die Schreinerei – gebaut wird, was du einträgst.“</p>
     </RoleBrief>
     <PartnerToggle mode={state.mode} onChange={mode => set({ mode })}

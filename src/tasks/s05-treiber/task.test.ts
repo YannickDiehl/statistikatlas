@@ -9,8 +9,8 @@ const render = (state: object) => renderSession(4, true, { tasks: { s05: { ...in
 
 test('session 5 starts with the brief and the card draw', () => {
   const html = renderSession(4);
-  assert.match(html, /Beratungsbüro „Querschnitt“ \(fiktiv\)/);
-  assert.match(html, /Förderfonds „Gemeinsinn“ \(fiktiv\)/);
+  assert.match(html, /Analyst:in im Beratungsbüro „Querschnitt“\./);
+  assert.match(html, /Der Förderfonds „Gemeinsinn“ vergibt/);
   assert.match(html, /Karte ziehen/);
   assert.doesNotMatch(html, /2 · Skalenniveau und Maß/);
   assert.match(html, /FÜR DAS PLENUM/);
