@@ -70,8 +70,27 @@ test('omega is the exact one-factor ML optimum (factanal with factr = 1)', () =>
   assert.ok(Math.abs(one.psi[2] - (1 - (0.4 * 0.3) / 0.5)) < 1e-10);
   // Heywood-Fall: λ² > 1 geht nicht, die Einzigartigkeit bleibt an der Grenze 0,005 hängen.
   const H = [[1, 0.9, 0.9], [0.9, 1, 0.5], [0.9, 0.5, 1]];
-  assert.equal(omegaOneFactor(H, H).boundary, true);
+  const hey = omegaOneFactor(H, H);
+  assert.equal(hey.boundary, true);
+  assert.equal(hey.psi[0], 0.005);
   assert.ok(Number.isNaN(omegaOneFactor([[1, 0.3], [0.3, 1]], [[1, 0.3], [0.3, 1]]).omega));
+});
+
+test('a Heywood case is solved on the boundary like factanal: pa29 + pa31 + pa32 on the fixture', () => {
+  // factanal legt die Einzigartigkeit von pa31 auf die Grenze 0,005 (λ² wäre ohne Grenze ≈ 1,14).
+  //   allbus %>% reliability(pa29, pa31, pa32)  → omega 0.601956793473559 (mariposa 0.7.3)
+  //   factanal(…, control = list(opt = list(factr = 1, pgtol = 0))) → 0.60195679814105374
+  const r = reliability(items([29, 31, 32]));
+  assert.equal(r.omegaBoundary, true);
+  assert.ok(Math.abs(r.omega - 0.601956793473559) < 2e-6, String(r.omega));
+  assert.ok(Math.abs(r.omega - 0.60195679814105374) < 1e-9, String(r.omega));
+  const cov = r.cov, one = omegaOneFactor(r.cor, cov);
+  assert.equal(one.psi[1], 0.005);
+  // Innere Lösung bei drei Fragen: geschlossene Form λᵢ² = rᵢⱼ·rᵢₖ / rⱼₖ, keine Grenze
+  const inner = reliability(items([31, 32, 33]));
+  const R = inner.cor, lam = omegaOneFactor(R, inner.cov).lambda;
+  assert.equal(inner.omegaBoundary, false);
+  assert.ok(Math.abs(lam[0] ** 2 - (R[0][1] * R[0][2]) / R[1][2]) < 1e-10);
 });
 
 test('reliability() drops incomplete cases listwise and returns NaN below two cases', () => {

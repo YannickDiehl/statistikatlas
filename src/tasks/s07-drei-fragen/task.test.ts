@@ -34,7 +34,11 @@ test('session 7 starts with the news app brief, the seven questions and the batt
   assert.match(html, /FÜR DAS PLENUM/);
   // Die drei Seiten des Begriffs erscheinen nicht vorab.
   assert.doesNotMatch(html, /Volkssouveränität|Anti-Elitismus|Einheit des Volkes/);
-  assert.match(html, /Welche Seiten hat der Begriff\?/);
+  assert.match(html, /<button>Welche Seiten hat der Begriff\?<\/button>/);
+  // Gekürzte Aussagen stehen ohne Anführungszeichen, mit dem Hinweis auf den Fragebogen.
+  assert.match(html, /<p>Die Abgeordneten im Bundestag sollten sich nur dem Willen des Volkes verpflichtet fühlen\.<\/p>/);
+  assert.doesNotMatch(html, /<p>„/);
+  assert.match(html, /Die Aussagen sind gekürzt; den genauen Wortlaut zeigt der ALLBUS-Fragebogen\./);
 });
 
 test('no numbers from the file before the own entry: neither alpha, omega nor the short scale values', () => {
@@ -105,7 +109,7 @@ test('final choice, duty question and plenum card', () => {
   const duty = dutyFor(2);
   const html = render({ ...entered, final: ['pa31', 'pa32', 'pa33'], sentence: 'die Einheit des Volkes', reason: 'Stellvertreter', duty: 2 });
   assert.match(html, new RegExp(`Pflichtfrage für Gruppe 2: ${duty.item}`));
-  if (!['pa31', 'pa32', 'pa33'].includes(duty.item)) assert.match(html, new RegExp(`Eure Pflichtfrage ${duty.item} fehlt in dieser Auswahl`));
+  if (!['pa31', 'pa32', 'pa33'].includes(duty.item)) assert.match(html, new RegExp(`Deine Pflichtfrage ${duty.item} fehlt in dieser Auswahl`));
   assert.match(html, /<dt>Kurzskala<\/dt><dd>pa31 \+ pa32 \+ pa33<\/dd>/);
   assert.match(html, /<dt>Punkt im Kreuz \(α \| r\)<\/dt><dd>0,599 \| 0,685<\/dd>/);
   assert.match(html, /<dt>Was sie nicht mehr misst<\/dt><dd>die Einheit des Volkes<\/dd>/);
@@ -114,6 +118,15 @@ test('final choice, duty question and plenum card', () => {
   assert.match(html, /vollständiges R-Skript/);
   assert.match(html, /Index und Skala<small>Aufgabe abgeschlossen/);
   assert.match(render({ ...entered, final: ['pa29', 'pa31', 'pa32'] }), /pa29 trifft den Kern des Begriffs/);
+  // Allein „du“, zu zweit „ihr“
+  const other = ['pa29', 'pa30', 'pa31', 'pa32', 'pa33', 'pa34', 'pa35'].filter(i => i !== duty.item).slice(0, 3) as S07State['final'];
+  const alone = render({ ...entered, final: other, duty: 2 });
+  assert.match(alone, new RegExp(`Deine Pflichtfrage ${duty.item} fehlt in dieser Auswahl\\. Wähle`));
+  assert.match(alone, /Sie muss in deiner Kurzskala bleiben: Wähle oben neu/);
+  assert.doesNotMatch(alone, /Eure Pflichtfrage|eurer Kurzskala/);
+  const pair = render({ ...entered, mode: 'pair', final: other, duty: 2 });
+  assert.match(pair, new RegExp(`Eure Pflichtfrage ${duty.item} fehlt in dieser Auswahl\\. Wählt`));
+  assert.match(pair, /Sie muss in eurer Kurzskala bleiben: Wählt oben neu/);
   assert.match(render({ ...entered, final: ['pa31', 'pa32', 'pa33'], sentence: 'nichts' }), /Jede Kurzskala verliert etwas/);
   // Vor der Enthüllung: Wahl steht auf der Karte, der Punkt im Kreuz noch nicht.
   const early = render({ final: ['pa31', 'pa32', 'pa33'] });
@@ -128,6 +141,11 @@ test('the bonus task reveals the gap only after both shares are recognised', () 
   assert.doesNotMatch(render({ ...base, kuer: { mean: f1(k.meanW), all: '' } }), /nur nach der Mittelwertlogik/);
   assert.match(render({ ...base, kuer: { mean: f1(k.meanW), all: f1(k.allW) } }), /gelten nur nach der Mittelwertlogik als populistisch/);
   assert.match(render({ ...base, kuer: { mean: '21', all: '' } }), /mit einer Nachkommastelle/);
+  // aus crosstab() kopiert, mit Punkt und Prozentzeichen
+  const pasted = render({ ...base, kuer: { mean: `${k.meanW.toFixed(1)}%`, all: `${k.allW.toFixed(1)}%` } });
+  assert.match(pasted, /gelten nur nach der Mittelwertlogik als populistisch/);
+  assert.doesNotMatch(pasted, /nicht als Zahl/);
+  assert.match(pasted, new RegExp(`<dt>Kür</dt><dd>${k.meanW.toFixed(1).replace('.', ',')} % im Schnitt · ${k.allW.toFixed(1).replace('.', ',')} % durchgehend</dd>`));
 });
 
 test('a file without complete answers gets an explanation instead of NaN', () => {

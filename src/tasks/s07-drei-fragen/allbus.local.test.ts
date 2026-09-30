@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readSav } from '../../sandbox/readSav';
 import {
-  ALPHA_NOT_FOUND, alphaVariants, checkNumber, detailOf, kuer, KUER_NOT_FOUND, kuerMeanVariants, landscapeNotes, pctTolerance, prepare, R_NOT_FOUND, rVariants, weakestItem,
+  ALPHA_NOT_FOUND, alphaVariants, checkNumber, detailOf, kuer, KUER_NOT_FOUND, kuerMeanVariants, landscapeNotes, prepare, R_NOT_FOUND, rVariants, weakestItem,
 } from './domain';
 
 const file = process.env.ALLBUS_SAV;
@@ -52,11 +52,20 @@ test('session 7: battery, 35 short scales, the example and the bonus task match 
   assert.match(r('0,937').text, /Gesamtindex aller sieben/);
   assert.match(r('0,745').text, /wer bekommt überhaupt einen Skalenwert/);
   assert.match(r('0,749').text, /mit Gewicht/);
+  // Kein Heywood-Fall auf der echten Datei; bei pa31 + pa32 + pa35 sind ω und standardisiertes α gleich gerundet (.777)
+  assert.equal(p.triples.filter(t => t.omegaBoundary).length, 0);
+  assert.equal(p.full.omegaBoundary, false);
+  const champ = p.byKey['pa31+pa32+pa35'];
+  assert.deepEqual([r3(champ.omega), r3(champ.alphaStd)], [0.777, 0.777]);
+  const both = checkNumber(alphaVariants(p, champ), '0,777', ALPHA_NOT_FOUND)[0];
+  assert.match(both.text, /McDonalds ω oder das standardisierte α – beide liegen hier bei 0,777/);
+  assert.equal(checkNumber(alphaVariants(p, champ), '0,776', ALPHA_NOT_FOUND)[0].tone, 'ok');
+  assert.match(checkNumber(kuerMeanVariants(kuer(p, ['pa31', 'pa32', 'pa33'])), '21.7%', KUER_NOT_FOUND, 1)[0].text, /^Stimmt/);
   // Kür (gewichtet): 21,7 % im Schnitt gegen 14,2 % durchgehend
   const k = kuer(p, ['pa31', 'pa32', 'pa33']);
   assert.deepEqual([r1(k.meanW), r1(k.allW), r1(k.meanW - k.allW)], [21.7, 14.2, 7.5]);
-  assert.match(checkNumber(kuerMeanVariants(k), '14,1', KUER_NOT_FOUND, pctTolerance)[0].text, /Kurzwert unter 2/);
-  assert.match(checkNumber(kuerMeanVariants(k), '14,2', KUER_NOT_FOUND, pctTolerance)[0].text, /zweite Feld/);
+  assert.match(checkNumber(kuerMeanVariants(k), '14,1', KUER_NOT_FOUND, 1)[0].text, /Kurzwert unter 2/);
+  assert.match(checkNumber(kuerMeanVariants(k), '14,2', KUER_NOT_FOUND, 1)[0].text, /zweite Feld/);
   const notes = landscapeNotes(p, [['pa31', 'pa32', 'pa33']], true);
   assert.equal(notes[0], 'Die stimmigste Kurzskala ist pa31 + pa32 + pa35 (α = 0,776). Als Stellvertreter steht sie auf Platz 26 von 35.');
   assert.equal(notes[1], 'Die zweitstimmigste, pa30 + pa32 + pa35, steht als Stellvertreter auf Platz 34.');

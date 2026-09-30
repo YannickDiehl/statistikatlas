@@ -184,9 +184,9 @@
 .s07-land svg text.axis{font-weight:600;fill:var(--ink)}
 .s07-land svg text.champ{font-style:italic}
 .s07-land svg .grid{stroke:#e6e8df}
-.s07-land svg .dot{fill:#8fa58a}
+.s07-land svg .dot{fill:#6f8a6a}
 .s07-land svg .dot.duty{fill:#242822}
-.s07-land svg .dot.faded{fill:#d5dccb}
+.s07-land svg .dot.faded{fill:#fff;stroke:#6f8a6a;stroke-width:1.5}
 .s07-land svg .own circle{fill:none;stroke:#242822;stroke-width:2}
 .s07-land svg .own text{fill:var(--ink);font-weight:600}
 .s07-land figcaption{font-size:14px;color:var(--muted);margin-top:6px}
