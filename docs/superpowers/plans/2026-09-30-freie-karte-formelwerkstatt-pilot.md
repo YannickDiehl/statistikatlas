@@ -60,8 +60,8 @@
 
 ### Task 5: Prüfung durch unabhängige Agenten und Korrekturen
 
-- [ ] Befunde der vier Prüfagenten einarbeiten (siehe Commit-Historie nach ec73e35).
-- [ ] README und Prüfstand ergänzen, Zusammenführung mit `main`.
+- [x] Befunde der vier Prüfagenten eingearbeitet (b99cac6): Wortlaut Statistik (n − 1, SE-Deutung, „durchschnittliche Fläche“, symmetrisches U …), rec()-Parität mit mariposa 0.7.4 (Komma nur als Liste, rev(lo < hi), leere Labels, „;“, Warnung außerhalb der Skala, NA= ohne Warnung, R-String maskiert, library(dplyr)), Antwort-Lesarten („+2“, „3.162“), typisierte Werkstätten, Schritt-Sprung per Effekt, Rückmeldung bei neuen Daten zurückgesetzt, Fokus und Live-Bereiche, Zeichnungen mit gemessener Breite, Kartenhinweise und Kamera beim Umschalten, Container-Abfragen, Datei-Wechsel im Aufgabenbereich.
+- [x] README und Prüfstand ergänzt; Zusammenführung mit `main` nach der Nachprüfung.
 
 ## Prüfen
 

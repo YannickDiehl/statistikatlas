@@ -257,3 +257,14 @@ Werkstätten für weitere Formeln; Listenansicht der Karte; ALLBUS-Anbindung der
 5. Wegfall von „Rechenschritte & Zeichen verstehen“ und des alten Tiefen-Aufklappers für die Pilotbegriffe.
 6. Zusammenhang-Werkstatt über die Kovarianz; der Weg über z-Werte nur als Hinweis in „Genau genommen“.
 7. Referenzversion von mariposa für die Studierenden: 0.7.4 (Warnung bei Codes ohne Regel, Kommalisten, `rev(lo, hi)`, Missing-Typen bleiben).
+
+## 14. Nachtrag nach dem Review (1. Oktober 2026)
+
+Die Umsetzung wurde von vier Prüfagenten begutachtet (Spezifikation, Code und Barrierefreiheit, Fachlichkeit und Sprache, Browser-Randfälle). Der verbindliche Wortlaut steht seitdem in `src/explain/content/*.ts`; gegenüber den Inhaltsdateien 01–05 geändert wurden unter anderem:
+
+- **Streuung:** „Mit n − 1 wird die Varianz in der Bevölkerung im Mittel über viele Stichproben nicht zu klein geschätzt“ (vorher „die Streuung“); „Genau genommen“ erklärt, warum n − 1 die zu kleine Quadratsumme ausgleicht, und dass die Erwartungstreue nur für s² gilt; der Unterschied zwischen mittlerer absoluter Abweichung und s kommt auch vom Teilen durch n − 1. Alltagsbild „Haltestellen einer Buslinie“ statt „Hausnummern“ (gerade und ungerade Nummern liegen auf verschiedenen Straßenseiten). Die Denkfrage „Alle rücken zwei Punkte nach rechts“ verschiebt beim Ausprobieren so weit, wie die Skala zulässt.
+- **Zusammenhang:** „durchschnittliche Fläche mit Vorzeichen“ statt „typisches Rechteck“; die Kovarianz liegt zwischen −sₓ · sᵧ und +sₓ · sᵧ; „symmetrisches U“; Stärke nach dem angezeigten, gerundeten r (0,4999… gilt als 0,5, also stark); Beispiel für eine Drittvariable: Nähe zu einer Regierungspartei. Schritt 6 zeigt das Rechteck sₓ × sᵧ und darin das durchschnittliche Rechteck gleicher Form.
+- **Mittel:** Voreinstellung „Mit Randwert“ statt „Mit Ausreißer“; die Denkfragen nennen Gruppe B; die Diagnose nennt die Person, deren Wert fehlt oder doppelt gezählt ist.
+- **Standardfehler:** Deutung „In etwa 95 von 100 Zufallsstichproben …“; Mittelwert 3,297 mit der Intervallrechnung; „Die Größe der Grundgesamtheit kommt in der Formel nicht vor“; „einfache Zufallsstichproben“; auch Gewichten vergrößert den Standardfehler.
+- **Rekodieren:** R-Code beginnt mit `library(dplyr)`; Warnung bei Codes außerhalb von `rev(lo, hi)`; `NA=…` gilt als bewusste Entscheidung ohne Warnung; Singular/Plural in den Regelbeschreibungen; Komma nur als Listentrenner (wie mariposa), `rev(lo, hi)` nur mit lo < hi, leere Labels und „;“ werden abgelehnt.
+- **Oberfläche:** Schrittkarten sind immer vollständig (unabhängig von Kompakt) und verlinken nicht auf sich selbst; im Lernpfad bietet die Aufgabe „Andere Datei laden“ an, wenn der geladenen Datei Variablen fehlen.
