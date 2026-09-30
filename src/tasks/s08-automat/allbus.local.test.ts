@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readSav } from '../../sandbox/readSav';
 import { inputById } from './content';
-import { leveneVariants, machineFor, parade, prepare, resolution, spread, variants, worseThanLazy, type Variant } from './domain';
+import { checkLevene, checkSetting, checkSpread, leveneVariants, machineFor, parade, prepare, recognisedSetting, resolution, spread, variants, worseThanLazy, type Variant } from './domain';
 
 const file = process.env.ALLBUS_SAV;
 const skip = !file && 'ALLBUS_SAV nicht gesetzt';
@@ -36,6 +36,14 @@ test('session 8: the pt03 automaton, its spread and Levene match spec 4.8', { sk
   assert.deepEqual([Math.round(res.sse), Math.round(res.sst), Math.round(100 * res.reduction)], [3797, 5804, 35]);
   // Faulpelz 65,5 %, Automat 70,8 % (der Browser zeigt eine Nachkommastelle)
   assert.deepEqual([r(100 * res.lazyHit, 1), r(100 * res.hit, 1)], [65.5, 70.8]);
+  // So, wie R es druckt (Punkt als Dezimalzeichen): summary() 2.288 / 0.465 / 0.346, describe() 0.713 / 1.325, levene_test() 74.860
+  const printed = { a: '2.288', b: '0.465', r2: '0.346' };
+  assert.equal(recognisedSetting(vars, printed), main);
+  assert.match(checkSetting(inputById.pt03, vars, printed)[0].text, /^Stimmt: Der Automat zeigt 2,288 \+ 0,465 · Eingabe/);
+  const mp = machineFor(p, inputById.pt03, main, printed);
+  assert.deepEqual([mp.a, mp.b], [2.288, 0.465]);
+  assert.equal(checkSpread(mp, spread(mp), '0.713', '1.325')[0].tone, 'ok');
+  assert.match(checkLevene(mp, leveneVariants(mp), '74.860')[0].text, /^Stimmt: F\(6; 3\.567,9\) = 74,860/);
 });
 
 test('session 8: the parade of all ten inputs matches spec 4.8', { skip }, () => {

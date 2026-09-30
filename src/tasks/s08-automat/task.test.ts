@@ -109,3 +109,28 @@ test('a finished automaton offers the full script, fills the plenum card and mar
   assert.match(html, /<dt>Treffer ±1<\/dt><dd>Automat \d+,\d % · Faulpelz \d+,\d %<\/dd>/);
   assert.match(html, /<dt>Entscheidung<\/dt><dd>nur mit Schild freigeben<\/dd>/);
 });
+
+test('pair mode: the curator opens probe and resolution only after her two hand displays', () => {
+  const at = (x: number) => (machine.a + machine.b * x).toFixed(2).replace('.', ',');
+  const closed = render({ ...setting, mode: 'pair', code: '417', guess: 'Automat' });
+  assert.match(closed, /Die Kuratorin gibt die Besucherprobe erst frei/);
+  assert.doesNotMatch(closed, /Besucherprobe mit 20 Befragten/);
+  assert.doesNotMatch(closed, /Auflösung: Automat gegen Faulpelz/);
+  const open = render({ ...setting, mode: 'pair', code: '417', guess: 'Automat', shows: [at(2), at(6)] });
+  assert.match(open, /Besucherprobe mit 20 Befragten/);
+  assert.match(open, /Auflösung: Automat gegen Faulpelz/);
+  // allein bleibt die Probe ohne Handrechnung offen
+  assert.match(render({ ...setting, code: '417' }), /Besucherprobe mit 20 Befragten/);
+});
+
+test('entries typed as R prints them (dot decimals) open the automaton; the knobs start at the lazy machine', () => {
+  const dot = (x: number) => x.toFixed(3).replace('-', '−');
+  const html = render({ input: 'pt03', a: dot(main.a), b: dot(main.b), r2: dot(main.r2), guess: 'Automat', sdMin: dot(sp.min), sdMax: dot(sp.max) });
+  assert.match(html, /Stimmt: Der Automat zeigt 5,126 − 0,217 · Eingabe/);
+  assert.match(html, /3 · Testen/);
+  assert.match(html, /Das ist dein R² \(0,052\)/);
+  assert.match(html, /Je Stufe: Fälle, Residuen-SD/);
+  assert.match(html, /<dt>b · R²<\/dt><dd>b = −0,217 · R² = 0,052<\/dd>/);
+  assert.match(html, /Die Knöpfe stehen auf dem Faulpelz/);
+  assert.match(html, /Steigung 0,000<input/);
+});
