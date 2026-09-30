@@ -81,6 +81,9 @@
 .s04-bars text .value{fill:var(--ink);font-weight:600}
 .s04-strip text.own,.s04-strip text.flag{fill:var(--ink);font-weight:600}
 .s04-bars figcaption,.s04-strip figcaption{font-size:14px;color:var(--muted);margin-top:6px}
+.s04-scroll{overflow-x:auto}
+.s04-bars .s04-scroll svg{min-width:700px}
+.s04-strip .s04-scroll svg{min-width:520px}
 .s04-check{display:flex;align-items:center;gap:8px;font-size:14px;margin:8px 0}
 .s04-causes{margin:8px 0;font-size:14px}
 .s04-causes ul{margin:6px 0 0;padding-left:20px}

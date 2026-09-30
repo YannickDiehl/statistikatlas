@@ -48,7 +48,7 @@ export function NennerCheck({ data, state, onChange, onConcept }: TaskProps<S04S
     <section className="task-step">
       <h3>Prüfauftrag 1 · Zahl nachbauen</h3>
       <p>Bilde in R zwei Dummys (1 = misstraut, 1 = würde nicht wählen) und lass dir die Kreuztabelle mit der passenden Prozentbasis zeigen. Trag den Prozentwert ein und die Häufigkeit derselben Zelle.</p>
-      <RBlock code={R_SETUP} file="nenner-check.R" />
+      <RBlock code={R_SETUP} file="nenner-check-start.R" />
       <div className="task-grid">
         <label>Prozentwert<input type="text" inputMode="decimal" maxLength={12} value={state.p1.pct} onChange={e => set({ p1: { ...state.p1, pct: e.target.value } })} /></label>
         <label>Häufigkeit derselben Zelle<input type="text" inputMode="numeric" maxLength={12} value={state.p1.n} onChange={e => set({ p1: { ...state.p1, n: e.target.value } })} /></label>
@@ -95,6 +95,7 @@ export function NennerCheck({ data, state, onChange, onConcept }: TaskProps<S04S
         <label>Häufigkeit: misstraut & nicht wählen<input type="text" inputMode="numeric" maxLength={12} value={state.p3.n} onChange={e => setP3({ n: e.target.value })} /></label>
       </div>
       <Feedback notes={p3} />
+      <details className="s04-causes"><summary>Das wollte ich anders</summary><ul>{CAUSES.map(c => <li key={c}>{c}</li>)}</ul></details>
       {own && <ReadingStrip readings={readings(joint)} own={own} claimed={CLAIMED} />}
       <HintLadder hint={{ ...hints.p3, solution: state.p3.distrust.length ? rCodeFor(way) : hints.p3.solution }} onConcept={onConcept} file="nenner-check-p3.R" />
     </section>

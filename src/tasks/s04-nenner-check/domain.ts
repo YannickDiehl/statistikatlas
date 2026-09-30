@@ -333,8 +333,9 @@ export function questions(joint: Joint, s: S04State): Question[] {
       text: 'Zeigen die Daten, dass Misstrauen vom Wählen abhält – oder nur, dass beides zusammen auftritt? Denk an Drittvariablen wie Alter, Bildung oder politisches Interesse und an die umgekehrte Richtung.' });
   }
   const way = declaredWay(s.p3), dk = way.nonvote.includes(-8);
-  // Zahlen erst nennen, wenn die eigene Rechnung eingetragen ist.
-  if (way.distrust.length && s.p3.rowDistrust.trim()) {
+  // Zahlen erst nennen, wenn die eigene Rechnung stimmt – sonst verrieten die Gegenfragen die Lösung.
+  const own = parseNumber(s.p3.rowDistrust), p1 = parseNumber(s.p1.pct);
+  if (way.distrust.length && own !== null && near(own, percent(fourfold(joint, way), 'a', 'row'), 0.55)) {
     const now = percent(fourfold(joint, way), 'a', 'row');
     const alt = percent(fourfold(joint, { ...way, nonvote: dk ? way.nonvote.filter(c => c !== -8) : [...way.nonvote, -8] }), 'a', 'row');
     out.push({ id: 'dk', title: 'Was ist mit „weiß nicht“?', concept: 'missing_tools',
@@ -342,7 +343,7 @@ export function questions(joint: Joint, s: S04State): Question[] {
         ? `Du zählst „weiß nicht“ als Nichtwahl. Ohne sie wollen ${pctText(alt)} der Misstrauenden nicht wählen statt ${pctText(now)}. Ist Unentschlossenheit schon Nichtwahl?`
         : `Zählst du „weiß nicht“ als Nichtwahl, wollen ${pctText(alt)} der Misstrauenden nicht wählen statt ${pctText(now)}. Was bedeutet „weiß nicht“ bei einer Wahlabsicht?` });
   }
-  if (s.p1.pct.trim()) {
+  if (p1 !== null && near(p1, percent(fourfold(joint, PARTY), 'a', 'col'), 0.55)) {
     const d = denominators(joint);
     out.push({ id: 'size', title: 'Wie viele Menschen stehen hinter der Zahl?', concept: 'sampling',
       text: `Hinter den ${CLAIMED} % stehen ${count(d.nonvoters)} Nichtwählende, in der Zelle ${count(d.cell)} Menschen. Wie sicher ist eine Aussage über alle Nichtwähler in Deutschland auf dieser Grundlage?` });
