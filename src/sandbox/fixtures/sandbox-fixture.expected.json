@@ -1332,6 +1332,234 @@
           "label": "EINZELHAUS, LAND"
         }
       ]
+    },
+    {
+      "name": "hs01",
+      "label": "GESUNDHEITSZUSTAND BEFR.",
+      "kind": "numeric",
+      "values": [2, 2, 2, 3, 2, 3, 2, 2, 1, 3, 3, 3, 1, 3, 1, 2, 1, 1, 2, 3, 1, 2, 2, 5, 3, 2, 3, 2, 3, 1, 2, 2, 2, 2, 1, 1, 2, 5, 4, 2, 1, 2, 2, 1, 5, 3, 2, 3, 4, 5, 3, 2, 3, 3, 3, 2, 1, 4, 2, 2],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -42,
+          "label": "DATENFEHLER: MFN"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": 1,
+          "label": "SEHR GUT"
+        },
+        {
+          "value": 2,
+          "label": "GUT"
+        },
+        {
+          "value": 3,
+          "label": "ZUFRIEDENSTELLEND"
+        },
+        {
+          "value": 4,
+          "label": "WENIGER GUT"
+        },
+        {
+          "value": 5,
+          "label": "SCHLECHT"
+        }
+      ]
+    },
+    {
+      "name": "dg03",
+      "label": "JUGEND IN OST-WEST,INTERVIEW IN OST-WEST",
+      "kind": "numeric",
+      "values": [2, 3, 1, 2, 1, 4, 4, 1, 3, 4, 4, 1, 4, 2, 1, 1, 4, 1, -32, 2, 3, 2, 4, -10, 4, 1, 4, -10, 2, 4, 4, 1, 2, 4, 2, 4, 4, 2, 2, 1, 3, 2, 2, 3, 3, 2, 2, 2, 4, 3, 3, 3, 2, 1, 2, 1, 3, 4, 4, 2],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -32,
+          "label": "NICHT GENERIERBAR"
+        },
+        {
+          "value": -10,
+          "label": "TNZ: FILTER"
+        },
+        {
+          "value": 1,
+          "label": "O.JUGEND-O.INT."
+        },
+        {
+          "value": 2,
+          "label": "O.JUGEND-W.INT."
+        },
+        {
+          "value": 3,
+          "label": "W.JUGEND-O.INT."
+        },
+        {
+          "value": 4,
+          "label": "W.JUGEND-W.INT."
+        }
+      ]
+    },
+    {
+      "name": "sex",
+      "label": "GESCHLECHT, BEFRAGTE(R)",
+      "kind": "numeric",
+      "values": [3, 2, 1, 1, 2, 1, 2, 2, 1, 2, 2, 2, 2, 2, 1, 2, 1, 2, 2, 2, 2, 2, 1, 1, 2, 1, 1, 1, 2, 1, 1, 2, -9, 1, 1, 1, 2, 2, 1, 2, 1, 2, 1, 1, 2, 1, 1, 2, 2, 2, 2, 1, 1, 1, 2, 1, 1, -9, 2, 2],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -42,
+          "label": "DATENFEHLER: MFN"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": 1,
+          "label": "MANN"
+        },
+        {
+          "value": 2,
+          "label": "FRAU"
+        },
+        {
+          "value": 3,
+          "label": "DIVERS"
+        }
+      ]
+    },
+    {
+      "name": "di08c",
+      "label": "AEQUIVALENZEINKOMMEN OECD - NEU, KAT.",
+      "kind": "numeric",
+      "values": [6, 14, 8, 13, -32, 8, -50, 17, 9, 22, 25, 20, 19, 14, 10, 12, 13, 15, 11, -50, 24, 10, 20, 4, -32, -32, -32, 14, -32, 3, 2, 25, 26, 4, 17, 3, 12, 20, 6, 14, 10, 7, 22, 19, 5, 10, 26, 14, 14, 13, 23, 11, 18, 18, 8, 3, -32, 3, 23, 7],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -50,
+          "label": "KEIN EINKOMMEN"
+        },
+        {
+          "value": -32,
+          "label": "NICHT GENERIERBAR"
+        },
+        {
+          "value": 1,
+          "label": "UNTER 200 EURO"
+        },
+        {
+          "value": 2,
+          "label": "200 - 299 EURO"
+        },
+        {
+          "value": 3,
+          "label": "300 - 399 EURO"
+        },
+        {
+          "value": 4,
+          "label": "400 - 499 EURO"
+        },
+        {
+          "value": 5,
+          "label": "500 - 624 EURO"
+        },
+        {
+          "value": 6,
+          "label": "625 - 749 EURO"
+        },
+        {
+          "value": 7,
+          "label": "750 - 874 EURO"
+        },
+        {
+          "value": 8,
+          "label": "875 - 999 EURO"
+        },
+        {
+          "value": 9,
+          "label": "1000 - 1124 EURO"
+        },
+        {
+          "value": 10,
+          "label": "1125 - 1249 EURO"
+        },
+        {
+          "value": 11,
+          "label": "1250 - 1374 EURO"
+        },
+        {
+          "value": 12,
+          "label": "1375 - 1499 EURO"
+        },
+        {
+          "value": 13,
+          "label": "1500 - 1749 EURO"
+        },
+        {
+          "value": 14,
+          "label": "1750 - 1999 EURO"
+        },
+        {
+          "value": 15,
+          "label": "2000 - 2249 EURO"
+        },
+        {
+          "value": 16,
+          "label": "2250 - 2499 EURO"
+        },
+        {
+          "value": 17,
+          "label": "2500 - 2749 EURO"
+        },
+        {
+          "value": 18,
+          "label": "2750 - 2999 EURO"
+        },
+        {
+          "value": 19,
+          "label": "3000 - 3499 EURO"
+        },
+        {
+          "value": 20,
+          "label": "3500 - 3999 EURO"
+        },
+        {
+          "value": 21,
+          "label": "4000 - 4499 EURO"
+        },
+        {
+          "value": 22,
+          "label": "4500 - 4999 EURO"
+        },
+        {
+          "value": 23,
+          "label": "5000 - 5999 EURO"
+        },
+        {
+          "value": 24,
+          "label": "6000 - 7499 EURO"
+        },
+        {
+          "value": 25,
+          "label": "7500 - 9999 EURO"
+        },
+        {
+          "value": 26,
+          "label": "10000 EURO UND MEHR"
+        }
+      ]
     }
   ]
 }

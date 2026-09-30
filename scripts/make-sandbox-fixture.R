@@ -94,6 +94,30 @@ d$gs01 <- lab(pick(c(1:5, -9), c(.21, .13, .36, .27, .01, .02)),
               c("KEINE ANGABE" = -9, "GROSSSTADT" = 1, "VORORT GROSSSTADT" = 2, "MITTEL-, KLEINSTADT" = 3, "LAENDL. DORF" = 4, "EINZELHAUS, LAND" = 5),
               "SELBSTBESCHREIBUNG DES WOHNORTS")
 
+# Lernpfad-Aufgabe 8: Der Demokratie-Automat – Gesundheit als zehnte Eingabefrage (die übrigen neun stehen schon oben).
+set.seed(8808)
+d$hs01 <- lab(pick(c(1:5, -9, -42), c(.16, .38, .28, .12, .04, .015, .005)),
+              c("DATENFEHLER: MFN" = -42, "KEINE ANGABE" = -9, "SEHR GUT" = 1, "GUT" = 2, "ZUFRIEDENSTELLEND" = 3, "WENIGER GUT" = 4, "SCHLECHT" = 5),
+              "GESUNDHEITSZUSTAND BEFR.")
+
+# Lernpfad-Aufgabe 9: Mitgenommen – Jugend/Interview in Ost oder West (passend zu eastwest), Geschlecht, Äquivalenzeinkommen.
+# Umgezogene sind überquotiert, damit jede der vier Gruppen bei n = 60 schätzbar bleibt.
+set.seed(8809)
+u <- runif(n)
+dg <- ifelse(as.numeric(d$eastwest) == 2, ifelse(u < .25, 1, 3), ifelse(u < .6, 4, 2))   # 1/3 wohnen im Osten, 2/4 im Westen
+dg[sample(n, 3)] <- c(-10, -10, -32)
+d$dg03 <- lab(dg, c("NICHT GENERIERBAR" = -32, "TNZ: FILTER" = -10, "O.JUGEND-O.INT." = 1, "O.JUGEND-W.INT." = 2, "W.JUGEND-O.INT." = 3, "W.JUGEND-W.INT." = 4),
+              "JUGEND IN OST-WEST,INTERVIEW IN OST-WEST")
+d$sex <- lab(pick(c(1, 2, 3, -9), c(.48, .48, .02, .02)), c("DATENFEHLER: MFN" = -42, "KEINE ANGABE" = -9, "MANN" = 1, "FRAU" = 2, "DIVERS" = 3), "GESCHLECHT, BEFRAGTE(R)")
+d$di08c <- lab(pick(c(1:26, -50, -32), c(rep(.035, 26), .02, .07)),
+               c("KEIN EINKOMMEN" = -50, "NICHT GENERIERBAR" = -32, "UNTER 200 EURO" = 1, "200 - 299 EURO" = 2, "300 - 399 EURO" = 3, "400 - 499 EURO" = 4,
+                 "500 - 624 EURO" = 5, "625 - 749 EURO" = 6, "750 - 874 EURO" = 7, "875 - 999 EURO" = 8, "1000 - 1124 EURO" = 9, "1125 - 1249 EURO" = 10,
+                 "1250 - 1374 EURO" = 11, "1375 - 1499 EURO" = 12, "1500 - 1749 EURO" = 13, "1750 - 1999 EURO" = 14, "2000 - 2249 EURO" = 15,
+                 "2250 - 2499 EURO" = 16, "2500 - 2749 EURO" = 17, "2750 - 2999 EURO" = 18, "3000 - 3499 EURO" = 19, "3500 - 3999 EURO" = 20,
+                 "4000 - 4499 EURO" = 21, "4500 - 4999 EURO" = 22, "5000 - 5999 EURO" = 23, "6000 - 7499 EURO" = 24, "7500 - 9999 EURO" = 25,
+                 "10000 EURO UND MEHR" = 26),
+               "AEQUIVALENZEINKOMMEN OECD - NEU, KAT.")
+
 write_sav(d, file.path(out, "sandbox-fixture.sav"), compress = "byte")
 write_sav(d, file.path(out, "sandbox-fixture-uncompressed.sav"), compress = "none")
 
