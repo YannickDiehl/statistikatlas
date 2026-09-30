@@ -66,7 +66,8 @@ const variantText = (v: Variant, groups: string[]) =>
 
 /** Richtungssatz in Worten. */
 export function direction(card: Card, value: number): string {
-  if (card.high === null || Math.abs(value) < 0.005) return 'Eine Richtung lässt sich hier nicht angeben.';
+  if (card.high === null) return 'Eine Richtung lässt sich hier nicht angeben.';
+  if (Math.abs(value) < 0.03) return 'Der Zusammenhang ist so schwach, dass sich keine Richtung angeben lässt.';
   return `Wer ${card.high}, ist eher ${value > 0 ? 'zufriedener' : 'unzufriedener'} mit der Demokratie.`;
 }
 
@@ -95,7 +96,11 @@ export function checkEntry(p: Prepared, card: Card, vars: Variant[], e: Entry): 
 }
 
 /** Werte für die Landesteile (bzw. Wirtschaftslage-Gruppen): mit oder ohne Gewicht, ps03 umgepolt. */
-export function checkStrata(p: Prepared, card: Card, vars: Variant[], measure: MeasureId | '', inputs: string[]): Note[] {
+/** Bei der Karte „West oder Ost“ vergleicht man innerhalb der Wirtschaftslage-Gruppen mit Gamma (wie im Lösungsskript), sonst mit dem gewählten Maß. */
+export const strataMeasure = (card: Card, measure: MeasureId | ''): MeasureId | '' => (card.id === 'eastwest' ? 'gamma' : measure);
+
+export function checkStrata(p: Prepared, card: Card, vars: Variant[], chosen: MeasureId | '', inputs: string[]): Note[] {
+  const measure = strataMeasure(card, chosen);
   if (!measure) return [];
   const groups = strata(p, card).map(s => s.label);
   return inputs.flatMap((input, s): Note[] => {
@@ -123,7 +128,7 @@ export function stampReading(total: number, parts: number[], signed: boolean): S
 
 export function checkStamp(p: Prepared, card: Card, vars: Variant[], measure: MeasureId | '', stamp: Stamp | ''): Note[] {
   if (!stamp) return [];
-  const m = measure || LEVEL_MEASURES[card.level][0];
+  const m = strataMeasure(card, measure || LEVEL_MEASURES[card.level][0]) as MeasureId;
   const total = vars.find(v => v.measure === m && v.weighted && v.stratum < 0 && v.reversed)!.value;
   const parts = strata(p, card).map((_, s) => vars.find(v => v.measure === m && !v.weighted && v.stratum === s && v.reversed)!.value);
   const mine = stampReading(total, parts, SIGNED.includes(m));
@@ -151,7 +156,7 @@ export function fitNotes(p: Prepared, card: Card, vars: Variant[], measure: Meas
     const gammas = KONF_ORDERS.map(o => MEASURES.gamma.fn(p.y, cardValues(p, card, o.map), p.w));
     notes.push({ tone: 'warn', text: `Die Reihenfolge der Konfessionen ist willkürlich. Gamma je nach Reihenfolge: ${gammas.map(fmt).join(' / ')} (${KONF_ORDERS.map(o => o.label).join(' | ')}).` });
   }
-  if (measure === 'gamma' && card.id !== 'konf') notes.push({ tone: 'hint', text: `Gamma übergeht Paare mit Bindungen und liegt deshalb über Tau-b (γ ${fmt(v('gamma'))}, τ ${fmt(v('tau'))}).` });
+  if (measure === 'gamma' && card.id !== 'konf') notes.push({ tone: 'hint', text: `Gamma übergeht Paare mit Bindungen und ist deshalb dem Betrag nach größer als Tau-b (γ ${fmt(v('gamma'))}, τ ${fmt(v('tau'))}).` });
   if (measure === 'r' && card.level === 'ordinal') notes.push({ tone: 'hint', text: 'Pearson-r setzt gleiche Abstände zwischen den Stufen voraus. Hält das für diese Skala?' });
   return notes;
 }
@@ -205,9 +210,11 @@ export function revealNotes(r: Reveal, view: View): string[] {
   const firsts = CARD_IDS.filter(id => !cardById[id].joker && CURRENCIES.every(m => without[m][id] === 1));
   if (firsts.length) notes.push(`Unter den übrigen Kandidaten steht nur ${cardById[firsts[0]].title} in allen vier Währungen vorn.`);
   if (view === 'weighted') {
+    // Diese beiden Bemerkungen gelten nur, wenn die Daten es hergeben (auf dem ALLBUS 2023: ja).
     const age = r.weighted.age.r, ageU = r.unweighted.age.r;
-    notes.push(`Mit Gewicht ändert sich r für das Alter von ${fmt(ageU)} auf ${fmt(age)}: In West (${fmt(r.west.age.r)}) und Ost (${fmt(r.ost.age.r)}) zeigt der Zusammenhang in verschiedene Richtungen, ungewichtet rechnet die Ost-Überquote das gegeneinander auf.`);
-    notes.push(`Für West oder Ost bleibt Gamma mit Gewicht fast gleich (${fmt(r.unweighted.eastwest.gamma)} → ${fmt(r.weighted.eastwest.gamma)}), V nicht (${fmt(r.unweighted.eastwest.V)} → ${fmt(r.weighted.eastwest.V)}).`);
+    if (Math.sign(r.west.age.r) !== Math.sign(r.ost.age.r)) notes.push(`Mit Gewicht ändert sich r für das Alter von ${fmt(ageU)} auf ${fmt(age)}: In West (${fmt(r.west.age.r)}) und Ost (${fmt(r.ost.age.r)}) zeigt der Zusammenhang in verschiedene Richtungen, ungewichtet rechnet die Ost-Überquote das gegeneinander auf.`);
+    const ew = r.weighted.eastwest, ewU = r.unweighted.eastwest;
+    if (Math.abs(ew.gamma - ewU.gamma) < 0.01 && Math.abs(ew.V - ewU.V) >= 0.02) notes.push(`Für West oder Ost bleibt Gamma mit Gewicht fast gleich (${fmt(ewU.gamma)} → ${fmt(ew.gamma)}), V nicht (${fmt(ewU.V)} → ${fmt(ew.V)}).`);
   }
   return notes;
 }
@@ -276,11 +283,12 @@ export function plenumLines(s: S05State): [string, string][] {
 
 /** Einlesen, ps03 umpolen und die Karte umkodieren. */
 export function rSetupFor(card: Card): string {
-  const recode = card.recode ? `,\n    ${card.id} = rec(${card.source}, rules = "${card.recode.rules}")` : '';
-  return ['library(mariposa)', 'library(dplyr)', '',
+  const mutate = card.recode
+    ? `  mutate(zufriedenheit = rec(ps03, rules = "rev"),   # umgepolt: höher = zufriedener\n    ${card.id} = rec(${card.source}, rules = "${card.recode.rules}"))`
+    : '  mutate(zufriedenheit = rec(ps03, rules = "rev"))   # umgepolt: höher = zufriedener';
+  return ['library(dplyr)', 'library(mariposa)   # zuletzt laden: haven würde sonst read_spss() überdecken', '',
     'allbus <- read_spss(file.choose())   # ZA8831_v1-3-0.sav',
-    'allbus <- allbus %>%',
-    `  mutate(zufriedenheit = rec(ps03, rules = "rev")${recode})   # umgepolt: höher = zufriedener`].join('\n');
+    'allbus <- allbus %>%', mutate].join('\n');
 }
 
 /** Vollständiger R-Code für eine Karte (Hilfestufe 4). */
@@ -311,6 +319,9 @@ export function rCodeFor(card: Card): string {
 }
 
 export function scaffoldFor(card: Card): string {
+  const recode = card.recode ? `,\n                             ${card.id} = rec(${card.source}, rules = "___")` : '';
+  const head = `allbus <- allbus %>% mutate(zufriedenheit = rec(ps03, rules = "___")${recode})`;
+  if (card.id === 'eastwest') return `${head}\nallbus %>% cramers_v(zufriedenheit, eastwest, weights = ___)\nallbus <- allbus %>% mutate(lage = rec(ep01, rules = "___"))\nallbus %>% filter(lage == ___) %>% goodman_gamma(zufriedenheit, eastwest)`;
   const fn = card.level === 'nominal' ? 'cramers_v' : card.level === 'ordinal' ? 'goodman_gamma' : 'pearson_cor';
-  return `allbus <- allbus %>% mutate(zufriedenheit = rec(ps03, rules = "___"))\nallbus %>% ${fn}(zufriedenheit, ___, weights = ___)\nallbus %>% group_by(___) %>% ${fn}(zufriedenheit, ___)`;
+  return `${head}\nallbus %>% ${fn}(zufriedenheit, ${card.id}, weights = ___)\nallbus %>% group_by(___) %>% ${fn}(zufriedenheit, ${card.id})`;
 }

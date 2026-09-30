@@ -67,7 +67,7 @@ export const ROLE = {
 export const hintTexts: Record<Level, { think: string; pointer: string; concept: { id: string; label: string } }> = {
   nominal: {
     think: 'Kategorien ohne Reihenfolge: Welches Maß braucht keine Rangfolge? Und wie nimmst du die Ost-Überquote aus dem Spiel?',
-    pointer: 'cramers_v() beruht auf χ²; mit weights = wghtpew rechnest du für Deutschland. group_by(eastwest) trennt West und Ost.',
+    pointer: 'cramers_v() beruht auf χ²; mit weights = wghtpew rechnest du für Deutschland. group_by(eastwest) trennt West und Ost. Bei der Karte „West oder Ost“ vergleichst du stattdessen innerhalb gleicher Wirtschaftslage: Gruppen aus ep01 mit rec() bilden, dann je Gruppe filter(lage == …) und goodman_gamma().',
     concept: { id: 'cramers_v', label: 'Cramér-V' },
   },
   ordinal: {
