@@ -50,7 +50,7 @@ export function Buergerrat({ data, state, onChange, onConcept }: TaskProps<S10St
     </article>)}</div>
     <PartnerToggle mode={state.mode} onChange={mode => set({ mode })}
       solo="Du übersetzt nacheinander in beide Sprachen: erst in Chancen (Jana von Hand, dann eine Stufe mehr nur mit × Exp(B), ohne R), dann in Wahrscheinlichkeiten (predict(), marginal_effects()). Am Ende steht ein Satz, der beide Sprachen verbindet."
-      pair="A übersetzt in Chancen: Jana von Hand, dann eine Stufe mehr nur mit × Exp(B) – ohne R. B übersetzt in Wahrscheinlichkeiten: predict() und marginal_effects(). A wird vermutlich „gleich“ sagen, B „bei Jana“. Einigt euch auf einen Satz für den Rat." />
+      pair="A übersetzt in Chancen: Jana von Hand, dann eine Stufe mehr nur mit × Exp(B) – ohne R. B übersetzt in Wahrscheinlichkeiten: predict() und marginal_effects(). A wird vermutlich „gleich“ sagen, B „bei Jana“. Einigt euch auf einen Satz für den Rat. Die Dolmetscher-Tafel erscheint erst, wenn beide Zahlenreihen auf einem Bildschirm stehen." />
 
     <section className="task-step">
       <h3>1 · Nachrechnen</h3>
@@ -71,7 +71,7 @@ export function Buergerrat({ data, state, onChange, onConcept }: TaskProps<S10St
       <section className="task-step">
         <h3>2 · {pair ? 'A: ' : ''}Jana von Hand übersetzen</h3>
         <p>Jana fragt: „Was heißt das für jemanden wie mich?“ Übersetze Schritt für Schritt: erst den Logit (Konstante + B × Wert), dann die Chance, dann die Wahrscheinlichkeit. Im Modell stehen die umgepolten Skalen.</p>
-        <div className="task-grid s10-chain">
+        <div className="task-grid">
           {numberInput('Logit', state.jana.logit, v => set({ jana: { ...state.jana, logit: v } }))}
           {numberInput('Chance', state.jana.odds, v => set({ jana: { ...state.jana, odds: v } }))}
           {numberInput('Wahrscheinlichkeit', state.jana.prob, v => set({ jana: { ...state.jana, prob: v } }))}
@@ -130,7 +130,7 @@ export function Buergerrat({ data, state, onChange, onConcept }: TaskProps<S10St
       </section>
 
       <section className="task-step">
-        <h3>5 · Die eine Zahl für den Bericht</h3>
+        <h3>5 · {pair ? 'B: ' : ''}Die eine Zahl für den Bericht</h3>
         <figure className="sandbox-quote"><blockquote>{QUESTIONS[3]}</blockquote></figure>
         <p>Rechne in R den durchschnittlichen marginalen Effekt (AME) des Pflichtgefühls. Dann entscheide: Welche Zahl – aus dem Modell, von der Tafel oder aus <code>marginal_effects()</code> – kommt in den Bericht? Mit Einheit und einem Satz für Laien.</p>
         <div className="task-grid">{numberInput('AME Pflichtgefühl', state.ame, v => set({ ame: v }))}</div>

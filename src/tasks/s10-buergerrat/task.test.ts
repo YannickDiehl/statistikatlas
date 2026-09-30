@@ -92,10 +92,13 @@ test('the partner variant splits the two languages and asks for a shared sentenc
   assert.match(pair, /A · in Chancen/);
   assert.match(pair, /B · in Wahrscheinlichkeiten/);
   assert.match(pair, /Euer gemeinsamer Satz/);
+  assert.match(pair, /Die Dolmetscher-Tafel erscheint erst, wenn beide Zahlenreihen auf einem Bildschirm stehen\./);
+  assert.match(pair, /5 · B: Die eine Zahl für den Bericht/);
   const solo = render(answered);
   assert.match(solo, /Sprache 1 · Chancen/);
   assert.match(solo, /Sprache 2 · Wahrscheinlichkeiten/);
   assert.doesNotMatch(solo, /A · in Chancen/);
+  assert.match(solo, /5 · Die eine Zahl für den Bericht/);
 });
 
 test('the report number is recognised, persons’ numbers appear only after the board', () => {
@@ -106,6 +109,10 @@ test('the report number is recognised, persons’ numbers appear only after the 
   assert.doesNotMatch(before, /22,2/);
   assert.match(render({ ...answered, ...report }), /für Menschen wie Jana 22,2, wie Herrn Wiegand 3,6 Prozentpunkte/);
   assert.match(render({ report: { number: fmt(100 * p.ame[0], 1), unit: 'pct', sentence: '' } }), /Prozent oder Prozentpunkte\?/);
+  // vor der Tafel ist das Feld kein Orakel für die Werte der Ratsmitglieder
+  const oracle = render({ report: { number: fmt(100 * wiegand.prob[0], 0), unit: 'pct', sentence: '' } });
+  assert.match(oracle, /erst ein, wenn die Dolmetscher-Tafel offen ist/);
+  assert.doesNotMatch(oracle, /Das ist eine Wahrscheinlichkeit/);
 });
 
 test('the likelihood station reveals its lesson after four right entries', () => {

@@ -47,12 +47,16 @@ test('session 10: Jana and Herr Wiegand with and without one step more', { skip 
   assert.deepEqual([r(j.odds[1], 1), r(w.odds[0], 1), r(w.odds[1], 1)], [12.2, 24.1, 90.8]);
   // Nichtwahl-Risiko relativ: −68 % und −73 %
   assert.deepEqual(tafel(p).map(t => r(100 * (t.risk[1] - t.risk[0]) / t.risk[0], 0)), [-68, -73]);
-  assert.equal(recogniseReport(p, '−68 %', 'pct')!.kind, 'riskJana');
+  assert.equal(recogniseReport(p, '−68 %', 'pct', true)!.kind, 'riskJana');
   assert.equal(recogniseReport(p, '5,4', 'pp')!.kind, 'amePp');
-  assert.equal(recogniseReport(p, '16,0', 'pp')!.kind, 'jana');
-  assert.equal(recogniseReport(p, '2,9', 'pp')!.kind, 'wiegand');
+  assert.equal(recogniseReport(p, '+16,0', 'pp', true)!.kind, 'jana');
+  assert.equal(recogniseReport(p, '2,9', 'pp', true)!.kind, 'wiegand');
+  assert.equal(recogniseReport(p, '16,0', 'pp'), null);
+  assert.equal(recogniseReport(p, '×3,77', 'times')!.kind, 'or');
   assert.equal(recogniseReport(p, '0,27', 'times')!.kind, 'invOr');
   assert.equal(recogniseReport(p, '1,33', 'logit')!.kind, 'b');
+  // B auf zwei Stellen gerundet: −2,15 + 1,33·2 + 0,34·2 = 1,19
+  assert.match(checkChain(p, { logit: '1,19', odds: '', prob: '' })[0].text, /B zu früh gerundet/);
   assert.deepEqual(checkChain(p, { logit: '1,18', odds: '3,25', prob: '76,4 %' }).map(n => n.tone), ['ok', 'ok', 'ok']);
   // von Hand mit den gedruckten B-Werten (−2,154 + 1,326·2 + 0,340·2 = 1,178) und daraus weitergerechnet
   assert.deepEqual(checkChain(p, { logit: '1,178', odds: '3,248', prob: '0,765' }).map(n => n.tone), ['ok', 'ok', 'ok']);
