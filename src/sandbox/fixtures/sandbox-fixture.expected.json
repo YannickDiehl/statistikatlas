@@ -1332,6 +1332,272 @@
           "label": "EINZELHAUS, LAND"
         }
       ]
+    },
+    {
+      "name": "pa29",
+      "label": "ABGEORDNETE NUR DEM VOLK VERPFLICHTET",
+      "kind": "numeric",
+      "values": [2, 2, 1, -9, -11, -11, -11, 1, 1, -11, 1, -11, 1, 1, 2, 1, -11, -11, -11, 1, 1, 2, -11, -11, -11, 2, 2, 2, 3, 1, 1, -9, 4, 1, -11, 1, -9, 1, -11, -11, -11, -11, 1, 2, -11, 3, 1, 1, 1, 4, 3, -11, 5, 2, -11, 1, 3, 1, 2, 1],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -11,
+          "label": "TNZ: SPLIT"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "STIMME VOLL ZU"
+        },
+        {
+          "value": 2,
+          "label": "STIMME EHER ZU"
+        },
+        {
+          "value": 3,
+          "label": "TEILS/TEILS"
+        },
+        {
+          "value": 4,
+          "label": "LEHNE EHER AB"
+        },
+        {
+          "value": 5,
+          "label": "LEHNE GANZ AB"
+        }
+      ]
+    },
+    {
+      "name": "pa30",
+      "label": "POLITIKER REDEN ZU VIEL,HANDELN ZU WENIG",
+      "kind": "numeric",
+      "values": [1, 2, 2, 1, -11, -11, -11, 1, 3, -11, 4, -11, 3, 2, 1, 1, -11, -11, -11, 2, 1, 2, -11, -11, -11, 1, 1, 5, 1, 2, 1, 1, 2, 1, -11, 2, 3, 1, -11, -11, -11, -11, 4, 1, -11, 3, 3, 1, 2, 2, 3, -11, 3, 3, -11, 2, 3, 1, 2, 2],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -11,
+          "label": "TNZ: SPLIT"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "STIMME VOLL ZU"
+        },
+        {
+          "value": 2,
+          "label": "STIMME EHER ZU"
+        },
+        {
+          "value": 3,
+          "label": "TEILS/TEILS"
+        },
+        {
+          "value": 4,
+          "label": "LEHNE EHER AB"
+        },
+        {
+          "value": 5,
+          "label": "LEHNE GANZ AB"
+        }
+      ]
+    },
+    {
+      "name": "pa31",
+      "label": "EINFACHE BUERGER BESSERE VOLKSVERTRETER",
+      "kind": "numeric",
+      "values": [2, 3, 2, 3, -11, -11, -11, 1, 5, -11, -8, -11, 2, 2, 1, 1, -11, -11, -11, 3, 2, 4, -11, -11, -11, 4, 3, 4, 1, 3, 1, 3, 4, 1, -11, 3, 4, 2, -11, -11, -11, -11, 5, 4, -11, 3, 5, 1, 3, 4, 2, -11, 3, 5, -11, 2, 3, 3, 3, 3],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -42,
+          "label": "DATENFEHLER: MFN"
+        },
+        {
+          "value": -11,
+          "label": "TNZ: SPLIT"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "STIMME VOLL ZU"
+        },
+        {
+          "value": 2,
+          "label": "STIMME EHER ZU"
+        },
+        {
+          "value": 3,
+          "label": "TEILS/TEILS"
+        },
+        {
+          "value": 4,
+          "label": "LEHNE EHER AB"
+        },
+        {
+          "value": 5,
+          "label": "LEHNE GANZ AB"
+        }
+      ]
+    },
+    {
+      "name": "pa32",
+      "label": "POLIT.KOMPROMISS IST VERRAT V.PRINZIPIEN",
+      "kind": "numeric",
+      "values": [1, 3, 1, 4, -11, -11, -11, 3, 3, -11, 5, -11, 4, 3, 2, -9, -11, -11, -11, 3, 3, 4, -11, -11, -11, 3, -9, 5, 1, 4, 1, 4, 3, 2, -11, 3, 2, 3, -11, -11, -11, -11, 3, 2, -11, 5, 1, 2, 3, -8, 3, -11, 1, 5, -11, 1, 4, 3, 4, 2],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -11,
+          "label": "TNZ: SPLIT"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "STIMME VOLL ZU"
+        },
+        {
+          "value": 2,
+          "label": "STIMME EHER ZU"
+        },
+        {
+          "value": 3,
+          "label": "TEILS/TEILS"
+        },
+        {
+          "value": 4,
+          "label": "LEHNE EHER AB"
+        },
+        {
+          "value": 5,
+          "label": "LEHNE GANZ AB"
+        }
+      ]
+    },
+    {
+      "name": "pa33",
+      "label": "VOLK SOLLTE POLIT.ENTSCHEIDUNGEN TREFFEN",
+      "kind": "numeric",
+      "values": [3, 4, 1, 4, -11, -11, -11, 2, 2, -11, 5, -11, 1, 3, 3, 1, -11, -11, -11, 3, 3, 2, -11, -11, -11, 3, 4, 4, 2, 4, 1, 3, 3, 1, -11, 3, 5, 2, -11, -11, -11, -11, 3, 4, -11, 1, 2, 3, 1, 5, 4, -11, 2, 5, -11, 3, -8, 2, 4, 3],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -42,
+          "label": "DATENFEHLER: MFN"
+        },
+        {
+          "value": -11,
+          "label": "TNZ: SPLIT"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "STIMME VOLL ZU"
+        },
+        {
+          "value": 2,
+          "label": "STIMME EHER ZU"
+        },
+        {
+          "value": 3,
+          "label": "TEILS/TEILS"
+        },
+        {
+          "value": 4,
+          "label": "LEHNE EHER AB"
+        },
+        {
+          "value": 5,
+          "label": "LEHNE GANZ AB"
+        }
+      ]
+    },
+    {
+      "name": "pa34",
+      "label": "VOLK EINIG WAS POLITISCH PASSIEREN MUSS",
+      "kind": "numeric",
+      "values": [1, 4, 3, 4, -11, -11, -11, 5, 4, -11, 5, -11, 1, 2, 3, 2, -11, -11, -11, 4, 3, 4, -11, -11, -11, 2, 4, 3, 2, 4, 1, 3, 2, 3, -11, 4, 3, 3, -11, -11, -11, -11, 3, 2, -11, 4, 4, 1, 3, 2, 3, -11, 3, -8, -11, 1, 2, 3, 5, 3],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -11,
+          "label": "TNZ: SPLIT"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "STIMME VOLL ZU"
+        },
+        {
+          "value": 2,
+          "label": "STIMME EHER ZU"
+        },
+        {
+          "value": 3,
+          "label": "TEILS/TEILS"
+        },
+        {
+          "value": 4,
+          "label": "LEHNE EHER AB"
+        },
+        {
+          "value": 5,
+          "label": "LEHNE GANZ AB"
+        }
+      ]
     }
   ]
 }

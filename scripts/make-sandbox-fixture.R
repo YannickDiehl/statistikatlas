@@ -94,6 +94,34 @@ d$gs01 <- lab(pick(c(1:5, -9), c(.21, .13, .36, .27, .01, .02)),
               c("KEINE ANGABE" = -9, "GROSSSTADT" = 1, "VORORT GROSSSTADT" = 2, "MITTEL-, KLEINSTADT" = 3, "LAENDL. DORF" = 4, "EINZELHAUS, LAND" = 5),
               "SELBSTBESCHREIBUNG DES WOHNORTS")
 
+# Lernpfad-Aufgabe 7: Populismus-Batterie pa29–pa34 zu pa35 (steht schon oben), Labels und Missing-Codes wie im echten ALLBUS.
+# Gestellt nur, wo pa35 gestellt wurde (sonst −11 „TNZ: SPLIT“). Ein gemeinsamer Faktor (an pa35 gekoppelt) und drei Seiten:
+# Volkssouveränität (pa29, pa33), Anti-Elitismus (pa30, pa31, pa35), Einheit des Volkes (pa32, pa34). pa29 stark schief (viel Zustimmung).
+set.seed(8807)
+local({
+  p35 <- as.numeric(d$pa35)
+  asked <- p35 > 0
+  z35 <- ifelse(asked, (p35 - 3) / 1.2, 0)
+  g <- 0.7 * z35 + rnorm(n, 0, 0.7)
+  side <- list(V = rnorm(n), E = 0.5 * z35 + rnorm(n, 0, 0.85), H = rnorm(n))
+  cut5 <- function(x, p) as.numeric(cut(x, c(-Inf, quantile(x[asked], cumsum(p)[1:4]), Inf)))
+  agree5 <- c("STIMME VOLL ZU" = 1, "STIMME EHER ZU" = 2, "TEILS/TEILS" = 3, "LEHNE EHER AB" = 4, "LEHNE GANZ AB" = 5)
+  item <- function(load_g, s, load_s, sd, p, label, mfn = FALSE) {
+    x <- cut5(load_g * g + load_s * side[[s]] + rnorm(n, 0, sd), p)
+    x <- ifelse(!asked, -11, ifelse(runif(n) < .035, sample(c(-9, -8), n, replace = TRUE), x))
+    labels <- c("TNZ: SPLIT" = -11, "KEINE ANGABE" = -9, "WEISS NICHT" = -8, agree5)
+    if (mfn) labels <- c("DATENFEHLER: MFN" = -42, labels)
+    lab(x, labels, label)
+  }
+  mid <- c(.15, .22, .33, .22, .08)
+  d$pa29 <<- item(0.55, "V", 0.35, 0.75, c(.50, .28, .16, .04, .02), "ABGEORDNETE NUR DEM VOLK VERPFLICHTET")
+  d$pa30 <<- item(0.60, "E", 0.40, 0.55, c(.39, .32, .23, .05, .01), "POLITIKER REDEN ZU VIEL,HANDELN ZU WENIG")
+  d$pa31 <<- item(0.60, "E", 0.40, 0.55, mid, "EINFACHE BUERGER BESSERE VOLKSVERTRETER", mfn = TRUE)
+  d$pa32 <<- item(0.65, "H", 0.40, 0.55, mid, "POLIT.KOMPROMISS IST VERRAT V.PRINZIPIEN")
+  d$pa33 <<- item(0.60, "V", 0.40, 0.55, mid, "VOLK SOLLTE POLIT.ENTSCHEIDUNGEN TREFFEN", mfn = TRUE)
+  d$pa34 <<- item(0.55, "H", 0.40, 0.65, c(.10, .22, .34, .24, .10), "VOLK EINIG WAS POLITISCH PASSIEREN MUSS")
+})
+
 write_sav(d, file.path(out, "sandbox-fixture.sav"), compress = "byte")
 write_sav(d, file.path(out, "sandbox-fixture-uncompressed.sav"), compress = "none")
 
