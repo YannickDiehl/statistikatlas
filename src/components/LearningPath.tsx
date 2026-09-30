@@ -66,15 +66,12 @@ export function LearningPath({ onConcept, sessionIndex = 0, onSessionChange, ini
     document.getElementById('learning-main')?.scrollTo({ top: 0 });
   };
   const taskDef = session.task ? taskRegistry[session.task] : undefined;
-  const dataLine = data ? `ALLBUScompact 2023 · ${data.version || 'Version unbekannt'} · ${data.sav.nCases.toLocaleString('de-DE')} Befragte` : 'ALLBUS noch nicht geladen';
 
   return <main className="learning-path" id="learning-main">
     <aside className="learning-rail">
       <a className="learning-brand" href="#learning-main">Statistikatlas<span>.</span></a>
-      <span className="learning-eyebrow">LERNPFAD · STATISTIK IB</span>
+      <span className="learning-eyebrow">LERNPFAD</span>
       <h1>Statistik als Entscheidungshilfe</h1>
-      <p>Zehn Sitzungen nach dem Sitzungsplan. Jede Sitzung gibt dir einen neuen Auftrag mit dem echten ALLBUScompact 2023: Du rechnest in R und entscheidest selbst, was die Daten tragen.</p>
-      <p className="learning-data-status">{dataLine}{data && <> · <button className="sandbox-link" onClick={() => setData(null)}>Andere Datei laden</button></>}</p>
       <nav aria-label="Sitzungen"><ol>
         {sessions.map((s, i) => {
           const status = sessionStatus(s, tasks);

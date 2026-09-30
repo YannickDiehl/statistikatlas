@@ -1,0 +1,70 @@
+import { useState } from 'react';
+import type { standardfehler as Template } from '../../explain/content/standardfehler';
+import { close } from '../../explain/format';
+import { FormulaView, GlyphLegend, Genau, KurzGesagt, Section, useExplainMode } from './basics';
+import { CheckQuestion, ConceptLink, ThinkQuestions } from './pieces';
+
+type T = typeof Template;
+type Values = T['initial'];
+
+/** Stufe 2: Formel als Satz (Spezifikation 5.2), hier für den Standardfehler. */
+export function FormelAlsSatz({ template: t, onConcept }: { template: T; onConcept: (id: string) => void }) {
+  const [mode] = useExplainMode(), compact = mode === 'kompakt';
+  const [values, setValues] = useState<Values>(t.initial);
+  const [mark, setMark] = useState<string>('s');
+  const s = t.compute(values);
+  const glyph = t.glyphs.find(g => g.key === mark)!;
+  const setValue = (key: keyof Values, v: number) => { setValues(old => ({ ...old, [key]: v })); setMark(key); };
+
+  return (
+    <div className={`xw${compact ? ' xw-compact' : ''}`}>
+      {!compact && <div className="xw-wofuer"><h2>Wofür?</h2><p>{t.wofuer}</p></div>}
+      <div className="xw-metrics">{t.metrics.map(m => <div key={m.label}><span>{m.label}</span><strong>{m.value(s)}</strong></div>)}</div>
+      {!compact && <Section title="Die Zeichen" note="Antippen markiert das Zeichen in Formel und Satz.">
+        <GlyphLegend items={t.glyphs.map(g => ({ ...g, target: g.key }))} active={mark} onPick={k => setMark(k as string)} />
+      </Section>}
+      <FormulaView className="xw-symbolic" nodes={t.symbolic} active={mark} onMark={m => setMark(m as string)} label={t.aria} />
+      <FormulaView className="xw-numeric" nodes={t.numeric(s)} active={mark} onMark={m => setMark(m as string)} />
+      <div className="xw-card xw-glyph-card">
+        <div className="xw-term"><span className="xw-sym">{glyph.sym}</span><strong>{glyph.term}</strong></div>
+        <p>{glyph.plain}</p>
+        <ConceptLink id={glyph.concept} onConcept={onConcept} />
+      </div>
+      <KurzGesagt text={t.kurz} fach={t.fachlich} />
+      <Section title="Als Satz gelesen">
+        <p className="xw-sentence">{t.sentence.map((part, i) => typeof part === 'string' ? part
+          : <span key={i} className={`xw-fp${part.m === mark ? ' on' : ''}`} onClick={() => setMark(part.m)}>{part.t}</span>)}</p>
+      </Section>
+      {!compact && <Section title="Vorgerechnet">
+        <ol className="xw-worked-steps">{t.worked(s).map((w, i) => <li key={i}><small>Schritt {i + 1}</small><strong>{w.title}</strong><span>{w.text}</span></li>)}</ol>
+        <h3 className="xw-warn-head">Typischer Fehler</h3><p>{t.fehler}</p>
+      </Section>}
+      <Section title="Ein Regler je Zeichen">
+        {t.sliders.map(sl => {
+          const key = sl.key as keyof Values, value = values[key];
+          const pos = sl.log ? Math.log10(value) : value;
+          return (
+            <label key={sl.key} className="xw-slider">
+              <span><span className={`xw-fp${mark === sl.key ? ' on' : ''}`}>{sl.key}</span> {sl.label}</span>
+              <input type="range" min={sl.log ? Math.log10(sl.min) : sl.min} max={sl.log ? Math.log10(sl.max) : sl.max} step={sl.log ? 0.01 : sl.step} value={pos}
+                onChange={e => setValue(key, sl.log ? Math.round(10 ** Number(e.target.value)) : Number(e.target.value))} />
+              <output>{sl.format(value)}</output>
+            </label>
+          );
+        })}
+        <div className="xw-presets">{t.quick.map(q => <button type="button" key={q.label} onClick={() => { setValues(q.apply(values)); setMark(q.mark); }}>{q.label}</button>)}</div>
+        <p className="xw-note">{t.compare(s)}</p>
+      </Section>
+      {!compact && <CheckQuestion title="Kurz prüfen" question={t.check.question}
+        evaluate={v => v !== 'NA' && close(v, t.check.answer, t.check.tolerance)
+          ? (setMark('sqrt'), { ok: true, message: t.check.right.replace(/^Stimmt: /, '') })
+          : { ok: false, message: v === 'NA' ? 'Gefragt ist eine Zahl.' : t.check.diagnose(v) }} />}
+      {!compact && (() => { const i = t.interpret(s); return <Section title="Was heißt das Ergebnis?"><KurzGesagt text={i.kurz} /><p>Fachlich: {i.fachlich}</p></Section>; })()}
+      {!compact && <ThinkQuestions title="Mit der Formel denken" items={[{
+        question: t.think.question, options: t.think.options, correct: t.think.correct, kurz: t.think.kurz,
+        explain: () => t.think.explain, onAnswer: () => setMark(t.think.mark),
+      }]} hint={t.think.hint} />}
+      {!compact && <Genau kurz={t.genau.kurz} paragraphs={t.genau.paragraphs} />}
+    </div>
+  );
+}

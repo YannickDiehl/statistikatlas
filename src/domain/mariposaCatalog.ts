@@ -2898,7 +2898,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "formula": "x_neu = [[Minimum + Maximum|pomps|Theoretische Skalenendpunkte]] − [[x|series|Ursprünglicher Wert]]",
   "requires": [],
   "notes": [
-   "Umpolen ist eine inhaltliche Entscheidung. Die Methodenitems im Atlas sind bereits gleichgerichtet; das Beispiel zeigt nur die Operation.",
+   "Umpolen ist eine inhaltliche Entscheidung: Erst die Frage entscheidet, welche Richtung „mehr“ bedeutet.",
    "Ein Suffix bewahrt die ursprünglichen Werte. Kategorien zusammenfassen verändert die verfügbare Information."
   ],
   "output": "Eine neue Spalte mit expliziter Rekodierregel.",

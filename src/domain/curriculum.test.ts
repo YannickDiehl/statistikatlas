@@ -22,7 +22,9 @@ test('lists every session with its status and marks missing map terms', () => {
   assert.doesNotMatch(html, /Aufgabe folgt/);
   assert.match(html, /<span title="Steht im Sitzungsplan, fehlt der Karte noch">AV und UV<\/span>/);
   assert.match(html, /<button>Kreuztabelle<\/button>/);
-  assert.match(html, /Andere Datei laden/);
+  // Vom Dozenten gestrichen (30.09.2026): Dateistatus, Einleitungssatz und „· STATISTIK IB“.
+  for (const gone of [/Andere Datei laden/, /ALLBUScompact 2023 ·/, /Zehn Sitzungen nach dem Sitzungsplan/, /STATISTIK IB/]) assert.doesNotMatch(html, gone);
+  assert.match(html, /<span class="learning-eyebrow">LERNPFAD<\/span>/);
 });
 
 test('shows the Nenner-Check in session 4 and a task in every later session', () => {

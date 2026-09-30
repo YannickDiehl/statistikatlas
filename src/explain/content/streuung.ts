@@ -15,7 +15,6 @@ const terms = (c: C): FNode[] => c.s.xs.flatMap((x, i): FNode[] => [
 
 export const streuung: Workshop<number[], Series> = {
   id: 'streuung',
-  title: 'der Standardabweichung',
   wofuer: 'Zwei Gruppen stufen sich auf der Links-rechts-Skala ein (1 = ganz links, 10 = ganz rechts). Beide haben denselben Mittelwert 5. Trotzdem wirken sie verschieden: In der einen sind sich alle ziemlich einig, in der anderen gehen die Meinungen weit auseinander. Die Standardabweichung macht diesen Unterschied zu einer Zahl.',
   names: NAMES,
   bounds: { min: 1, max: 10 },

@@ -22,7 +22,6 @@ const strength = (r: number) => {
 
 export const zusammenhang: Workshop<Pairs, PairStats> = {
   id: 'zusammenhang',
-  title: 'der Pearson-Korrelation',
   wofuer: 'Vertraut, wer dem Bundestag vertraut, auch eher der Bundesregierung? Fünf Beispielpersonen beantworten zwei ALLBUS-Fragen auf einer Skala von 1 (gar kein Vertrauen) bis 7 (großes Vertrauen). Die Formel fragt: Liegen die beiden Antworten einer Person meist auf derselben Seite ihres Durchschnitts?',
   names: NAMES,
   bounds: { min: 1, max: 7 },

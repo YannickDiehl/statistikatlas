@@ -9,7 +9,6 @@ const werte = (c: C) => c.s.xs.join(' + ');
 
 export const mittel: Workshop<number[], Series> = {
   id: 'mittel',
-  title: 'arithmetischen Mittel',
   wofuer: 'Wo stehen die Befragten einer Gruppe politisch im Durchschnitt? Fünf Beispielpersonen stufen sich auf der Links-rechts-Skala des ALLBUS ein (1 = ganz links, 10 = ganz rechts).',
   names: NAMES,
   bounds: { min: 1, max: 10 },

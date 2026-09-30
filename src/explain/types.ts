@@ -91,8 +91,6 @@ export interface Variant<S> {
 
 export interface Workshop<D, S> {
   id: 'mittel' | 'streuung' | 'zusammenhang';
-  /** Name in „Ist Schritt n von … (Werkstatt öffnen)“. */
-  title: string;
   wofuer: string;
   names: readonly string[];
   bounds: { min: number; max: number };
