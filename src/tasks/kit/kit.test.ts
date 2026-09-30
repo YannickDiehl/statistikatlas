@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { HintLadder } from './HintLadder';
-import { de, near, parseNumber } from './numbers';
+import { de, halfUnit, near, numberReadings, parseNumber } from './numbers';
 import { PlenumCard, plenumMarkdown } from './PlenumCard';
 import { RBlock } from './RBlock';
 import { emptyTaskStore, oneOf, parseTaskStore, str, strList } from './storage';
@@ -54,4 +54,17 @@ test('de() writes German numbers with a true minus sign that parseNumber reads b
   assert.equal(de(1234.5), '1.234,5');
   assert.equal(de(Number.NaN), '–');
   assert.equal(parseNumber(de(-0.35, 3)), -0.35);
+});
+
+test('numberReadings reads R-printed decimals and German numbers, both readings when ambiguous', () => {
+  assert.deepEqual(numberReadings('3.765'), [{ x: 3.765, decimals: 3 }, { x: 3765, decimals: 0 }]);
+  assert.deepEqual(numberReadings('0.465'), [{ x: 0.465, decimals: 3 }]);
+  assert.deepEqual(numberReadings('−2.481'), [{ x: -2.481, decimals: 3 }, { x: -2481, decimals: 0 }]);
+  assert.deepEqual(numberReadings('3,77'), [{ x: 3.77, decimals: 2 }]);
+  assert.deepEqual(numberReadings('1.656,5'), [{ x: 1656.5, decimals: 1 }]);
+  assert.deepEqual(numberReadings('1.234.567'), [{ x: 1234567, decimals: 0 }]);
+  assert.deepEqual(numberReadings('2.28'), [{ x: 2.28, decimals: 2 }]);
+  assert.deepEqual(numberReadings('67,7 %'), [{ x: 67.7, decimals: 1 }]);
+  assert.deepEqual(numberReadings('abc'), []);
+  assert.ok(Math.abs(halfUnit(3) - 0.0005) < 1e-8);
 });
