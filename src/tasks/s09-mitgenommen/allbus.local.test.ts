@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readSav } from '../../sandbox/readSav';
 import { COMMON_CAUSES, GROUP_IDS } from './content';
-import { board, core, interaction, modelStore, moverVariants, predictions, prepare, selection, wobbleTest } from './domain';
+import { board, checkControlled, checkInteraction, checkModel, checkPrediction, checkSelection, core, interaction, modelStore, moverVariants, predictions, prepare, selection, wobbleTest, type ModelEntry } from './domain';
 
 const file = process.env.ALLBUS_SAV;
 const skip = !file && 'ALLBUS_SAV nicht gesetzt';
@@ -75,4 +75,14 @@ test('session 9: the wobble test stays far from the 0.7 both camps would need (c
   assert.deepEqual([r(w[2].lo, 3), r(w[2].hi, 3)], [-0.255, 0.015]);
   assert.deepEqual([r(w[3].lo, 3), r(w[3].hi, 3)], [-0.134, 0.123]);
   assert.ok(Math.abs(w[2].lo) < 0.7 && Math.abs(w[3].lo) < 0.7);
+});
+
+test('session 9: entries typed as R prints them (dot decimals, 78.0%) are recognised', { skip }, () => {
+  const p = load(), models = modelStore(p);
+  const e: ModelEntry = { c: '4.243', b: ['-0.705', '-0.166', '-0.034', ''] };
+  assert.equal(checkModel(p, models, 4, e)[0].tone, 'ok');
+  assert.equal(checkPrediction(core(models, 4), e, '4.077')[0].tone, 'ok');
+  assert.match(checkSelection(selection(p), '78.0%')[0].text, /^Stimmt \(gewichtet\)/);
+  assert.equal(checkControlled(models, 4, COMMON_CAUSES, { c: '', b: ['-0.692', '-0.170', '-0.155', ''] })[0].tone, 'ok');
+  assert.match(checkInteraction(interaction(p), core(models, 4)!.fit.r2, '-0.506')[0].text, /^Stimmt: ost:ostjugend = −0,506 \(p = 0,023\)/);
 });

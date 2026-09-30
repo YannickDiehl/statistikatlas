@@ -11,9 +11,9 @@ import type { TaskProps } from '../types';
 import { ParadeTable, ProbeChart, SpreadChart } from './Charts';
 import { DECISIONS, GUESSES, hints, INPUTS, inputById, MIN_CASES, ROLE, WORKSHOP, type InputId } from './content';
 import {
-  checkDisplay, checkLevene, checkSetting, checkSpread, codeNumber, displayOk, drawVisitors, knobScore, leveneVariants, levelName, machineFor, parade,
-  own, paradeNotes, pickInput, plenumLines, prepare, probeRows, probeTotals, recognisedSetting, resolution, rSetup, rSolution, scaffoldSetting, scaffoldSpread,
-  signQuestions, spread, spreadRecognised, statusS08, variants, type Machine, type S08State,
+  checkDisplay, checkLevene, checkSetting, checkSpread, codeNumber, displayOk, drawVisitors, knobScore, leveneVariants, machineFor, NOT_ESTIMABLE, parade,
+  paradeNotes, pickInput, plenumLines, prepare, probeRows, probeTotals, recognisedSetting, recognisedSpread, resolution, rSetup, rSolution, scaffoldSetting,
+  scaffoldSpread, shown as shownInput, signQuestions, spread, statusS08, variants, type Machine, type S08State,
 } from './domain';
 
 const pct = (x: number) => `${de(100 * x, 1)} %`;
@@ -29,14 +29,18 @@ export function Automat({ data, state, onChange, onConcept }: TaskProps<S08State
   const machine = useMemo(() => (item && rec ? machineFor(p, item, rec, { a: state.a, b: state.b, r2: state.r2 }) : null), [p, item, rec, state.a, state.b, state.r2]);
   const res = useMemo(() => (machine ? resolution(machine) : null), [machine]);
   const sp = useMemo(() => (machine ? spread(machine) : null), [machine]);
-  const spreadOk = sp ? spreadRecognised(sp, state.sdMin, state.sdMax) : false;
+  // erkannte Streuungstabelle (eigene Gewichtung; beim Automaten ohne Gewicht auch die gewichtete aus dem Gerüst)
+  const spOk = useMemo(() => (machine ? recognisedSpread(machine, state.sdMin, state.sdMax) : null), [machine, state.sdMin, state.sdMax]);
   const lv = useMemo(() => (machine ? leveneVariants(machine) : null), [machine]);
   const code = codeNumber(state.code);
   const visitors = useMemo(() => (machine && code !== null ? probeRows(machine, drawVisitors(machine, code)) : []), [machine, code]);
   const totals = probeTotals(visitors);
   const shown = Boolean(res && state.guess);
+  // Zu zweit gibt die Kuratorin Besucherprobe und Auflösung erst frei, wenn sie zwei Anzeigen selbst nachgerechnet hat.
+  const displaysOk = Boolean(machine && item && displayOk(machine, item.probe[0], state.shows[0]) && displayOk(machine, item.probe[1], state.shows[1]));
   const paradeRows = useMemo(() => (rec && state.decision ? parade(p, rec.weighted) : null), [p, rec, state.decision]);
   const pair = state.mode === 'pair';
+  const probeOpen = !pair || displaysOk;
   const tag = (who: string) => (pair ? ` · ${who}` : '');
   const newCode = () => set({ code: String(100 + Math.floor(Math.random() * 900)) });
 
@@ -73,6 +77,7 @@ export function Automat({ data, state, onChange, onConcept }: TaskProps<S08State
         <h3>2 · Automat einstellen (R){tag('Technik')}</h3>
         <p>Pol ps03 um, damit hohe Werte „zufrieden“ heißen, und stell den Automaten mit <code>linear_regression()</code> ein – gewichtet, denn er soll für ganz Deutschland sprechen. Trag Konstante, Steigung und R² ein.</p>
         <RBlock code={rSetup(item)} file="automat-start.R" />
+        {!main && <p className="sandbox-note" role="note">{NOT_ESTIMABLE}</p>}
         <div className="task-grid">
           <label>Konstante<input type="text" inputMode="decimal" maxLength={12} value={state.a} onChange={e => set({ a: e.target.value })} /></label>
           <label>Steigung<input type="text" inputMode="decimal" maxLength={12} value={state.b} onChange={e => set({ b: e.target.value })} /></label>
@@ -82,18 +87,18 @@ export function Automat({ data, state, onChange, onConcept }: TaskProps<S08State
         <HintLadder key={`setting-${item.id}`} hint={{ ...hints.setting, workshop: WORKSHOP, scaffold: scaffoldSetting(item), solution: rSolution(item) }} onConcept={onConcept} file="automat.R" />
       </section>
 
-      {machine && <Testing machine={machine} state={state} set={set} visitors={visitors} totals={totals} code={code} newCode={newCode} tag={tag} />}
+      {machine && <Testing machine={machine} state={state} set={set} visitors={visitors} totals={totals} code={code} newCode={newCode} tag={tag} probeOpen={probeOpen} />}
 
-      {machine && res && <section className="task-step">
+      {machine && res && probeOpen && <section className="task-step">
         <h3>Auflösung: Automat gegen Faulpelz</h3>
         <p>Über alle Befragten: Wer trifft öfter auf ±1 genau – dein Automat oder der Faulpelz?</p>
         <div className="sandbox-chips" role="group" aria-label="Tipp: Wer trifft öfter?">
           {GUESSES.map(g => <button key={g} aria-pressed={state.guess === g} onClick={() => set({ guess: g })}>{g}</button>)}
         </div>
         {shown && <div className="s08-reveal" aria-live="polite">
-          <p><strong>Fehlerquadrate:</strong> Automat {de(res.sse, 0)}, Faulpelz {de(res.sst, 0)} – also {pct(res.reduction)} weniger. Das ist dein R² ({own(state.r2)}).</p>
+          <p><strong>Fehlerquadrate:</strong> Automat {de(res.sse, 0)}, Faulpelz {de(res.sst, 0)} – also {pct(res.reduction)} weniger. Das ist dein R² ({rec ? shownInput(state.r2, [rec.r2]) : state.r2.trim()}).</p>
           <p><strong>Treffer auf ±1:</strong> Automat {pct(res.hit)}, Faulpelz {pct(res.lazyHit)}.{res.hit < res.lazyHit - 1e-12 ? ' Der Automat trifft seltener als der Faulpelz!' : Math.abs(res.hit - res.lazyHit) <= 1e-12 ? ' Beide treffen genau gleich oft.' : ''}</p>
-          <p className="sandbox-note">Warum ist der Faulpelz so gut? Er zeigt allen {de(res.mean, 2)}. Damit liegt er bei allen, die {res.near.map(n => `${n.value} (${pct(n.share)})`).join(' oder ')} geantwortet haben, höchstens 1 daneben – das sind die häufigsten Antworten. Weniger Fehlerquadrate heißt nicht mehr Treffer.</p>
+          <p className="sandbox-note">Warum ist der Faulpelz so gut? Er zeigt allen {de(res.mean, 2)}. Damit liegt er bei allen, die {res.near.map(n => `${n.value} (${pct(n.share)})`).join(' oder ')} geantwortet haben, höchstens 1 daneben – {res.nearAreTop ? 'das sind die häufigsten Antworten' : `zusammen ${pct(res.near.reduce((a, n) => a + n.share, 0))} aller Antworten`}. Weniger Fehlerquadrate heißt nicht mehr Treffer.</p>
         </div>}
         {shown && <Knobs key={`${item.id}-${machine.weighted}`} machine={machine} />}
       </section>}
@@ -107,8 +112,8 @@ export function Automat({ data, state, onChange, onConcept }: TaskProps<S08State
         </div>
         <Feedback notes={checkSpread(machine, sp, state.sdMin, state.sdMax)} />
         <HintLadder key={`spread-${item.id}`} hint={{ ...hints.spread, workshop: WORKSHOP, scaffold: scaffoldSpread(item), solution: rSolution(item) }} onConcept={onConcept} file="automat.R" />
-        {spreadOk
-          ? <SpreadChart spread={sp} item={item} />
+        {spOk
+          ? <SpreadChart spread={spOk} item={item} />
           : <p className="sandbox-note">Nach deinem Eintrag zeige ich dir die Streuung aller Stufen als Balken, dazu die Residuenmittel als Blick auf die Linearität.</p>}
         <details className="s08-extra">
           <summary>Profi-Zusatz: Levene-Test der Voraussetzung</summary>
@@ -123,7 +128,7 @@ export function Automat({ data, state, onChange, onConcept }: TaskProps<S08State
         <label className="sandbox-label" htmlFor="s08-sign">Das Schild neben dem Automaten (zwei, drei Sätze, auch für Schulklassen)</label>
         <textarea id="s08-sign" maxLength={400} value={state.sign} placeholder="Dieser Automat zeigt … Er liegt typischerweise … daneben, am weitesten bei …"
           onChange={e => set({ sign: e.target.value })} />
-        <Feedback notes={signQuestions(state.sign, item, spreadOk ? sp : null)} />
+        <Feedback notes={signQuestions(state.sign, item, spOk)} />
         <div className="sandbox-chips" role="group" aria-label="Entscheidung">
           {DECISIONS.map(d => <button key={d} aria-pressed={state.decision === d} onClick={() => set({ decision: d })}>{d}</button>)}
         </div>
@@ -144,15 +149,15 @@ export function Automat({ data, state, onChange, onConcept }: TaskProps<S08State
       </section>}
     </>}
 
-    <PlenumCard title="Der Demokratie-Automat" lines={plenumLines(state, rec, shown ? res : null)} file="automat-plenum.md" />
+    <PlenumCard title="Der Demokratie-Automat" lines={plenumLines(state, rec, shown ? res : null, spOk)} file="automat-plenum.md" />
     {item && statusS08(state) === 'done' && <details className="s02-solution"><summary>Ein vollständiges R-Skript zum Mitnehmen</summary><RBlock code={rSolution(item)} file="automat.R" /></details>}
   </div>;
 }
 
 /** Schritt 3: Anzeige von Hand, Automat im Probebetrieb, Besucherprobe. */
-function Testing({ machine, state, set, visitors, totals, code, newCode, tag }: {
+function Testing({ machine, state, set, visitors, totals, code, newCode, tag, probeOpen }: {
   machine: Machine; state: S08State; set: (patch: Partial<S08State>) => void; visitors: ReturnType<typeof probeRows>; totals: ReturnType<typeof probeTotals>;
-  code: number | null; newCode: () => void; tag: (who: string) => string;
+  code: number | null; newCode: () => void; tag: (who: string) => string; probeOpen: boolean;
 }) {
   const item = machine.item, [x1, x2] = item.probe;
   const both = displayOk(machine, x1, state.shows[0]) && displayOk(machine, x2, state.shows[1]);
@@ -170,6 +175,8 @@ function Testing({ machine, state, set, visitors, totals, code, newCode, tag }: 
       <Display key={item.id} machine={machine} />
     </>}
     <h4 className="s08-sub">Besucherprobe</h4>
+    {!probeOpen && <p className="sandbox-note">Die Kuratorin gibt die Besucherprobe erst frei, wenn sie zwei Anzeigen selbst nachgerechnet hat.</p>}
+    {probeOpen && <>
     <p>Eine Besuchergruppe zieht 20 Befragte aus deiner Datei. Du siehst nur Eingabe und Antwort – und wie weit Automat und Faulpelz danebenliegen. Mit demselben Gruppencode ziehen alle Rechner im Raum dieselben Personen.</p>
     <div className="sandbox-chips">
       <label className="s08-code">Gruppencode <input type="text" inputMode="numeric" maxLength={4} value={state.code} onChange={e => set({ code: e.target.value.replace(/\D/g, '') })} /></label>
@@ -179,6 +186,7 @@ function Testing({ machine, state, set, visitors, totals, code, newCode, tag }: 
     {visitors.length > 0 && <>
       <ProbeChart rows={visitors} item={item} />
       <p><strong>Deine Gruppe:</strong> Fehlerquadrate Automat {de(totals.sse, 1)}, Faulpelz {de(totals.lazySse, 1)} · Treffer auf ±1: Automat {totals.hits}, Faulpelz {totals.lazyHits} von {visitors.length}.</p>
+    </>}
     </>}
   </section>;
 }
@@ -194,18 +202,22 @@ function Display({ machine }: { machine: Machine }) {
   </div>;
 }
 
-/** Knöpfe: Konstante und Steigung selbst drehen – kleiner als die Fehlerquadratsumme aus R wird es nie. */
+/** Knöpfe: Konstante und Steigung selbst drehen – sie starten beim Faulpelz (Durchschnitt, Steigung 0);
+ *  kleiner als die Fehlerquadratsumme aus R wird es nie. */
 function Knobs({ machine }: { machine: Machine }) {
-  const a0 = machine.fit.coef[0], b0 = machine.fit.coef[1];
-  const xs = machine.x, span = Math.max(1, Math.max(...xs) - Math.min(...xs));
-  const bRange = 2 / span;
-  const [a, setA] = useState(a0), [b, setB] = useState(b0);
+  const a0 = machine.fit.coef[0], b0 = machine.fit.coef[1], lazy = machine.mean;
+  let lo = Infinity, hi = -Infinity;
+  for (const v of machine.x) { if (v < lo) lo = v; if (v > hi) hi = v; }
+  const span = Math.max(1, hi - lo), bRange = Math.max(2 / span, 2 * Math.abs(b0));
+  const aMin = Math.min(a0, lazy) - 2, aMax = Math.max(a0, lazy) + 2;
+  const [a, setA] = useState(lazy), [b, setB] = useState(0);
   const best = knobScore(machine, a0, b0), now = knobScore(machine, a, b);
   return <details className="s08-extra">
     <summary>Knöpfe (optional): selbst einstellen</summary>
+    <p>Die Knöpfe stehen auf dem Faulpelz: Konstante = Durchschnitt, Steigung 0. Dreh sie.</p>
     <div className="s08-knobs">
-      <label>Konstante {de(a, 2)}<input type="range" min={a0 - 2} max={a0 + 2} step={0.01} value={a} onChange={e => setA(Number(e.target.value))} /></label>
-      <label>Steigung {de(b, 3)}<input type="range" min={b0 - bRange} max={b0 + bRange} step={bRange / 100} value={b} onChange={e => setB(Number(e.target.value))} /></label>
+      <label>Konstante {de(a, 2)}<input type="range" min={aMin} max={aMax} step={0.01} value={a} onChange={e => setA(Number(e.target.value))} /></label>
+      <label>Steigung {de(b, 3)}<input type="range" min={-bRange} max={bRange} step={bRange / 100} value={b} onChange={e => setB(Number(e.target.value))} /></label>
     </div>
     <p aria-live="polite">Fehlerquadrate {de(now.sse, 0)} (aus R: {de(best.sse, 0)}) · Treffer auf ±1: {pct(now.hit)} (aus R: {pct(best.hit)}).</p>
     <p className="sandbox-note">Keine Stellung unterbietet die Fehlerquadratsumme aus R – das sind die kleinsten Quadrate. Mehr Treffer lassen sich aber holen: Die Gerade optimiert etwas anderes als die Trefferquote.</p>

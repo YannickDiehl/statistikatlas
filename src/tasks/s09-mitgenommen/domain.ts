@@ -1,6 +1,6 @@
 import type { SavFile } from '../../sandbox/readSav';
 import type { Note } from '../kit/Feedback';
-import { de, parseNumber } from '../kit/numbers';
+import { de, halfUnit, numberReadings, parseNumber } from '../kit/numbers';
 import { predictCi, tryOls, wobble, dfbeta, type OlsFit } from '../kit/ols';
 import { WORK_MODES, type WorkMode } from '../kit/PartnerToggle';
 import { validValues } from '../kit/stats';
@@ -98,16 +98,31 @@ export function predictions(m: Model): Record<GroupId, { fit: number; lower: num
 
 /* ---------- Eingaben prüfen ---------- */
 
-const decimals = (s: string) => (s.trim().replace(/^[−–-]/, '').split(/[.,]/)[1] ?? '').length;
-/** Toleranz aus den Nachkommastellen (mindestens zwei): 0,17 → ±0,005; 0,166 → ±0,0005. */
-export const tolerance = (input: string) => (decimals(input) >= 2 ? 0.5 * 10 ** -decimals(input) + 1e-9 : null);
-const within = (value: number, input: string) => {
-  const x = parseNumber(input), tol = tolerance(input);
-  return x !== null && tol !== null && Number.isFinite(value) && Math.abs(value - x) <= tol;
-};
+export type Reading = { x: number; decimals: number };
+const roundTo = (v: number, d: number) => Math.round(v * 10 ** d) / 10 ** d;
+/** Die Lesart einer Eingabe, die zu value passt: die aus R zuerst („3.995“ = 3,995), dann die deutsche („3.995“ = 3995);
+ *  „%“ am Ende und „+“ vorn stören nicht. Toleranz: halbe Einheit der eingegebenen Stellen, mindestens minDecimals Stellen –
+ *  außer R druckt die Zahl kürzer, weil Nullen am Ende wegfallen (0,500 → „0.5“). */
+export function matchReading(value: number, input: string, minDecimals = 2, printed = 3): Reading | null {
+  if (!Number.isFinite(value)) return null;
+  const rs = numberReadings(input);
+  for (const [k, r] of rs.entries()) {
+    if (r.decimals >= minDecimals ? Math.abs(value - r.x) <= halfUnit(r.decimals)
+      // weggelassene Nullen am Ende gibt es nur bei der Lesart aus R (der ersten), nicht beim deutschen Tausenderpunkt
+      : k === 0 && Math.abs(roundTo(value, printed) - r.x) <= 1e-9) return r;
+  }
+  return null;
+}
+const within = (value: number, input: string, minDecimals = 2) => matchReading(value, input, minDecimals) !== null;
+const notNumber = (input: string) => numberReadings(input).length === 0;
+/** Zu wenige Nachkommastellen – gemessen an der ersten Lesart (so druckt R). */
+const coarse = (input: string, minDecimals = 2) => (numberReadings(input)[0]?.decimals ?? 0) < minDecimals;
 const fmt = (x: number, d = 2) => de(x, d);
-/** Eine eingetragene Zahl mit Komma und echtem Minus, so viele Stellen wie eingetragen. */
-export const own = (input: string) => { const x = parseNumber(input); return x === null ? input.trim() : de(x, decimals(input)); };
+/** Eine eingetragene Zahl, die zu einem der Werte passt, in deutscher Schreibweise; sonst der Rohtext, markiert. */
+export function shown(input: string, values: number[], minDecimals = 2): string {
+  for (const v of values) { const r = matchReading(v, input, minDecimals); if (r) return de(r.x, r.decimals); }
+  return `${input.trim()} (noch nicht geprüft)`;
+}
 
 export type ModelEntry = { c: string; b: [string, string, string, string] };
 export const emptyEntry = (): ModelEntry => ({ c: '', b: ['', '', '', ''] });
@@ -131,11 +146,11 @@ function checkTable(m: Model | null, ref: GroupId, e: ModelEntry, withConstant: 
   const entered = fields.filter(f => fieldInput(e, f).trim());
   if (!entered.length) return [];
   if (!m) return [{ tone: 'warn', text: 'Dieses Modell lässt sich mit deiner Datei nicht schätzen – eine Gruppe ist leer oder die Prädiktoren sind kollinear. Prüfe Referenz und Kontrollen.' }];
-  const bad = entered.find(f => parseNumber(fieldInput(e, f)) === null);
+  const bad = entered.find(f => notNumber(fieldInput(e, f)));
   if (bad) return [{ tone: 'warn', text: `${fieldLabel(bad)}: Das ist keine Zahl.` }];
-  const coarse = entered.find(f => tolerance(fieldInput(e, f)) === null);
-  if (coarse) return [{ tone: 'hint', text: `${fieldLabel(coarse)}: Trag die Werte mit drei Nachkommastellen ein, so wie R sie zeigt.` }];
   const wrong = entered.filter(f => !within(fieldValue(m, f), fieldInput(e, f)));
+  const short = wrong.find(f => coarse(fieldInput(e, f)));
+  if (short) return [{ tone: 'hint', text: `${fieldLabel(short)}: Trag die Werte mit drei Nachkommastellen ein, so wie R sie zeigt.` }];
   if (!wrong.length) return entered.length === fields.length
     ? [{ tone: 'ok', text: `Stimmt: ${withConstant ? `Die Konstante ist die mittlere Zufriedenheit der Referenzgruppe (${GROUPS[ref].short}); ` : ''}jedes B ist der Abstand einer Gruppe zu ihr, kein eigener Gruppenwert.` }]
     : [{ tone: 'hint', text: `Bisher stimmt alles – trag noch ${fields.filter(f => !entered.includes(f)).map(fieldLabel).join(', ')} ein.` }];
@@ -205,19 +220,27 @@ export function checkCounter(models: Models, ref: GroupId, e: ModelEntry): Note[
   return checkTable(core(models, ref, 'pt03'), ref, e, false, alts);
 }
 
+/** Die Lesart einer Vorhersage-Eingabe, die zu Konstante + B passt (aus den eigenen, erkannten Tabellenwerten oder exakt);
+ *  mindestens zwei Stellen, Toleranz die halbe Einheit, mindestens 0,011 (Rundung der Tabellenwerte). */
+export function predictionReading(m: Model, e: ModelEntry, input: string, group: GroupId = 2): Reading | null {
+  const ref = m.spec.ref, exact = m.c + m.b[group];
+  // eigene Tabellenwerte in der Lesart, die zum Modell passt („3.995“ = 3,995)
+  const read = (inp: string, value: number) => matchReading(value, inp)?.x ?? numberReadings(inp)[0]?.x ?? null;
+  const c = read(e.c, m.c), b = group === ref ? 0 : read(e.b[group - 1], m.b[group]);
+  const mine = c !== null && b !== null ? c + b : NaN;
+  return numberReadings(input).find(r => r.decimals >= 2 && [exact, mine].some(t => Math.abs(r.x - t) <= Math.max(halfUnit(r.decimals), 0.011))) ?? null;
+}
+
 /** Vorhersage für Ost→West aus der eigenen Tabelle: Konstante + B (oder die Konstante, wenn Ost→West die Referenz ist). */
 export function checkPrediction(m: Model | null, e: ModelEntry, input: string, group: GroupId = 2): Note[] {
-  const x = parseNumber(input);
-  if (!m || x === null) return input.trim() && x === null ? [{ tone: 'warn', text: 'Das ist keine Zahl.' }] : [];
-  const tol = tolerance(input);
-  if (tol === null) return [{ tone: 'hint', text: 'Bitte mit zwei Nachkommastellen.' }];
-  const t = Math.max(tol, 0.011);
+  const rs = numberReadings(input);
+  if (!m || !rs.length) return input.trim() && !rs.length ? [{ tone: 'warn', text: 'Das ist keine Zahl.' }] : [];
   const ref = m.spec.ref, exact = m.c + m.b[group];
-  const c = parseNumber(e.c), b = group === ref ? 0 : parseNumber(e.b[group - 1]);
-  const mine = c !== null && b !== null ? c + b : NaN;
-  if (Math.abs(x - exact) <= t || Math.abs(x - mine) <= t) return [{ tone: 'ok', text: `Stimmt: ${group === ref ? `${GROUPS[group].short} ist die Referenz, die Vorhersage ist die Konstante.` : `Konstante + B(${GROUPS[group].short}) = ${fmt(exact)}.`} Diese Zahl muss bei jeder Referenz herauskommen.` }];
-  if (group !== ref && Math.abs(x - m.b[group]) <= t) return [{ tone: 'hint', text: 'Das ist nur der Abstand zur Referenz. Die Vorhersage ist Konstante + B.' }];
-  if (group !== ref && Math.abs(x - m.c) <= t) return [{ tone: 'hint', text: 'Das ist die Konstante – die Vorhersage der Referenzgruppe. Für Ost→West kommt das B dazu.' }];
+  if (predictionReading(m, e, input, group)) return [{ tone: 'ok', text: `Stimmt: ${group === ref ? `${GROUPS[group].short} ist die Referenz, die Vorhersage ist die Konstante.` : `Konstante + B(${GROUPS[group].short}) = ${fmt(exact)}.`} Diese Zahl muss bei jeder Referenz herauskommen.` }];
+  if (rs[0].decimals < 2) return [{ tone: 'hint', text: 'Bitte mit zwei Nachkommastellen.' }];
+  const hits = (target: number) => rs.some(r => r.decimals >= 2 && Math.abs(r.x - target) <= Math.max(halfUnit(r.decimals), 0.011));
+  if (group !== ref && hits(m.b[group])) return [{ tone: 'hint', text: 'Das ist nur der Abstand zur Referenz. Die Vorhersage ist Konstante + B.' }];
+  if (group !== ref && hits(m.c)) return [{ tone: 'hint', text: 'Das ist die Konstante – die Vorhersage der Referenzgruppe. Für Ost→West kommt das B dazu.' }];
   return [{ tone: 'warn', text: 'Rechne Konstante + B der Gruppe aus deiner Tabelle.' }];
 }
 
@@ -239,7 +262,7 @@ export function moverVariants(p: Prepared): MoverVariant[] {
   ];
 }
 
-const countTol = (input: string) => Math.max(0.5 * 10 ** -decimals(input), 0.5) + 1e-9;
+const countTol = (input: string) => Math.max(halfUnit(numberReadings(input)[0]?.decimals ?? 0), 0.5 + 1e-9);
 const nearCount = (v: number, input: string) => { const x = parseNumber(input); return x !== null && Math.abs(x - v) <= countTol(input); };
 
 export function moversRecognised(vars: MoverVariant[], ow: string, wo: string): MoverVariant | null {
@@ -282,15 +305,14 @@ export function selection(p: Prepared): Selection {
   };
 }
 
-const pctTol = (input: string) => 0.5 * 10 ** -decimals(input) + 1e-9;
-const nearPct = (v: number, input: string) => { const x = parseNumber(input); return x !== null && Number.isFinite(v) && Math.abs(x - v) <= pctTol(input); };
+/** Prozent wie R sie druckt („78.0%“) oder deutsch („78,0“); jede Lesart mit ihrer halben Einheit. */
+const nearPct = (v: number, input: string) => Number.isFinite(v) && numberReadings(input).some(r => Math.abs(r.x - v) <= halfUnit(r.decimals));
 
 export const selectionRecognised = (s: Selection, input: string) =>
   [s.weighted[3], s.unweighted[3], s.model, s.modelUnweighted].some(v => nearPct(v, input) || nearPct(v / 100, input));
 
 export function checkSelection(s: Selection, input: string): Note[] {
-  const x = parseNumber(input);
-  if (x === null) return input.trim() ? [{ tone: 'warn', text: 'Das ist keine Zahl.' }] : [];
+  if (notNumber(input)) return input.trim() ? [{ tone: 'warn', text: 'Das ist keine Zahl.' }] : [];
   const all = `Abitur-Anteile: ${GROUP_IDS.map(g => `${GROUPS[g].short} ${de(s.weighted[g], 1)} %`).join(', ')}.`;
   if (nearPct(s.weighted[3], input) || nearPct(s.weighted[3] / 100, input)) return [{ tone: 'ok', text: `Stimmt (gewichtet). ${all} Die West→Ost-Umgezogenen sind eine eigene Auswahl – das ist Selektion.` }];
   if (nearPct(s.unweighted[3], input)) return [{ tone: 'ok', text: `Stimmt (ohne Gewicht; gewichtet ${de(s.weighted[3], 1)} %). ${all} Die West→Ost-Umgezogenen sind eine eigene Auswahl – das ist Selektion.` }];
@@ -306,7 +328,9 @@ export function checkSelection(s: Selection, input: string): Note[] {
 export function sortNote(id: ControlId, sort: Sort | ''): Note[] {
   if (!sort) return [];
   const c = controlById[id];
-  return [{ tone: (sort === 'vorher') === !c.consequence ? 'ok' : 'hint', text: `${c.title}: ${sort === 'vorher' ? c.onBefore : c.onAfter}` }];
+  // neutral: ein Argument für die gewählte Seite und eines für die andere – keine Musterlösung (Spezifikation §2)
+  const [pro, con] = sort === 'vorher' ? [c.before, c.after] : [c.after, c.before];
+  return [{ tone: 'hint', text: `${c.title} – ein Argument dafür: ${pro} Bedenke auch: ${con}` }];
 }
 
 /** Wie ändern die Kontrollen die drei Abstände? */
@@ -331,12 +355,11 @@ export function interaction(p: Prepared): Interaction | null {
 export const interactionRecognised = (it: Interaction | null, input: string) => Boolean(it && within(it.fit.coef[3], input));
 
 export function checkInteraction(it: Interaction | null, coreR2: number, input: string): Note[] {
-  const x = parseNumber(input);
-  if (x === null) return input.trim() ? [{ tone: 'warn', text: 'Das ist keine Zahl.' }] : [];
+  if (notNumber(input)) return input.trim() ? [{ tone: 'warn', text: 'Das ist keine Zahl.' }] : [];
   if (!it) return [{ tone: 'warn', text: 'Das Interaktionsmodell lässt sich mit deiner Datei nicht schätzen.' }];
-  if (tolerance(input) === null) return [{ tone: 'hint', text: 'Bitte mit drei Nachkommastellen, so wie R sie zeigt.' }];
   const f = it.fit;
   if (within(f.coef[3], input)) return [{ tone: 'ok', text: `Stimmt: ost:ostjugend = ${fmt(f.coef[3], 3)} (${f.p[3] < 0.001 ? 'p < 0,001' : `p = ${de(f.p[3], 3)}`}). Die Ost-Bleibenden liegen um so viel anders, als ost und ostjugend einzeln erwarten ließen. R² = ${fmt(f.r2, 3)} – wie im Modell mit vier Gruppen (${fmt(coreR2, 3)}): dieselbe Information, zweite Schreibweise.` }];
+  if (coarse(input)) return [{ tone: 'hint', text: 'Bitte mit drei Nachkommastellen, so wie R sie zeigt.' }];
   if (it.orig && within(it.orig.coef[3], input)) return [{ tone: 'warn', text: 'Das Vorzeichen passt zu ps03 ohne Umpolen. Pol zuerst um.' }];
   if (it.unweighted && within(it.unweighted.coef[3], input)) return [{ tone: 'hint', text: 'Das ist die Interaktion ohne Gewicht. Rechne mit weights = wghtpew.' }];
   if (it.additive && it.additive.coef.slice(1).some(v => within(v, input))) return [{ tone: 'hint', text: 'Das ist das Modell ohne Interaktion (ost + ostjugend). Schreib ost * ostjugend.' }];
@@ -442,7 +465,7 @@ export const initialS09 = (): S09State => ({
 /** Neue Referenz: Tabellen, die an ihr hängen, beginnen von vorn; die zweite Referenz nur, wenn sie jetzt gleich wäre. */
 export function chooseRef(s: S09State, ref: GroupId | 0): S09State {
   if (ref === s.ref) return s;
-  return { ...s, ref, model: emptyEntry(), pred: '', cmodel: emptyEntry(), counter: emptyEntry(), second: s.second.ref === ref ? { ref: 0, model: emptyEntry(), pred: '' } : s.second };
+  return { ...s, ref, refReason: '', model: emptyEntry(), pred: '', cmodel: emptyEntry(), counter: emptyEntry(), second: s.second.ref === ref ? { ref: 0, model: emptyEntry(), pred: '' } : s.second };
 }
 export const chooseSecondRef = (s: S09State, ref: GroupId | 0): S09State =>
   ref === s.second.ref ? s : { ...s, second: { ref, model: emptyEntry(), pred: '' } };
@@ -480,18 +503,28 @@ export function statusS09(s: S09State): TaskStatus {
   return s.decide.length || s.movers.some(m => m.trim()) || s.ref || s.offText.trim() ? 'running' : 'open';
 }
 
-export function plenumLines(s: S09State): [string, string][] {
+/** Schnittplan-Karte: erkannte Zahlen in deutscher Schreibweise, noch nicht erkannte als Rohtext mit Vermerk. */
+export function plenumLines(s: S09State, models: Models | null = null): [string, string][] {
   const ref = s.ref ? GROUPS[s.ref] : null;
   const notControlled = CONTROL_IDS.filter(id => s.sort[id] === 'folge' && !s.controls.includes(id)).map(id => controlById[id].title);
+  const unchecked = (text: string) => `${text.trim()} (noch nicht geprüft)`;
+  const main = models && s.ref ? core(models, s.ref) : null;
+  const mainOk = Boolean(s.ref && main && modelRecognised(main, s.ref, s.model));
+  const pred = (m: Model | null, ok: boolean, e: ModelEntry, input: string) => {
+    const r = m && ok ? predictionReading(m, e, input) : null;
+    return r ? de(r.x, r.decimals) : unchecked(input);
+  };
+  const second = models && s.second.ref ? core(models, s.second.ref) : null;
+  const secondOk = Boolean(s.second.ref && second && modelRecognised(second, s.second.ref, s.second.model));
   const lines: [string, string][] = [
     ['Referenzgruppe', ref ? ref.short : ''],
-    ['B Ost→West', !s.ref ? '' : s.ref === 2 ? 'Referenz' : s.model.b[1].trim() ? own(s.model.b[1]) : ''],
-    ['Vorhersage Ost→West', s.pred.trim() ? own(s.pred) : ''],
+    ['B Ost→West', !s.ref ? '' : s.ref === 2 ? 'Referenz' : !s.model.b[1].trim() ? '' : mainOk && main ? shown(s.model.b[1], [main.b[2]]) : unchecked(s.model.b[1])],
+    ['Vorhersage Ost→West', s.pred.trim() ? pred(main, mainOk, s.model, s.pred) : ''],
     ['Kontrolliert', s.controls.map(id => controlById[id].title).join(', ')],
     ['Bewusst nicht kontrolliert', notControlled.length ? `${notControlled.join(', ')} (${SORT_LABEL.folge})` : ''],
     ['Off-Text', s.offText.trim()],
   ];
-  if (s.second.ref) lines.splice(3, 0, ['Zweite Referenz', `${GROUPS[s.second.ref].short}${s.second.pred.trim() ? ` · Vorhersage Ost→West ${own(s.second.pred)}` : ''}`]);
+  if (s.second.ref) lines.splice(3, 0, ['Zweite Referenz', `${GROUPS[s.second.ref].short}${s.second.pred.trim() ? ` · Vorhersage Ost→West ${pred(second, secondOk, s.second.model, s.second.pred)}` : ''}`]);
   return lines;
 }
 
@@ -521,6 +554,16 @@ const setupLines = [
 ];
 export const rSetup = () => setupLines.join('\n');
 
+/** Nur der Hinweis zur Referenz – der fertige Modellcode steht erst in Hilfestufe 4. */
+export const refComment = (ref: GroupId) =>
+  `# Deine Referenz: ${GROUPS[ref].short} – ihr Dummy (${GROUPS[ref].dummy}) bleibt draußen, die anderen drei kommen ins Modell; nie alle vier zugleich.`;
+
+export const scaffoldCounter = () => [
+  'allbus %>%',
+  '  linear_regression(___ ~ ___ + ___ + ___, weights = wghtpew) %>%',
+  '  summary()',
+].join('\n');
+
 export const rModel = (ref: GroupId, outcome: 'demo' | 'pt03' = 'demo') => [
   `# Referenz: ${GROUPS[ref].short} – ihr Dummy (${GROUPS[ref].dummy}) bleibt draußen; nie alle vier zugleich`,
   'allbus %>%',
@@ -535,7 +578,8 @@ export function rControls(ref: GroupId, controls: ControlId[]): string {
   const formula = `demo ~ ${[dummyTerms(ref), ...orderedControls(controls)].join(' + ')}`;
   const model = formula.length > LONG_FORMULA
     ? ['modell <- allbus %>%', `  linear_regression(${formula}, weights = wghtpew)`,
-      '# Bei so langen Formeln bricht summary() in mariposa 0.7.3 ab – die Koeffiziententabelle zeigt B, Standardfehler, p und KI:', 'modell$coef_table']
+      '# Bei so langen Formeln bricht summary() in mariposa 0.7.3 ab – die Koeffiziententabelle zeigt B, Standardfehler, p, KI und VIF:',
+      'as.data.frame(modell$coef_table)']
     : ['allbus %>%', `  linear_regression(${formula}, weights = wghtpew) %>%`, '  summary()'];
   return [
     '# Wer zieht um? Abitur-Anteil je Gruppe',

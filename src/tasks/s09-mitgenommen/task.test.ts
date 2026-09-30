@@ -25,7 +25,10 @@ test('session 9 starts with the brief of the documentary desk and the two camps'
 
 test('coefficients, CIs, predictions and the template wait for the own recognised table', () => {
   const chosen = render({ ref: 4 });
-  assert.match(chosen, /linear_regression\(demo ~ dg03_1 \+ dg03_2 \+ dg03_3, weights = wghtpew\)/);
+  // Nur der Hinweis zur Referenz – der fertige Modellcode steht erst in Hilfestufe 4
+  assert.match(chosen, /# Deine Referenz: West-Bleibende – ihr Dummy \(dg03_4\) bleibt draußen/);
+  assert.doesNotMatch(chosen, /linear_regression\(demo ~ dg03_1/);
+  assert.doesNotMatch(chosen, /pt03 ~ dg03_1|crosstab\(dg03, abi|ost \* ostjugend/);
   assert.match(chosen, /readOnly="" aria-readonly="true" tabindex="-1" value="Referenz"/);
   for (const n of [f3(m4.c), f3(m4.b[2])]) assert.doesNotMatch(chosen, new RegExp(n), n);
   assert.doesNotMatch(chosen, /95-%-Konfidenzintervall/);
@@ -63,8 +66,10 @@ test('selection, controls and their effect appear only after recognised own valu
   assert.doesNotMatch(render({ ...base, controls: COMMON_CAUSES }), /ohne und mit Kontrollen/);
   const withC = render({ ...base, controls: COMMON_CAUSES, cmodel: entry(cc, false) });
   assert.match(withC, /Abstand zu West-Bleibende: ohne und mit Kontrollen/);
-  assert.match(withC, /demo ~ dg03_1 \+ dg03_2 \+ dg03_3 \+ age \+ frau \+ abi/);
-  assert.match(render({ ...base, sort: { ...initialS09().sort, pt03: 'vorher' } }), /Stand es wirklich vor dem Umzug fest\?/);
+  assert.doesNotMatch(withC, /demo ~ dg03_1 \+ dg03_2 \+ dg03_3 \+ age/);
+  const sorted = render({ ...base, sort: { ...initialS09().sort, pt03: 'vorher' } });
+  assert.match(sorted, /Vertrauen in den Bundestag – ein Argument dafür: .* Bedenke auch: /);
+  assert.doesNotMatch(sorted, /tone-ok">Vertrauen in den Bundestag/);
 });
 
 test('the interaction and the counter-check reveal details only after the own value', () => {
@@ -101,4 +106,30 @@ test('pair variant: two cutting rooms, roles A and B; the finished card and the 
   assert.match(done, /Regression vertiefen<small>Aufgabe abgeschlossen/);
   assert.match(done, /<dt>Referenzgruppe<\/dt><dd>West-Bleibende<\/dd>/);
   assert.match(done, /<dt>Kontrolliert<\/dt><dd>Alter, Geschlecht \(Frau\), Abitur<\/dd>/);
+});
+
+test('main-model numbers stay hidden until the own first table is recognised (counter-check, board, controls)', () => {
+  const cc = models({ outcome: 'rev', ref: 4, controls: COMMON_CAUSES, weighted: true })!, pt = core(models, 4, 'pt03')!;
+  const noModel = { ref: 4, second: { ref: 1, model: entry(m1), pred: pred(m1) }, controls: COMMON_CAUSES, cmodel: entry(cc, false), counter: entry(pt, false) };
+  const hidden = render(noModel);
+  assert.doesNotMatch(hidden, /Zufriedenheit \/ Vertrauen:/);
+  assert.doesNotMatch(hidden, /<h4 class="s09-sub">Tafel der anderen Schnittplätze<\/h4>/);
+  assert.doesNotMatch(hidden, /ohne und mit Kontrollen/);
+  // (B Ost-Bleibende steht als −B West-Bleibende in der eigenen zweiten Tabelle – das hat die Person selbst getippt)
+  for (const n of [f3(m4.c), f3(m4.b[2]), f3(m4.b[3])]) assert.doesNotMatch(hidden, new RegExp(n), n);
+  const shown = render({ ...noModel, model: entry(m4) });
+  assert.match(shown, /Zufriedenheit \/ Vertrauen:/);
+  assert.match(shown, /<h4 class="s09-sub">Tafel der anderen Schnittplätze<\/h4>/);
+  assert.match(shown, /ohne und mit Kontrollen/);
+});
+
+test('entries typed as R prints them open the tables and the plenum card shows normalised values', () => {
+  const dot = (x: number) => x.toFixed(3).replace('-', '−');
+  const e = { c: dot(m4.c), b: GROUP_IDS.map(g => (g === 4 ? '' : dot(m4.b[g]))) };
+  const s = selection(p);
+  const html = render({ ref: 4, model: e, pred: (Number(dot(m4.c)) + Number(dot(m4.b[2]))).toFixed(3), abi: `${s.weighted[3].toFixed(1)}%` });
+  assert.match(html, /Referenz West-Bleibende: Abstand zur Referenz/);
+  assert.match(html, /Stimmt \(gewichtet\)\. Abitur-Anteile:/);
+  assert.match(html, new RegExp(`<dt>B Ost→West</dt><dd>${f3(m4.b[2])}</dd>`));
+  assert.doesNotMatch(html, /noch nicht geprüft/);
 });

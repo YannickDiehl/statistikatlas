@@ -12,7 +12,7 @@ import { CONTROLS, GROUP_IDS, GROUPS, hints, MAX_WORDS, MOVERS, ROLE, SORT_LABEL
 import {
   board, checkControlled, checkCounter, checkDecide, checkInteraction, checkModel, checkMovers, checkPrediction, checkSelection, chooseRef, chooseSecondRef,
   controlEffect, core, interaction, interactionRecognised, modelRecognised, modelStore, moverVariants, moversRecognised, offQuestions, others, plenumLines,
-  prepare, rControls, rInteraction, rModel, rSetup, rSolution, scaffoldControls, scaffoldInteraction, scaffoldModel, selection, selectionRecognised,
+  prepare, refComment, rInteraction, rSetup, rSolution, scaffoldControls, scaffoldCounter, scaffoldInteraction, scaffoldModel, selection, selectionRecognised,
   sortNote, statusS09, toggleControl, wobbleTest, wordCount, type ModelEntry, type S09State,
 } from './domain';
 
@@ -90,7 +90,8 @@ export function Mitgenommen({ data, state, onChange, onConcept }: TaskProps<S09S
       {ref && <>
         <label className="sandbox-label" htmlFor="s09-ref">Warum diese Referenz? (ein Satz)</label>
         <input id="s09-ref" type="text" maxLength={400} value={state.refReason} onChange={e => set({ refReason: e.target.value })} />
-        <RBlock code={rModel(ref)} file="mitgenommen-modell.R" />
+        <p>Rechne in R das gewichtete Modell mit den drei Dummies, die nicht zur Referenz gehören, und trag Konstante und B ein.</p>
+        <RBlock code={refComment(ref)} />
         <ModelInputs refGroup={ref} entry={state.model} withConstant onChange={model => set({ model })} label="Modell" />
         <Feedback notes={checkModel(p, models, ref, state.model)} />
         <HintLadder key={`model-${ref}`} hint={{ ...hints.model, workshop: WORKSHOP, scaffold: scaffoldModel(), solution: rSolution(ref, state.controls.length ? state.controls : undefined) }} onConcept={onConcept} file="mitgenommen.R" />
@@ -111,13 +112,14 @@ export function Mitgenommen({ data, state, onChange, onConcept }: TaskProps<S09S
         {others(ref).map(g => <button key={g} aria-pressed={state.second.ref === g} onClick={() => onChange(chooseSecondRef(state, g))}>{GROUPS[g].short}</button>)}
       </div>
       {state.second.ref !== 0 && <>
-        <RBlock code={rModel(state.second.ref)} />
+        <RBlock code={refComment(state.second.ref)} />
         <ModelInputs refGroup={state.second.ref} entry={state.second.model} withConstant onChange={model => set({ second: { ...state.second, model } })} label="Zweites Modell" />
         <Feedback notes={checkModel(p, models, state.second.ref, state.second.model)} />
         <div className="task-grid"><label>Vorhersage für Ost→West aus dieser Tabelle<input type="text" inputMode="decimal" maxLength={12} value={state.second.pred} onChange={e => set({ second: { ...state.second, pred: e.target.value } })} /></label></div>
         {secondOk && <Feedback notes={checkPrediction(second, state.second.model, state.second.pred)} />}
+        <HintLadder key={`second-${state.second.ref}`} hint={{ ...hints.model, workshop: WORKSHOP, scaffold: scaffoldModel(), solution: rSolution(state.second.ref) }} onConcept={onConcept} file="mitgenommen.R" />
       </>}
-      {secondOk && <>
+      {modelOk && secondOk && <>
         <h4 className="s09-sub">Tafel der anderen Schnittplätze</h4>
         <BoardTable rows={board(models)} own={[ref, state.second.ref as GroupId]} />
         <p className="sandbox-note">Die Koeffizienten hängen an der Referenz, die Vorhersagen nicht. Ein B ist kein Wert einer Gruppe, sondern ihr Abstand zur Referenz.</p>
@@ -126,7 +128,7 @@ export function Mitgenommen({ data, state, onChange, onConcept }: TaskProps<S09S
 
     {ref && <section className="task-step">
       <h3>5 · Wer zieht um? Selektion und Kontrollen (R){tag('A')}</h3>
-      <RBlock code={rControls(ref, state.controls)} file="mitgenommen-kontrollen.R" />
+      <p>Prüfe in R mit einer Kreuztabelle (Zeilenprozente, gewichtet), wie viele der West→Ost-Umgezogenen Abitur haben. Sortiere dann die Kontrollkarten, kreuze deine Kontrollen an und rechne das Modell mit ihnen.</p>
       <div className="task-grid"><label>Abitur-Anteil unter West→Ost (%)<input type="text" inputMode="decimal" maxLength={12} value={state.abi} onChange={e => set({ abi: e.target.value })} /></label></div>
       <Feedback notes={checkSelection(sel, state.abi)} />
       <p>Sortiere die Kontrollkarten: Was stand fest, bevor jemand umzog – und was kann eine Folge des Umzugs sein?</p>
@@ -146,7 +148,7 @@ export function Mitgenommen({ data, state, onChange, onConcept }: TaskProps<S09S
         <Feedback notes={checkControlled(models, ref, state.controls, state.cmodel)} />
       </>}
       <HintLadder key={`controls-${ref}`} hint={{ ...hints.controls, workshop: WORKSHOP, scaffold: scaffoldControls(ref), solution: rSolution(ref, state.controls.length ? state.controls : undefined) }} onConcept={onConcept} file="mitgenommen.R" />
-      {effect && <div className="s09-scroll" tabIndex={0} role="region" aria-label="Abstände ohne und mit Kontrollen">
+      {modelOk && effect && <div className="s09-scroll" tabIndex={0} role="region" aria-label="Abstände ohne und mit Kontrollen">
         <table className="s09-table">
           <caption>Abstand zu {GROUPS[ref].short}: ohne und mit Kontrollen</caption>
           <thead><tr><th scope="col">Gruppe</th><th scope="col">ohne</th><th scope="col">mit</th></tr></thead>
@@ -159,19 +161,19 @@ export function Mitgenommen({ data, state, onChange, onConcept }: TaskProps<S09S
     {ref && <section className="task-step">
       <h3>6 · Gegenprobe mit dem Vertrauen in den Bundestag (R){pair ? ' · B' : ' · allein optional'}</h3>
       <p>Zeigt eine andere Frage dasselbe Muster? Rechne dasselbe Modell mit pt03 (1 = gar kein … 7 = großes Vertrauen) statt der Zufriedenheit.</p>
-      <RBlock code={rModel(ref, 'pt03')} />
       <ModelInputs refGroup={ref} entry={state.counter} withConstant={false} onChange={counter => set({ counter })} label="Gegenprobe" />
       <Feedback notes={checkCounter(models, ref, state.counter)} />
-      {counterOk && main && counter && <p className="sandbox-note">Abstand zu {GROUPS[ref].short} – Zufriedenheit / Vertrauen: {others(ref).map(g => `${GROUPS[g].short} ${de(main.b[g], 2)} / ${de(counter.b[g], 2)}`).join(', ')}.</p>}
+      <HintLadder key={`counter-${ref}`} hint={{ ...hints.counter, workshop: WORKSHOP, scaffold: scaffoldCounter(), solution: rSolution(ref) }} onConcept={onConcept} file="mitgenommen.R" />
+      {modelOk && counterOk && main && counter && <p className="sandbox-note">Abstand zu {GROUPS[ref].short} – Zufriedenheit / Vertrauen: {others(ref).map(g => `${GROUPS[g].short} ${de(main.b[g], 2)} / ${de(counter.b[g], 2)}`).join(', ')}.</p>}
     </section>}
 
     <section className="task-step">
       <details className="s09-extra">
         <summary>7 · Profi: dieselbe Frage als Interaktion</summary>
-        <RBlock code={rInteraction()} />
+        <p>Bilde mit rec() zwei 0/1-Variablen – ost (wohnt im Osten) und ostjugend (im Osten aufgewachsen) – und rechne das gewichtete Modell mit ihrer Interaktion.</p>
         <div className="task-grid"><label>B der Zeile ost:ostjugend<input type="text" inputMode="decimal" maxLength={12} value={state.inter} onChange={e => set({ inter: e.target.value })} /></label></div>
         <Feedback notes={checkInteraction(it, core(models, 4)?.fit.r2 ?? NaN, state.inter)} />
-        {!interactionRecognised(it, state.inter) && <HintLadder hint={{ ...hints.interaction, workshop: WORKSHOP, scaffold: scaffoldInteraction(), solution: rInteraction() }} onConcept={onConcept} />}
+        {!interactionRecognised(it, state.inter) && <HintLadder hint={{ ...hints.interaction, workshop: WORKSHOP, scaffold: scaffoldInteraction(), solution: `${rSetup()}\n\n${rInteraction()}` }} onConcept={onConcept} file="mitgenommen-interaktion.R" />}
       </details>
     </section>
 
@@ -193,7 +195,7 @@ export function Mitgenommen({ data, state, onChange, onConcept }: TaskProps<S09S
       })} />
     </section>
 
-    <PlenumCard title="Schnittplan-Karte · Mitgenommen" lines={plenumLines(state)} file="mitgenommen-schnittplan.md" />
+    <PlenumCard title="Schnittplan-Karte · Mitgenommen" lines={plenumLines(state, models)} file="mitgenommen-schnittplan.md" />
     {ref && statusS09(state) === 'done' && <details className="s02-solution"><summary>Ein vollständiges R-Skript zum Mitnehmen</summary><RBlock code={rSolution(ref, state.controls.length ? state.controls : undefined)} file="mitgenommen.R" /></details>}
   </div>;
 }

@@ -4,8 +4,9 @@ import { fakeSav, fixtureSav } from '../../sandbox/testData';
 import { inputById, INPUTS } from './content';
 import {
   checkDisplay, checkLevene, checkSetting, checkSpread, codeNumber, drawVisitors, groupValues, initialS08, knobScore, levelName, leveneVariants,
-  machineFor, own, parade, paradeNotes, parseS08, pickInput, plenumLines, prepare, probeRows, probeTotals, recognisedSetting, resolution, rSolution,
-  scaffoldSetting, scaffoldSpread, signQuestions, spread, spreadRecognised, statusS08, tolerance, variants, worseThanLazy, type Variant,
+  machineFor, matchReading, NOT_ESTIMABLE, parade, paradeNotes, parseS08, pickInput, plenumLines, prepare, probeRows, probeTotals, recognisedSetting,
+  recognisedSpread, resolution, rSolution, scaffoldSetting, scaffoldSpread, shown, signQuestions, spread, spreadRecognised, statusS08, variants, worseThanLazy,
+  type Variant,
 } from './domain';
 
 const p = prepare(fixtureSav());
@@ -32,9 +33,16 @@ test('computes the automaton variants: weight, coding of ps03, swapped axes, age
   assert.ok(Math.abs(get('orig').b + main.b) < 1e-12 && Math.abs(get('orig').a - (7 - main.a)) < 1e-12);
   assert.ok(Math.abs(get('swapped').r2 - main.r2) < 1e-12);
   assert.ok(variants(p, inputById.age).some(v => v.kind === 'grouped'));
-  assert.equal(tolerance('0,47'), 0.005 + 1e-9);
-  assert.equal(tolerance('0,5'), null);
-  assert.equal(own('-0,2170'), '−0,2170');
+  assert.deepEqual(matchReading(0.4652, '0,47'), { x: 0.47, decimals: 2 });
+  assert.equal(matchReading(0.4652, '0,5'), null);
+  // R druckt mit Punkt: „2.288“ ist 2,288, nicht 2288; describe() lässt Nullen am Ende weg (1,300 → „1.3“)
+  assert.deepEqual(matchReading(2.2875, '2.288'), { x: 2.288, decimals: 3 });
+  assert.deepEqual(matchReading(2288, '2.288', 0), { x: 2288, decimals: 0 });
+  assert.deepEqual(matchReading(1.3, '1.3'), { x: 1.3, decimals: 1 });
+  assert.equal(matchReading(1.34, '1.3'), null);
+  assert.equal(shown('-0,2170', [-0.217]), '−0,2170');
+  assert.equal(shown('1.325', [1.3252]), '1,325');
+  assert.equal(shown('9,9', [1.3252]), '9,9 (noch nicht geprüft)');
 });
 
 test('the setting detector recognises weighted and unweighted, names every other variant', () => {
@@ -61,6 +69,48 @@ test('the setting detector recognises weighted and unweighted, names every other
   assert.deepEqual(checkSetting(pt03, vars, { a: '', b: '', r2: '' }), []);
   const age = variants(p, inputById.age), grouped = get('grouped', age);
   assert.match(checkSetting(inputById.age, age, { ...entry(get('main', age)), b: f3(grouped.b) })[0].text, /Altersgruppen/);
+});
+
+test('numbers typed as R prints them (dot decimals) are read as R decimals everywhere', () => {
+  const dot = (x: number, d = 3) => x.toFixed(d).replace('-', '−');
+  const set = { a: dot(main.a), b: dot(main.b), r2: dot(main.r2) };
+  assert.equal(recognisedSetting(vars, set), main);
+  assert.match(checkSetting(pt03, vars, set)[0].text, /^Stimmt: Der Automat zeigt 5,126 − 0,217 · Eingabe/);
+  const m = machineFor(p, pt03, main, set);
+  assert.ok(Math.abs(m.a - 5.126) < 1e-12 && Math.abs(m.b + 0.217) < 1e-12);
+  assert.equal(checkDisplay(m, 2, dot(m.a + m.b * 2, 2))[0].tone, 'ok');
+  const s = spread(m);
+  assert.ok(spreadRecognised(s, dot(s.min), dot(s.max)));
+  const lv = leveneVariants(m);
+  assert.equal(checkLevene(m, lv, dot(lv.main.F))[0].tone, 'ok');
+  // Plenumskarte normalisiert erkannte Werte
+  const lines = Object.fromEntries(plenumLines({ ...initialS08(), input: 'pt03', ...set, sdMin: dot(s.min), sdMax: dot(s.max) }, main, null, s));
+  assert.equal(lines['b · R²'], `b = ${f3(main.b)} · R² = ${f3(main.r2)}`);
+  assert.equal(lines['Daneben je Stufe'], `±${f3(s.min)} bis ±${f3(s.max)}`);
+});
+
+test('a model that cannot be estimated gets an explanation instead of a value hint', () => {
+  const tiny = prepare(fakeSav({ ps03: { values: [1, 2, 3], missingFrom: -1 }, wghtpew: { values: [1, 1, 1] }, pt03: { values: [4, 4, 4], missingFrom: -1 } }));
+  const v = variants(tiny, pt03);
+  assert.equal(v.some(x => x.kind === 'main'), false);
+  assert.deepEqual(checkSetting(pt03, v, { a: '1,000', b: '', r2: '' }), [{ tone: 'warn', text: NOT_ESTIMABLE }]);
+});
+
+test('an unweighted automaton accepts the weighted spread and Levene from the scaffold; the weighted one names the unweighted', () => {
+  const u = get('unweighted'), mu = machineFor(p, pt03, u, entry(u));
+  const own = spread(mu), weighted = spread(mu, true);
+  assert.equal(own.weighted, false);
+  assert.notEqual(own.max, weighted.max);
+  assert.ok(Math.abs(own.other.max - weighted.max) < 1e-12);
+  assert.equal(recognisedSpread(mu, f3(weighted.min), f3(weighted.max))?.weighted, true);
+  assert.match(checkSpread(mu, own, f3(weighted.min), f3(weighted.max))[0].text, /mit Gewicht gerechnet, deinen Automaten ohne – beides ist vertretbar/);
+  const lvu = leveneVariants(mu);
+  assert.notEqual(lvu.main.F, lvu.other.F);
+  assert.match(checkLevene(mu, lvu, f3(lvu.other.F))[0].text, /^Stimmt: .*beides ist vertretbar/);
+  const mw = machineFor(p, pt03, main, entry(main)), sw = spread(mw), lvw = leveneVariants(mw);
+  assert.equal(recognisedSpread(mw, f3(sw.other.min), f3(sw.other.max)), null);
+  assert.match(checkSpread(mw, sw, f3(sw.min), f3(sw.other.max))[0].text, /SD ohne Gewicht/);
+  assert.match(checkLevene(mw, lvw, f3(lvw.other.F))[0].text, /ohne Gewicht/);
 });
 
 test('hand displays: constant + slope × input, with typical slips named', () => {
@@ -95,6 +145,11 @@ test('the resolution: fewer squared errors is R², hits compare with the lazy ma
   assert.ok(Math.abs(r.reduction - main.r2) < 1e-12);
   assert.ok(r.hit >= 0 && r.hit <= 1 && r.lazyHit >= 0 && r.lazyHit <= 1);
   assert.ok(r.near.every(n => Math.abs(n.value - r.mean) <= 1));
+  // „die häufigsten Antworten“ wird berechnet, nicht behauptet
+  const byShare = (vals: number[]) => vals.map(v => m.y.reduce((a, y, i) => a + (y === v ? m.w[i] : 0), 0));
+  const all = [...new Set(m.y)], near = r.near.map(n => n.value);
+  const top = all.sort((x, y) => byShare([y])[0] - byShare([x])[0]).slice(0, near.length);
+  assert.equal(r.nearAreTop, near.every(v => top.includes(v)));
   const best = knobScore(m, main.a, main.b).sse;
   assert.ok(Math.abs(best - main.fit.ssResidual) < 1e-9);
   for (const [da, db] of [[0.1, 0], [0, 0.05], [-0.2, 0.02]]) assert.ok(knobScore(m, main.a + da, main.b + db).sse > best);
@@ -139,6 +194,9 @@ test('sign questions: missing error, overclaim, causal words, missing group – 
   assert.match(all, /Für wen liegt er weiter daneben\? Bei Eingabe 7/);
   assert.deepEqual(signQuestions('Er zeigt den Durchschnitt und liegt im Mittel ±1,6 daneben, bei manchen Menschen mehr.', pt03, s), []);
   assert.deepEqual(signQuestions('', pt03, s), []);
+  // „weiß“ endet auf ß – die Wortgrenze muss trotzdem greifen; „Weißwein“ nicht
+  assert.ok(signQuestions('Er weiß es ±1 daneben bei manchen Menschen.', pt03, s).some(n => /Durchschnitt von Menschen/.test(n.text)));
+  assert.ok(!signQuestions('Weißwein ±1 daneben bei manchen Menschen.', pt03, s).some(n => /Durchschnitt von Menschen/.test(n.text)));
   // Ohne erkannte Streuung: dieselben Fragen ohne Zahl
   const plain = signQuestions('Menschen wie du sind so zufrieden.', pt03, null).map(n => n.text);
   assert.ok(plain.every(t => !/\d/.test(t.replace('Schritt 4', ''))), plain.join(' | '));
@@ -163,11 +221,12 @@ test('state: defensive parse, a new input resets everything that depends on it, 
   assert.equal(statusS08({ ...s, guess: '' }), 'running');
   const next = pickInput(s, 'age');
   assert.deepEqual(next, { ...initialS08(), mode: 'pair', code: '417', input: 'age' });
-  const lines = Object.fromEntries(plenumLines({ ...s, signedTech: true, signedCurator: true }, main, null));
-  assert.equal(lines.Eingabe, 'Vertrauen in den Bundestag (pt03) · gewichtet');
-  assert.equal(lines['b · R²'], 'b = 0,465 · R² = 0,346');
+  // Die Zahlen aus s passen nicht zur Testdatei: roh und als „noch nicht geprüft“ markiert
+  const lines = Object.fromEntries(plenumLines({ ...s, signedTech: true, signedCurator: true }, recognisedSetting(vars, s), null));
+  assert.equal(lines.Eingabe, 'Vertrauen in den Bundestag (pt03)');
+  assert.equal(lines['b · R²'], 'b = 0,465 · R² = 0,346 (noch nicht geprüft)');
   assert.equal(lines['Treffer ±1'], '');
-  assert.equal(lines['Daneben je Stufe'], '±0,713 bis ±1,325');
+  assert.equal(lines['Daneben je Stufe'], '±0,713 bis ±1,325 (noch nicht geprüft)');
   assert.equal(lines.Entscheidung, 'nur mit Schild freigeben (unterschrieben: Technik und Kuratorin)');
 });
 

@@ -6,8 +6,8 @@ import { COMMON_CAUSES, GROUP_IDS, type GroupId } from './content';
 import {
   board, checkControlled, checkCounter, checkDecide, checkInteraction, checkModel, checkMovers, checkPrediction, checkSelection, chooseRef, chooseSecondRef,
   controlEffect, core, emptyEntry, initialS09, interaction, interactionRecognised, modelRecognised, modelStore, moverVariants, moversRecognised,
-  offQuestions, own, parseS09, plenumLines, predictions, prepare, rSolution, scaffoldModel, selection, selectionRecognised, sortNote, statusS09,
-  toggleControl, wobbleTest, wordCount, type Model, type ModelEntry,
+  matchReading, offQuestions, parseS09, plenumLines, predictions, prepare, rSolution, scaffoldModel, selection, selectionRecognised, sortNote, statusS09,
+  shown, toggleControl, wobbleTest, wordCount, type Model, type ModelEntry,
 } from './domain';
 
 const p = prepare(fixtureSav()), models = modelStore(p);
@@ -65,6 +65,29 @@ test('the model detector: correct table, other reference and the dummy trap, unw
   assert.deepEqual(checkModel(p, models, 4, emptyEntry()), []);
 });
 
+test('numbers typed as R prints them (dot decimals, 78.0%) are read as R decimals', () => {
+  const dot = (x: number, d = 3) => x.toFixed(d).replace('-', '−');
+  const e: ModelEntry = { c: dot(m4.c), b: GROUP_IDS.map(g => (g === 4 ? '' : dot(m4.b[g]))) as ModelEntry['b'] };
+  assert.ok(modelRecognised(m4, 4, e));
+  assert.equal(checkModel(p, models, 4, e)[0].tone, 'ok');
+  // Vorhersage von Hand aus den gedruckten Werten: 3.995 + 0.169 = 4.164
+  const hand = (Number(dot(m4.c)) + Number(dot(m4.b[2]))).toFixed(3);
+  assert.equal(checkPrediction(m4, e, hand)[0].tone, 'ok');
+  const s = selection(p);
+  assert.ok(selectionRecognised(s, `${s.weighted[3].toFixed(1)}%`));
+  assert.match(checkSelection(s, `${s.weighted[3].toFixed(1)}%`)[0].text, /^Stimmt \(gewichtet\)/);
+  assert.match(checkSelection(s, '40,3 %')[0].text, /^Stimmt/);
+  const it = interaction(p)!;
+  assert.ok(interactionRecognised(it, dot(it.fit.coef[3])));
+  assert.deepEqual(matchReading(3.9953, '3.995'), { x: 3.995, decimals: 3 });
+  assert.equal(matchReading(3995, '3.995'), null);
+  const cc = models({ outcome: 'rev', ref: 4, controls: COMMON_CAUSES, weighted: true })!;
+  assert.equal(checkControlled(models, 4, COMMON_CAUSES, { c: '', b: GROUP_IDS.map(g => (g === 4 ? '' : dot(cc.b[g]))) as ModelEntry['b'] })[0].tone, 'ok');
+  const lines = Object.fromEntries(plenumLines({ ...initialS09(), ref: 4, model: e, pred: hand }, models));
+  assert.equal(lines['B Ost→West'], f3(m4.b[2]));
+  assert.equal(lines['Vorhersage Ost→West'], hand.replace('.', ','));
+});
+
 test('the prediction for Ost→West is reference-invariant and the typical slips are named', () => {
   const at = (m: Model) => (m.c + m.b[2]).toFixed(2).replace('.', ',');
   assert.match(checkPrediction(m4, entry(m4), at(m4))[0].text, /^Stimmt: Konstante \+ B\(Ost→West\)/);
@@ -104,9 +127,11 @@ test('selection: row percentages of the Abitur, other rows, column percentages a
 });
 
 test('control cards: prompts per sorting, effect of controls, the controlled table and its variants', () => {
-  assert.equal(sortNote('age', 'vorher')[0].tone, 'ok');
-  assert.equal(sortNote('pt03', 'vorher')[0].tone, 'hint');
-  assert.match(sortNote('pt03', 'vorher')[0].text, /Stand es wirklich vor dem Umzug fest/);
+  // neutral: nie „ok“, immer ein Argument für die gewählte Seite und eines für die andere (keine Musterlösung)
+  for (const id of ['age', 'pt03'] as const) for (const sort of ['vorher', 'folge'] as const) assert.equal(sortNote(id, sort)[0].tone, 'hint');
+  assert.match(sortNote('pt03', 'vorher')[0].text, /^Vertrauen in den Bundestag – ein Argument dafür: Vertrauen in Institutionen bringt man vielleicht aus der Jugend mit\. Bedenke auch: Vertrauen wird heute gemessen/);
+  assert.match(sortNote('pt03', 'folge')[0].text, /ein Argument dafür: Vertrauen wird heute gemessen.*Bedenke auch: Vertrauen in Institutionen/);
+  assert.doesNotMatch(sortNote('di08c', 'folge')[0].text, /Gut begründet/);
   assert.deepEqual(sortNote('abi', ''), []);
   const cc = models({ outcome: 'rev', ref: 4, controls: COMMON_CAUSES, weighted: true })!;
   assert.equal(checkControlled(models, 4, COMMON_CAUSES, entry(cc, false))[0].tone, 'ok');
@@ -169,22 +194,26 @@ test('state: defensive parse, reference changes reset dependent tables, status a
   assert.equal(statusS09(s), 'done');
   assert.equal(statusS09({ ...s, cmodel: emptyEntry() }), 'running');
   assert.equal(statusS09(initialS09()), 'open');
-  const changed = chooseRef(s, 1);
-  assert.deepEqual([changed.model, changed.pred, changed.cmodel, changed.second.ref], [emptyEntry(), '', emptyEntry(), 0]);
+  const changed = chooseRef({ ...s, refReason: 'Weil' }, 1);
+  assert.deepEqual([changed.model, changed.pred, changed.cmodel, changed.second.ref, changed.refReason], [emptyEntry(), '', emptyEntry(), 0, '']);
   assert.equal(chooseRef(s, 2).second.ref, 1);
   assert.equal(chooseRef(s, 4), s);
   assert.deepEqual(chooseSecondRef(s, 2).second, { ref: 2, model: emptyEntry(), pred: '' });
   const toggled = toggleControl(s, 'pt03');
   assert.deepEqual([toggled.controls, toggled.cmodel], [['age', 'frau', 'abi', 'pt03'], emptyEntry()]);
   assert.deepEqual(toggleControl(toggled, 'pt03').controls, ['age', 'frau', 'abi']);
-  const lines = Object.fromEntries(plenumLines({ ...s, sort: { ...s.sort, di08c: 'folge', pt03: 'folge' } }));
+  const lines = Object.fromEntries(plenumLines({ ...s, sort: { ...s.sort, di08c: 'folge', pt03: 'folge' } }, models));
   assert.equal(lines.Referenzgruppe, 'West-Bleibende');
   assert.equal(lines['B Ost→West'], f3(m4.b[2]));
   assert.equal(lines['Vorhersage Ost→West'], '4,16');
   assert.equal(lines['Zweite Referenz'], 'Ost-Bleibende · Vorhersage Ost→West 4,16');
   assert.equal(lines['Bewusst nicht kontrolliert'], 'Einkommen heute, Vertrauen in den Bundestag (kann Folge des Umzugs sein)');
-  assert.equal(Object.fromEntries(plenumLines({ ...s, ref: 2 }))['B Ost→West'], 'Referenz');
-  assert.equal(own('-0,1700'), '−0,1700');
+  assert.equal(Object.fromEntries(plenumLines({ ...s, ref: 2 }, models))['B Ost→West'], 'Referenz');
+  // nicht erkannte Werte: roh und markiert
+  const raw = Object.fromEntries(plenumLines({ ...s, model: { ...s.model, b: [s.model.b[0], '9,999', s.model.b[2], ''] }, pred: '9,99' }, models));
+  assert.equal(raw['B Ost→West'], '9,999 (noch nicht geprüft)');
+  assert.equal(raw['Vorhersage Ost→West'], '9,99 (noch nicht geprüft)');
+  assert.equal(shown('-0,1700', [-0.17]), '−0,1700');
 });
 
 test('R code: never all four dummies, mariposa style, scaffold with gaps', () => {
