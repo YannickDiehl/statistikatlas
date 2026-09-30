@@ -116,3 +116,31 @@
 .s05-scroll{overflow-x:auto}
 .s05-rank .s05-scroll svg{min-width:560px}
 .s05-rank-table td{white-space:nowrap}
+
+/* Sitzung 10 · Dolmetschen für den Bürgerrat */
+.s10-questions{margin:0 0 10px;padding-left:22px}
+.s10-questions li{margin:0 0 4px}
+.s10-council{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:0 0 4px}
+.s10-council .task-card{margin:0 0 10px}
+.s10-council p{margin:0;font-style:italic}
+.s10-langs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.s10-langs .task-card{margin:0}
+.s10-sub{font:600 15px/1.4 var(--sans);margin:18px 0 6px}
+.s10-reveal{background:var(--soft);border-radius:8px;padding:10px 14px;font-size:15px}
+.s10-reveal-block{margin:12px 0 0}
+.s10-scroll{overflow-x:auto}
+.s10-tafel,.s10-curve{margin:12px 0}
+.s10-tafel table{width:100%;min-width:520px;border-collapse:collapse;font-size:14px;background:#fff}
+.s10-tafel caption{text-align:left;color:var(--muted);margin-bottom:4px}
+.s10-tafel th,.s10-tafel td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
+.s10-tafel figcaption,.s10-curve figcaption{font-size:14px;color:var(--muted);margin-top:6px}
+.s10-curve svg{width:100%;min-width:520px;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+.s10-curve svg text{font:12px var(--sans);fill:var(--muted)}
+.s10-curve svg text.step,.s10-curve svg text.name{fill:var(--ink);font-weight:600}
+.s10-curve svg .grid{stroke:#e6e3da}
+.s10-extra summary,.s10-afterword summary{font:600 16px/1.4 var(--sans);cursor:pointer}
+.s10-afterword{margin:12px 0;font-size:15px}
+.s10-afterword ol{padding-left:22px}
+.s10-afterword li{margin:0 0 6px}
+.s10-notes{margin:10px 0;padding-left:20px;font-size:15px}
+.s10-notes li{margin:0 0 6px}

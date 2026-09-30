@@ -8,6 +8,7 @@ import { R_SOLUTION as S03 } from '../src/tasks/s03-stuehle/content';
 import { R_SOLUTION as S04 } from '../src/tasks/s04-nenner-check/content';
 import { CARDS } from '../src/tasks/s05-treiber/content';
 import { rCodeFor } from '../src/tasks/s05-treiber/domain';
+import { R_SOLUTION as S10 } from '../src/tasks/s10-buergerrat/content';
 
 const [sav, out] = process.argv.slice(2);
 if (!sav || !out) {
@@ -21,6 +22,12 @@ const scripts: Record<string, string> = {
   's03-stuehle.R': S03,
   's04-nenner-check.R': S04,
   ...Object.fromEntries(CARDS.map(c => [`s05-treiber-${c.id}.R`, rCodeFor(c)])),
+  's10-buergerrat.R': S10.full,
+  's10-buergerrat-1-modell.R': S10.model,
+  's10-buergerrat-2-jana.R': S10.jana,
+  's10-buergerrat-4-profile.R': S10.profiles,
+  's10-buergerrat-5-ame.R': S10.ame,
+  's10-buergerrat-6-likelihood.R': S10.likelihood,
 };
 mkdirSync(out, { recursive: true });
 for (const [name, code] of Object.entries(scripts)) writeFileSync(join(out, name), withFile(code));

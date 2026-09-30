@@ -88,7 +88,7 @@ export const sessions: Session[] = [
     question: 'Wer geht wählen – und wie wahrscheinlich?',
     repetition: [],
     introduced: [t('Wahrscheinlichkeit, Odds & Logit', 'logit'), t('Logistische Regression', 'logistic_regression'), t('Likelihood', 'likelihood'), t('Marginale Effekte', 'marginal_effects')],
-    task: null,
+    task: 's10',
   },
 ];
 
