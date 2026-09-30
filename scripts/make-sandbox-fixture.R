@@ -63,8 +63,36 @@ d$work <- lab(pick(1:4, c(.4, .15, .05, .4)), c("KEINE ANGABE" = -9, "VOLLZEIT, 
 d$dw15 <- lab(ifelse(d$work %in% 1:2, sample(c(10, 20, 25, 30, 35, 38.5, 40, 40, 40, 45, 50, 60), n, replace = TRUE), -10),
               c("DATENFEHLER" = -41, "TNZ: FILTER" = -10, "KEINE ANGABE" = -9), "BEFRAGTER: ARBEITSSTUNDEN PRO WOCHE")
 
-# Sitzung 2 erfasst pt03 = 6: Labels wie im echten ALLBUS (2–6 als „..“), Werte unverändert.
+# Sitzung 2 erfasst pt03 = 6: Labels wie im echten ALLBUS (2–6 als „.."), Werte unverändert.
 d$pt03 <- lab(as.numeric(d$pt03), c("TNZ: SPLIT" = -11, "KEINE ANGABE" = -9, scale_labels(1, 7, "GAR KEIN VERTRAUEN", "GROSSES VERTRAUEN")), "VERTRAUEN pt03")
+
+# Lernpfad-Aufgaben 4–5: Variablen mit Labels und Missing-Codes des echten ALLBUS (Werte synthetisch).
+# Neue Zufallsziehungen stehen hinter allen bisherigen, damit deren Werte gleich bleiben.
+agree4 <- c("STIMME VOLL ZU" = 1, "STIMME EHER ZU" = 2, "STIMME EHER NICHT ZU" = 3, "STIMME GAR NICHT ZU" = 4)
+d$pe05 <- lab(pick(c(1:4, -11, -9, -8), c(.05, .25, .25, .12, .3, .02, .01)),
+              c("TNZ: SPLIT" = -11, "KEINE ANGABE" = -9, "WEISS NICHT" = -8, agree4), "POLITIKER VERTRETEN INTERESSEN D. BEV.")
+good5 <- c("SEHR GUT" = 1, "GUT" = 2, "TEILS/TEILS" = 3, "SCHLECHT" = 4, "SEHR SCHLECHT" = 5)
+d$ep01 <- lab(pick(c(1:5, -9), c(.05, .25, .4, .2, .08, .02)), c("KEINE ANGABE" = -9, "WEISS NICHT" = -8, good5), "WIRTSCHAFTSLAGE IN DEUTSCHLAND HEUTE")
+ps <- pmin(6, pmax(1, as.numeric(d$ep01) + sample(-2:1, n, replace = TRUE)))
+d$ps03 <- lab(ifelse(runif(n) < .3, -11, ifelse(as.numeric(d$ep01) < 0, -9, ps)),
+              c("DATENFEHLER: MFN" = -42, "TNZ: SPLIT" = -11, "KEINE ANGABE" = -9, "WEISS NICHT" = -8, "SEHR ZUFRIEDEN" = 1, "ZIEMLICH ZUFRIEDEN" = 2,
+                "ETWAS ZUFRIEDEN" = 3, "ETWAS UNZUFRIEDEN" = 4, "ZIEML. UNZUFRIEDEN" = 5, "SEHR UNZUFRIEDEN" = 6), "ZUFRIEDEN MIT DEMOKRATIE IN DEUTSCHLAND?")
+d$ep03 <- lab(pick(c(1:5, -9), c(.08, .5, .28, .1, .02, .02)), c("KEINE ANGABE" = -9, "WEISS NICHT" = -8, good5), "WIRTSCHAFTSLAGE, BEFR. HEUTE")
+d$id02 <- lab(pick(c(1:5, -50, -8), c(.05, .25, .5, .14, .02, .02, .02)),
+              c("KEINER DER SCHICHTEN" = -50, "KEINE ANGABE" = -9, "WEISS NICHT" = -8, "VERWEIGERT" = -7, "UNTERSCHICHT" = 1, "ARBEITERSCHICHT" = 2,
+                "MITTELSCHICHT" = 3, "OBERE MITTELSCHICHT" = 4, "OBERSCHICHT" = 5), "SUBJEKTIVE SCHICHTEINSTUFUNG, BEFR.")
+d$educ <- lab(pick(c(1:7, -9), c(.02, .17, .31, .12, .33, .02, .02, .01)),
+              c("NICHT BESTIMMBAR" = -33, "KEINE ANGABE" = -9, "OHNE ABSCHLUSS" = 1, "VOLKS-,HAUPTSCHULE" = 2, "MITTLERE REIFE" = 3,
+                "FACHHOCHSCHULREIFE" = 4, "HOCHSCHULREIFE" = 5, "ANDERER ABSCHLUSS" = 6, "NOCH SCHUELER" = 7), "ALLGEMEINER SCHULABSCHLUSS")
+d$rp01 <- lab(pick(c(1:6, -10, -9), c(.02, .03, .05, .12, .27, .45, .04, .02)),
+              c("TNZ: FILTER" = -10, "KEINE ANGABE" = -9, "UEBER 1X DIE WOCHE" = 1, "1X PRO WOCHE" = 2, "1-3X PRO MONAT" = 3,
+                "MEHRMALS IM JAHR" = 4, "SELTENER" = 5, "NIE" = 6), "KIRCHGANGSHAEUFIGKEIT")
+d$rd01 <- lab(pick(c(1:6, -7), c(.21, .02, .22, .03, .03, .47, .02)),
+              c("KEINE ANGABE" = -9, "VERWEIGERT" = -7, "EVANG.OHNE FREIKIRCH" = 1, "EVANG.FREIKIRCHE" = 2, "ROEMISCH-KATHOLISCH" = 3,
+                "AND.CHRISTL.RELIGION" = 4, "AND.NICHT-CHRISTLICH" = 5, "KEINER RELIGIONSGEM." = 6), "KONFESSION, BEFRAGTE(R)")
+d$gs01 <- lab(pick(c(1:5, -9), c(.21, .13, .36, .27, .01, .02)),
+              c("KEINE ANGABE" = -9, "GROSSSTADT" = 1, "VORORT GROSSSTADT" = 2, "MITTEL-, KLEINSTADT" = 3, "LAENDL. DORF" = 4, "EINZELHAUS, LAND" = 5),
+              "SELBSTBESCHREIBUNG DES WOHNORTS")
 
 write_sav(d, file.path(out, "sandbox-fixture.sav"), compress = "byte")
 write_sav(d, file.path(out, "sandbox-fixture-uncompressed.sav"), compress = "none")

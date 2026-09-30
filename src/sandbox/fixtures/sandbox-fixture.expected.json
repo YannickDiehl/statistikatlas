@@ -949,6 +949,389 @@
           "label": "KEINE ANGABE"
         }
       ]
+    },
+    {
+      "name": "pe05",
+      "label": "POLITIKER VERTRETEN INTERESSEN D. BEV.",
+      "kind": "numeric",
+      "values": [-11, 4, 4, 4, 3, 2, 3, 3, 2, -11, 3, -9, 2, -11, 2, 2, -11, -11, 3, 2, 2, -9, 3, 2, -11, 4, -11, 2, -11, 4, 2, 2, -11, 3, 2, 2, 2, 2, 3, 3, 2, -9, 3, -9, -11, 4, 2, -11, -11, -11, 2, 2, -11, -11, 4, 1, 4, 4, 1, 2],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -11,
+          "label": "TNZ: SPLIT"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "STIMME VOLL ZU"
+        },
+        {
+          "value": 2,
+          "label": "STIMME EHER ZU"
+        },
+        {
+          "value": 3,
+          "label": "STIMME EHER NICHT ZU"
+        },
+        {
+          "value": 4,
+          "label": "STIMME GAR NICHT ZU"
+        }
+      ]
+    },
+    {
+      "name": "ep01",
+      "label": "WIRTSCHAFTSLAGE IN DEUTSCHLAND HEUTE",
+      "kind": "numeric",
+      "values": [4, 2, 2, 3, 2, 4, 4, 3, 2, 2, 3, 1, 2, 5, 4, 1, 4, 3, 1, 2, 3, 2, 3, 2, 4, 3, 2, 2, 2, 2, 5, 2, 2, 3, 2, 3, 4, 4, 2, 3, 2, 3, 4, 4, 3, 4, 4, 4, 5, 3, 3, 5, 2, 5, 5, 2, 1, 2, -9, 2],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "SEHR GUT"
+        },
+        {
+          "value": 2,
+          "label": "GUT"
+        },
+        {
+          "value": 3,
+          "label": "TEILS/TEILS"
+        },
+        {
+          "value": 4,
+          "label": "SCHLECHT"
+        },
+        {
+          "value": 5,
+          "label": "SEHR SCHLECHT"
+        }
+      ]
+    },
+    {
+      "name": "ps03",
+      "label": "ZUFRIEDEN MIT DEMOKRATIE IN DEUTSCHLAND?",
+      "kind": "numeric",
+      "values": [-11, 3, 1, -11, -11, 3, 3, 4, -11, 3, 4, 2, 2, 5, 2, 1, 4, 4, 1, -11, -11, 2, 2, 2, 4, 3, 1, -11, 1, 3, 4, 1, -11, 4, 1, -11, 4, -11, 1, 2, 1, 1, 5, 2, 1, -11, 5, 5, -11, -11, 3, 5, 3, 6, 4, -11, 1, 1, -9, 1],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -42,
+          "label": "DATENFEHLER: MFN"
+        },
+        {
+          "value": -11,
+          "label": "TNZ: SPLIT"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "SEHR ZUFRIEDEN"
+        },
+        {
+          "value": 2,
+          "label": "ZIEMLICH ZUFRIEDEN"
+        },
+        {
+          "value": 3,
+          "label": "ETWAS ZUFRIEDEN"
+        },
+        {
+          "value": 4,
+          "label": "ETWAS UNZUFRIEDEN"
+        },
+        {
+          "value": 5,
+          "label": "ZIEML. UNZUFRIEDEN"
+        },
+        {
+          "value": 6,
+          "label": "SEHR UNZUFRIEDEN"
+        }
+      ]
+    },
+    {
+      "name": "ep03",
+      "label": "WIRTSCHAFTSLAGE, BEFR. HEUTE",
+      "kind": "numeric",
+      "values": [2, 3, 2, 2, 3, 4, 3, 3, 3, 2, 2, 2, 2, 2, 2, 2, 4, 2, 2, 4, 3, 3, 2, 2, 2, 2, 3, 4, 3, 4, 2, 2, 3, 4, 3, 2, 2, 2, 4, 3, 3, 2, 4, 2, 3, 4, 3, 2, 2, 4, 4, 3, 3, 2, 3, 2, 3, 2, 3, 2],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": 1,
+          "label": "SEHR GUT"
+        },
+        {
+          "value": 2,
+          "label": "GUT"
+        },
+        {
+          "value": 3,
+          "label": "TEILS/TEILS"
+        },
+        {
+          "value": 4,
+          "label": "SCHLECHT"
+        },
+        {
+          "value": 5,
+          "label": "SEHR SCHLECHT"
+        }
+      ]
+    },
+    {
+      "name": "id02",
+      "label": "SUBJEKTIVE SCHICHTEINSTUFUNG, BEFR.",
+      "kind": "numeric",
+      "values": [4, 2, 4, 3, 5, 3, 4, 4, 1, 1, 4, 1, 3, 3, 3, 3, 3, 3, 4, 2, 3, 3, 3, 4, 3, 3, 3, 2, 3, 3, 3, 1, 3, 3, 3, 2, 4, 3, 2, 4, 3, 3, -8, 2, 3, 4, 3, 3, 1, 3, 3, 2, 3, 4, 2, 1, 2, 3, 2, 3],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -50,
+          "label": "KEINER DER SCHICHTEN"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -8,
+          "label": "WEISS NICHT"
+        },
+        {
+          "value": -7,
+          "label": "VERWEIGERT"
+        },
+        {
+          "value": 1,
+          "label": "UNTERSCHICHT"
+        },
+        {
+          "value": 2,
+          "label": "ARBEITERSCHICHT"
+        },
+        {
+          "value": 3,
+          "label": "MITTELSCHICHT"
+        },
+        {
+          "value": 4,
+          "label": "OBERE MITTELSCHICHT"
+        },
+        {
+          "value": 5,
+          "label": "OBERSCHICHT"
+        }
+      ]
+    },
+    {
+      "name": "educ",
+      "label": "ALLGEMEINER SCHULABSCHLUSS",
+      "kind": "numeric",
+      "values": [5, 3, 3, 3, 2, 4, 2, 3, 3, 3, 5, 3, 1, 5, 5, 5, 5, 1, 5, 3, 3, 3, 2, 5, 5, 4, 4, 2, 7, 5, 4, 1, 2, 6, -9, 3, 4, 5, 4, 4, 5, 3, 2, 3, 3, 5, 3, 2, 3, 4, 5, 4, 3, 2, 5, 5, 3, 5, 2, 5],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -33,
+          "label": "NICHT BESTIMMBAR"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": 1,
+          "label": "OHNE ABSCHLUSS"
+        },
+        {
+          "value": 2,
+          "label": "VOLKS-,HAUPTSCHULE"
+        },
+        {
+          "value": 3,
+          "label": "MITTLERE REIFE"
+        },
+        {
+          "value": 4,
+          "label": "FACHHOCHSCHULREIFE"
+        },
+        {
+          "value": 5,
+          "label": "HOCHSCHULREIFE"
+        },
+        {
+          "value": 6,
+          "label": "ANDERER ABSCHLUSS"
+        },
+        {
+          "value": 7,
+          "label": "NOCH SCHUELER"
+        }
+      ]
+    },
+    {
+      "name": "rp01",
+      "label": "KIRCHGANGSHAEUFIGKEIT",
+      "kind": "numeric",
+      "values": [5, 5, 5, 5, 2, 6, -9, 6, 5, 6, 2, 6, 3, 5, 5, 6, 4, 3, 6, 5, 5, 4, 6, 6, 5, 4, 4, 6, 3, 5, 5, 6, -10, 5, -10, 4, 5, 6, 5, 6, 5, 5, 5, 6, 5, 6, 6, 5, 6, 5, -10, 5, 6, 5, 6, 4, 4, 5, 1, 6],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -10,
+          "label": "TNZ: FILTER"
+        },
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": 1,
+          "label": "UEBER 1X DIE WOCHE"
+        },
+        {
+          "value": 2,
+          "label": "1X PRO WOCHE"
+        },
+        {
+          "value": 3,
+          "label": "1-3X PRO MONAT"
+        },
+        {
+          "value": 4,
+          "label": "MEHRMALS IM JAHR"
+        },
+        {
+          "value": 5,
+          "label": "SELTENER"
+        },
+        {
+          "value": 6,
+          "label": "NIE"
+        }
+      ]
+    },
+    {
+      "name": "rd01",
+      "label": "KONFESSION, BEFRAGTE(R)",
+      "kind": "numeric",
+      "values": [6, 6, 3, 6, 6, 1, 6, 1, 1, 3, 3, -7, 6, 6, 5, 6, 1, 6, 6, 3, 6, 6, 3, 1, 5, 6, 3, 3, 6, 6, 6, 1, 3, 6, 3, 6, 6, 1, 1, 3, 1, 1, 1, 3, 4, 1, 6, 6, 6, 3, 1, 6, 1, 1, 6, 6, 6, 6, 3, 1],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": -7,
+          "label": "VERWEIGERT"
+        },
+        {
+          "value": 1,
+          "label": "EVANG.OHNE FREIKIRCH"
+        },
+        {
+          "value": 2,
+          "label": "EVANG.FREIKIRCHE"
+        },
+        {
+          "value": 3,
+          "label": "ROEMISCH-KATHOLISCH"
+        },
+        {
+          "value": 4,
+          "label": "AND.CHRISTL.RELIGION"
+        },
+        {
+          "value": 5,
+          "label": "AND.NICHT-CHRISTLICH"
+        },
+        {
+          "value": 6,
+          "label": "KEINER RELIGIONSGEM."
+        }
+      ]
+    },
+    {
+      "name": "gs01",
+      "label": "SELBSTBESCHREIBUNG DES WOHNORTS",
+      "kind": "numeric",
+      "values": [3, 1, 1, 3, 3, 1, 3, 4, 4, 4, 4, 3, 4, 4, 3, 4, 4, 4, 4, 2, 3, 3, 3, 3, 1, 3, 4, 2, 3, 1, 3, 2, 4, 2, 3, 4, 1, 3, -9, 4, 4, 3, 4, 1, 4, 3, 4, 4, 4, 4, 4, 3, 4, 2, 2, 3, 1, 3, 2, 4],
+      "strings": null,
+      "naValues": [],
+      "naRange": [null, -1],
+      "valueLabels": [
+        {
+          "value": -9,
+          "label": "KEINE ANGABE"
+        },
+        {
+          "value": 1,
+          "label": "GROSSSTADT"
+        },
+        {
+          "value": 2,
+          "label": "VORORT GROSSSTADT"
+        },
+        {
+          "value": 3,
+          "label": "MITTEL-, KLEINSTADT"
+        },
+        {
+          "value": 4,
+          "label": "LAENDL. DORF"
+        },
+        {
+          "value": 5,
+          "label": "EINZELHAUS, LAND"
+        }
+      ]
     }
   ]
 }
