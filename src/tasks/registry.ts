@@ -3,6 +3,7 @@ import { datenerfassung } from './s02-datenerfassung';
 import { stuehle } from './s03-stuehle';
 import { nennerCheck } from './s04-nenner-check';
 import { treiber } from './s05-treiber';
+import { letzteFrage } from './s06-letzte-frage';
 import { dreiFragen } from './s07-drei-fragen';
 import type { TaskDef, TaskId } from './types';
 
@@ -14,5 +15,6 @@ export const taskRegistry: Partial<Record<TaskId, TaskDef<any>>> = {
   s03: stuehle,
   s04: nennerCheck,
   s05: treiber,
+  s06: letzteFrage,
   s07: dreiFragen,
 };

@@ -60,7 +60,7 @@ export const sessions: Session[] = [
     question: 'Unterscheiden sich Gruppen im Mittel?',
     repetition: [t('Normalverteilung', 'normal_distribution')],
     introduced: [t('t-Test', 't_test'), t('Einfaktorielle ANOVA', 'oneway_anova'), t('Korrelationsmatrix', 'correlation_matrix')],
-    task: null,
+    task: 's06',
   },
   {
     id: 7, plan: 'Sitzungsplan 9', title: 'Index und Skala', short: 'Reliabilität, Cronbachs α',

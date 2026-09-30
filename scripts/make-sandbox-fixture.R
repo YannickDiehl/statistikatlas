@@ -94,6 +94,26 @@ d$gs01 <- lab(pick(c(1:5, -9), c(.21, .13, .36, .27, .01, .02)),
               c("KEINE ANGABE" = -9, "GROSSSTADT" = 1, "VORORT GROSSSTADT" = 2, "MITTEL-, KLEINSTADT" = 3, "LAENDL. DORF" = 4, "EINZELHAUS, LAND" = 5),
               "SELBSTBESCHREIBUNG DES WOHNORTS")
 
+# Lernpfad-Aufgabe 6: Incentive-Experiment (splt23_3, xr21) mit Labels und Missing-Codes des echten ALLBUS (Werte synthetisch).
+# Wie im ALLBUS: nur Selbstausfüller:innen im Experiment, Papier (MAIL) nur A1/B1, online (CAWI) alle vier Fassungen,
+# der Betrag folgt der Fragebogenhälfte splt23_1. Online sagen mehr Menschen zu als auf Papier (die Falle der Aufgabe).
+set.seed(8806)
+s6_mode <- as.numeric(d$mode)
+s6_half <- as.numeric(d$splt23_1)
+s6_version <- rep(-15, n)
+s6_version[s6_mode == 4] <- ifelse(s6_half[s6_mode == 4] == 1, 1, 3)
+for (s6_h in 1:2) {
+  s6_idx <- which(s6_mode == 3 & s6_half == s6_h)
+  s6_version[s6_idx] <- 2 * s6_h - 1 + rep(0:1, length.out = length(s6_idx))
+}
+d$splt23_3 <- lab(s6_version, c("TNZ: MODE" = -15, "A1 - 5 EURO OHNE" = 1, "A2 - 5 EURO MIT" = 2, "B1 - 10 EURO OHNE" = 3, "B2 - 10 EURO MIT" = 4),
+                  "FRAGEBOGENSPLIT 2023: EXPERIMENT XR21")
+repeat {  # jede Fassung hat online mindestens ein Ja und ein Nein, damit ANOVA, Welch und Tukey schätzbar sind
+  s6_p <- ifelse(s6_mode == 4, .4, ifelse(s6_version == 4, .8, .65))
+  s6_x <- ifelse(s6_mode == 2, -15, ifelse(runif(n) < .06, -9, ifelse(runif(n) < s6_p, 1, 2)))
+  if (all(sapply(1:4, function(k) all(1:2 %in% s6_x[s6_mode == 3 & s6_version == k])))) break
+}
+d$xr21 <- lab(s6_x, c("TNZ: MODE" = -15, "KEINE ANGABE" = -9, "JA" = 1, "NEIN" = 2), "TEILNAHMEBEREITSCHAFT WEITERE UMFRAGEN")
 # Lernpfad-Aufgabe 7: Populismus-Batterie pa29–pa34 zu pa35 (steht schon oben), Labels und Missing-Codes wie im echten ALLBUS.
 # Gestellt nur, wo pa35 gestellt wurde (sonst −11 „TNZ: SPLIT“). Ein gemeinsamer Faktor (an pa35 gekoppelt) und drei Seiten:
 # Volkssouveränität (pa29, pa33), Anti-Elitismus (pa30, pa31, pa35), Einheit des Volkes (pa32, pa34). pa29 stark schief (viel Zustimmung).
