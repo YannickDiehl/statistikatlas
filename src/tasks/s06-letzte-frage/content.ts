@@ -85,7 +85,7 @@ online %>% filter(splt23_3 == ${code}) %>% t_test(zusage) %>% summary()`;
 
 export const rSolution = (code = 1) => [R_SETUP, R_S1, R_S2, R_S3A, R_S3B, R_WEIGHTED, rRelease(code)].join('\n\n') + '\n';
 
-const WORKSHOP = '5 Datenaufbereitung (rec) · 7.6 Mittelwertvergleiche';
+const WORKSHOP = '5 Daten transformieren und Skalen bilden (rec) · 7.6 Mittelwertvergleiche';
 
 export const hints: Record<'s1' | 's2' | 's3a' | 's3b' | 's4', Hint> = {
   s1: {
@@ -108,7 +108,7 @@ experiment %>% t_test(zusage, group = ___) %>% summary()`,
     think: 'Das Los weiß nichts über Alter oder Papier. Welche Zellen der Matrix müssten also nahe 0 liegen?',
     pointer: 'pearson_cor() mit mehreren Variablen liefert eine Matrix. Jede Zelle nutzt alle Fälle, bei denen beide Variablen gültig sind (paarweises n). Für papier bildest du mit rec() aus mode eine 0/1-Variable.',
     concept: { id: 'correlation_matrix', label: 'Korrelationsmatrix' },
-    workshop: '7 Bivariate Analyse (Korrelation)',
+    workshop: '7 Bivariate Analyse (7.5.3 Korrelation)',
     scaffold: `experiment <- experiment %>%
   mutate(papier = rec(mode, rules = "3=___ [online]; 4=___ [Papier]; else=NA"))
 experiment %>% pearson_cor(wiederholung, betrag, ___, age, zusage) %>%

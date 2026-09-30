@@ -342,7 +342,7 @@ export function checkF(c: Computed, input: string): Check<FVariant> {
   const hits = byRank(closest(c.fs, parsed.readings));
   const isExact = (v: FVariant) => v.scope === 'online' && v.kind === 'classical' && !v.weighted;
   const exact = hits.find(isExact);
-  if (exact) return { notes: [{ tone: 'ok', text: `Stimmt: F(${exact.df1}, ${exact.df2}) = ${de(exact.value, 3)} – ANOVA über die vier Fassungen, nur online.` }], hit: exact, valid: true, exact: true };
+  if (exact) return { notes: [{ tone: 'ok', text: `Stimmt: F(${exact.df1}; ${exact.df2}) = ${de(exact.value, 3)} – ANOVA über die vier Fassungen, nur online.` }], hit: exact, valid: true, exact: true };
   if (hits[0]) return { notes: [anovaNote(hits[0], `F = ${de(hits[0].value, 3)}`)], hit: hits[0], valid: false, exact: false };
   return only({ tone: 'warn', text: 'Dieses F finde ich nicht. Nimm aus summary() die Zeile „Between Groups“, Spalte F – nur online, vier Fassungen (group = splt23_3).' });
 }
@@ -640,7 +640,7 @@ export function trap(c: Computed): Trap | null {
 export function weightedNotes(c: Computed, done: { rep: boolean; amt: boolean; tukey: boolean } = { rep: false, amt: false, tukey: false }): string[] {
   const u = c.anova.online, w = c.anova.onlineW;
   if (!u || !w) return ['Die ANOVA lässt sich mit dieser Datei nicht schätzen: Mindestens eine Fassung hat online zu wenige Fälle.'];
-  const notes = [`Ungewichtet: F(${u.dfBetween}, ${u.dfWithin}) = ${de(u.F, 3)}, ${fmtP(u.p)}. Mit wghtpew: F(${w.dfBetween}, ${w.dfWithin}) = ${de(w.F, 3)}, ${fmtP(w.p)}.`];
+  const notes = [`Ungewichtet: F(${u.dfBetween}; ${u.dfWithin}) = ${de(u.F, 3)}, ${fmtP(u.p)}. Mit wghtpew: F(${w.dfBetween}; ${w.dfWithin}) = ${de(w.F, 3)}, ${fmtP(w.p)}.`];
   if ((u.p < 0.05) !== (w.p < 0.05)) notes.push(`Die Signifikanz kippt: ${u.p < 0.05 ? 'ungewichtet signifikant, gewichtet nicht' : 'gewichtet signifikant, ungewichtet nicht'}.`);
   else notes.push('Die Signifikanz bleibt mit und ohne Gewicht dieselbe.');
   for (const grouping of (['rep', 'amt'] as const).filter(g => done[g])) {

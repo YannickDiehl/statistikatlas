@@ -73,7 +73,7 @@ export const ROLE = {
   curator: 'Ida Lorenzen',
 };
 
-export const WORKSHOP = '10 Lineare Regression';
+export const WORKSHOP = '9 Erklärungsmodelle (9.2 Einfache lineare Regression, 9.6 Residuen-Diagnostik)';
 
 export const hints = {
   setting: {

@@ -73,6 +73,9 @@ test('names the number on the sign and checks the chairs right of the mean', () 
   assert.match(mixed[1].text, /nicht der Mittelwert/);
   assert.equal(mixed[2].tone, 'warn');
   assert.deepEqual(checkSign(sav, { value: '', measure: '', selection: '', right: '' }), []);
+  // So wie R den Mittelwert druckt („37.912“), nicht als Tausenderpunkt gelesen.
+  const rPrinted = checkSign(sav, { value: g.mean.toFixed(3), measure: 'mean', selection: 'gefragt', right: '' });
+  assert.equal(rPrinted.at(-1)?.tone, 'ok');
 });
 
 test('accepts a whole-hour sign as the rounded value', () => {

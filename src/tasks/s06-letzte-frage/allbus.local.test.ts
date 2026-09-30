@@ -55,7 +55,7 @@ test('session 6: ANOVA and Tukey online, unweighted and weighted (spec 4.6)', { 
   // verzerrte ANOVA über alle Selbstausfüller:innen: F = 20,7, p < .001
   const pooled = c.fs.find(v => v.scope === 'all' && v.kind === 'classical' && !v.weighted)!;
   assert.deepEqual([r1(pooled.value), pooled.p < 0.001], [20.7, true]);
-  assert.match(checkF(c, '2,681').notes[0].text, /^Stimmt: F\(3, 1519\) = 2,681/);
+  assert.match(checkF(c, '2,681').notes[0].text, /^Stimmt: F\(3; 1519\) = 2,681/);
   assert.match(checkP(c, '0,046').notes[0].text, /^Stimmt: p = 0,046/);
   assert.match(checkP(c, '0,063').notes[0].text, /gewichtete ANOVA/);
   assert.match(checkF(c, '20,690').notes[0].text, /über alle Selbstausfüller:innen/);
@@ -80,7 +80,7 @@ test('session 6: correlation matrix, cells and the amount = questionnaire half (
   assert.match(checkT(c, { scope: 'all', grouping: 'rep' }, '7.590').notes[0].text, /^Stimmt: Welch-t = 7,590/);
   assert.match(checkT(c, { scope: 'all', grouping: 'amt' }, '-2.491').notes[0].text, /^Stimmt: Welch-t = −2,491/);
   assert.match(checkT(c, { scope: 'online', grouping: 'amt' }, '-1.892').notes[0].text, /^Stimmt: Welch-t = −1,892/);
-  assert.match(checkF(c, '2.681').notes[0].text, /^Stimmt: F\(3, 1519\) = 2,681/);
+  assert.match(checkF(c, '2.681').notes[0].text, /^Stimmt: F\(3; 1519\) = 2,681/);
   assert.match(checkP(c, '0.046').notes[0].text, /^Stimmt: p = 0,046/);
   // Eine geratene Ungleichung öffnet weder Tukey noch die zweite Enthüllung; „< 0,001“ ist die gepoolte ANOVA, nicht die online.
   for (const guess of ['< 0,05', '< 1', 'p < 0,95']) {

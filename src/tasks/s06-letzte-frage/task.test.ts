@@ -91,9 +91,9 @@ test('station 3b: ANOVA entries, Tukey only after the own ANOVA and „Auswahl p
   const anova = { means, F: propIn(fOnline.value), p: '' };
   const html = render({ anova });
   assert.match(html, /Stimmt: Zusagequote Fassung A1, nur online, ungewichtet = 80,0 %/);
-  assert.match(html, /Stimmt: F\(3, 10\) = 0,238/);
+  assert.match(html, /Stimmt: F\(3; 10\) = 0,238/);
   assert.match(html, /Zweite Enthüllung · mit Gewicht/);
-  assert.match(html, /Mit wghtpew: F\(3, 9\) = 0,201/);
+  assert.match(html, /Mit wghtpew: F\(3; 9\) = 0,201/);
   // Die Online-t-Tests aus Station 3a und Tukey gewichtet bleiben verborgen, solange sie nicht eingetragen bzw. geprüft sind.
   assert.doesNotMatch(html, /Wiederholung online: ungewichtet|Betrag online: ungewichtet|Tukey gewichtet/);
   assert.match(render({ anova, s3: { rep: rep('online'), amt: empty } }), /Wiederholung online: ungewichtet/);

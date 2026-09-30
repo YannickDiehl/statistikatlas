@@ -1,6 +1,6 @@
 import { isMissingCode, type SavFile, type SavVariable } from '../../sandbox/readSav';
 import type { Note } from '../kit/Feedback';
-import { de, near, parseNumber } from '../kit/numbers';
+import { de, near, numberReadings, parseNumber } from '../kit/numbers';
 import { WORK_MODES, type WorkMode } from '../kit/PartnerToggle';
 import { bool, oneOf, record, str } from '../kit/storage';
 import type { TaskStatus } from '../types';
@@ -185,14 +185,17 @@ const selectionShort = (id: Selection | '') => SELECTIONS.find(s => s.id === id)
 const measureName = (m: Measure) => m === 'mean' ? 'Mittelwert' : 'Median';
 
 export function checkSign(sav: SavFile, sign: Sign): Note[] {
-  const value = parseNumber(sign.value);
-  if (value === null) return [];
+  // „37.912“ ist mehrdeutig: So druckt R den Mittelwert, im Deutschen wäre es ein Tausenderpunkt – passt eine Lesart, zählt sie.
+  const readings = numberReadings(sign.value).map(r => r.x);
+  if (!readings.length) return [];
   const notes: Note[] = [];
   const stats = Object.fromEntries(SELECTIONS.map(s => [s.id, describeHours(hoursFor(sav, s.id))])) as Record<Selection, Describe>;
-  // Ganze Stunden sind das übliche Schildformat: 38 gilt als gerundeter Mittelwert 37,9.
-  const exact = (stat: number) => near(value, stat, 0.05);
-  const fits = (stat: number) => exact(stat) || (Number.isInteger(value) && Math.round(stat) === value);
   const candidates = SELECTIONS.flatMap(s => (['median', 'mean'] as Measure[]).map(m => ({ s: s.id, m })));
+  // Ganze Stunden sind das übliche Schildformat: 38 gilt als gerundeter Mittelwert 37,9.
+  const fitsValue = (v: number, stat: number) => near(v, stat, 0.05) || (Number.isInteger(v) && Math.round(stat) === v);
+  const value = readings.find(v => candidates.some(({ s, m }) => fitsValue(v, stats[s][m]))) ?? readings[0];
+  const exact = (stat: number) => near(value, stat, 0.05);
+  const fits = (stat: number) => fitsValue(value, stat);
   const match = candidates.find(({ s, m }) => exact(stats[s][m])) ?? candidates.find(({ s, m }) => fits(stats[s][m]));
   notes.push(match
     ? { tone: 'hint', text: `${de(value, Number.isInteger(value) ? 0 : 1)} ist der ${exact(stats[match.s][match.m]) ? '' : 'gerundete '}${measureName(match.m)} ${selectionShort(match.s)}.` }

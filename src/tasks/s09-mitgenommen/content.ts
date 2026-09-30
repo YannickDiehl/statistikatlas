@@ -67,7 +67,7 @@ export const MAX_WORDS = 30;
 /** Wackeltest: ohne so viele Fälle, die einen Koeffizienten am stärksten nach oben bzw. unten ziehen. */
 export const WOBBLE_K = 5;
 
-export const WORKSHOP = '11 Regression vertiefen (Dummies, Kontrollen, Interaktion)';
+export const WORKSHOP = '9 Erklärungsmodelle (9.3 Dummy-Codierung, 9.4 Multiple lineare Regression, 9.5 VIF)';
 
 export const hints = {
   model: {

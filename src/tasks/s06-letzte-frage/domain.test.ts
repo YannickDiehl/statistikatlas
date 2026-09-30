@@ -176,7 +176,7 @@ test('the correlation detector checks the cell, its weight, scope and sign', () 
 test('the ANOVA detector separates classical, Welch, weighted and pooled results', () => {
   const f = (scope: Scope, kind: 'classical' | 'welch', weighted = false) => c.fs.find(v => v.scope === scope && v.kind === kind && v.weighted === weighted)!;
   const exact = checkF(c, propIn(f('online', 'classical').value));
-  assert.match(text(exact.notes), /^Stimmt: F\(3, 10\) = 0,238/);
+  assert.match(text(exact.notes), /^Stimmt: F\(3; 10\) = 0,238/);
   assert.ok(exact.exact);
   assert.match(text(checkF(c, propIn(f('online', 'welch').value)).notes), /Welchs Test/);
   assert.match(text(checkF(c, propIn(f('online', 'classical', true).value)).notes), /gewichtete ANOVA/);
@@ -400,7 +400,7 @@ test('reveals wait for recognised own values', () => {
   assert.ok(anovaDone(c, state({ anova: { means: ['', '', '', ''], F: '', p: propIn(f.p) } })));
   assert.ok(!anovaDone(c, state({ anova: { means: ['', '', '', ''], F: propIn(welch.value), p: '0,999' } })));
   const notes = weightedNotes(c).join(' ');
-  assert.match(notes, /Ungewichtet: F\(3, 10\) = 0,238, p = 0,868\. Mit wghtpew: F\(3, 9\) = 0,201, p = 0,893\./);
+  assert.match(notes, /Ungewichtet: F\(3; 10\) = 0,238, p = 0,868\. Mit wghtpew: F\(3; 9\) = 0,201, p = 0,893\./);
   assert.match(notes, /Signifikanz bleibt/);
   // Station 3a und Tukey bleiben verborgen, bis die eigenen Werte stehen.
   assert.doesNotMatch(notes, /Wiederholung online|Betrag online|Tukey gewichtet/);
