@@ -67,7 +67,7 @@ export const sessions: Session[] = [
     question: 'Wie misst man Populismus mit mehreren Fragen?',
     repetition: [t('Validität', 'validity'), t('Messfehler', 'measurement_error')],
     introduced: [t('Mittelwertindex', 'row_operations'), t('Skalenwert pro Person', 'item_score'), t('Kombinationsindex'), t('Reliabilität · Alpha & Omega', 'reliability')],
-    task: null,
+    task: 's07',
   },
   {
     id: 8, plan: 'Sitzungsplan 10', title: 'Lineare Regression', short: 'Modell, Residuen, R²',
