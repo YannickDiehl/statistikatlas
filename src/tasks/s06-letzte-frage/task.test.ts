@@ -61,7 +61,10 @@ test('station 2: r only after the locked marks, the matrix only after recognised
   assert.doesNotMatch(render({ marks, locked: true, r: { ...r, amtPaper: '0,999' } }), /Korrelationsmatrix über alle/);
   const reveal = render({ marks, locked: true, r });
   assert.match(reveal, /Korrelationsmatrix über alle Selbstausfüller:innen, ungewichtet/);
-  assert.match(reveal, /markiert · Los verletzt/);
+  assert.match(reveal, /markiert · ≠ 0 – über die Modi nicht ausgelost/);
+  assert.doesNotMatch(reveal, /Los verletzt/);
+  // Werte aus anderen Zellen öffnen die Matrix nicht
+  assert.doesNotMatch(render({ marks, locked: true, r: { repPaper: rOf('age-zusage'), amtPaper: rOf('papier-zusage') } }), /Korrelationsmatrix über alle/);
   assert.match(reveal, /Aus Kostengründen gab es auf Papier nur A1 und B1/);
   assert.match(reveal, /Wer bekam welche Fassung\?/);
   assert.match(reveal, /Der Unterschied aus Station 1 kommt nicht \(nur\) von der Wiederholung, weil/);
@@ -83,21 +86,36 @@ test('station 3a: the trap appears after the own shares over all and online', ()
   assert.doesNotMatch(render({ s1: { rep: rep('all'), amt: empty }, s3: { rep: rep('all'), amt: empty } }), /Die Falle/);
 });
 
-test('station 3b: ANOVA entries, Tukey table after correct marks, the weighted reveal after the own ANOVA', () => {
+test('station 3b: ANOVA entries, Tukey only after the own ANOVA and „Auswahl prüfen“, the weighted reveal without station 3a', () => {
   const means = [1, 2, 3, 4].map(k => pctIn(share('online', 'version', k)));
-  const html = render({ anova: { means, F: propIn(fOnline.value), p: '' } });
+  const anova = { means, F: propIn(fOnline.value), p: '' };
+  const html = render({ anova });
   assert.match(html, /Stimmt: Zusagequote Fassung A1, nur online, ungewichtet = 80,0 %/);
   assert.match(html, /Stimmt: F\(3, 10\) = 0,238/);
   assert.match(html, /Zweite Enthüllung · mit Gewicht/);
   assert.match(html, /Mit wghtpew: F\(3, 9\) = 0,201/);
+  // Die Online-t-Tests aus Station 3a und Tukey gewichtet bleiben verborgen, solange sie nicht eingetragen bzw. geprüft sind.
+  assert.doesNotMatch(html, /Wiederholung online: ungewichtet|Betrag online: ungewichtet|Tukey gewichtet/);
+  assert.match(render({ anova, s3: { rep: rep('online'), amt: empty } }), /Wiederholung online: ungewichtet/);
   assert.doesNotMatch(render({ anova: { means, F: '0,999', p: '' } }), /Zweite Enthüllung/);
-  assert.doesNotMatch(render({ tukey: ['4-2'] }), /Tukey-Paarvergleiche nur online/);
-  assert.match(render({ tukey: ['4-2'] }), /B2 – A2 ist nach Tukey nicht signifikant/);
-  const table = render({ tukey: ['none'] });
+  // ohne eigene ANOVA: Auswahl gesperrt, keine Tabelle, kein Urteil – auch nicht mit gespeicherter „richtiger“ Auswahl
+  const locked = render({ tukey: ['none'], tukeyTried: ['none'] });
+  assert.match(locked, /Die Auswahl öffnet sich, sobald oben F oder p deiner ANOVA erkannt ist/);
+  assert.match(locked, /<button disabled="" aria-pressed="false">B2 – A2<\/button>/);
+  assert.doesNotMatch(locked, /Tukey-Paarvergleiche nur online|Stimmt: Nach Tukey/);
+  // mit ANOVA, aber ungeprüft: kein Urteil
+  const unchecked = render({ anova, tukey: ['none'] });
+  assert.doesNotMatch(unchecked, /Tukey-Paarvergleiche nur online|Stimmt: Nach Tukey|Noch nicht/);
+  assert.match(unchecked, /Auswahl prüfen/);
+  const wrong = render({ anova, tukey: ['4-2'], tukeyTried: ['4-2'] });
+  assert.match(wrong, /Noch nicht: Deine Auswahl passt nicht zur Tukey-Tabelle/);
+  assert.doesNotMatch(wrong, /Tukey-Paarvergleiche nur online|B2 – A2 ist/);
+  const table = render({ anova, tukey: ['none'], tukeyTried: ['none'] });
   assert.match(table, /Stimmt: Nach Tukey unterscheidet sich kein Paar signifikant\./);
   assert.match(table, /Tukey-Paarvergleiche nur online/);
-  assert.doesNotMatch(table, /p gewichtet/);
-  assert.match(render({ tukey: ['none'], anova: { means: ['', '', '', ''], F: propIn(fOnline.value), p: '' } }), /p gewichtet/);
+  assert.match(table, /p gewichtet/);
+  assert.match(table, /Tukey gewichtet: kein Paar signifikant/);
+  assert.match(table, /<td>,937<\/td>/);   // p wie mariposa, ohne führende Null
 });
 
 test('station 4: inputs after the version, the interval after the own rate and span, two signatures', () => {
@@ -113,8 +131,14 @@ test('station 4: inputs after the version, the interval after the own rate and s
   assert.match(rate, /Wie breit ist dein Intervall\?/);
   assert.doesNotMatch(rate, /Zum Vergleich/);
   const ci = c.rates[0]!;
+  // beliebige Spanne ohne eigene vier Quoten: kein Intervall aus der Datei
   const span = render({ release: { ...initialS06().release, version: 'A1', rate: '75', low: '70', high: '80' } });
-  assert.match(span, new RegExp(`Zum Vergleich: A1 online, ungewichtet: ${shown(100 * ci.mean)} %`));
+  assert.doesNotMatch(span, /Zum Vergleich|95-%-Intervall aus t_test/);
+  assert.match(span, /Woran misst du deine Spanne\?/);
+  assert.match(render({ anova: { means, F: '', p: '' }, release: { ...initialS06().release, version: 'A1', rate: '75', low: '70', high: '80' } }),
+    new RegExp(`Zum Vergleich: A1 online, ungewichtet: ${shown(100 * ci.mean)} %`));
+  const own = render({ release: { ...initialS06().release, version: 'A1', rate: '75', low: shown(100 * ci.ci[0]), high: shown(100 * ci.ci[1]) } });
+  assert.match(own, /Das ist das 95-%-Intervall aus t_test\(\) für A1 online/);
   assert.match(span, /Unterschrift Panelaufbau \(ein Satz\)/);
   assert.match(span, /Freigabe: noch offen/);
   const veto = render({ release: { ...initialS06().release, version: 'A1' }, sign: { panel: 'Ich verspreche 75 %.', qs: 'Veto.', veto: true } });
@@ -147,4 +171,19 @@ test('a signed release completes the session, fills the card and offers the full
   assert.match(done, /vollständiges R-Skript/);
   assert.match(done, /filter\(splt23_3 == 3\) %&gt;% t_test\(zusage\)/);
   assert.doesNotMatch(render({}), /vollständiges R-Skript/);
+});
+
+test('gut feeling locks after the first recognised number, t is optional, station 3a does not spoil station 2, rates print in percent', () => {
+  const open = render({ gut: { version: 'B2', rate: '80' } });
+  assert.doesNotMatch(open, /<button disabled="" aria-pressed="true">B2<\/button>/);
+  assert.match(open, /Sobald deine erste Zahl aus Station 1 erkannt ist, wird es festgehalten/);
+  const fixed = render({ gut: { version: 'B2', rate: '80' }, s1: { rep: rep('all'), amt: empty } });
+  assert.match(fixed, /<button disabled="" aria-pressed="true">B2<\/button>/);
+  assert.match(fixed, /value="80" disabled=""|disabled="" value="80"/);
+  assert.match(fixed, /Dein Bauchgefühl ist festgehalten/);
+  assert.match(open, /t \(Welch\) – zur Kontrolle, freiwillig/);
+  assert.doesNotMatch(open, /nur online gab es alle vier Fassungen/);
+  const card = render({ gut: { version: 'A2', rate: '0,8' }, release: { ...initialS06().release, version: 'B1', rate: '0,67', low: '0,62', high: '0,72' } });
+  assert.match(card, /<dt>Versprochene Online-Quote<\/dt><dd>67 % \(Spanne 62–72 %\)<\/dd>/);
+  assert.match(card, /<dt>Bauchgefühl vorher<\/dt><dd>A2 · 80 %<\/dd>/);
 });

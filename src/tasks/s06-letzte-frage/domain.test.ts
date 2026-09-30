@@ -4,10 +4,10 @@ import { fakeSav, fixtureSav } from '../../sandbox/testData';
 import type { CorMatrix, TukeyRow } from '../kit/means';
 import { hints, PAIR_IDS, R_S1, rSolution } from './content';
 import {
-  becauseNotes, checkAmount, checkEntry, checkF, checkP, checkR, checkRelease, checkShare, checkT, checkTukey, chooseRelease, compute, initialS06,
-  lockMarks, markNotes, matrixReady, ownDiff, parseDiff, parseP, parseRate, parseS06, parseShare, parseStat, plenumLines, prepare, readMarks,
-  releaseState, signedEffect, statusS06, toggleMark, toggleTukey, trap, trapReady, unlockMarks, weightedNotes, weightedReady,
-  type Coding, type Computed, type GroupVar, type S06State, type Scope,
+  anovaDone, becauseNotes, checkAmount, checkEntry, checkF, checkP, checkR, checkRelease, checkShare, checkT, checkTukey, chooseRelease, compute, computeFor,
+  gutLocked, initialS06, lockMarks, markNotes, matrixReady, ownDiff, parseDiff, parseP, parseRate, parseS06, parseShare, parseStat, plenumLines, prepare,
+  rateText, readMarks, releaseState, signedEffect, statusS06, toggleMark, toggleTukey, trap, trapReady, tryTukey, tukeyDone, unlockMarks, weightedNotes,
+  type Coding, type Computed, type GroupVar, type S06State, type Scope, type TukeyKey,
 } from './domain';
 
 const c = compute(prepare(fixtureSav()));
@@ -62,27 +62,64 @@ test('computes every path once per file: shares, t-tests, correlations, ANOVA, T
   assert.equal(signedEffect(rep, 'rep'), -rep.diff);
 });
 
-test('reads entries as R prints them or in percent, with tolerance from the decimals', () => {
-  assert.deepEqual(parseShare('67,7'), { kind: 'ok', value: 0.677, tol: 0.0005 });
-  assert.deepEqual(parseShare('0,677'), { kind: 'ok', value: 0.677, tol: 0.0005 });
-  assert.deepEqual(parseShare('67,7 %'), parseShare('67,7'));
+const one = (p: ReturnType<typeof parseShare>) => (p.kind === 'ok' ? p.readings.map(r => [Number(r.value.toFixed(9)), Number(r.tol.toFixed(6))]) : p.kind);
+
+test('reads entries as R prints them (dot decimals) or in German, with tolerance from the decimals', () => {
+  assert.deepEqual(one(parseShare('67,7')), [[0.677, 0.0005]]);
+  assert.deepEqual(one(parseShare('0,677')), [[0.677, 0.0005]]);
+  assert.deepEqual(one(parseShare('0.677')), [[0.677, 0.0005]]);
+  assert.deepEqual(one(parseShare('67.7')), [[0.677, 0.0005]]);
+  assert.deepEqual(one(parseShare('67,7 %')), one(parseShare('67,7')));
+  // „1.577“ ist ein Mittelwert, wie R ihn druckt (xr21 noch 1/2) – die Tausender-Lesart ist für eine Quote zu grob und fällt weg.
+  assert.deepEqual(one(parseShare('1.577')), [[1.577, 0.0005]]);
   assert.equal(parseShare('67').kind, 'coarse');
   assert.equal(parseShare('0,7').kind, 'coarse');
   assert.equal(parseShare('abc').kind, 'text');
   assert.equal(parseShare(' ').kind, 'empty');
-  assert.deepEqual(parseStat('−7,59'), { kind: 'ok', value: -7.59, tol: 0.005 });
+  assert.deepEqual(one(parseStat('7.590')), [[7.59, 0.0005]]);
+  assert.deepEqual(one(parseStat('-2.491')), [[-2.491, 0.0005]]);
+  assert.deepEqual(one(parseStat('2.681')), [[2.681, 0.0005]]);
+  assert.deepEqual(one(parseStat('−7,59')), [[-7.59, 0.005]]);
+  assert.deepEqual(one(parseStat('7,590')), [[7.59, 0.0005]]);
   assert.equal(parseStat('7,6').kind, 'coarse');
   assert.deepEqual(parseP('< 0,001'), { kind: 'below', value: 0.001 });
-  assert.deepEqual(parseP('p = ,046'), { kind: 'ok', value: 0.046, tol: 0.0005 });
+  assert.deepEqual(parseP('p < .001'), { kind: 'below', value: 0.001 });
+  assert.deepEqual(one(parseP('p = ,046')), [[0.046, 0.0005]]);
+  assert.deepEqual(one(parseP('0.046')), [[0.046, 0.0005]]);
   assert.equal(parseP('0,05').kind, 'coarse');
-  assert.deepEqual(parseDiff('4,5'), { kind: 'ok', value: 4.5, tol: 0.05 });
-  assert.equal(parseDiff('−0,045').kind === 'ok' && Math.abs((parseDiff('−0,045') as { value: number }).value + 4.5) < 1e-12, true);
-  assert.deepEqual(parseDiff('4 Pp.'), { kind: 'ok', value: 4, tol: 0.5 });
+  assert.deepEqual(one(parseDiff('4,5')), [[4.5, 0.05]]);
+  assert.deepEqual(one(parseDiff('−0,045')), [[-4.5, 0.05]]);
+  assert.deepEqual(one(parseDiff('-0.045')), [[-4.5, 0.05]]);
+  assert.deepEqual(one(parseDiff('4 Pp.')), [[4, 0.5]]);
   assert.equal(parseRate('67'), 67);
   assert.equal(parseRate('0,67'), 67);
+  assert.equal(parseRate('0.672'), 67.2);
+  assert.equal(parseRate('0,8'), 80);
+  assert.equal(parseRate('1'), 1);
   assert.equal(parseRate('x'), null);
+  assert.equal(rateText('0,67'), '67 %');
+  assert.equal(rateText('67,5 %'), '67,5 %');
   assert.ok(Math.abs(ownDiff('52,7', '0,677')! - 0.15) < 1e-12);
+  assert.ok(Math.abs(ownDiff('0.527', '0.677')! - 0.15) < 1e-12);
   assert.equal(ownDiff('52', '67,7'), null);
+});
+
+test('values typed with R dot decimals are recognised like comma input', () => {
+  const dot = (x: number) => x.toFixed(3).replace('−', '-');
+  const welch = tOf('all', 'rep', 'welch');
+  assert.match(text(checkT(c, { scope: 'all', grouping: 'rep' }, dot(welch)).notes), /^Stimmt: Welch-t/);
+  // ein t über 1 mit drei Stellen (hier: Betrag auf Papier) ist mehrdeutig – die R-Lesart zählt
+  const paper = c.tests.find(v => v.scope === 'paper' && v.grouping === 'amt' && v.kind === 'welch' && !v.weighted)!.value;
+  assert.ok(Math.abs(paper) > 1);
+  assert.match(text(checkT(c, { scope: 'all', grouping: 'rep' }, dot(paper)).notes), /Betrag, nur auf Papier/);
+  const fPaper = c.fs.find(v => v.scope === 'paper' && v.kind === 'classical' && !v.weighted)!.value;
+  assert.ok(fPaper > 1);
+  assert.match(text(checkF(c, dot(fPaper)).notes), /nur auf Papier/);
+  assert.match(text(checkShare(c, { scope: 'all', grouping: 'rep', level: 0 }, dot(share('all', 'rep', 0, false, 'raw'))).notes), /Mittelwert über 1/);
+  assert.match(text(checkShare(c, { scope: 'all', grouping: 'rep', level: 0 }, dot(share('all', 'rep', 0))).notes), /^Stimmt/);
+  assert.match(text(checkR(c, 'wiederholung-papier', dot(c.rs.find(v => v.pair === 'wiederholung-papier' && v.scope === 'all' && !v.weighted)!.value)).notes), /^Stimmt/);
+  const f = c.fs.find(v => v.scope === 'online' && v.kind === 'classical' && !v.weighted)!;
+  assert.ok(checkF(c, dot(f.value)).exact && checkP(c, dot(f.p)).exact);
 });
 
 test('the value detector names every path of a share', () => {
@@ -155,17 +192,33 @@ test('the ANOVA detector separates classical, Welch, weighted and pooled results
 
 const row = (a: number, b: number, p: number): TukeyRow => ({ a, b, label: `${a}-${b}`, diff: 0.05, se: 0.02, lower: 0, upper: 0.1, p });
 const withTukey = (rows: TukeyRow[]): Computed => ({ ...c, tukey: { online: rows, onlineW: rows } });
+const fOnline = () => c.fs.find(v => v.scope === 'online' && v.kind === 'classical' && !v.weighted)!;
+const anovaIn = () => ({ means: ['', '', '', ''], F: propIn(fOnline().value), p: '' });
 
-test('Tukey marks: right, missing, extra and „kein Paar“', () => {
-  assert.deepEqual(checkTukey(c, []), { notes: [], correct: false });
-  assert.deepEqual(checkTukey(c, ['none']).correct, true);   // Testdatei: kein Paar signifikant
-  assert.match(text(checkTukey(c, ['4-2']).notes), /B2 – A2 ist nach Tukey nicht signifikant.*Zeile 4-2/);
+test('Tukey marks: checked only after the own ANOVA and „Auswahl prüfen“, as a whole, without naming the wrong pair', () => {
+  const tried = (tukey: TukeyKey[], extra: Partial<S06State> = {}) => state({ anova: anovaIn(), tukey, tukeyTried: tukey, ...extra });
+  assert.deepEqual(checkTukey(c, state({})), { notes: [], correct: false });
+  // ohne eigene ANOVA: kein Urteil, nur der Hinweis
+  const early = checkTukey(c, state({ tukey: ['none'], tukeyTried: ['none'] }));
+  assert.ok(!early.correct);
+  assert.match(text(early.notes), /Trag zuerst oben F oder p deiner ANOVA ein/);
+  // mit ANOVA, aber nicht geprüft oder nach dem Prüfen geändert: kein Urteil
+  assert.deepEqual(checkTukey(c, state({ anova: anovaIn(), tukey: ['none'] })), { notes: [], correct: false });
+  assert.deepEqual(checkTukey(c, state({ anova: anovaIn(), tukey: ['4-2'], tukeyTried: ['none'] })), { notes: [], correct: false });
+  assert.ok(checkTukey(c, tried(['none'])).correct);   // Testdatei: kein Paar signifikant
+  const wrong = text(checkTukey(c, tried(['4-2'])).notes);
+  assert.match(wrong, /^Noch nicht: Deine Auswahl passt nicht zur Tukey-Tabelle/);
+  assert.doesNotMatch(wrong, /A1|A2|B1|B2|4-2/);
   const d = withTukey([row(2, 1, 0.5), row(3, 1, 0.9), row(4, 1, 0.4), row(3, 2, 0.7), row(4, 2, 0.026), row(4, 3, 0.3)]);
-  assert.match(text(checkTukey(d, ['4-2']).notes), /^Stimmt: Nach Tukey unterscheidet sich nur B2 – A2 signifikant\.$/);
-  assert.ok(checkTukey(d, ['4-2']).correct);
-  assert.match(text(checkTukey(d, ['4-1']).notes), /B2 – A1 ist nach Tukey nicht signifikant.*Es fehlt noch ein signifikantes Paar/);
-  assert.match(text(checkTukey(d, ['none']).notes), /Mindestens ein Paar/);
-  assert.match(text(checkTukey({ ...c, tukey: { online: null, onlineW: null } }, ['4-2']).notes), /zu wenige Fälle/);
+  assert.match(text(checkTukey(d, tried(['4-2'])).notes), /^Stimmt: Nach Tukey unterscheidet sich nur B2 – A2 signifikant\.$/);
+  assert.ok(tukeyDone(d, tried(['4-2'])));
+  for (const marks of [['4-1'], ['4-2', '4-1'], ['none']] as TukeyKey[][]) {
+    const res = checkTukey(d, tried(marks));
+    assert.ok(!res.correct, marks.join());
+    assert.doesNotMatch(text(res.notes), /A1|A2|B1|B2/, marks.join());
+  }
+  assert.match(text(checkTukey({ ...c, tukey: { online: null, onlineW: null } }, tried(['4-2'])).notes), /zu wenige Fälle/);
+  assert.deepEqual(tryTukey(state({ tukey: ['4-2', '3-1'] })).tukeyTried, ['4-2', '3-1']);
 });
 
 test('the balance check reads marks against the matrix without numbers before the reveal', () => {
@@ -177,8 +230,9 @@ test('the balance check reads marks against the matrix without numbers before th
   const verdict = (id: string) => read.find(x => x.pair === id)!.verdict;
   assert.deepEqual(['wiederholung-papier', 'betrag-papier', 'wiederholung-age', 'betrag-age', 'papier-age', 'age-zusage'].map(verdict), ['verletzt', 'hält', 'verletzt', 'übersehen', 'kein Loscheck', 'kein Loscheck']);
   const notes = markNotes(c, ['wiederholung-papier', 'betrag-papier', 'papier-age'], m).join(' ');
-  assert.match(notes, /wiederholung × papier: r = −0,580\. Du hast richtig erwartet/);
+  assert.match(notes, /wiederholung × papier: r = −0,580\. Du hast richtig erwartet, dass hier bei echter Auslosung ≈ 0 stehen müsste – über beide Modi hinweg war die Fassung also nicht ausgelost\./);
   assert.match(notes, /wiederholung × age: r = −0,200\. Hier hätte bei echter Auslosung ≈ 0 stehen müssen/);
+  assert.doesNotMatch(notes, /Los ist verletzt/);
   assert.match(notes, /betrag × papier: r = −0,020, hält\./);
   assert.match(notes, /betrag × age \(r = 0,000\) hättest du markieren können/);
   assert.match(notes, /wiederholung × betrag .*ungleich groß/);
@@ -214,6 +268,18 @@ test('release questions: highest bar, span, interval, pooled rate and the gut fe
   assert.match(text(checkRelease(d, rel({ version: 'B2', rate: '72' }), both)), /Wie breit ist dein Intervall/);
   assert.match(text(checkRelease(d, rel({ version: 'B2', rate: '72', low: '76', high: '68' }), both)), /vertauscht/);
   assert.match(text(checkRelease(d, rel({ version: 'B2', rate: '80', low: '68', high: '76' }), both)), /außerhalb deiner eigenen Spanne.*Zum Vergleich: B2 online, ungewichtet: 72,2 % \[67,7; 76,7\].*über der oberen Grenze/);
+  // Ohne eigene vier Quoten gibt es das Intervall nur, wenn die Spanne selbst das Intervall aus t_test() ist.
+  const noMeans = { meansDone: false, tukeyDone: false };
+  for (const [low, high] of [['0', '2'], ['68', '76'], ['1', '99']]) {
+    const t = text(checkRelease(d, rel({ version: 'B2', rate: '72', low, high }), noMeans));
+    assert.doesNotMatch(t, /Zum Vergleich|72,2|67,7|76,7|Grenze|schmaler/, `${low}–${high}`);
+    assert.match(t, /Woran misst du deine Spanne\?/);
+  }
+  for (const [low, high] of [['67,7', '76,7'], ['0.677', '0.767'], ['67.7', '76.7']]) {
+    const t = text(checkRelease(d, rel({ version: 'B2', rate: '80', low, high }), noMeans));
+    assert.match(t, /Das ist das 95-%-Intervall aus t_test\(\) für B2 online \(ungewichtet, n = 400\)\..*über der oberen Grenze/, `${low}–${high}`);
+    assert.doesNotMatch(t, /Zum Vergleich/);
+  }
   assert.match(text(checkRelease(d, rel({ version: 'B2', rate: '60', low: '58', high: '62' }), both)), /unter der unteren Grenze.*schmaler als die Hälfte/);
   assert.doesNotMatch(text(checkRelease(d, rel({ version: 'B2', rate: '72', low: '68', high: '76' }), both)), /Grenze|schmaler|Papier/);
   assert.match(text(checkRelease(d, rel({ version: 'B2', rate: '72', low: '68', high: '76' }, { gut: { version: 'A2', rate: '80' } }), both)), /Bauchgefühl vorher: A2 mit 80 %/);
@@ -236,6 +302,12 @@ test('state: defensive parse, locked marks, Tukey exclusivity, release resets, s
     anova: { means: ['1', '', '', ''], F: '', p: '' },
   });
   assert.equal(parseS06({ locked: true, marks: [] }).locked, false);
+  assert.deepEqual(parseS06({ tukeyTried: ['4-2', 'y'] }).tukeyTried, ['4-2']);
+  assert.equal(parseS06({ tukeyTried: 'x' }).tukeyTried, null);
+  // Bauchgefühl: fest, sobald eine Zahl aus Station 1 erkannt ist (auch als falsche Gruppe erkannt), nicht bei Unsinn
+  assert.equal(gutLocked(c, initialS06()), false);
+  assert.equal(gutLocked(c, state({ s1: { rep: { a: '99,9', b: '', t: '' }, amt: { a: '', b: '', t: '' } } })), false);
+  assert.equal(gutLocked(c, state({ s1: { rep: { a: '', b: '', t: '' }, amt: { a: pctIn(share('all', 'amt', 5)), b: '', t: '' } } })), true);
   assert.equal(parseS06({ because: 'x'.repeat(900) }).because.length, 600);
   assert.equal(PAIR_IDS.length, 10);
   const marked = toggleMark(initialS06(), 'wiederholung-papier');
@@ -281,15 +353,28 @@ test('reveals wait for recognised own values', () => {
   assert.ok(matrixReady(c, state({ marks: ['wiederholung-papier'], locked: true, r })));
   assert.ok(!matrixReady(c, state({ marks: ['wiederholung-papier'], locked: false, r })));
   assert.ok(!matrixReady(c, state({ marks: ['wiederholung-papier'], locked: true, r: { ...r, amtPaper: '0,999' } })));
+  // Werte anderer Zellen (erkannt, aber falsche Zelle) öffnen die Matrix nicht; die gewichtete Zelle schon.
+  assert.ok(!matrixReady(c, state({ marks: ['wiederholung-papier'], locked: true, r: { repPaper: rOf('age-zusage'), amtPaper: rOf('papier-zusage') } })));
+  const rw = (pair: string) => propIn(c.rs.find(v => v.pair === pair && v.scope === 'all' && v.weighted)!.value);
+  assert.ok(matrixReady(c, state({ marks: ['wiederholung-papier'], locked: true, r: { repPaper: rw('wiederholung-papier'), amtPaper: rw('betrag-papier') } })));
   const f = c.fs.find(v => v.scope === 'online' && v.kind === 'classical' && !v.weighted)!;
   const welch = c.fs.find(v => v.scope === 'online' && v.kind === 'welch' && !v.weighted)!;
-  assert.ok(weightedReady(c, state({ anova: { means: ['', '', '', ''], F: propIn(f.value), p: '' } })));
-  assert.ok(weightedReady(c, state({ anova: { means: ['', '', '', ''], F: '', p: propIn(f.p) } })));
-  assert.ok(!weightedReady(c, state({ anova: { means: ['', '', '', ''], F: propIn(welch.value), p: '0,999' } })));
+  assert.ok(anovaDone(c, state({ anova: { means: ['', '', '', ''], F: propIn(f.value), p: '' } })));
+  assert.ok(anovaDone(c, state({ anova: { means: ['', '', '', ''], F: '', p: propIn(f.p) } })));
+  assert.ok(!anovaDone(c, state({ anova: { means: ['', '', '', ''], F: propIn(welch.value), p: '0,999' } })));
   const notes = weightedNotes(c).join(' ');
   assert.match(notes, /Ungewichtet: F\(3, 10\) = 0,238, p = 0,868\. Mit wghtpew: F\(3, 9\) = 0,201, p = 0,893\./);
   assert.match(notes, /Signifikanz bleibt/);
-  assert.match(notes, /Tukey gewichtet: kein Paar signifikant/);
+  // Station 3a und Tukey bleiben verborgen, bis die eigenen Werte stehen.
+  assert.doesNotMatch(notes, /Wiederholung online|Betrag online|Tukey gewichtet/);
+  const withRep = weightedNotes(c, { rep: true, amt: false, tukey: false }).join(' ');
+  assert.match(withRep, /Wiederholung online: ungewichtet .* gewichtet /);
+  assert.doesNotMatch(withRep, /Betrag online|Tukey/);
+  assert.match(weightedNotes(c, { rep: false, amt: true, tukey: true }).join(' '), /Betrag online.*Tukey gewichtet: kein Paar signifikant/);
+  assert.equal(anovaDone(c, state({ anova: anovaIn() })), true);
+  assert.equal(computeFor(fixtureSav()) === computeFor(fixtureSav()), false);   // neue Datei, neue Rechnung
+  const sav = fixtureSav();
+  assert.equal(computeFor(sav), computeFor(sav));
 });
 
 test('R code: mariposa style, runnable per station, full script with the chosen version', () => {

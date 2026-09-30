@@ -24,7 +24,7 @@ export function MatrixMarks({ marks, locked, onToggle }: { marks: PairId[]; lock
   </div>;
 }
 
-const VERDICT: Record<ReturnType<typeof readMarks>[number]['verdict'], string> = { hält: 'hält', verletzt: 'Los verletzt', übersehen: 'nicht markiert', 'kein Loscheck': '' };
+const VERDICT: Record<ReturnType<typeof readMarks>[number]['verdict'], string> = { hält: 'hält', verletzt: '≠ 0 – über die Modi nicht ausgelost', übersehen: 'nicht markiert', 'kein Loscheck': '' };
 
 /** Nach der Rechnung: die Matrix aus der Datei, deine Markierung eingezeichnet. */
 export function MatrixReveal({ m, marks, weighted }: { m: CorMatrix; marks: PairId[]; weighted: boolean }) {
@@ -38,9 +38,10 @@ export function MatrixReveal({ m, marks, weighted }: { m: CorMatrix; marks: Pair
         {cols.map((c, ci) => {
           if (ci > ri) return <td key={c} />;
           const pair = pairAt(ri + 1, ci), x = readings.find(y => y.pair === pair.id)!;
-          const alpha = Math.min(0.85, Math.abs(x.r) * 1.3);
+          // Höchstens 45 % Deckung: Die Schrift bleibt dunkel und hat auf jeder Zelle mindestens 4,5 : 1 Kontrast.
+          const alpha = Math.min(0.45, Math.abs(x.r) * 0.75);
           return <td key={c} className={`${x.marked ? 'marked' : ''} ${x.verdict === 'verletzt' ? 'broken' : ''}`}
-            style={{ background: `rgba(70, 82, 96, ${Number.isFinite(alpha) ? alpha : 0})`, color: alpha > 0.45 ? '#fff' : undefined }}>
+            style={{ background: `rgba(40, 50, 62, ${Number.isFinite(alpha) ? alpha : 0})` }}>
             <span>{de(x.r, 3)}</span>{(x.marked || VERDICT[x.verdict]) && <small>{[x.marked ? 'markiert' : '', VERDICT[x.verdict]].filter(Boolean).join(' · ')}</small>}
           </td>;
         })}

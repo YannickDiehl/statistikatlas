@@ -49,26 +49,26 @@ library(mariposa)   # zuletzt laden: haven würde sonst read_spss() überdecken
 allbus <- read_spss(file.choose())   # ZA8831_v1-3-0.sav`;
 
 export const R_S1 = `# Station 1 · Erste Auswertung: Im Experiment waren nur die Selbstausfüller:innen (online und Papier)
-exp <- allbus %>%
+experiment <- allbus %>%
   filter(mode != 2) %>%
   mutate(
     zusage       = rec(xr21, rules = "1=1 [ja]; 2=0 [nein]; else=NA"),
     betrag       = rec(splt23_3, rules = "1:2=5 [5 Euro]; 3:4=10 [10 Euro]; else=NA"),
     wiederholung = rec(splt23_3, rules = "1=0 [ohne]; 3=0 [ohne]; 2=1 [mit]; 4=1 [mit]; else=NA")
   )
-exp %>% t_test(zusage, group = wiederholung) %>% summary()
-exp %>% t_test(zusage, group = betrag) %>% summary()`;
+experiment %>% t_test(zusage, group = wiederholung) %>% summary()
+experiment %>% t_test(zusage, group = betrag) %>% summary()`;
 
 export const R_S2 = `# Station 2 · Zufallscheck: Was hängt mit der Fassung zusammen, obwohl das Los es nicht dürfte?
-exp <- exp %>%
+experiment <- experiment %>%
   mutate(papier = rec(mode, rules = "3=0 [online]; 4=1 [Papier]; else=NA"))
-exp %>% pearson_cor(wiederholung, betrag, papier, age, zusage) %>%
+experiment %>% pearson_cor(wiederholung, betrag, papier, age, zusage) %>%
   summary(pvalue_matrix = FALSE, n_matrix = FALSE)
-exp %>% crosstab(splt23_3, mode, percentages = "none") %>% summary()   # Wer bekam welche Fassung?`;
+experiment %>% crosstab(splt23_3, mode, percentages = "none") %>% summary()   # Wer bekam welche Fassung?`;
 
 export const R_S3A = `# Station 3 · Der saubere Vergleich: nur online – so befragt das Institut
 # (kein group_by(mode) vor t_test(): auf Papier gibt es kein „mit“, mariposa bricht dann ab)
-online <- exp %>% filter(mode == 3)
+online <- experiment %>% filter(mode == 3)
 online %>% t_test(zusage, group = wiederholung) %>% summary()
 online %>% t_test(zusage, group = betrag) %>% summary()`;
 
@@ -93,15 +93,15 @@ export const hints: Record<'s1' | 's2' | 's3a' | 's3b' | 's4', Hint> = {
     pointer: 'filter(mode != 2) behält online (3) und Papier (4). rec() mit else=NA macht aus xr21 eine 0/1-Variable – ihr Mittelwert ist der Anteil der Ja-Antworten. t_test(zusage, group = …) vergleicht zwei Gruppen; summary() zeigt beide Mittelwerte, die Differenz und das Intervall.',
     concept: { id: 't_test', label: 't-Test' },
     workshop: WORKSHOP,
-    scaffold: `exp <- allbus %>%
+    scaffold: `experiment <- allbus %>%
   filter(mode != ___) %>%
   mutate(
     zusage       = rec(xr21, rules = "1=___ [ja]; 2=___ [nein]; else=NA"),
     betrag       = rec(splt23_3, rules = "1:2=5 [5 Euro]; ___=10 [10 Euro]; else=NA"),
     wiederholung = rec(splt23_3, rules = "1=0 [ohne]; 3=0 [ohne]; ___=1 [mit]; ___=1 [mit]; else=NA")
   )
-exp %>% t_test(zusage, group = ___) %>% summary()
-exp %>% t_test(zusage, group = ___) %>% summary()`,
+experiment %>% t_test(zusage, group = ___) %>% summary()
+experiment %>% t_test(zusage, group = ___) %>% summary()`,
     solution: `${R_SETUP}\n\n${R_S1}`,
   },
   s2: {
@@ -109,9 +109,9 @@ exp %>% t_test(zusage, group = ___) %>% summary()`,
     pointer: 'pearson_cor() mit mehreren Variablen liefert eine Matrix. Jede Zelle nutzt alle Fälle, bei denen beide Variablen gültig sind (paarweises n). Für papier bildest du mit rec() aus mode eine 0/1-Variable.',
     concept: { id: 'correlation_matrix', label: 'Korrelationsmatrix' },
     workshop: '7 Bivariate Analyse (Korrelation)',
-    scaffold: `exp <- exp %>%
+    scaffold: `experiment <- experiment %>%
   mutate(papier = rec(mode, rules = "3=___ [online]; 4=___ [Papier]; else=NA"))
-exp %>% pearson_cor(wiederholung, betrag, ___, age, zusage) %>%
+experiment %>% pearson_cor(wiederholung, betrag, ___, age, zusage) %>%
   summary(pvalue_matrix = FALSE, n_matrix = FALSE)`,
     solution: `${R_SETUP}\n\n${R_S1}\n\n${R_S2}`,
   },
@@ -120,7 +120,7 @@ exp %>% pearson_cor(wiederholung, betrag, ___, age, zusage) %>%
     pointer: 'filter(mode == 3) behält nur die Online-Befragten. Kein group_by(mode) vor t_test(): Auf Papier gibt es kein „mit“, dann bricht mariposa mit einer unverständlichen Meldung ab.',
     concept: { id: 'confounding', label: 'Confounding' },
     workshop: WORKSHOP,
-    scaffold: `online <- exp %>% filter(mode == ___)
+    scaffold: `online <- experiment %>% filter(mode == ___)
 online %>% t_test(zusage, group = ___) %>% summary()
 online %>% t_test(zusage, group = ___) %>% summary()`,
     solution: `${R_SETUP}\n\n${R_S1}\n\n${R_S3A}`,

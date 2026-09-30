@@ -14,7 +14,7 @@ export function TTestFields({ id, legend, labels, entry, onChange, notes, diff }
     <div className="task-grid">
       <label>{labels[0]}<input type="text" inputMode="decimal" maxLength={12} value={entry.a} onChange={e => set({ a: e.target.value })} /></label>
       <label>{labels[1]}<input type="text" inputMode="decimal" maxLength={12} value={entry.b} onChange={e => set({ b: e.target.value })} /></label>
-      <label>t (Welch)<input type="text" inputMode="decimal" maxLength={12} value={entry.t} onChange={e => set({ t: e.target.value })} /></label>
+      <label>t (Welch) – zur Kontrolle, freiwillig<input type="text" inputMode="decimal" maxLength={12} value={entry.t} onChange={e => set({ t: e.target.value })} /></label>
     </div>
     <Feedback notes={notes} />
     {diff && <p className="s06-own">{diff}</p>}
@@ -22,9 +22,9 @@ export function TTestFields({ id, legend, labels, entry, onChange, notes, diff }
 }
 
 /** Die vier Fassungen als Auswahl. */
-export function VersionChips({ value, onChange, label }: { value: VersionId | ''; onChange: (v: VersionId) => void; label: string }) {
+export function VersionChips({ value, onChange, label, disabled = false }: { value: VersionId | ''; onChange: (v: VersionId) => void; label: string; disabled?: boolean }) {
   return <div className="sandbox-chips" role="group" aria-label={label}>
-    {VERSIONS.map(v => <button key={v.id} aria-pressed={value === v.id} onClick={() => onChange(v.id)}>{v.id}</button>)}
+    {VERSIONS.map(v => <button key={v.id} disabled={disabled} aria-pressed={value === v.id} onClick={() => onChange(v.id)}>{v.id}</button>)}
   </div>;
 }
 
@@ -63,19 +63,23 @@ export function TrapChart({ trap, view, onView }: { trap: Trap; view: 'all' | 'o
   </figure>;
 }
 
+/** p wie in mariposas Tukey-Tabelle: ohne führende Null, sehr kleine Werte als „< ,001“. */
+const tukeyP = (p: number | undefined) => (p === undefined || !Number.isFinite(p) ? 'n. b.' : p < 0.001 ? '< ,001' : de(p, 3).replace(/^0/, ''));
+
 /** Tukey-Paare wie in summary(); nach der zweiten Enthüllung mit der gewichteten Spalte. */
 export function TukeyTable({ rows, weighted }: { rows: TukeyRow[]; weighted: TukeyRow[] | null }) {
   const wp = (r: TukeyRow) => weighted?.find(x => (x.a === r.a && x.b === r.b) || (x.a === r.b && x.b === r.a))?.p;
+  const missing = weighted !== null && rows.some(r => !Number.isFinite(wp(r) ?? NaN));
   return <div className="s04-scroll" tabIndex={0} role="region" aria-label="Tukey-Paarvergleiche">
     <table className="s06-table">
-      <caption>Tukey-Paarvergleiche nur online (Differenz in Prozentpunkten, mariposa-Zeile in Klammern)</caption>
+      <caption>Tukey-Paarvergleiche nur online (Differenz in Prozentpunkten, mariposa-Zeile in Klammern){missing ? '. n. b. = mit Gewicht nicht berechenbar (zu wenige Fälle in einer Fassung).' : ''}</caption>
       <thead><tr><th scope="col">Paar</th><th scope="col">Differenz</th><th scope="col">95-%-Intervall</th><th scope="col">p (Tukey)</th>{weighted && <th scope="col">p gewichtet</th>}</tr></thead>
       <tbody>{rows.map(r => <tr key={r.label} className={r.p < 0.05 ? 's06-sig' : ''}>
         <th scope="row">{versionPair(r.label as TukeyKey)} <small>({r.label})</small></th>
         <td>{pp(r.diff)}</td>
         <td>[{de(100 * r.lower, 1)}; {de(100 * r.upper, 1)}]</td>
-        <td>{de(r.p, 3)}</td>
-        {weighted && <td>{de(wp(r) ?? NaN, 3)}</td>}
+        <td>{tukeyP(r.p)}</td>
+        {weighted && <td>{tukeyP(wp(r))}</td>}
       </tr>)}</tbody>
     </table>
   </div>;

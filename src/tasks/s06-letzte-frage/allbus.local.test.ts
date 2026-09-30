@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readSav } from '../../sandbox/readSav';
-import { checkF, checkP, checkR, checkShare, checkT, checkTukey, compute, prepare, signedEffect, trap, type Computed, type Scope } from './domain';
+import { checkAmount, checkF, checkP, checkR, checkShare, checkT, checkTukey, compute, initialS06, prepare, signedEffect, trap, type Computed, type Scope } from './domain';
 
 const file = process.env.ALLBUS_SAV;
 const skip = !file && 'ALLBUS_SAV nicht gesetzt';
@@ -49,7 +49,9 @@ test('session 6: ANOVA and Tukey online, unweighted and weighted (spec 4.6)', { 
   const t = Object.fromEntries(c.tukey.online!.map(r => [r.label, r]));
   assert.deepEqual([r1(100 * t['4-2'].diff), r3(t['4-2'].p)], [9.6, 0.026]);
   assert.deepEqual([r1(100 * t['4-1'].diff), r3(t['4-1'].p), r1(100 * t['4-3'].diff), r3(t['4-3'].p)], [5.2, 0.395, 5.7, 0.338]);
-  assert.ok(checkTukey(c, ['4-2']).correct);
+  const tried = { ...initialS06(), anova: { means: ['', '', '', ''], F: '2.681', p: '' }, tukey: ['4-2' as const], tukeyTried: ['4-2' as const] };
+  assert.ok(checkTukey(c, tried).correct);
+  assert.ok(!checkTukey(c, { ...tried, tukey: ['4-1' as const], tukeyTried: ['4-1' as const] }).correct);
   // verzerrte ANOVA über alle Selbstausfüller:innen: F = 20,7, p < .001
   const pooled = c.fs.find(v => v.scope === 'all' && v.kind === 'classical' && !v.weighted)!;
   assert.deepEqual([r1(pooled.value), pooled.p < 0.001], [20.7, true]);
@@ -74,6 +76,16 @@ test('session 6: correlation matrix, cells and the amount = questionnaire half (
   assert.match(checkShare(c, { scope: 'online', grouping: 'rep', level: 0 }, '52,7').notes[0].text, /Gesucht ist hier: nur online/);
   assert.match(checkT(c, { scope: 'all', grouping: 'rep' }, '7,590').notes[0].text, /^Stimmt: Welch-t = 7,590.*„1 vs\. 0“/);
   assert.match(checkT(c, { scope: 'all', grouping: 'rep' }, '7,34').notes[0].text, /gleiche Varianzen/);
+  // so, wie R druckt: Dezimalpunkt (nicht als Tausenderpunkt gelesen)
+  assert.match(checkT(c, { scope: 'all', grouping: 'rep' }, '7.590').notes[0].text, /^Stimmt: Welch-t = 7,590/);
+  assert.match(checkT(c, { scope: 'all', grouping: 'amt' }, '-2.491').notes[0].text, /^Stimmt: Welch-t = −2,491/);
+  assert.match(checkT(c, { scope: 'online', grouping: 'amt' }, '-1.892').notes[0].text, /^Stimmt: Welch-t = −1,892/);
+  assert.match(checkF(c, '2.681').notes[0].text, /^Stimmt: F\(3, 1519\) = 2,681/);
+  assert.match(checkP(c, '0.046').notes[0].text, /^Stimmt: p = 0,046/);
+  assert.match(checkR(c, 'wiederholung-papier', '-0.583').notes[0].text, /^Stimmt/);
+  assert.match(checkShare(c, { scope: 'all', grouping: 'rep', level: 0 }, '0.527').notes[0].text, /^Stimmt/);
+  assert.match(checkShare(c, { scope: 'all', grouping: 'rep', level: 0 }, '1.473').notes[0].text, /Mittelwert über 1/);
+  assert.match(checkAmount(c, '-0.045').notes[0].text, /^Stimmt: 10 € statt 5 € bringen online \+4,5 Pp\./);
   // Quote je Fassung online mit Intervall (Einstichproben-t-Test): B2 72,2 % [67,8; 76,5]
   const b2 = c.rates[3]!;
   assert.deepEqual([r1(100 * b2.mean), r1(100 * b2.ci[0]), r1(100 * b2.ci[1]), b2.n], [72.2, 67.8, 76.5, 406]);
