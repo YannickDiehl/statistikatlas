@@ -74,7 +74,7 @@ export const sessions: Session[] = [
     question: 'Was sagt eine Gerade über politische Einstellungen?',
     repetition: [],
     introduced: [t('Lineare Regression', 'linear_regression'), t('Linearer Prädiktor', 'prediction'), t('Residuen & kleinste Quadrate', 'residuals'), t('Erklärter Varianzanteil · R²', 'explained_variance'), t('Gleiche Fehlervarianz', 'variance_assumption')],
-    task: null,
+    task: 's08',
   },
   {
     id: 9, plan: 'Sitzungsplan 11', title: 'Regression vertiefen', short: 'mehrere Prädiktoren',
