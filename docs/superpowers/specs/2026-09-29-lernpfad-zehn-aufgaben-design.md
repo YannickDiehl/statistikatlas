@@ -84,7 +84,7 @@ Die Konzeptdateien enthalten Rollenauftrag im Wortlaut, Minutenplan, vollständi
 - **Browser:** gewichtete Kreuztabellen beliebiger Größe, Cramér-V, Phi, Gamma, Tau-b, Spearman, Pearson; Prüfung der eingetragenen Werte; Enthüllung aller zwölf Kandidaten in allen Währungen; Zufallsvergleich für V (Permutationswert).
 - **Plenum/Partner:** Tafelraster mit zwölf Zeilen, dann Sortieren und Streiten. Partner: Analyst:in und Gegenleser:in des Fonds (zweite Währung, ungewichtet, Ost/West-Test, Veto gegen „Treiber“).
 - **Referenz (gewichtet):** Wirtschaftslage V .277, Tau-b .387, Gamma .544; Alter V .158 (Zufall ≈ .154), r West −.095 / Ost +.045, Gewichtung verdoppelt r (−.031 → −.059); Konfession Gamma je nach Reihenfolge +.147 / −.135 / −.043; Ost/West V .229 → .186 mit Gewicht, Gamma .350.
-- **Festgelegt:** `ps03` wird zuerst umgepolt (höher = zufriedener); `kendall_tau()` nach `unlabel()`, bis mariposa behoben ist; `pt03` bleibt als bewusst „zu guter“ Kandidat im Deck; Hinweis, dass `spearman_rho()` Gewichte nur zur Fallauswahl nutzt.
+- **Festgelegt:** `ps03` wird zuerst umgepolt (höher = zufriedener); `kendall_tau()` nach `unlabel()`, bis mariposa behoben ist; `pt03` bleibt als bewusst „zu guter“ Kandidat im Deck (13. Karte, „Joker“); Hinweis, dass `spearman_rho()` Gewichte nur zur Fallauswahl nutzt. Stempel-Regel (offengelegt): „kehrt sich um“, wenn die Landesteile verschiedene Vorzeichen haben (beide mindestens 0,03 vom Nullpunkt); „nur in einem Landesteil“, wenn ein Wert mindestens doppelt so groß ist wie der andere und der kleinere unter 0,1 liegt; „schrumpft“, wenn die Landesteile im Mittel unter 85 % des Gesamtwerts liegen; sonst „trägt“. Bei der Karte „West oder Ost“ ersetzt die Wirtschaftslage (gut/teils/schlecht) als Drittvariable den Ost/West-Test. Leitfrage der Sitzung: „Was hängt mit der Zufriedenheit mit der Demokratie zusammen?“
 
 ### 4.6 Sitzung 6 · Die letzte Frage
 
@@ -161,9 +161,9 @@ src/tasks/                     neu: die zehn Aufgaben
     domain.ts                  Prüf- und Diagnoselogik der Aufgabe
     Task.tsx (+ Teilkomponenten)
     *.test.ts
-src/sandbox/                   bleibt: readSav, allbus (Laden, Validierung), format, crosstab-Kern,
-                               Gegenfragen-Regeln (für Sitzung 4 angepasst); Werkbank, LiveTable,
-                               Mirror, Decompose, Verdict und die Missionen 3/5 entfallen
+src/sandbox/                   bleibt: readSav, allbus (Laden, Validierung), DataDrop, Testdaten; Vierfelder-
+                               Kern und Gegenfragen für Sitzung 4 liegen in s04-nenner-check (Stand Etappe 2);
+                               Werkbank, LiveTable, Mirror, Decompose, Verdict und alle Missionen entfallen
 src/domain/curriculum.ts       Session.mission → Session.task (s01 … s10)
 src/components/LearningPath.tsx rendert die Aufgabe der Sitzung
 ```

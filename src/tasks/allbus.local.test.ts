@@ -7,6 +7,9 @@ import { askedCount, findVar } from './s01-schon-gefragt/domain';
 import { S02_VARS, sheets } from './s02-datenerfassung/content';
 import { countCode, factorPosition, gradeCell, scanCode } from './s02-datenerfassung/domain';
 import { describeHours, diagnoseSeats, hoursFor, rawCounts, seatsFor, validCodes } from './s03-stuehle/domain';
+import { allTables, checkP1, denominators, fourfold, PARTY, percent, prepare as prepareS04, readings, stairs } from './s04-nenner-check/domain';
+import { cardById } from './s05-treiber/content';
+import { prepare as prepareS05, reveal, variants } from './s05-treiber/domain';
 
 const file = process.env.ALLBUS_SAV;
 const skip = !file && 'ALLBUS_SAV nicht gesetzt';
@@ -78,4 +81,35 @@ test('session 3: chairs per rule, diagnoses and hours match the concept', { skip
   assert.deepEqual([v.n, r1(v.mean), v.median, v.q1, v.q3, Math.round(v.skew * 100) / 100], [2172, 41.7, 40, 39, 44, 0.97]);
   const a = describeHours(hoursFor(sav, 'alle0'));
   assert.deepEqual([a.n, r1(a.mean), a.median], [5208, 21.4, 25]);
+});
+
+test('session 4: the 87 %, three denominators, 18 readings and the stairs match the concept', { skip }, () => {
+  const sav = load(), joint = prepareS04(sav), tables = allTables(joint);
+  const party = fourfold(joint, PARTY);
+  assert.deepEqual(party.n, { a: 127, b: 1829, c: 19, d: 810 });
+  assert.deepEqual([percent(party, 'a', 'col'), percent(party, 'a', 'row'), percent(party, 'c', 'row'), percent(party, 'a', 'all')].map(r1), [87, 6.5, 2.3, 4.6]);
+  assert.equal(r1(percent(fourfold(joint, { ...PARTY, weighted: true }), 'a', 'col')), 86.5);
+  assert.deepEqual(denominators(joint), { cell: 127, nonvoters: 146, distrusting: 1956, all: 2785 });
+  assert.match(checkP1(tables, joint, '87,0', '127')[0].text, /Genau so hat der Parteivorstand gerechnet/);
+  assert.match(checkP1(tables, joint, '3,2', '')[0].text, /Lies pe05 noch einmal/);
+  const rd = readings(joint).map(x => x.distrusting);
+  assert.deepEqual([r1(Math.min(...rd)), r1(Math.max(...rd))], [6.5, 29.2]);
+  const example = fourfold(joint, { item: 'pe05', distrust: [3, 4], nonvote: [-8], else0: false, weighted: false });
+  assert.deepEqual([r1(percent(example, 'a', 'row')), example.n.a, r1(percent(example, 'c', 'row'))], [21.5, 386, 11.7]);
+  assert.deepEqual(stairs(sav).map(x => r1(x.share)), [1.2, 4.4, 5.6, 8.8]);
+});
+
+test('session 5: measures per card, strata and the ranking match mariposa (ps03 reversed)', { skip }, () => {
+  const p = prepareS05(load());
+  const r3 = (x: number) => Math.round(x * 1000) / 1000;
+  const get = (id: keyof typeof cardById, measure: string, weighted: boolean, stratum = -1) =>
+    r3(variants(p, cardById[id]).find(v => v.measure === measure && v.weighted === weighted && v.stratum === stratum && v.reversed)!.value);
+  assert.deepEqual([get('ep01', 'V', true), get('ep01', 'gamma', true), get('ep01', 'gamma', false), get('ep01', 'tau', true), get('ep01', 'tau', false, 0), get('ep01', 'tau', false, 1)], [0.277, -0.544, -0.553, -0.387, -0.367, -0.436]);
+  assert.deepEqual([get('age', 'V', true), get('age', 'r', true), get('age', 'r', false), get('age', 'r', false, 0), get('age', 'r', false, 1)], [0.158, 0.059, 0.031, 0.095, -0.045]);
+  assert.deepEqual([get('eastwest', 'V', true), get('eastwest', 'V', false), get('eastwest', 'gamma', true)], [0.186, 0.229, -0.35]);
+  assert.deepEqual([get('konf', 'V', true), get('konf', 'gamma', true)], [0.105, -0.147]);
+  assert.equal(get('pt03', 'tau', true), 0.485);
+  const r = reveal(p);
+  assert.equal(r3(r.weighted.rp01.tau), -0.136);
+  assert.equal(r3(r.west.gs01.tau), -0.063);
 });
