@@ -134,3 +134,17 @@ test('entries typed as R prints them (dot decimals) open the automaton; the knob
   assert.match(html, /Die Knöpfe stehen auf dem Faulpelz/);
   assert.match(html, /Steigung 0,000<input/);
 });
+
+test('a question that cannot be estimated shows the explanation exactly once', async () => {
+  const { createElement } = await import('react');
+  const { renderToStaticMarkup } = await import('react-dom/server');
+  const { fakeSav } = await import('../../sandbox/testData');
+  const { Automat } = await import('./Automat');
+  const { NOT_ESTIMABLE } = await import('./domain');
+  const sav = fakeSav({ ps03: { values: [1, 2, 3, 4], missingFrom: -1 }, wghtpew: { values: [1, 1, 1, 1] }, pt03: { values: [4, 4, 4, 4], missingFrom: -1 } });
+  for (const typed of [{}, { a: '1,000', b: '0,500', r2: '0,100' }]) {
+    const html = renderToStaticMarkup(createElement(Automat, { data: { sav, fileName: 'x.sav', version: 'v1.3.0' }, state: { ...initialS08(), input: 'pt03', ...typed }, onChange: () => {}, onConcept: () => {} }));
+    assert.equal(html.split(NOT_ESTIMABLE).length - 1, 1, JSON.stringify(typed));
+    assert.doesNotMatch(html, /3 · Testen/);
+  }
+});

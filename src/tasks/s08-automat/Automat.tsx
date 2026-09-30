@@ -83,7 +83,7 @@ export function Automat({ data, state, onChange, onConcept }: TaskProps<S08State
           <label>Steigung<input type="text" inputMode="decimal" maxLength={12} value={state.b} onChange={e => set({ b: e.target.value })} /></label>
           <label>R²<input type="text" inputMode="decimal" maxLength={12} value={state.r2} onChange={e => set({ r2: e.target.value })} /></label>
         </div>
-        <Feedback notes={checkSetting(item, vars, setting)} />
+        {main && <Feedback notes={checkSetting(item, vars, setting)} />}
         <HintLadder key={`setting-${item.id}`} hint={{ ...hints.setting, workshop: WORKSHOP, scaffold: scaffoldSetting(item), solution: rSolution(item) }} onConcept={onConcept} file="automat.R" />
       </section>
 

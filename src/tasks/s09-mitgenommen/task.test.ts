@@ -133,3 +133,14 @@ test('entries typed as R prints them open the tables and the plenum card shows n
   assert.match(html, new RegExp(`<dt>B Ost→West</dt><dd>${f3(m4.b[2])}</dd>`));
   assert.doesNotMatch(html, /noch nicht geprüft/);
 });
+
+test('with only consequence controls, the off-text counter-question gives no main-model numbers before the own table', () => {
+  // „ohne diese Kontrolle“ ist hier das Hauptmodell selbst
+  const cm = models({ outcome: 'rev', ref: 4, controls: ['di08c'], weighted: true })!;
+  const state = { ref: 4, controls: ['di08c'], cmodel: entry(cm, false), offText: 'Wer umzieht, bleibt etwa so zufrieden wie die West-Bleibenden, in den Osten wie in den Westen.' };
+  const hidden = render(state);
+  assert.match(hidden, /Einkommen heute kontrolliert – das kann eine Folge des Umzugs sein\.<\/li>/);
+  assert.doesNotMatch(hidden, /Ohne diese Kontrolle/);
+  for (const n of [f3(m4.c), f3(m4.b[1]), f3(m4.b[2]), f3(m4.b[3]), m4.b[2].toFixed(2).replace('.', ','), m4.b[3].toFixed(2).replace('.', ',')]) assert.doesNotMatch(hidden, new RegExp(n), n);
+  assert.match(render({ ...state, model: entry(m4) }), /Ohne diese Kontrolle: Ost→West /);
+});

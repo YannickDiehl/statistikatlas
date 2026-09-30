@@ -72,12 +72,12 @@ export const WORKSHOP = '11 Regression vertiefen (Dummies, Kontrollen, Interakti
 export const hints = {
   model: {
     think: 'Vier Gruppen: Wie viele 0/1-Variablen brauchst du, damit jede Gruppe erkennbar ist? Woran erkennt man die Gruppe, bei der alle null sind?',
-    pointer: 'to_dummy(dg03) legt einmal alle vier Dummies an (dg03_1 … dg03_4). Ins Modell kommen drei – die weggelassene Gruppe ist die Referenz. Nie alle vier zugleich: Dummyfalle.',
+    pointer: 'to_dummy() legt einmal für jede der vier Gruppen eine 0/1-Variable an (dg03_1 … dg03_4). Ins Modell kommen drei – die weggelassene Gruppe ist die Referenz. Nie alle vier zugleich: Dummyfalle.',
     concept: { id: 'dummy', label: 'Dummyvariablen' },
   },
   controls: {
     think: 'Was stand fest, bevor jemand umzog? Nur solche Merkmale können gemeinsame Ursache von Umzug und Zufriedenheit sein.',
-    pointer: 'crosstab(dg03, abi, percentages = "row", weights = wghtpew) zeigt, wer umzieht. Kontrollen nimmst du mit + ins Modell auf. Wird die Formel sehr lang (über 60 Zeichen), bricht summary() in mariposa 0.7.3 mit „length = 2 in coercion to logical(1)“ ab – speichere das Modell dann und lass dir as.data.frame(modell$coef_table) zeigen.',
+    pointer: 'crosstab() zeigt, wer umzieht – mit Zeilenprozenten (Argument percentages) und Gewicht. Kontrollen nimmst du mit + ins Modell auf. Wird die Formel sehr lang (über 60 Zeichen), bricht summary() in mariposa 0.7.3 mit „length = 2 in coercion to logical(1)“ ab – speichere das Modell dann und lass dir as.data.frame(modell$coef_table) zeigen.',
     concept: { id: 'confounding', label: 'Confounding · gemeinsame Ursachen' },
   },
   counter: {
@@ -87,7 +87,7 @@ export const hints = {
   },
   interaction: {
     think: 'Zwei Merkmale: im Osten aufgewachsen (ostjugend) und im Osten wohnend (ost). Die Ost-Bleibenden haben beide. Ist ihre Lücke mehr als die Summe der beiden einzelnen?',
-    pointer: 'ost * ostjugend schreibt ost + ostjugend + ost:ostjugend. Der Interaktionskoeffizient steht in der Zeile ost:ostjugend.',
+    pointer: 'Ein * zwischen zwei Variablen schreibt R als beide Einzeleffekte plus ihre Interaktion. Den Interaktionskoeffizienten findest du in der Zeile mit dem Doppelpunkt.',
     concept: { id: 'interaction', label: 'Interaktion' },
   },
 };

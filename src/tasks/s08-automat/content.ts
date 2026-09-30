@@ -78,12 +78,12 @@ export const WORKSHOP = '10 Lineare Regression';
 export const hints = {
   setting: {
     think: 'Der Automat braucht zwei Zahlen: die Anzeige bei Eingabe 0 und die Änderung pro Stufe. Beide stehen in der Koeffiziententabelle (Spalte B). Und was bedeutet bei ps03 die 1?',
-    pointer: 'Mit rec(ps03, rules = "rev") polst du um (höher = zufriedener), linear_regression(y ~ x, weights = wghtpew) stellt den Automaten ein; R² steht unter „Model Summary“.',
+    pointer: 'Umpolen geht mit rec() und der passenden Regel (wie in Sitzung 5). linear_regression() mit Gewicht stellt den Automaten ein: Konstante und Steigung stehen in Spalte B, R² unter „Model Summary“.',
     concept: { id: 'linear_regression', label: 'Lineare Regression' },
   },
   spread: {
     think: 'Residuum = Antwort minus Anzeige. Vergleiche seine Streuung je Eingabewert: Wo liegt der Automat typischerweise weiter daneben?',
-    pointer: 'mutate() bildet anzeige und daneben, describe(daneben, weights = wghtpew, show = c("mean", "sd")) nach group_by() der Eingabe zeigt die SD je Stufe; levene_test() prüft, ob die Streuungen gleich sind.',
+    pointer: 'mutate() bildet die Anzeige und das Residuum; describe() nach group_by() der Eingabe zeigt Mittelwert und SD je Stufe (Gewicht nicht vergessen). levene_test() prüft, ob die Streuungen gleich sind.',
     concept: { id: 'variance_assumption', label: 'Gleiche Fehlervarianz' },
   },
 };

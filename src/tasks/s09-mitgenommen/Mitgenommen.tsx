@@ -36,7 +36,8 @@ export function Mitgenommen({ data, state, onChange, onConcept }: TaskProps<S09S
   const selOk = selectionRecognised(sel, state.abi);
   const wob = useMemo(() => (modelOk && main ? wobbleTest(main) : null), [modelOk, main]);
   const consequences = state.controls.filter(id => CONTROLS.find(c => c.id === id)!.consequence);
-  const without = ref && controlledOk && consequences.length ? models({ outcome: 'rev', ref, controls: state.controls.filter(c => !consequences.includes(c)), weighted: true }) : null;
+  // „Ohne diese Kontrolle“ kann das Hauptmodell selbst sein (nur Folge-Kontrollen angekreuzt) – deshalb erst nach der eigenen Tabelle.
+  const without = ref && modelOk && controlledOk && consequences.length ? models({ outcome: 'rev', ref, controls: state.controls.filter(c => !consequences.includes(c)), weighted: true }) : null;
   const effect = ref && controlledOk ? controlEffect(models, ref, state.controls) : null;
   const pair = state.mode === 'pair';
   const tag = (who: string) => (pair ? ` · ${who}` : '');
