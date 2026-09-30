@@ -59,8 +59,11 @@ const roundTo = (v: number, d: number) => Math.round(v * 10 ** d) / 10 ** d;
  *  außer R druckt die Zahl kürzer, weil describe() Nullen am Ende weglässt (1,300 → „1.3“). */
 export function matchReading(value: number, input: string, minDecimals = 2, printed = 3): Reading | null {
   if (!Number.isFinite(value)) return null;
-  for (const r of numberReadings(input)) {
-    if (r.decimals >= minDecimals ? Math.abs(value - r.x) <= halfUnit(r.decimals) : Math.abs(roundTo(value, printed) - r.x) <= 1e-9) return r;
+  const rs = numberReadings(input);
+  for (const [k, r] of rs.entries()) {
+    if (r.decimals >= minDecimals ? Math.abs(value - r.x) <= halfUnit(r.decimals)
+      // weggelassene Nullen am Ende gibt es nur bei der Lesart aus R (der ersten), nicht beim deutschen Tausenderpunkt
+      : k === 0 && Math.abs(roundTo(value, printed) - r.x) <= 1e-9) return r;
   }
   return null;
 }
