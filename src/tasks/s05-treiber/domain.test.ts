@@ -11,7 +11,7 @@ const p = prepare(fixtureSav());
 const ep01 = cardById.ep01, vars = variants(p, ep01);
 const value = (measure: string, weighted: boolean, stratum = -1, reversed = true) =>
   vars.find(v => v.measure === measure && v.weighted === weighted && v.stratum === stratum && v.reversed === reversed)!.value;
-const fmt = (x: number) => x.toFixed(3).replace('.', ',');
+const fmt = (x: number) => x.toFixed(3).replace('.', ',').replace('-', '−');
 
 test('reverses ps03, recodes cards like rec() and groups the economy as a third variable', () => {
   const sav = fakeSav({

@@ -143,6 +143,7 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
       {rev && <section className="task-step">
         <h3>7 · Die Rangliste in vier Währungen</h3>
         <p>So stehen alle Kandidaten aus deiner Datei da – jede Spalte ist eine andere Währung. Deine Karte ist hervorgehoben.</p>
+        <p className="sandbox-note">Cramér-V hat kein Vorzeichen (0 bis 1); Gamma, Tau-b und r zeigen die Richtung. Die Plätze richten sich nach dem Betrag.</p>
         <div className="sandbox-chips" role="group" aria-label="Ansicht">
           {VIEWS.map(v => <button key={v} aria-pressed={state.view === v} onClick={() => set({ view: v })}>{VIEW_LABELS[v]}</button>)}
         </div>

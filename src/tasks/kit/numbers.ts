@@ -11,6 +11,7 @@ export function parseNumber(input: string): number | null {
 
 export const near = (value: number, target: number, tolerance: number) => Math.abs(value - target) <= tolerance + 1e-9;
 
+/** Deutsche Schreibweise mit echtem Minuszeichen (−0,350 statt -0,350); nicht berechenbare Werte als „–“. */
 export const de = (x: number, digits = 1) => Number.isFinite(x)
-  ? x.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits })
+  ? x.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits }).replace('-', '−')
   : '–';

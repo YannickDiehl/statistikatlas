@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { HintLadder } from './HintLadder';
-import { near, parseNumber } from './numbers';
+import { de, near, parseNumber } from './numbers';
 import { PlenumCard, plenumMarkdown } from './PlenumCard';
 import { RBlock } from './RBlock';
 import { emptyTaskStore, oneOf, parseTaskStore, str, strList } from './storage';
@@ -46,4 +46,12 @@ test('hint ladder starts closed and the plenum card lists its lines', () => {
   assert.match(card, /2 von 4/);
   assert.equal(plenumMarkdown('T', [['A', '1'], ['B', '']]), '# T\n\n- **A:** 1\n- **B:** –\n');
   assert.match(renderToStaticMarkup(createElement(RBlock, { code: 'library(mariposa)', file: 'x.R' })), /library\(mariposa\)/);
+});
+
+test('de() writes German numbers with a true minus sign that parseNumber reads back', () => {
+  assert.equal(de(-0.35, 3), '−0,350');
+  assert.equal(de(0.186, 3), '0,186');
+  assert.equal(de(1234.5), '1.234,5');
+  assert.equal(de(Number.NaN), '–');
+  assert.equal(parseNumber(de(-0.35, 3)), -0.35);
 });

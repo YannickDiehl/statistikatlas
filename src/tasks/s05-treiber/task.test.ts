@@ -30,6 +30,7 @@ test('a drawn card opens the steps; the ranking waits for value, stamp and sente
   assert.doesNotMatch(render({ ...entry, value: 'x' }), /Rangliste in vier Währungen/);
   const ready = render(entry);
   assert.match(ready, /7 · Die Rangliste in vier Währungen/);
+  assert.match(ready, /Cramér-V hat kein Vorzeichen \(0 bis 1\); Gamma, Tau-b und r zeigen die Richtung\. Die Plätze richten sich nach dem Betrag\./);
   assert.match(ready, /Rangliste gewichtet: Cramér-V Platz 1/);
   assert.match(ready, /8 · Empfehlung an den Fonds/);
 });
