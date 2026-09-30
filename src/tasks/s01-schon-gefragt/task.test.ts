@@ -20,10 +20,10 @@ test('session 1 shows the task: file first, then handshake, four ideas and the p
 });
 
 test('the rail shows running and finished status for session 1', () => {
-  const running = renderSession(0, true, undefined, { tasks: { s01: { cases: '5246' } } });
+  const running = renderSession(0, true, { tasks: { s01: { cases: '5246' } } });
   assert.match(running, /Einstieg<small>Aufgabe läuft<\/small>/);
   const stamp = (decision: 'take' | 'ask', extra: object) => ({ decision, variable: '', lowest: '', asked: '', searches: [], note: '', ...extra });
-  const done = renderSession(0, true, undefined, { tasks: { s01: { stamps: {
+  const done = renderSession(0, true, { tasks: { s01: { stamps: {
     horoskop: stamp('take', { variable: 'rh08b' }), gefluechtete: stamp('ask', { searches: ['angst', 'fluecht'] }),
     politik: stamp('take', { variable: 'pt03' }), einsamkeit: stamp('ask', { searches: ['einsam', 'allein'] }),
   } } } });
