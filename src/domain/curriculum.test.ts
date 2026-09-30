@@ -7,7 +7,7 @@ import { sessions } from './curriculum';
 
 test('follows the session plan: ten sessions, one task each', () => {
   assert.deepEqual(sessions.map(s => s.id), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-  assert.deepEqual(sessions.map(s => s.task), ['s01', 's02', 's03', 's04', 's05', null, null, null, null, null]);
+  assert.deepEqual(sessions.map(s => s.task), ['s01', 's02', 's03', 's04', 's05', 's06', null, null, null, null]);
   for (const s of sessions) {
     assert.ok(s.introduced.length > 0, `Sitzung ${s.id}`);
     for (const term of [...s.repetition, ...s.introduced]) if (term.concept) assert.ok(conceptById[term.concept], `${s.id}: ${term.concept}`);
@@ -27,8 +27,8 @@ test('lists every session with its status and marks missing map terms', () => {
 test('shows the Nenner-Check in session 4 and announces upcoming tasks', () => {
   assert.match(renderSession(3), /Nenner-Check/);
   assert.match(renderSession(3, false), /87 Prozent der Nichtwähler/);
-  const later = renderSession(5);
+  const later = renderSession(6);
   assert.match(later, /AUFGABE FOLGT/);
-  assert.match(later, /Mittelwerte vergleichen/);
+  assert.match(later, /Index und Skala/);
   assert.match(renderSession(99), /Logistische Regression/);
 });

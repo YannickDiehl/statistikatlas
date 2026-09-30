@@ -116,3 +116,49 @@
 .s05-scroll{overflow-x:auto}
 .s05-rank .s05-scroll svg{min-width:560px}
 .s05-rank-table td{white-space:nowrap}
+
+/* Sitzung 6 · Die letzte Frage */
+.s06-role{font:600 12px/1 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 8px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+.s06-table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+.s06-table caption{text-align:left;color:var(--muted);margin-bottom:4px}
+.s06-table th,.s06-table td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;font-weight:400;vertical-align:top}
+.s06-table th[scope=row],.s06-table thead th:first-child{text-align:left}
+.s06-table small{color:var(--muted)}
+.s06-table tr.s06-sig{background:var(--soft);font-weight:600}
+.s06-versions td{text-align:left}
+.s06-versions{min-width:520px}
+.s06-fields{border:1px solid var(--line);border-radius:8px;padding:8px 14px 4px;margin:12px 0;background:#fff}
+.s06-fields legend{font:600 14px/1.4 var(--sans);padding:0 6px}
+.s06-own{font-size:14px;font-weight:600;margin:0 0 8px}
+.s06-voice{border-left:4px solid var(--line);padding:6px 12px;font:italic 15px/1.5 Georgia,serif;margin:12px 0}
+.s06-details{margin:10px 0;font-size:15px}
+.s06-details summary{cursor:pointer;color:var(--green)}
+.s06-matrix{border-collapse:separate;border-spacing:4px;font-size:13px;margin:8px 0}
+.s06-matrix caption{text-align:left;color:var(--muted);font-size:14px;margin-bottom:4px}
+.s06-matrix th{font-weight:600;padding:2px 6px;text-align:center}
+.s06-matrix th[scope=row]{text-align:right}
+.s06-matrix td{min-width:86px;height:44px;text-align:center;padding:0;border-radius:6px}
+.sandbox .s06-matrix td button{width:100%;height:44px;font-variant-numeric:tabular-nums}
+.s06-matrix-values td{border:2px solid transparent;padding:4px 6px;font-variant-numeric:tabular-nums}
+.s06-matrix-values td:empty{border:0}
+.s06-matrix-values td.marked{border-color:var(--ink)}
+.s06-matrix-values td.broken span{font-weight:700}
+.s06-matrix-values td span{display:block}
+.s06-matrix-values td small{display:block;font-size:11px;line-height:1.2}
+.s06-reveal{background:var(--soft);border-radius:10px;padding:12px 16px;margin:12px 0}
+.s06-reveal h4{font:600 15px/1.4 var(--sans);margin:0 0 8px}
+.s06-notes{margin:10px 0;padding-left:20px;font-size:15px}
+.s06-notes li{margin:0 0 6px}
+.s06-trap{margin:8px 0}
+.s06-bars{display:flex;gap:28px;align-items:flex-end;padding:8px 4px}
+.s06-bar{display:flex;flex-direction:column;align-items:center;gap:4px;width:110px;font-size:14px;text-align:center}
+.s06-bar-track{position:relative;width:64px;height:180px;background:#fff;border:1px solid var(--line);border-radius:6px 6px 0 0;overflow:hidden}
+.s06-bar-fill{position:absolute;left:0;right:0;bottom:0;background:#465260;transition:height .9s ease}
+.s06-bar-value{font-weight:600;font-variant-numeric:tabular-nums}
+.s06-bar-label small{color:var(--muted)}
+.s06-trap figcaption{font-size:15px;margin-top:6px}
+.s06-sign{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.s06-state{font-weight:600;margin:12px 0;padding:8px 12px;border-radius:6px;border:1px solid var(--line);background:#fff}
+.s06-state-freigegeben{border-color:#9fbf9a;background:#eef5ec}
+.s06-state-Veto{border-color:#e3c08a;background:#fff5e6}
+@media (prefers-reduced-motion:reduce){.s06-bar-fill{transition:none}}
