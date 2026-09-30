@@ -4,7 +4,7 @@ import { de, near, parseNumber } from '../kit/numbers';
 import { WORK_MODES, type WorkMode } from '../kit/PartnerToggle';
 import { bool, oneOf, record, str } from '../kit/storage';
 import type { TaskStatus } from '../types';
-import { CLAIMED, ITEM_IDS, ITEMS, NONVOTE_EXTRAS, NOT_ELIGIBLE, type ItemId } from './content';
+import { CLAIMED, ITEM_IDS, ITEMS, NONVOTE_EXTRAS, NOT_ELIGIBLE, R_P3_EXAMPLE, type ItemId } from './content';
 
 /** Ein Rechenweg: welche Antworten als Misstrauen zählen, welche fehlenden Angaben als Nichtwahl, else=0, Gewicht. */
 export type Way = { item: ItemId; distrust: number[]; nonvote: number[]; else0: boolean; weighted: boolean };
@@ -118,8 +118,9 @@ export function lookup(tables: WayTable[], pct: number, n: number | null, intege
     if (n !== null && (t.way.weighted ? Math.abs(n - t.w[cell]) > 1 : n !== count)) continue;
     const table = canonical(tables, t, cell, base);
     const c: Candidate = { table, cell, base, pct: p, n: count, group: groupOf(table, cell), side: cell === 'a' || cell === 'c' ? 1 : 0 };
-    const key = meaningKey(c);
-    if (!seen.has(key)) seen.set(key, c);
+    const key = meaningKey(c), prev = seen.get(key);
+    // Vom Spiegelzwilling den Weg behalten, in dem die Gruppe selbst als „misstraut“ zählt (Zelle a/b) – dann nennt das Wegkürzel die gemeinte Lesart.
+    if (!prev || ((c.cell === 'a' || c.cell === 'b') && (prev.cell === 'c' || prev.cell === 'd'))) seen.set(key, c);
   }
   return [...seen.values()];
 }
@@ -273,12 +274,21 @@ export function checkP3(tables: WayTable[], joint: Joint, p3: S04State['p3']): N
   const okA = near(a, percent(t, 'a', 'row'), tol(p3.rowDistrust)), okC = c === null || near(c, percent(t, 'c', 'row'), tol(p3.rowOthers));
   const okN = n === null || (way.weighted ? Math.abs(n - t.w.a) <= 1 : n === t.n.a);
   if (okA && okC && okN) {
-    notes.push({ tone: 'ok', text: `Stimmt für deine Lesart ${shortcut(way)}: Von den Misstrauenden wollen ${pctText(percent(t, 'a', 'row'))} nicht wählen, von den Übrigen ${pctText(percent(t, 'c', 'row'))}.` });
+    notes.push({ tone: 'ok', text: `Stimmt für deine Lesart ${shortcut(way)}: Von den Misstrauenden wollen ${pctText(percent(t, 'a', 'row'))} nicht wählen${c === null ? '' : `, von den Übrigen ${pctText(percent(t, 'c', 'row'))}`}.` });
     return notes;
   }
-  const found = lookup(tables, a, n, tol(p3.rowDistrust) > 0.1).filter(x => x.base === 'row');
+  if (okA) {
+    if (!okC) notes.push({ tone: 'warn', text: `Die Misstrauenden stimmen für ${shortcut(way)}. Der Wert der Übrigen passt nicht – lies die Zeile „misstraut nicht“ in der Spalte „würde nicht wählen“ ab.` });
+    if (!okN) notes.push({ tone: 'warn', text: `Die Prozente stimmen für ${shortcut(way)}, die Häufigkeit nicht – trag die Zahl aus der Zelle „misstraut“ und „würde nicht wählen“ ein.` });
+    return notes;
+  }
+  // Zeilenprozente der Nichtwählenden; zuerst Wege mit demselben Item und derselben Gewichtung.
+  const rank = (x: Candidate) => (x.table.way.item === way.item ? 0 : 2) + (x.table.way.weighted === way.weighted ? 0 : 1);
+  const found = lookup(tables, a, n, tol(p3.rowDistrust) > 0.1).filter(x => x.base === 'row' && x.side === 1).sort((x, y) => rank(x) - rank(y));
+  const flipped = item.reversed && !p3.distrust.every(code => code <= 2) ? found.find(unreversedPe05) : undefined;
   const forgotUntag = found.find(x => x.table.way.item === way.item && sameSet(x.group, [...way.distrust].sort((p, q) => p - q)) && !x.table.way.nonvote.length && way.nonvote.length);
-  if (forgotUntag) notes.push({ tone: 'warn', text: `${meaning(forgotUntag)} Deine „weiß nicht“-Regel greift nicht: untag_na() vergessen? rec() lässt getaggte fehlende Werte stehen.` });
+  if (flipped) notes.push({ tone: 'warn', text: `${meaning(flipped)} Die Richtung ist gekippt: Bei dir zählen Zustimmende zu pe05 als Misstrauende. rules = "rev" vergessen oder die Regel von pe01 kopiert?` });
+  else if (forgotUntag) notes.push({ tone: 'warn', text: `${meaning(forgotUntag)} Deine „weiß nicht“-Regel greift nicht: untag_na() vergessen? rec() lässt getaggte fehlende Werte stehen.` });
   else if (found[0]) notes.push({ tone: 'warn', text: `${meaning(found[0])} Das ist nicht die Lesart, die du oben festgelegt hast (${shortcut(way)}).` });
   else notes.push({ tone: 'warn', text: `Diese Zahl passt nicht zu deiner Lesart ${shortcut(way)}. Prüfe Umpolen, Grenze und die Nichtwahl-Regel.` });
   return notes;
@@ -323,7 +333,8 @@ export function questions(joint: Joint, s: S04State): Question[] {
       text: 'Zeigen die Daten, dass Misstrauen vom Wählen abhält – oder nur, dass beides zusammen auftritt? Denk an Drittvariablen wie Alter, Bildung oder politisches Interesse und an die umgekehrte Richtung.' });
   }
   const way = declaredWay(s.p3), dk = way.nonvote.includes(-8);
-  if (way.distrust.length) {
+  // Zahlen erst nennen, wenn die eigene Rechnung eingetragen ist.
+  if (way.distrust.length && s.p3.rowDistrust.trim()) {
     const now = percent(fourfold(joint, way), 'a', 'row');
     const alt = percent(fourfold(joint, { ...way, nonvote: dk ? way.nonvote.filter(c => c !== -8) : [...way.nonvote, -8] }), 'a', 'row');
     out.push({ id: 'dk', title: 'Was ist mit „weiß nicht“?', concept: 'missing_tools',
@@ -331,9 +342,11 @@ export function questions(joint: Joint, s: S04State): Question[] {
         ? `Du zählst „weiß nicht“ als Nichtwahl. Ohne sie wollen ${pctText(alt)} der Misstrauenden nicht wählen statt ${pctText(now)}. Ist Unentschlossenheit schon Nichtwahl?`
         : `Zählst du „weiß nicht“ als Nichtwahl, wollen ${pctText(alt)} der Misstrauenden nicht wählen statt ${pctText(now)}. Was bedeutet „weiß nicht“ bei einer Wahlabsicht?` });
   }
-  const d = denominators(joint);
-  out.push({ id: 'size', title: 'Wie viele Menschen stehen hinter der Zahl?', concept: 'sampling',
-    text: `Hinter den ${CLAIMED} % stehen ${count(d.nonvoters)} Nichtwählende, in der Zelle ${count(d.cell)} Menschen. Wie sicher ist eine Aussage über alle Nichtwähler in Deutschland auf dieser Grundlage?` });
+  if (s.p1.pct.trim()) {
+    const d = denominators(joint);
+    out.push({ id: 'size', title: 'Wie viele Menschen stehen hinter der Zahl?', concept: 'sampling',
+      text: `Hinter den ${CLAIMED} % stehen ${count(d.nonvoters)} Nichtwählende, in der Zelle ${count(d.cell)} Menschen. Wie sicher ist eine Aussage über alle Nichtwähler in Deutschland auf dieser Grundlage?` });
+  }
   out.push({ id: 'intention', title: 'Absicht ist nicht Verhalten.', concept: 'measurement_error',
     text: 'Die Daten zeigen eine Wahlabsicht, keine tatsächliche Wahl. Was kann zwischen Befragung und Wahltag passieren – und wie offen antwortet man auf die Frage, ob man wählen geht?' });
   return out.slice(0, 3);
@@ -385,7 +398,7 @@ export function statusS04(s: S04State): TaskStatus {
 export function plenumLines(s: S04State): [string, string][] {
   const a = parseNumber(s.p3.rowDistrust), c = parseNumber(s.p3.rowOthers);
   return [
-    ['Die 87 % beziehen sich auf alle, die …', s.guess.trim()],
+    [`Die ${CLAIMED} % beziehen sich auf alle, die …`, s.guess.trim()],
     ['Meine Lesart', s.p3.rowDistrust.trim() ? shortcut(declaredWay(s.p3)) : ''],
     ['Misstrauende · Übrige (nicht wählen)', a === null ? '' : `${de(a)} % · ${c === null ? '–' : `${de(c)} %`}`],
     ['Urteil', s.verdict === null ? '' : VERDICTS[s.verdict]],
@@ -396,6 +409,7 @@ export function plenumLines(s: S04State): [string, string][] {
 /** R-Code der eigenen Lesart (Hilfestufe 4 in Prüfauftrag 3). */
 export function rCodeFor(way: Way): string {
   const item = ITEMS[way.item], codes = item.categories.map(c => c.code);
+  if (!way.distrust.length || way.distrust.length === codes.length) return R_P3_EXAMPLE;
   const shown = item.reversed ? way.distrust.map(c => Math.max(...codes) + Math.min(...codes) - c) : way.distrust;
   const rest = codes.filter(c => !shown.includes(c));
   const rule = (xs: number[], value: number, label: string) => ranges(xs).split(', ').map((r, i) => `${r.replace('–', ':')}=${value}${i === 0 ? ` [${label}]` : ''}`).join('; ');

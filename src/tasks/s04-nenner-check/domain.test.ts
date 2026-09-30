@@ -40,6 +40,8 @@ test('names who the 100 % are and recognises the press-release way', () => {
   assert.match(checkP1(tables, joint, '20,0', '5')[0].text, /an allen 25 Befragten.*alle Befragten 100 %/);
   assert.match(checkP1(tables, joint, '16,7', '1')[0].text, /pe01 3–4.*andere Zelle/);
   assert.match(checkP1(tables, joint, '28,6', '2')[0].text, /pe05 1–2.*Lies pe05 noch einmal/);
+  assert.match(checkP1(tables, joint, '66,7', '4')[0].text, /Vertretbar anders gerechnet: pe05↺ 1–2 · 91\./);
+  assert.match(checkP1(tables, joint, '29,4', '5')[0].text, /Mit else=0 zählen bei dir auch 3 Nicht-Wahlberechtigte/);
   assert.match(checkP1(tables, joint, '41,7', '99')[0].text, /finde ich unter den gut 1\.800/);
   assert.deepEqual(checkP1(tables, joint, '', ''), []);
 });
@@ -48,7 +50,7 @@ test('finds the way behind a number, merging mirror twins and silent else=0 vari
   const hits = lookup(tables, 500 / 6, 5);
   assert.equal(shortcut(hits[0].table.way), 'pe01 1–2 · 91');
   // In so kleinen Daten passt dieselbe Zahl zufällig auch zu pe01 3 (Wählende) – aber nie doppelt über wirkungslose Entscheidungen.
-  assert.deepEqual(hits.map(h => `${shortcut(h.table.way)} ${h.cell} ${h.base}`), ['pe01 1–2 · 91 a col', 'pe01 3 · 91 b row', 'pe01 3 · 91 c col']);
+  assert.deepEqual(hits.map(h => `${shortcut(h.table.way)} ${h.cell} ${h.base}`), ['pe01 1–2 · 91 a col', 'pe01 3 · 91 b row', 'pe01 1–2, 4 · 91 a col']);
   assert.equal(shortcut({ item: 'pe05', distrust: [3, 4], nonvote: [-8, -7], else0: false, weighted: true }), 'pe05↺ 1–2 · 91+wn+vw · gewichtet');
 });
 
@@ -58,13 +60,18 @@ test('checks three denominators and the own reading', () => {
   const p3 = { item: 'pe01' as const, distrust: [1, 2], nonvote: [-8], weighted: false, rowDistrust: '41,2', rowOthers: '10,0', n: '7' };
   assert.match(checkP3(tables, joint, p3).at(-1)!.text, /Stimmt für deine Lesart pe01 1–2 · 91\+wn/);
   assert.match(checkP3(tables, joint, { ...p3, rowDistrust: '33,3', n: '5' }).at(-1)!.text, /untag_na\(\) vergessen/);
+  assert.match(checkP3(tables, joint, { ...p3, rowOthers: '20,0' }).at(-1)!.text, /Der Wert der Übrigen passt nicht/);
+  assert.match(checkP3(tables, joint, { ...p3, n: '8' }).at(-1)!.text, /die Häufigkeit nicht/);
+  assert.match(checkP3(tables, joint, { ...p3, item: 'pe05', distrust: [3, 4], nonvote: [], rowDistrust: '28,6', rowOthers: '', n: '2' }).at(-1)!.text, /Die Richtung ist gekippt/);
+  assert.doesNotMatch(checkP3(tables, joint, { ...p3, rowOthers: '' }).at(-1)!.text, /Übrigen/);
   assert.match(checkP3(tables, joint, { ...p3, nonvote: [] }).at(0)!.text, /genau der Weg des Parteivorstands/);
   assert.match(checkP3(tables, joint, { ...p3, item: 'pe05', distrust: [1, 2] })[0].text, /Misst deine Gruppe wirklich Misstrauen/);
   assert.equal(readings(joint).length, 18);
 });
 
 test('asks at most three questions and builds the plenum card', () => {
-  const s = { ...initialS04(), guess: 'Nichtwähler', verdict: 2, reason: 'weil Misstrauen abhält', sentence: 'Von denen …',
+  assert.deepEqual(questions(joint, { ...initialS04(), verdict: 1 }).map(x => x.id), ['intention']);
+  const s = { ...initialS04(), guess: 'Nichtwähler', verdict: 2, reason: 'weil Misstrauen abhält', sentence: 'Von denen …', p1: { pct: '83,3', n: '5' },
     p3: { item: 'pe01' as const, distrust: [1, 2], nonvote: [], weighted: false, rowDistrust: '33,3', rowOthers: '10', n: '5' } };
   const q = questions(joint, s);
   assert.deepEqual(q.map(x => x.id), ['causal', 'dk', 'size']);
@@ -88,6 +95,8 @@ test('writes R code for the own reading', () => {
 test('counts the distrust stairs and checks the top step', () => {
   const real = fixtureSav(), steps = stairs(real);
   assert.deepEqual(steps.map(s => s.step), [0, 1, 2, 3]);
+  assert.deepEqual(steps.map(s => s.n), [1, 3, 2, 3]);
+  assert.equal(steps[3].share.toFixed(1), '33.3');
   const top = steps[3];
   assert.match(checkExtra(real, top.share.toFixed(1).replace('.', ','))[0].text, /Stimmt/);
 });
