@@ -25,7 +25,7 @@ export function FormelAlsSatz({ template: t, onConcept }: { template: T; onConce
       </Section>}
       <FormulaView className="xw-symbolic" nodes={t.symbolic} active={mark} onMark={m => setMark(m as string)} label={t.aria} />
       <FormulaView className="xw-numeric" nodes={t.numeric(s)} active={mark} onMark={m => setMark(m as string)} />
-      <div className="xw-card xw-glyph-card">
+      <div className="xw-card xw-glyph-card" aria-live="polite">
         <div className="xw-term"><span className="xw-sym">{glyph.sym}</span><strong>{glyph.term}</strong></div>
         <p>{glyph.plain}</p>
         <ConceptLink id={glyph.concept} onConcept={onConcept} />
@@ -33,7 +33,7 @@ export function FormelAlsSatz({ template: t, onConcept }: { template: T; onConce
       <KurzGesagt text={t.kurz} fach={t.fachlich} />
       <Section title="Als Satz gelesen">
         <p className="xw-sentence">{t.sentence.map((part, i) => typeof part === 'string' ? part
-          : <span key={i} className={`xw-fp${part.m === mark ? ' on' : ''}`} onClick={() => setMark(part.m)}>{part.t}</span>)}</p>
+          : <button type="button" key={i} className={`xw-fp xw-inline${part.m === mark ? ' on' : ''}`} aria-pressed={part.m === mark} onClick={() => setMark(part.m)}>{part.t}</button>)}</p>
       </Section>
       {!compact && <Section title="Vorgerechnet">
         <ol className="xw-worked-steps">{t.worked(s).map((w, i) => <li key={i}><small>Schritt {i + 1}</small><strong>{w.title}</strong><span>{w.text}</span></li>)}</ol>
@@ -41,24 +41,25 @@ export function FormelAlsSatz({ template: t, onConcept }: { template: T; onConce
       </Section>}
       <Section title="Ein Regler je Zeichen">
         {t.sliders.map(sl => {
-          const key = sl.key as keyof Values, value = values[key];
-          const pos = sl.log ? Math.log10(value) : value;
+          const key = sl.key as keyof Values, value = values[key], id = `xw-slider-${sl.key}`;
           return (
-            <label key={sl.key} className="xw-slider">
-              <span><span className={`xw-fp${mark === sl.key ? ' on' : ''}`}>{sl.key}</span> {sl.label}</span>
-              <input type="range" min={sl.log ? Math.log10(sl.min) : sl.min} max={sl.log ? Math.log10(sl.max) : sl.max} step={sl.log ? 0.01 : sl.step} value={pos}
+            <div key={sl.key} className="xw-slider">
+              <label htmlFor={id}><span className={`xw-fp${mark === sl.key ? ' on' : ''}`}>{sl.key}</span> {sl.label}</label>
+              <input id={id} type="range" aria-valuetext={sl.format(value)}
+                min={sl.log ? Math.log10(sl.min) : sl.min} max={sl.log ? Math.log10(sl.max) : sl.max} step={sl.log ? 'any' : sl.step} value={sl.log ? Math.log10(value) : value}
                 onChange={e => setValue(key, sl.log ? Math.round(10 ** Number(e.target.value)) : Number(e.target.value))} />
-              <output>{sl.format(value)}</output>
-            </label>
+              <output htmlFor={id}>{sl.format(value)}</output>
+            </div>
           );
         })}
         <div className="xw-presets">{t.quick.map(q => <button type="button" key={q.label} onClick={() => { setValues(q.apply(values)); setMark(q.mark); }}>{q.label}</button>)}</div>
         <p className="xw-note">{t.compare(s)}</p>
       </Section>
       {!compact && <CheckQuestion title="Kurz prüfen" question={t.check.question}
-        evaluate={v => v !== 'NA' && close(v, t.check.answer, t.check.tolerance)
-          ? (setMark('sqrt'), { ok: true, message: t.check.right.replace(/^Stimmt: /, '') })
-          : { ok: false, message: v === 'NA' ? 'Gefragt ist eine Zahl.' : t.check.diagnose(v) }} />}
+        evaluate={v => {
+          if (v !== 'NA' && v.some(x => close(x, t.check.answer, t.check.tolerance))) { setMark('sqrt'); return { ok: true, message: t.check.right.replace(/^Stimmt: /, '') }; }
+          return { ok: false, message: v === 'NA' ? 'Gefragt ist eine Zahl.' : t.check.diagnose(v[0]) };
+        }} />}
       {!compact && (() => { const i = t.interpret(s); return <Section title="Was heißt das Ergebnis?"><KurzGesagt text={i.kurz} /><p>Fachlich: {i.fachlich}</p></Section>; })()}
       {!compact && <ThinkQuestions title="Mit der Formel denken" items={[{
         question: t.think.question, options: t.think.options, correct: t.think.correct, kurz: t.think.kurz,

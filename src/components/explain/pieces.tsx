@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type Ref } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { conceptById } from '../../domain/concepts';
 import { txt, type Ctx, type Step, type Workshop } from '../../explain/types';
@@ -6,17 +6,19 @@ import { parseAnswer } from '../../explain/format';
 import { KurzGesagt } from './basics';
 
 /** Kontrollfrage mit Eingabefeld; leere oder unlesbare Eingaben werden am Feld gemeldet. */
-export function CheckQuestion({ title, question, evaluate, next }: {
+export function CheckQuestion({ title, question, evaluate, next, invalid = 'Das ist keine Zahl. Schreibe zum Beispiel 3,16 oder −4.' }: {
   title: string;
   question: string;
-  evaluate: (v: number | 'NA') => { ok: boolean; message: string };
+  /** Bekommt alle Lesarten der Eingabe (siehe parseAnswer) oder „NA“. */
+  evaluate: (v: number[] | 'NA') => { ok: boolean; message: string };
   next?: { label: string; go: () => void };
+  invalid?: string;
 }) {
   const [value, setValue] = useState(''), [error, setError] = useState(''), [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   function submit() {
     const v = parseAnswer(value);
-    if (!value.trim()) { setError('Gib zuerst eine Zahl ein.'); setResult(null); return; }
-    if (v === null) { setError('Das ist keine Zahl. Schreibe zum Beispiel 3,16 oder −4.'); setResult(null); return; }
+    if (!value.trim()) { setError('Gib zuerst eine Antwort ein.'); setResult(null); return; }
+    if (v === null) { setError(invalid); setResult(null); return; }
     setError('');
     setResult(evaluate(v));
   }
@@ -48,6 +50,8 @@ export type ThinkItem = {
   explain: () => string;
   kurz: string;
   onAnswer: () => void;
+  /** Hinweis nach der Antwort, zum Beispiel wenn oben etwas umgestellt wurde. */
+  note?: string;
   tryIt?: { label: string; run: () => string };
 };
 
@@ -73,14 +77,14 @@ export function ThinkQuestions({ items, title = 'Mit der Formel denken', note = 
                   onClick={() => { setChosen(c => ({ ...c, [i]: k })); q.onAnswer(); }}>{o}</button>
               ))}
             </div>
-            {pick !== undefined && (
-              <div className="xw-answer" aria-live="polite">
+            <div className="xw-answer" aria-live="polite">
+              {pick !== undefined && <>
                 <p><strong className={pick === q.correct ? 'xw-right' : 'xw-wrong'}>{pick === q.correct ? 'Stimmt.' : 'Nicht ganz.'}</strong> {q.explain()}</p>
                 <KurzGesagt text={q.kurz} />
-                <p className="xw-note">{hint}</p>
+                <p className="xw-note">{q.note ?? hint}</p>
                 {q.tryIt && <p><button type="button" className="xw-button" onClick={() => { const message = q.tryIt!.run(); setTried(t => ({ ...t, [i]: message })); }}>Ausprobieren: {q.tryIt.label}</button> <span className="xw-note">{tried[i]}</span></p>}
-              </div>
-            )}
+              </>}
+            </div>
           </div>
         );
       })}
@@ -88,25 +92,33 @@ export function ThinkQuestions({ items, title = 'Mit der Formel denken', note = 
   );
 }
 
-/** Link auf einen Begriff; Kartenpunkte werden zusätzlich in der Karte gezeigt (über onSelect). */
+/** Link auf einen Begriff; die Navigation übernimmt onSelect des Inspectors (bleibt im Verlauf). */
 export function ConceptLink({ id, onConcept, children }: { id: string; onConcept: (id: string) => void; children?: ReactNode }) {
   return <button type="button" className="xw-link" onClick={() => onConcept(id)}>{children ?? 'Begriff öffnen'} <ArrowUpRight size={14} aria-hidden="true" /></button>;
 }
 
 /** Lernkarte eines Schritts; auch als Schrittkarte eines Rechenbegriffs (Spezifikation 6.4). */
-export function LearnCard<S>({ step, ctx, compact, onConcept, onWho, header, footer }: {
-  step: Step<S>; ctx: Ctx<S>; compact: boolean; onConcept: (id: string) => void; onWho?: (i: number) => void; header?: ReactNode; footer?: ReactNode;
+export function LearnCard<S>({ step, ctx, compact, onConcept, onWho, header, footer, current, headingRef }: {
+  step: Step<S>; ctx: Ctx<S>; compact: boolean; onConcept: (id: string) => void; onWho?: (i: number) => void;
+  header?: ReactNode; footer?: ReactNode;
+  /** Begriff, der gerade offen ist; auf ihn wird nicht noch einmal verlinkt. */
+  current?: string;
+  headingRef?: Ref<HTMLDivElement>;
 }) {
+  const links = [
+    ...(step.concept !== current ? [{ id: step.concept, label: 'Begriff öffnen' }] : []),
+    ...(step.links ?? []).filter(l => l.id !== current),
+  ];
   return (
     <div className="xw-card">
       {header}
-      <div className="xw-term">
+      <div className="xw-term" ref={headingRef} tabIndex={-1}>
         <span className="xw-label">Fachbegriff</span>
         <strong>{conceptById[step.concept]?.title ?? step.concept}</strong>
         {step.also && <span className="xw-also">auch: {step.also}</span>}
         <span className="xw-sym">{step.sym}</span>
       </div>
-      <ConceptLink id={step.concept} onConcept={onConcept} />
+      {links.length > 0 && <p className="xw-links-row">{links.map(l => <ConceptLink key={l.id} id={l.id} onConcept={onConcept}>{l.label}</ConceptLink>)}</p>}
       <KurzGesagt text={txt(step.kurz, ctx)} />
       {!compact && <>
         <h3>Fachlich in einem Satz</h3><p>{txt(step.fachlich, ctx)}</p>
@@ -133,7 +145,7 @@ export function WorkTable<D, S>({ workshop, ctx, step, lastStep, onWho }: {
   workshop: Workshop<D, S>; ctx: Ctx<S>; step: number; lastStep: number; onWho: (i: number) => void;
 }) {
   const cols = workshop.table.columns.filter(c => c.from <= step && c.from <= lastStep);
-  const cls = (active: number[]) => active.includes(step) ? 'on' : undefined;
+  const cls = (active: number[], tone?: string) => [active.includes(step) ? 'on' : '', tone ?? ''].join(' ').trim() || undefined;
   const lines = workshop.table.lines.filter(l => l.from <= step && l.from <= lastStep);
   return (
     <div className="xw-table-wrap">
@@ -143,7 +155,7 @@ export function WorkTable<D, S>({ workshop, ctx, step, lastStep, onWho }: {
           {ctx.names.map((n, r) => (
             <tr key={n} className={r === ctx.who ? 'sel' : undefined}>
               <th scope="row"><button type="button" aria-pressed={r === ctx.who} onClick={() => onWho(r)}>{n}</button></th>
-              {cols.map(c => <td key={c.head} className={cls(c.active)}>{c.cell(ctx, r)}</td>)}
+              {cols.map(c => <td key={c.head} className={cls(c.active, c.tone?.(ctx, r))}>{c.cell(ctx, r)}</td>)}
             </tr>
           ))}
         </tbody>

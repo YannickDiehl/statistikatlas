@@ -1,11 +1,12 @@
 import type { Workshop } from './types';
+import type { Pairs, PairStats, Series } from './math';
 import { mittel } from './content/mittel';
 import { streuung } from './content/streuung';
 import { zusammenhang } from './content/zusammenhang';
 import { standardfehler } from './content/standardfehler';
 import { rekodieren } from './content/rekodieren';
 
-export type AnyWorkshop = Workshop<any, any>;
+export type AnyWorkshop = Workshop<number[], Series> | Workshop<Pairs, PairStats>;
 export const WORKSHOPS: AnyWorkshop[] = [mittel, streuung, zusammenhang];
 
 export type Explain =
@@ -44,13 +45,14 @@ export function stepCardFor(id: string, anchor?: string): StepCard | null {
   }
 }
 
-// Sprung „Werkstatt öffnen“ zu einem bestimmten Schritt: Die Schrittkarte hinterlegt
-// den Schritt, die Werkstatt holt ihn beim ersten Rendern ab.
-let pending: { concept: string; step: number } | null = null;
-export function requestStep(concept: string, step: number) { pending = { concept, step }; }
-export function takeStep(concept: string): number | null {
-  if (!pending || pending.concept !== concept) return null;
-  const step = pending.step;
+// Sprung „Werkstatt öffnen“ zu einem bestimmten Schritt: Die Schrittkarte hinterlegt den Schritt,
+// die Werkstatt holt ihn nach dem Einhängen ab (Effekt). Alte Anfragen verfallen nach zehn Sekunden.
+let pending: { concept: string; step: number; at: number } | null = null;
+export function requestStep(concept: string, step: number, now = Date.now()) { pending = { concept, step, at: now }; }
+export function takeStep(concept: string, now = Date.now()): number | null {
+  const p = pending;
+  if (!p || now - p.at > 10000) { pending = null; return null; }
+  if (p.concept !== concept) return null;
   pending = null;
-  return step;
+  return p.step;
 }

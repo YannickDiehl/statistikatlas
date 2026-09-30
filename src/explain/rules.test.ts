@@ -30,6 +30,13 @@ test('mean, binary share, unmatched codes and captured missings', () => {
   const cap = recode(parseRules('1:2=1 [stark]; else=0 [nicht stark]', SCALE), CODES, v => num(v));
   assert.equal(cap.captured?.code.k, 'M'); assert.equal(cap.captured?.to.v, 0); assert.equal(cap.captured?.to.label, 'nicht stark');
   assert.deepEqual(cap.targets, ['v1', 'v1', 'v0', 'v0', 'v0', 'v0']);
+  // NA=9 ist eine bewusste Entscheidung (mariposa 0.7.4: 21 × 9, ohne Warnung) und keine versehentliche Erfassung.
+  const na = recode(parseRules('NA=9; 1:5=copy', SCALE), CODES, v => num(v));
+  assert.equal(na.captured, null); assert.equal(na.rows.find(r => r.code === '9')?.f, 21);
+  // rev(1, 4): Code 5 liegt außerhalb, wird trotzdem umgedreht (1 + 4 − 5 = 0), mariposa warnt.
+  const out = recode(parseRules('rev(1, 4)', SCALE), CODES, v => num(v));
+  assert.deepEqual(out.outside.map(c => c.k), [5]); assert.equal(out.rows.find(r => r.code === '0')?.f, 190);
+  assert.deepEqual(recode(parseRules('rev', SCALE), CODES, v => num(v)).outside, []);
 });
 
 test('first matching rule wins, copy keeps codes, NA= catches missings, keywords ignore case', () => {
@@ -54,9 +61,10 @@ test('trace stops at the first matching rule and marks missing values in ranges'
 test('labels may contain semicolons; invalid syntax throws readable RuleErrors', () => {
   assert.deepEqual(splitRules('1:2=1 [stark; sehr]; 3:5=0'), ['1:2=1 [stark; sehr]', '3:5=0']);
   const bad: [string, RegExp][] = [
-    ['', /Gib eine Regel ein/], ['1:2', /verstehe ich nicht/], ['1:2=x', /kein gültiger neuer Wert/],
+    ['', /Gib eine Regel ein/], [';', /Gib eine Regel ein/], ['1:2', /verstehe ich nicht/], ['1:2=x', /kein gültiger neuer Wert/],
     ['a=1', /weder ein Code noch ein Bereich/], ['5:2=1', /von klein nach groß schreiben: 2:5/],
-    ['dicho', /Werkstatt zeigt es noch nicht/], ['rev(5, 1)', /kleinere Wert zuerst/],
+    ['dicho', /Werkstatt zeigt es noch nicht/], ['rev(5, 1)', /erste Wert kleiner/], ['rev(3, 3)', /erste Wert kleiner/],
+    ['1=1,5', /kein gültiger neuer Wert/], ['1:2=1 []; 3:5=0', /Wertelabel leer/],
   ];
   for (const [rule, msg] of bad) assert.throws(() => parseRules(rule, SCALE), (e: unknown) => e instanceof RuleError && msg.test(e.message), rule);
 });

@@ -83,8 +83,8 @@ export function StepNav({ buttons, active, onStep }: { buttons: string[]; active
 export function StepArrows({ step, last, onStep }: { step: number; last: number; onStep: (s: number) => void }) {
   return (
     <span className="xw-arrows">
-      <button type="button" aria-label="Vorheriger Schritt" disabled={step <= 1} onClick={() => onStep(step - 1)}><ArrowLeft size={16} /></button>
-      <button type="button" aria-label="Nächster Schritt" disabled={step >= last} onClick={() => onStep(step + 1)}><ArrowRight size={16} /></button>
+      <button type="button" aria-label="Vorheriger Schritt" aria-disabled={step <= 1} onClick={() => step > 1 && onStep(step - 1)}><ArrowLeft size={16} /></button>
+      <button type="button" aria-label="Nächster Schritt" aria-disabled={step >= last} onClick={() => step < last && onStep(step + 1)}><ArrowRight size={16} /></button>
     </span>
   );
 }

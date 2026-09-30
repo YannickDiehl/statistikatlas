@@ -82,7 +82,6 @@
 .learning-rail nav li>button>strong small{display:block;font-size:12px;font-weight:400;color:var(--muted)}
 .learning-rail nav li.done>button>strong small{color:var(--green)}
 .learning-rail nav li>button>svg{color:var(--green)}
-.learning-data-status{font:13px/1.5 var(--sans);color:var(--muted);margin:-12px 0 18px}
 .learning-terms{border-top:1px solid var(--line);padding-top:6px;margin:0 0 30px}
 .learning-terms .learning-eyebrow{margin:18px 0 10px}
 .learning-term-list{list-style:none;display:flex;flex-wrap:wrap;gap:6px;margin:0;padding:0}

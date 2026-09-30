@@ -5,6 +5,8 @@
  */
 
 /** Kontext zum Füllen der Texte: Kennwerte der Beispieldaten und gewählte Person/Zelle. */
+import type { Pairs } from './math';
+
 export type Ctx<S> = { s: S; who: number; names: readonly string[] };
 export type Text<S> = string | ((c: Ctx<S>) => string);
 export const txt = <S,>(t: Text<S>, c: Ctx<S>): string => typeof t === 'function' ? t(c) : t;
@@ -39,6 +41,8 @@ export interface Step<S> {
   /** Verlinkter Begriff; sein Titel in concepts.ts ist der Fachbegriff. */
   concept: string;
   also?: string;
+  /** Weitere Begriffe dieses Schritts, zum Beispiel die Freiheitsgrade. */
+  links?: { id: string; label: string }[];
   kurz: Text<S>;
   fachlich: Text<S>;
   /** Überschrift über „Vorgerechnet“; Personenwahl nur, wenn `perPerson`. */
@@ -59,6 +63,8 @@ export interface Column<S> {
   sum?: (c: Ctx<S>) => string;
   sumFrom?: number;
   sumNote?: string;
+  /** Farbe einer Zelle nach Vorzeichen, zum Beispiel für negative Produkte. */
+  tone?: (c: Ctx<S>, row: number) => 'pos' | 'neg' | undefined;
 }
 export interface Line<S> { from: number; step: number; text: (c: Ctx<S>) => string }
 
@@ -86,11 +92,14 @@ export interface Variant<S> {
   aria: string;
   metrics: Metric<S>[];
   interpret: (c: Ctx<S>) => { kurz: string; fachlich: string };
+  /** Verweis unter der Deutung, zum Beispiel von der Varianz zur Standardabweichung. */
+  next?: { id: string; label: string };
   genau: { kurz: string; paragraphs: (c: Ctx<S>) => string[] };
 }
 
 export interface Workshop<D, S> {
-  id: 'mittel' | 'streuung' | 'zusammenhang';
+  /** Wertepaare gehören zur Werkstatt Zusammenhang; daran unterscheidet die Oberfläche die Bilder. */
+  id: D extends Pairs ? 'zusammenhang' : 'mittel' | 'streuung';
   wofuer: string;
   names: readonly string[];
   bounds: { min: number; max: number };

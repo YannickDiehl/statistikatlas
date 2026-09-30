@@ -39,7 +39,8 @@ test('format helpers write German numbers with a true minus sign', () => {
   assert.equal(signed(4), '+4'); assert.equal(signed(-2), '−2'); assert.equal(signed(0), '0');
   assert.equal(paren(-4), '(−4)'); assert.equal(paren(3), '3');
   assert.equal(pct(1 / 3), '33,3 %'); assert.equal(count(5225), '5.225'); assert.equal(num(NaN), '–');
-  assert.equal(parseAnswer('3,16'), 3.16); assert.equal(parseAnswer('−4'), -4); assert.equal(parseAnswer(' na '), 'NA');
+  assert.deepEqual(parseAnswer('3,16'), [3.16]); assert.deepEqual(parseAnswer('−4'), [-4]); assert.equal(parseAnswer(' na '), 'NA');
+  assert.deepEqual(parseAnswer('+2'), [2]); assert.deepEqual(parseAnswer('3.162'), [3.162, 3162]); assert.deepEqual(parseAnswer('0.5'), [0.5]);
   assert.equal(parseAnswer(''), null); assert.equal(parseAnswer('abc'), null);
   assert.ok(close(3.16, 3.1623)); assert.ok(!close(3.1, 3.1623));
 });

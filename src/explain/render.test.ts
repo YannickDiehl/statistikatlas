@@ -15,7 +15,7 @@ const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, 
 const sound = (html: string, label: string) => assert.ok(!/NaN|undefined|Infinity|\[object/.test(text(html)), `${label}: kaputter Wert`);
 
 test('every workshop variant renders all blocks in Ausführlich and fewer in Kompakt', () => {
-  for (const w of WORKSHOPS) for (const variant of Object.keys(w.variants)) {
+  try { for (const w of WORKSHOPS) for (const variant of Object.keys(w.variants)) {
     modeStore.set('ausfuehrlich');
     const full = renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: w, variant, onConcept: noop }));
     sound(full, `${w.id}/${variant}`);
@@ -26,14 +26,17 @@ test('every workshop variant renders all blocks in Ausführlich and fewer in Kom
     const compact = text(renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: w, variant, onConcept: noop })));
     for (const part of ['Kurz gesagt', 'Fachbegriff', 'Das Bild dazu']) assert.ok(compact.includes(part), `${w.id}/${variant} kompakt: „${part}“ fehlt`);
     for (const part of ['Die Rechentabelle', 'Kurz prüfen', 'Mit der Formel denken', 'Wie im Alltag']) assert.ok(!compact.includes(part), `${w.id}/${variant} kompakt: „${part}“ sollte fehlen`);
-  }
-  modeStore.set('ausfuehrlich');
+  } } finally { modeStore.set('ausfuehrlich'); }
 });
 
 test('step cards name their term and offer the jump into their workshop', () => {
-  const html = text(renderToStaticMarkup(createElement(StepCard, { card: stepCardFor('deviation', 'pearson')!, onConcept: noop, onOpen: noop })));
+  const html = text(renderToStaticMarkup(createElement(StepCard, { card: stepCardFor('deviation', 'pearson')!, current: 'deviation', onConcept: noop, onOpen: noop })));
   assert.ok(html.includes('Abweichung vom Mittelwert') && html.includes('Ist Schritt 2 von 6 der Werkstatt Pearson-Korrelation'));
-  const ss = text(renderToStaticMarkup(createElement(StepCard, { card: stepCardFor('ss')!, onConcept: noop, onOpen: noop })));
+  assert.ok(!html.includes('Begriff öffnen'), 'Schrittkarte verlinkt nicht auf sich selbst');
+  modeStore.set('kompakt');
+  try { assert.ok(text(renderToStaticMarkup(createElement(StepCard, { card: stepCardFor('ss')!, current: 'ss', onConcept: noop, onOpen: noop }))).includes('Wie im Alltag'), 'Schrittkarte bleibt vollständig'); }
+  finally { modeStore.set('ausfuehrlich'); }
+  const ss = text(renderToStaticMarkup(createElement(StepCard, { card: stepCardFor('ss')!, current: 'ss', onConcept: noop, onOpen: noop })));
   assert.ok(ss.includes('Quadratsumme der Abweichungen') && ss.includes('Ist Schritt 4 von 6 der Werkstatt Standardabweichung'));
 });
 

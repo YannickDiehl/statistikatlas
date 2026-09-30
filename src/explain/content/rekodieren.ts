@@ -1,6 +1,6 @@
 // Vorlage „Werkzeug“ (Stufe 3) am Beispiel Rekodieren mit mariposa::rec() 0.7.4. Wortlaut: docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt/05-rekodieren.md
 import { apply, trace, type Code, type Outcome, type Program, type Rule } from '../rules';
-import { num, count, pct } from '../format';
+import { num, count, pct, fixed } from '../format';
 
 /** ALLBUS 2023, politisches Interesse pa02a, ungewichtet (aggregiert). */
 export const PA02A: Code[] = [
@@ -16,7 +16,8 @@ export const MEAN_BEFORE = 2.70;
 
 const q = (s: string) => `„${s}“`;
 const code = (c: Code) => c.k === 'M' ? 'keine gültige Angabe' : `den Code ${c.k} (${q(c.label)})`;
-const target = (r: Rule['rhs']) => r === 'NA' ? 'NA (fehlend)' : r === 'copy' ? 'sich selbst (unverändert)' : num(r);
+const target = (r: Rule['rhs']) => r === 'NA' ? 'NA (fehlend)' : r === 'copy' ? 'unverändert' : num(r);
+const codeList = (ks: (number | 'M')[]) => ks.length === 1 ? `Code ${ks[0]}` : `Codes ${ks.slice(0, -1).join(', ')} und ${ks[ks.length - 1]}`;
 
 export const rekodieren = {
   concept: 'recode',
@@ -51,14 +52,20 @@ export const rekodieren = {
   ],
   /** „So liest rec() deine Regel“: eine Zeile je Regel. */
   describe(p: Program): { label: string; src: string; text: string }[] {
-    if (p.kind === 'rev') return [{ label: 'Regel', src: p.src, text: `Die Skala wird umgepolt. neu = kleinster + größter Code − alt, hier ${num(p.lo + p.hi)} − alt. Die Wertelabels wandern mit.` }];
+    if (p.kind === 'rev') return [{ label: 'Regel', src: p.src, text: `Die Skala wird umgepolt. Es gilt: neu = kleinster + größter Code − alt, hier ${num(p.lo + p.hi)} − alt. Die Wertelabels wandern mit.` }];
     return p.rules.map((r, i) => ({
       label: `Regel ${i + 1}`, src: r.src,
       text: 'else' in r.lhs
-        ? `Alles, was bis hierhin keine Regel getroffen hat, wird ${target(r.rhs)}${r.label ? ` mit dem Wertelabel ${q(r.label)}` : ''}. Achtung: Das gilt auch für fehlende Werte.`
+        ? (r.rhs === 'copy' ? 'Alles, was bis hierhin keine Regel getroffen hat, bleibt unverändert; fehlende Werte bleiben fehlend.'
+          : `Alles, was bis hierhin keine Regel getroffen hat, wird zu ${target(r.rhs)}${r.label ? ` mit dem Wertelabel ${q(r.label)}` : ''}. Achtung: Das gilt auch für fehlende Werte.`)
         : 'na' in r.lhs
-          ? `Fehlende Werte werden zu ${target(r.rhs)}.`
-          : `Die Codes ${r.lhs.items.map(([a, b]) => a === b ? num(a) : `${num(a)} bis ${num(b)}`).join(' und ')} werden zu ${target(r.rhs)}${r.label ? `, Wertelabel ${q(r.label)}` : ''}.`,
+          ? (r.rhs === 'copy' ? 'Fehlende Werte bleiben fehlend.' : `Fehlende Werte werden zu ${target(r.rhs)}.`)
+          : (() => {
+            const single = r.lhs.items.length === 1 && r.lhs.items[0][0] === r.lhs.items[0][1];
+            const which = r.lhs.items.map(([a, b]) => a === b ? num(a) : `${num(a)} bis ${num(b)}`).join(' und ');
+            return r.rhs === 'copy' ? `${single ? 'Der Code' : 'Die Codes'} ${which} ${single ? 'bleibt' : 'bleiben'} unverändert.`
+              : `${single ? 'Der Code' : 'Die Codes'} ${which} ${single ? 'wird' : 'werden'} zu ${target(r.rhs)}${r.label ? `, Wertelabel ${q(r.label)}` : ''}.`;
+          })(),
     }));
   },
   firstWins: 'Die Regeln werden der Reihe nach geprüft. Die erste passende gewinnt.',
@@ -78,10 +85,10 @@ export const rekodieren = {
       : 'Keine Regel passt. Der Code wird NA, und mariposa gibt eine Warnung aus.');
     const from = c.k === 'M' ? '„fehlend“' : String(c.k);
     const to = result.t === 'val' ? num(result.v) : result.t === 'miss' ? '„fehlend“' : 'NA';
-    return { lines, kurz: `Aus ${from} wird ${to}.`, result };
+    return { lines, kurz: result.t === 'miss' ? '„fehlend“ bleibt „fehlend“.' : `Aus ${from} wird ${to}.`, result };
   },
   warnUnmatched: (codes: Code[]) => ({
-    text: `Warnung wie in mariposa: Code ${codes.map(c => c.k).join(', ')} passt zu keiner Regel und wird NA. Das betrifft ${count(codes.reduce((a, c) => a + c.f, 0))} Befragte. Mit „else=copy“ behältst du die Codes, mit „else=NA“ bestätigst du es.`,
+    text: `Warnung wie in mariposa: ${codes.length === 1 ? 'Der' : 'Die'} ${codeList(codes.map(c => c.k))} ${codes.length === 1 ? 'passt' : 'passen'} zu keiner Regel und ${codes.length === 1 ? 'wird' : 'werden'} NA. Das betrifft ${count(codes.reduce((a, c) => a + c.f, 0))} Befragte. Mit „else=copy“ behältst du die Codes, mit „else=NA“ bestätigst du, dass sie NA werden.`,
     r: `${codes.length} value${codes.length === 1 ? '' : 's'} of \`pa02a\` matched no rule and became "NA": ${codes.map(c => c.k).join(', ')}.`,
     kurz: 'Diese Antworten gehen verloren, wenn du nichts tust.',
   }),
@@ -89,12 +96,18 @@ export const rekodieren = {
     text: `Achtung: Auch die 21 fehlenden Angaben treffen hier eine Regel. Sie zählen jetzt als ${num(v)}${label ? ` ${q(label)}` : ''}. Sicherer ist es, die Codes ausdrücklich zu nennen.`,
     kurz: 'Aus „keine Angabe“ wird eine Antwort, die niemand gegeben hat.',
   }),
+  warnOutside: (p: Extract<Program, { kind: 'rev' }>, codes: Code[]) => ({
+    text: `Warnung wie in mariposa: ${codes.length === 1 ? 'Der' : 'Die'} ${codeList(codes.map(c => c.k))} ${codes.length === 1 ? 'liegt' : 'liegen'} außerhalb von ${num(p.lo)} bis ${num(p.hi)} und ${codes.length === 1 ? 'wird' : 'werden'} trotzdem umgedreht (${num(p.lo)} + ${num(p.hi)} − alt). Rekodiere solche Codes vorher, zum Beispiel zu NA.`,
+    r: `\`pa02a\` has value outside the scale range ${num(p.lo)}-${num(p.hi)}: ${codes.map(c => c.k).join(', ')}.`,
+    kurz: 'Die Skala in rev() muss zu den Codes passen.',
+  }),
   meanNote(p: Program, mean: number, binary: boolean): string {
-    if (p.kind === 'rev') return `Umpolen rechnet neu = ${num(p.lo + p.hi)} − alt. Das gilt auch für den Mittelwert: ${num(p.lo + p.hi)} − 2,70 = ${num(p.lo + p.hi - MEAN_BEFORE)}. Die Streuung bleibt gleich.`;
-    if (binary) return `Bei einer 0/1-Variable ist der Mittelwert der Anteil der 1: ${pct(mean)}.`;
+    if (p.kind === 'rev') return `Umpolen rechnet neu = ${num(p.lo + p.hi)} − alt. Das gilt auch für den Mittelwert: ${num(p.lo + p.hi)} − ${fixed(MEAN_BEFORE)} = ${fixed(p.lo + p.hi - MEAN_BEFORE)}. Die Streuung bleibt gleich.`;
+    if (binary) return `Bei einer 0/1-Variable ist der Mittelwert der Anteil der Einsen: ${pct(mean)}.`;
     return 'Der Mittelwert ändert sich mit den neuen Codes. Ob er inhaltlich sinnvoll ist, hängt von den Abständen der neuen Codes ab.';
   },
-  rCode: (rule: string) => `library(mariposa)\nallbus <- read_spss("ZA8831_v1-3-0.sav")\n\nallbus %>%\n  mutate(interesse = rec(pa02a, rules = "${rule}")) %>%\n  frequency(interesse)`,
+  /** R-Code im Lernpfad-Stil; Anführungszeichen und Backslashes der Regel werden für den R-String maskiert. */
+  rCode: (rule: string) => `library(dplyr)\nlibrary(mariposa)\n\nallbus <- read_spss("ZA8831_v1-3-0.sav")\n\nallbus %>%\n  mutate(interesse = rec(pa02a, rules = "${rule.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")) %>%\n  frequency(interesse)`,
   fehler: '„else“ schreiben und vergessen, dass es auch fehlende Angaben erfasst. Nach dem Umpolen die alte Bedeutung im Kopf behalten: Jetzt heißt 5 „sehr stark“.',
   check: {
     /** Code für die Frage: die gewählte Person, bei „fehlend“ Code 2. */
@@ -120,8 +133,8 @@ export const rekodieren = {
   genau: {
     kurz: 'Die erste passende Regel gewinnt. Was keine Regel trifft, wird NA, und fehlende Werte bleiben fehlend, solange keine NA- oder else-Regel sie erfasst.',
     paragraphs: [
-      'rec() prüft die Regeln von links nach rechts; für jeden Code gilt die erste passende. Gültige Codes ohne passende Regel werden NA, und mariposa gibt eine Warnung aus. Mit „else=copy“ behält man sie, mit „else=NA“ bestätigt man das. Fehlende Werte aus read_spss() bleiben fehlend, außer eine Regel „NA=…“ oder „else=…“ erfasst sie.',
-      'Ob ein Mittelwert der neuen Codes sinnvoll ist, hängt vom Skalenniveau ab. Bei einer 0/1-Variable ist er der Anteil der 1.',
+      'rec() prüft die Regeln von links nach rechts; für jeden Code gilt die erste passende. Gültige Codes ohne passende Regel werden NA, und mariposa gibt eine Warnung aus. Mit „else=copy“ behältst du sie, mit „else=NA“ bestätigst du das. Fehlende Werte aus read_spss() bleiben fehlend, außer eine Regel „NA=…“ oder „else=…“ erfasst sie.',
+      'Ob ein Mittelwert der neuen Codes sinnvoll ist, hängt vom Skalenniveau ab. Bei einer 0/1-Variable ist er der Anteil der Einsen.',
     ],
   },
 };

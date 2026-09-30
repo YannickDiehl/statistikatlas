@@ -17,8 +17,11 @@ export type Scale = { min: number; max: number };
 
 export class RuleError extends Error {}
 
-const NUM = '-?\\d+(?:[.,]\\d+)?';
-const toNum = (t: string, s: Scale) => /^min$/i.test(t) ? s.min : /^max$/i.test(t) ? s.max : Number(t.replace(',', '.'));
+const num = (v: number) => String(v);
+
+// Dezimalpunkt wie in R; das Komma trennt Listen (mariposa lehnt „1=1,5“ ab).
+const NUM = '-?\\d+(?:\\.\\d+)?';
+const toNum = (t: string, s: Scale) => /^min$/i.test(t) ? s.min : /^max$/i.test(t) ? s.max : Number(t);
 
 /** Trennt an „;“ außerhalb eckiger Klammern, damit Labels Semikolons enthalten dürfen. */
 export function splitRules(input: string): string[] {
@@ -40,15 +43,18 @@ export function parseRules(input: string, scale: Scale): Program {
   const revRange = s.match(new RegExp(`^rev\\s*\\(\\s*(${NUM})\\s*,\\s*(${NUM})\\s*\\)$`, 'i'));
   if (revRange) {
     const lo = toNum(revRange[1], scale), hi = toNum(revRange[2], scale);
-    if (lo > hi) throw new RuleError(`Bei rev(lo, hi) kommt der kleinere Wert zuerst: rev(${revRange[2]}, ${revRange[1]}).`);
+    if (lo >= hi) throw new RuleError(`Bei rev(lo, hi) muss der erste Wert kleiner sein als der zweite, zum Beispiel rev(${num(scale.min)}, ${num(scale.max)}).`);
     return { kind: 'rev', lo, hi, src: s };
   }
   if (/^(dicho|mean|quart)\b/i.test(s)) throw new RuleError('Das kann rec(), die Werkstatt zeigt es noch nicht.');
   const rules: Rule[] = [];
-  for (const part of splitRules(s)) {
+  const parts = splitRules(s);
+  if (!parts.length) throw new RuleError('Gib eine Regel ein, zum Beispiel 1:2=1; 3:5=0.');
+  for (const part of parts) {
     const m = part.match(/^(.+?)\s*=\s*([^[\s]+)\s*(?:\[(.*)\])?\s*$/);
     if (!m) throw new RuleError(`„${part}“ verstehe ich nicht. Erwartet wird alt=neu, zum Beispiel 1:2=1.`);
     const left = m[1].trim(), right = m[2].trim(), label = m[3] !== undefined ? m[3].trim() : null;
+    if (label === '') throw new RuleError(`In „${part}“ ist das Wertelabel leer. Schreibe einen Text in die eckigen Klammern oder lass sie weg.`);
     if (!new RegExp(`^(${NUM}|na|copy)$`, 'i').test(right)) throw new RuleError(`„${right}“ ist kein gültiger neuer Wert. Erlaubt sind eine Zahl, NA oder copy.`);
     const rhs: Rhs = /^na$/i.test(right) ? 'NA' : /^copy$/i.test(right) ? 'copy' : toNum(right, scale);
     let lhs: Lhs;
@@ -106,6 +112,8 @@ export function trace(p: Program, code: Code): { checked: TraceStep[]; result: O
 export type Row = { key: string; code: string; label: string; f: number; bad?: boolean };
 export type Mapping = {
   rows: Row[];
+  /** Bei rev(lo, hi): gültige Codes außerhalb von lo bis hi (mariposa warnt und dreht sie trotzdem um). */
+  outside: Code[];
   /** Für jeden alten Code (gleiche Reihenfolge) der Schlüssel seiner Zeile rechts. */
   targets: string[];
   unmatched: Code[];
@@ -131,10 +139,12 @@ export function recode(p: Program, codes: readonly Code[], fmt: (v: number) => s
   codes.forEach((c, i) => { rows.find(r => r.key === targets[i])!.f += c.f; });
   let sum = 0, nValid = 0;
   outs.forEach((o, i) => { if (o.t === 'val') { sum += o.v * codes[i].f; nValid += codes[i].f; } });
-  const capIndex = codes.findIndex((c, i) => c.k === 'M' && outs[i].t === 'val');
+  // Nur else fängt fehlende Werte „aus Versehen“; NA=… ist eine bewusste Entscheidung.
+  const capIndex = p.kind === 'rules' ? codes.findIndex((c, i) => c.k === 'M' && outs[i].t === 'val' && 'else' in p.rules.find(r => hits(r, c))!.lhs) : -1;
   return {
     rows, targets,
     unmatched: codes.filter((_, i) => outs[i].t === 'unm'),
+    outside: p.kind === 'rev' ? codes.filter(c => c.k !== 'M' && (c.k < p.lo || c.k > p.hi)) : [],
     captured: capIndex >= 0 ? { code: codes[capIndex], to: outs[capIndex] as Extract<Outcome, { t: 'val' }> } : null,
     mean: nValid ? sum / nValid : NaN,
     nValid,

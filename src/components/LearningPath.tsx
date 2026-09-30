@@ -101,7 +101,7 @@ export function LearningPath({ onConcept, sessionIndex = 0, onSessionChange, ini
 
       <section className="sandbox learning-mission" aria-label="Aufgabe">
         {taskDef && <TaskHost key={taskDef.id} def={taskDef} data={data} raw={tasks.tasks[taskDef.id]}
-          onRaw={next => setTasks(t => ({ tasks: { ...t.tasks, [taskDef.id]: next } }))} onData={setData} onConcept={onConcept} />}
+          onRaw={next => setTasks(t => ({ tasks: { ...t.tasks, [taskDef.id]: next } }))} onData={setData} onReset={() => setData(null)} onConcept={onConcept} />}
         {!taskDef && <div className="learning-mission-soon">
           <span className="learning-eyebrow">AUFGABE FOLGT</span>
           <p>Für diese Sitzung entsteht eine eigene Aufgabe mit echten ALLBUS-Daten. Bis dahin: Begriffe oben in der Karte erkunden und im Seminar in R arbeiten.</p>

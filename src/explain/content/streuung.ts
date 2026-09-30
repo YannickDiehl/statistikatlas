@@ -7,6 +7,11 @@ type C = Ctx<Series>;
 const NAMES = ['A', 'B', 'C', 'D', 'E'] as const;
 const P = (c: C) => c.names[c.who];
 const GROUP_A = series([4, 5, 5, 5, 6]), GROUP_B = series([1, 3, 5, 7, 9]);
+/** Größte Verschiebung (2 oder 1, sonst 0), die alle Werte auf der Skala lässt; bevorzugt nach rechts. */
+const shiftWithin = (d: number[], lo: number, hi: number) => {
+  const up = hi - Math.max(...d), down = Math.min(...d) - lo;
+  return up >= 2 ? 2 : down >= 2 ? -2 : up >= 1 ? 1 : down >= 1 ? -1 : 0;
+};
 
 const terms = (c: C): FNode[] => c.s.xs.flatMap((x, i): FNode[] => [
   ...(i ? [' ', { part: ['+'], m: 4 }, ' '] as FNode[] : []),
@@ -53,13 +58,13 @@ export const streuung: Workshop<number[], Series> = {
     {
       button: 'xᵢ − x̄', sym: 'xᵢ − x̄', concept: 'deviation', also: 'mit Vorzeichen', perPerson: true,
       kurz: 'Für jede Person messen wir: Wie weit ist sie von der Mitte weg, und auf welcher Seite?',
-      fachlich: 'Die Abweichung ist die Beobachtung einer Person minus den Mittelwert. Ihr Vorzeichen zeigt die Richtung.',
+      fachlich: 'Die Abweichung ist der Wert einer Person minus Mittelwert. Ihr Vorzeichen zeigt die Richtung.',
       vorgerechnet: c => {
         const d = c.s.dev[c.who];
         const side = d < -1e-9 ? `Negativ: ${P(c)} liegt links der Mitte.` : d > 1e-9 ? `Positiv: ${P(c)} liegt rechts der Mitte.` : `Null: ${P(c)} liegt genau auf der Mitte.`;
         return `Person ${P(c)} hat den Wert ${c.s.xs[c.who]}. Der Mittelwert liegt bei ${num(c.s.mean)}. Abweichung: ${c.s.xs[c.who]} − ${num(c.s.mean)} = ${signed(d)}. ${side}`;
       },
-      alltag: 'Wie Hausnummern auf einer Straße: Wer bei Nummer 1 wohnt, wohnt 4 Häuser links von Nummer 5.',
+      alltag: 'Wie Haltestellen einer Buslinie: Von Station 1 bis Station 5 sind es 4 Stationen, und die Richtung sagt, ob man vor oder hinter Station 5 ist.',
       warum: 'Das Vorzeichen zeigt die Seite, links oder rechts der Mitte. Der Betrag zeigt, wie weit weg jemand ist.',
       fehler: 'Das Minus weglassen. Es wirkt unwichtig, zeigt aber etwas Wichtiges: Addiert man alle Abweichungen, kommt immer 0 heraus (siehe Summenzeile der Tabelle).',
       check: {
@@ -73,7 +78,7 @@ export const streuung: Workshop<number[], Series> = {
     },
     {
       button: '( )²', sym: '(xᵢ − x̄)²', concept: 'squared_deviation', also: 'Abweichungsquadrat', perPerson: true,
-      kurz: 'Aus jedem Abstand wird eine Fläche. Danach zählt nur noch, wie weit jemand weg ist, nicht mehr die Seite.',
+      kurz: 'Aus jedem Abstand wird eine Fläche. Danach zählt nur noch, wie weit jemand weg ist, nicht mehr, auf welcher Seite der Mitte jemand liegt.',
       fachlich: 'Jede Abweichung wird quadriert, also mit sich selbst multipliziert. Das Ergebnis ist nie negativ.',
       vorgerechnet: c => {
         const d = c.s.dev[c.who], q = c.s.sq[c.who];
@@ -110,10 +115,11 @@ export const streuung: Workshop<number[], Series> = {
     },
     {
       button: '÷ (n − 1)', sym: 's²', concept: 'variance', also: 'Varianz s², geteilt durch die Freiheitsgrade n − 1', perPerson: false,
-      kurz: 'Der Haufen wird fair aufgeteilt. So groß ist eine typische Fläche.',
+      links: [{ id: 'df', label: 'Freiheitsgrade der Streuung' }],
+      kurz: 'Der Haufen wird aufgeteilt, fast wie bei einem Durchschnitt. So groß ist eine typische Fläche.',
       fachlich: 'Die Quadratsumme geteilt durch die Freiheitsgrade n − 1 ergibt die Varianz s².',
       vorgerechnet: c => `${num(c.s.ss)} geteilt durch n − 1 = 5 − 1 = 4 ergibt ${num(c.s.variance)}. Das ist die Fläche eines typischen Quadrats, gemessen in Skalenpunkten zum Quadrat.`,
-      alltag: 'Wie gerechtes Aufteilen: Der Haufen wird in gleich große Stücke geteilt, eins weniger, als es Personen gibt.',
+      alltag: 'Fast wie ein Durchschnitt, nur durch n − 1 statt durch n geteilt; warum, steht unter „Genau genommen“.',
       warum: 'Teilen macht Gruppen unterschiedlicher Größe vergleichbar. Warum durch n − 1 und nicht durch n, erklärt „Genau genommen“.',
       fehler: c => `Durch n statt durch n − 1 teilen. Das ergäbe ${num(c.s.ss)} / 5 = ${num(c.s.ss / 5)} statt ${num(c.s.variance)}.`,
       check: {
@@ -129,7 +135,7 @@ export const streuung: Workshop<number[], Series> = {
       button: '√', sym: 's', concept: 'sd', also: 'Quadratwurzel der Varianz', perPerson: false,
       kurz: 'Aus der typischen Fläche wird wieder ein Abstand: So weit liegen die Werte typischerweise von der Mitte weg.',
       fachlich: 'Die Standardabweichung s ist die Quadratwurzel der Varianz. Sie hat wieder die Einheit der Daten.',
-      vorgerechnet: c => `√${num(c.s.variance)} ≈ ${num(c.s.sd)}. Probe: ${num(c.s.sd)} · ${num(c.s.sd)} ≈ ${num(Math.round(c.s.sd * 100) ** 2 / 10000)}. Die Seitenlänge des typischen Quadrats beträgt also etwa ${num(c.s.sd)} Skalenpunkte.`,
+      vorgerechnet: c => `√${num(c.s.variance)} ≈ ${num(c.s.sd)}. Probe: ${num(c.s.sd)} · ${num(c.s.sd)} ≈ ${num(c.s.variance)}. Die Seitenlänge des typischen Quadrats beträgt also etwa ${num(c.s.sd)} Skalenpunkte.`,
       alltag: 'Eine Terrasse mit 10 m² Fläche ist ein Quadrat mit etwa 3,16 m Seitenlänge. Die Wurzel rechnet von der Fläche zurück zur Länge.',
       warum: 'Die Varianz hat die Einheit „Skalenpunkte zum Quadrat“, die niemand deuten kann. Erst s ist wieder in Skalenpunkten und lässt sich am Zahlenstrahl abtragen.',
       fehler: c => `Die Wurzel vergessen. ${num(c.s.variance)} ist die Varianz, nicht die Standardabweichung. Prüfe die Einheit: s muss in Skalenpunkten sein.`,
@@ -178,7 +184,7 @@ export const streuung: Workshop<number[], Series> = {
       options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 2,
       explain: 'Der Mittelwert wandert mit. In der Abweichung heben sich die 2 Punkte auf: (xᵢ + 2) − (x̄ + 2) = xᵢ − x̄. Die Streuung beschreibt, wie weit die Werte auseinanderliegen, nicht wo sie liegen.',
       kurz: 'Verschieben ändert die Lage, nicht die Streuung.',
-      tryIt: { label: 'um 2 verschieben', apply: d => Math.max(...d) <= 8 ? d.map(x => x + 2) : Math.min(...d) >= 3 ? d.map(x => x - 2) : [6, 7, 7, 7, 8] },
+      tryIt: { label: 'alle verschieben', apply: d => d.map(x => x + shiftWithin(d, 1, 10)) },
     },
     {
       question: 'Warum nicht einfach die Abweichungen addieren, ohne Quadrat?', options: ['das ginge genauso', 'die Summe wäre immer 0'], correct: 1, step: 3,
@@ -203,13 +209,13 @@ export const streuung: Workshop<number[], Series> = {
       interpret: c => ({
         kurz: c.s.sd < 0.005 ? 'Alle sagen dasselbe. Es gibt keine Streuung.'
           : Math.abs(c.s.sd - GROUP_A.sd) <= Math.abs(c.s.sd - GROUP_B.sd) ? 'Diese Gruppe ist sich eher einig, ähnlich wie Gruppe A.' : 'Diese Gruppe ist sich eher uneinig, ähnlich wie Gruppe B.',
-        fachlich: `Die Standardabweichung beträgt s = ${num(c.s.sd)} Skalenpunkte. Die Einstufungen liegen also typischerweise etwa ${num(c.s.sd)} Punkte um den Mittelwert ${num(c.s.mean)} herum, grob zwischen ${num(c.s.mean - c.s.sd)} und ${num(c.s.mean + c.s.sd)}. Zum Vergleich: Gruppe A hat s = ${num(GROUP_A.sd)}, Gruppe B s = ${num(GROUP_B.sd)}. Je kleiner s, desto einiger ist sich eine Gruppe. Der Mittelwert allein hätte diesen Unterschied nicht gezeigt.`,
+        fachlich: `Die Standardabweichung beträgt s = ${num(c.s.sd)} Skalenpunkte. Die Einstufungen liegen also typischerweise etwa ${num(c.s.sd)} Punkte vom Mittelwert ${num(c.s.mean)} entfernt, grob zwischen ${num(c.s.mean - c.s.sd)} und ${num(c.s.mean + c.s.sd)}. Zum Vergleich: Gruppe A hat s = ${num(GROUP_A.sd)}, Gruppe B s = ${num(GROUP_B.sd)}. Je kleiner s, desto einiger ist sich eine Gruppe. Der Mittelwert allein hätte diesen Unterschied nicht gezeigt.`,
       }),
       genau: {
-        kurz: 'Mit n − 1 wird die Streuung in der Bevölkerung nicht zu klein geschätzt. Und s ist etwas anderes als der durchschnittliche Abstand.',
+        kurz: 'Mit n − 1 wird die Varianz in der Bevölkerung im Mittel über viele Stichproben nicht zu klein geschätzt. Und s ist etwas anderes als der durchschnittliche Abstand.',
         paragraphs: c => [
-          'Warum n − 1? Die Abweichungen vom eigenen Mittelwert ergeben zusammen immer 0, das zeigt die Summenzeile der Tabelle. Kennt man vier davon, steht die fünfte fest: Es bleiben n − 1 frei wählbare Abweichungen, die Freiheitsgrade. Mit n − 1 ist s² ein erwartungstreuer Schätzer der Varianz der Grundgesamtheit, unterschätzt sie also nicht systematisch. Teilt man durch n, erhält man die mittlere quadrierte Abweichung genau dieser fünf Personen.',
-          `s ist kein durchschnittlicher Abstand. Hier beträgt die mittlere absolute Abweichung ${num(c.s.mad)}, s dagegen ${num(c.s.sd)}. Das Quadrat gewichtet große Abweichungen stärker.`,
+          'Warum n − 1? Die Abweichungen vom eigenen Mittelwert ergeben zusammen immer 0, das zeigt die Summenzeile der Tabelle. Kennt man vier davon, steht die fünfte fest: Es bleiben n − 1 frei wählbare Abweichungen, die Freiheitsgrade. Die Abweichungen werden vom Stichprobenmittel gemessen, das näher an den Daten liegt als der wahre Mittelwert. Die Quadratsumme fällt deshalb im Schnitt zu klein aus; n − 1 gleicht das aus. So ist s² ein erwartungstreuer Schätzer der Varianz der Grundgesamtheit. Für s selbst gilt das nur annähernd. Teilt man durch n, erhält man die mittlere quadrierte Abweichung genau dieser fünf Personen.',
+          `s ist kein durchschnittlicher Abstand. Hier beträgt die mittlere absolute Abweichung ${num(c.s.mad)}, s dagegen ${num(c.s.sd)}. Das Quadrat gewichtet große Abweichungen stärker, und geteilt wird durch n − 1 statt durch n.`,
           'Die Links-rechts-Skala hier wie eine metrische Skala zu behandeln, ist eine Annahme: Gleiche Zahlenabstände sollen gleiche inhaltliche Abstände bedeuten.',
         ],
       },
@@ -226,10 +232,11 @@ export const streuung: Workshop<number[], Series> = {
           : Math.abs(c.s.variance - GROUP_A.variance) <= Math.abs(c.s.variance - GROUP_B.variance) ? 'Diese Gruppe ist sich eher einig, ähnlich wie Gruppe A.' : 'Diese Gruppe ist sich eher uneinig, ähnlich wie Gruppe B.',
         fachlich: `Die Varianz beträgt s² = ${num(c.s.variance)} Skalenpunkte zum Quadrat. Als Fläche ist sie schwer zu deuten; ihre Wurzel, die Standardabweichung s ≈ ${num(c.s.sd)}, ist wieder in Skalenpunkten.`,
       }),
+      next: { id: 'sd', label: 'Weiter zur Standardabweichung' },
       genau: {
-        kurz: 'Mit n − 1 wird die Streuung in der Bevölkerung nicht zu klein geschätzt.',
+        kurz: 'Mit n − 1 wird die Varianz in der Bevölkerung im Mittel über viele Stichproben nicht zu klein geschätzt.',
         paragraphs: () => [
-          'Warum n − 1? Die Abweichungen vom eigenen Mittelwert ergeben zusammen immer 0, das zeigt die Summenzeile der Tabelle. Kennt man vier davon, steht die fünfte fest: Es bleiben n − 1 frei wählbare Abweichungen, die Freiheitsgrade. Mit n − 1 ist s² ein erwartungstreuer Schätzer der Varianz der Grundgesamtheit, unterschätzt sie also nicht systematisch. Teilt man durch n, erhält man die mittlere quadrierte Abweichung genau dieser fünf Personen.',
+          'Warum n − 1? Die Abweichungen vom eigenen Mittelwert ergeben zusammen immer 0, das zeigt die Summenzeile der Tabelle. Kennt man vier davon, steht die fünfte fest: Es bleiben n − 1 frei wählbare Abweichungen, die Freiheitsgrade. Die Abweichungen werden vom Stichprobenmittel gemessen, das näher an den Daten liegt als der wahre Mittelwert. Die Quadratsumme fällt deshalb im Schnitt zu klein aus; n − 1 gleicht das aus. So ist s² ein erwartungstreuer Schätzer der Varianz der Grundgesamtheit. Für s selbst gilt das nur annähernd. Teilt man durch n, erhält man die mittlere quadrierte Abweichung genau dieser fünf Personen.',
           'Die Links-rechts-Skala hier wie eine metrische Skala zu behandeln, ist eine Annahme: Gleiche Zahlenabstände sollen gleiche inhaltliche Abstände bedeuten.',
         ],
       },

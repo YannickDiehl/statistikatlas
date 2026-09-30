@@ -15,14 +15,16 @@ const products = (c: C): FNode[] => c.s.xs.flatMap((x, i): FNode[] => [
   { part: [' · ('], m: 3 }, { part: [`${c.s.ys[i]} −`], m: 2 }, ' ', { part: [num(c.s.y.mean)], m: 1 }, { part: [')'], m: 3 },
 ]);
 
+/** Betrag von r, gerundet wie angezeigt: 0,4999… gilt als 0,5. */
+const shown = (r: number) => Math.round(Math.abs(r) * 100) / 100;
 const strength = (r: number) => {
-  const a = Math.abs(r);
-  return a >= 0.9999 ? 'perfekt' : a >= 0.5 ? 'stark' : a >= 0.3 ? 'mittel' : 'schwach';
+  const a = shown(r);
+  return a >= 1 ? 'perfekt' : a >= 0.5 ? 'stark' : a >= 0.3 ? 'mittel' : 'schwach';
 };
 
 export const zusammenhang: Workshop<Pairs, PairStats> = {
   id: 'zusammenhang',
-  wofuer: 'Vertraut, wer dem Bundestag vertraut, auch eher der Bundesregierung? Fünf Beispielpersonen beantworten zwei ALLBUS-Fragen auf einer Skala von 1 (gar kein Vertrauen) bis 7 (großes Vertrauen). Die Formel fragt: Liegen die beiden Antworten einer Person meist auf derselben Seite ihres Durchschnitts?',
+  wofuer: 'Vertraut, wer dem Bundestag vertraut, auch eher der Bundesregierung? Fünf Beispielpersonen beantworten zwei ALLBUS-Fragen auf einer Skala von 1 (gar kein Vertrauen) bis 7 (großes Vertrauen). Die Formel fragt: Liegen die beiden Antworten einer Person meist auf derselben Seite des jeweiligen Durchschnitts?',
   names: NAMES,
   bounds: { min: 1, max: 7 },
   presets: [
@@ -37,7 +39,7 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
     { sym: '( ) · ( )', say: '„mal“', term: 'Abweichungsprodukt', plain: 'die beiden Abweichungen malnehmen', step: 3 },
     { sym: 'Σ', say: '„Sigma“', term: 'Summenzeichen', plain: 'alles addieren, jede Person einmal', step: 4 },
     { sym: 'n − 1', say: '„n minus eins“', term: 'Freiheitsgrade', plain: 'eins weniger als Personen', step: 5 },
-    { sym: 'sₓᵧ', say: '„s x y“', term: 'Stichprobenkovarianz', plain: 'das typische Rechteck', step: 5 },
+    { sym: 'sₓᵧ', say: '„s x y“', term: 'Stichprobenkovarianz', plain: 'die durchschnittliche Fläche mit Vorzeichen', step: 5 },
     { sym: 'sₓ, sᵧ', say: '„s x, s y“', term: 'Standardabweichungen', plain: 'typische Abstände jeder Frage', step: 6 },
     { sym: 'r', say: '„r“', term: 'Pearson-Korrelation', plain: 'Zusammenhang zwischen −1 und +1', step: 6 },
   ],
@@ -94,8 +96,8 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
         return `${P(c)}: ${paren(dx)} · ${paren(dy)} = ${num(p)}. ${how} Im Bild: ein Rechteck mit den Seiten ${num(Math.abs(dx))} und ${num(Math.abs(dy))}.`;
       },
       alltag: 'Wie zwei Wetterfahnen: Zeigen beide in dieselbe Richtung, zählt das als Übereinstimmung, sonst als Widerspruch. Je stärker der Wind, desto mehr zählt es.',
-      warum: 'Das Vorzeichen des Produkts sagt, ob diese Person zum gleichläufigen oder zum gegenläufigen Muster beiträgt, die Fläche, wie deutlich.',
-      fehler: 'Die Vorzeichenregel vergessen: Minus mal Minus ergibt Plus, Plus mal Minus ergibt Minus. Und: Das Abweichungsquadrat der Standardabweichung ist der Sonderfall, in dem eine Variable mit sich selbst multipliziert wird.',
+      warum: 'Das Vorzeichen des Produkts sagt, ob diese Person zum gleichläufigen oder zum gegenläufigen Muster beiträgt, die Fläche, wie deutlich. Das Abweichungsquadrat der Standardabweichung ist der Sonderfall, in dem eine Variable mit sich selbst malgenommen wird.',
+      fehler: 'Die Vorzeichenregel vergessen: Minus mal Minus ergibt Plus, Plus mal Minus ergibt Minus.',
       check: {
         question: c => `Wie groß ist das Abweichungsprodukt von Person ${P(c)}?`,
         answer: c => c.s.prod[c.who],
@@ -130,7 +132,7 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
     },
     {
       button: '÷ (n − 1)', sym: 'sₓᵧ', concept: 'covariance', perPerson: false,
-      kurz: 'Die Summe wird auf n − 1 verteilt. So groß ist ein typisches Rechteck.',
+      kurz: 'Die verrechneten Flächen werden auf n − 1 verteilt. Das ergibt eine durchschnittliche Fläche mit Vorzeichen.',
       fachlich: 'Die Summe der Abweichungsprodukte geteilt durch n − 1 ergibt die Stichprobenkovarianz sₓᵧ.',
       vorgerechnet: c => `${num(c.s.cp)} / (5 − 1) = ${num(c.s.cov)}. Einheit: Vertrauenspunkte beim Bundestag mal Vertrauenspunkte bei der Bundesregierung.`,
       alltag: 'Wie bei der Varianz: gerecht auf n − 1 Stücke verteilen.',
@@ -147,13 +149,14 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
     },
     {
       button: '÷ (sₓ · sᵧ)', sym: 'r', concept: 'pearson', also: 'Nenner: Produkt der Standardabweichungen', perPerson: false,
-      kurz: 'Wir vergleichen das typische Rechteck mit dem größtmöglichen. So entsteht eine Zahl zwischen −1 und +1.',
+      links: [{ id: 'sd_product', label: 'Produkt der Standardabweichungen' }, { id: 'sd', label: 'Standardabweichung' }],
+      kurz: 'Wir vergleichen die durchschnittliche Fläche mit der größtmöglichen. So entsteht eine Zahl zwischen −1 und +1.',
       fachlich: 'Pearson-r ist die Kovarianz geteilt durch das Produkt der beiden Standardabweichungen. Das Ergebnis hat keine Einheit und liegt zwischen −1 und +1.',
       vorgerechnet: c => c.s.r === null
         ? `sₓ ≈ ${num(c.s.x.sd)} und sᵧ ≈ ${num(c.s.y.sd)}. Eine Standardabweichung ist 0, deshalb ist r nicht definiert: Man kann nicht durch 0 teilen.`
-        : `sₓ ≈ ${num(c.s.x.sd)} und sᵧ ≈ ${num(c.s.y.sd)} (je aus der Werkstatt Standardabweichung), also sₓ · sᵧ ≈ ${num(c.s.sxy)}. r = ${num(c.s.cov)} / ${num(c.s.sxy)} = ${num(c.s.r)}.`,
+        : `sₓ ≈ ${num(c.s.x.sd)} und sᵧ ≈ ${num(c.s.y.sd)} (je aus der Werkstatt Standardabweichung), also sₓ · sᵧ ≈ ${num(c.s.sxy)}. r = ${num(c.s.cov)} / ${num(c.s.sxy)} ≈ ${num(c.s.r)}.`,
       alltag: 'Wie eine Prozentangabe: nicht wie viele Punkte, sondern welcher Anteil vom Höchstmöglichen.',
-      warum: 'Die Kovarianz kann nie größer sein als sₓ · sᵧ. Teilt man durch diesen Höchstwert, verschwinden die Einheiten, und Zusammenhänge zwischen ganz verschiedenen Fragen werden vergleichbar.',
+      warum: 'Die Kovarianz liegt immer zwischen −sₓ · sᵧ und +sₓ · sᵧ. Teilt man durch sₓ · sᵧ, verschwinden die Einheiten, und Zusammenhänge zwischen ganz verschiedenen Fragen werden vergleichbar.',
       fehler: 'r als Anteil der Personen lesen. r = 0,5 heißt nicht, dass die Hälfte übereinstimmt. Es beschreibt, wie eng die Punkte an einer steigenden Geraden liegen.',
       check: {
         question: c => c.s.r === null ? 'Wie groß ist r? Hier ist eine Standardabweichung 0. Tippe NA, wenn r nicht definiert ist.' : 'Wie groß ist r?',
@@ -172,7 +175,7 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
     const cov: FNode[] = ['sₓᵧ = [ ', ...products(c), ' ] ', { part: ['/ (5 − 1)'], m: 5 }, { br: true },
       '= ', { part: [num(c.s.cp)], m: 4 }, ' ', { part: ['/ 4'], m: 5 }, ' = ', { part: [num(c.s.cov)], m: 5 }];
     if (last < 6) return cov;
-    return [...cov, { br: true }, 'r = ', { part: [num(c.s.cov)], m: 5 }, ' ', { part: [`/ (${num(c.s.x.sd)} · ${num(c.s.y.sd)})`], m: 6 }, ' = ',
+    return [...cov, { br: true }, 'r = ', { part: [num(c.s.cov)], m: 5 }, ' ', { part: [`/ (${num(c.s.x.sd)} · ${num(c.s.y.sd)})`], m: 6 }, c.s.r === null ? ': ' : ' ≈ ',
       { part: [c.s.r === null ? 'nicht definiert' : num(c.s.r)], m: 6 }];
   },
   table: {
@@ -181,12 +184,12 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
       { head: 'yᵢ', from: 1, active: [1], cell: (c, i) => String(c.s.ys[i]), sum: c => num(c.s.y.sum), sumFrom: 1 },
       { head: 'xᵢ − x̄', from: 2, active: [2], cell: (c, i) => signed(c.s.x.dev[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer' },
       { head: 'yᵢ − ȳ', from: 2, active: [2], cell: (c, i) => signed(c.s.y.dev[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer' },
-      { head: 'Produkt', from: 3, active: [3, 4], cell: (c, i) => num(c.s.prod[i]), sum: c => num(c.s.cp), sumFrom: 4 },
+      { head: 'Produkt', from: 3, active: [3, 4], cell: (c, i) => num(c.s.prod[i]), sum: c => num(c.s.cp), sumFrom: 4, tone: (c, i) => c.s.prod[i] > 1e-9 ? 'pos' : c.s.prod[i] < -1e-9 ? 'neg' : undefined },
     ],
     lines: [
       { from: 1, step: 1, text: c => `x̄ = ${num(c.s.x.sum)} / 5 = ${num(c.s.x.mean)}, ȳ = ${num(c.s.y.sum)} / 5 = ${num(c.s.y.mean)}` },
       { from: 5, step: 5, text: c => `sₓᵧ = ${num(c.s.cp)} / 4 = ${num(c.s.cov)}` },
-      { from: 6, step: 6, text: c => `sₓ ≈ ${num(c.s.x.sd)}, sᵧ ≈ ${num(c.s.y.sd)}, r = ${num(c.s.cov)} / ${num(c.s.sxy)} ${c.s.r === null ? 'nicht definiert' : `= ${num(c.s.r)}`}` },
+      { from: 6, step: 6, text: c => `sₓ ≈ ${num(c.s.x.sd)}, sᵧ ≈ ${num(c.s.y.sd)}, r = ${num(c.s.cov)} / ${num(c.s.sxy)}${c.s.r === null ? ': nicht definiert' : ` ≈ ${num(c.s.r)}`}` },
     ],
   },
   captions: {
@@ -194,8 +197,8 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
     2: 'Jede Person hat zwei Abweichungen: waagerecht zu x̄, senkrecht zu ȳ.',
     3: 'Rechts oben und links unten: gleichläufig, die Fläche zählt plus. Die anderen Felder zählen minus.',
     4: 'Der Balken legt alle Plusflächen und alle Minusflächen gegeneinander.',
-    5: 'Geteilt durch n − 1 ergibt sich das typische Rechteck: die Kovarianz.',
-    6: 'Das typische Rechteck im Vergleich zum größtmöglichen, sₓ · sᵧ: Das Verhältnis ist r.',
+    5: 'Geteilt durch n − 1 ergibt sich die durchschnittliche Fläche mit Vorzeichen: die Kovarianz.',
+    6: 'Die durchschnittliche Fläche im Vergleich zur größtmöglichen, sₓ · sᵧ: Das Verhältnis ist r.',
   },
   think: [
     {
@@ -205,9 +208,9 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
       kurz: 'r hängt nicht von der Einheit ab, die Kovarianz schon.',
     },
     {
-      question: 'Die Punkte liegen auf einem U. Wie groß ist r?', questionFor: { covariance: 'Die Punkte liegen auf einem U. Wie groß ist die Kovarianz?' },
+      question: 'Die Punkte liegen auf einem symmetrischen U. Wie groß ist r?', questionFor: { covariance: 'Die Punkte liegen auf einem symmetrischen U. Wie groß ist die Kovarianz?' },
       options: ['nahe 1', '0', 'negativ'], correct: 1, step: 4,
-      explain: 'Rechts und links liegen die Punkte oben, in der Mitte unten: Die Plus- und Minusrechtecke heben sich genau auf, die Summe ist 0. Kovarianz und r messen nur den geraden (linearen) Anteil eines Zusammenhangs.',
+      explain: 'Rechts und links liegen die Punkte oben, in der Mitte unten: Beim symmetrischen U heben sich die Plus- und Minusrechtecke genau auf, die Summe ist 0. Kovarianz und r messen nur den geraden (linearen) Anteil eines Zusammenhangs.',
       kurz: 'r = 0 heißt nicht, dass es keinen Zusammenhang gibt.',
       tryIt: { label: 'gekrümmt', apply: () => ({ x: X, y: [5, 3, 2, 3, 5] }) },
     },
@@ -239,7 +242,9 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
         if (c.s.r === null) return { kurz: 'Eine Frage hat keine Streuung. Dann lässt sich kein Zusammenhang berechnen.', fachlich: 'Eine Standardabweichung ist 0, deshalb ist r nicht definiert.' };
         const r = c.s.r;
         return {
-          kurz: Math.abs(r) < 0.1 ? 'Kein gerader Zusammenhang.' : `${r > 0 ? 'Gleichläufig' : 'Gegenläufig'} und ${strength(r)}${strength(r) === 'perfekt' ? '.' : ', aber kein perfekter Zusammenhang.'}`,
+          kurz: shown(r) < 0.1 ? 'Kein gerader Zusammenhang.'
+            : strength(r) === 'perfekt' ? `Ein perfekt ${r > 0 ? 'gleichläufiger' : 'gegenläufiger'} Zusammenhang: Alle Punkte liegen auf einer Geraden.`
+            : `Ein ${r > 0 ? 'gleichläufiger' : 'gegenläufiger'}, ${{ schwach: 'schwacher', mittel: 'mittelstarker', stark: 'starker', perfekt: 'perfekter' }[strength(r)]} Zusammenhang${strength(r) === 'stark' ? ', aber kein perfekter' : ''}.`,
           fachlich: `r = ${num(r)}. Nach der verbreiteten Faustregel von Cohen ist ein Betrag ab 0,1 schwach, ab 0,3 mittel, ab 0,5 stark. Bei nur fünf Personen ist r sehr unsicher; die Werkstatt zeigt die Rechnung, nicht einen Befund über Deutschland.`,
         };
       },
@@ -248,15 +253,15 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
         paragraphs: () => [
           'Es gibt einen zweiten Rechenweg mit demselben Ergebnis: beide Variablen z-standardisieren und r = Σzₓzᵧ / (n − 1) rechnen. Er ist über den Routenwähler im Abschnitt „Mit dem Lehrdatensatz“ erreichbar.',
           'Dass r zwischen −1 und +1 liegt, folgt aus |sₓᵧ| ≤ sₓ · sᵧ (Cauchy-Schwarz-Ungleichung). Gleichheit gilt nur, wenn alle Punkte exakt auf einer Geraden liegen.',
-          'Einzelne auffällige Punkte können r stark verändern. Bei Ausreißern oder nur geordneten Kategorien ist die Spearman-Korrelation robuster.',
-          'Die Vertrauensskalen hier wie metrische Skalen zu behandeln, ist eine Annahme.',
-          'Ein Zusammenhang ist keine Ursache: Beides kann zum Beispiel von allgemeinem politischem Vertrauen abhängen (Begriff „Confounding“).',
+          'Einzelne auffällige Punkte können r stark verändern. Bei Ausreißern ist die Spearman-Korrelation robuster, bei nur geordneten Kategorien angemessener.',
+          'Die Vertrauensskalen hier wie metrische Skalen zu behandeln, ist eine Annahme: Gleiche Zahlenabstände sollen gleiche inhaltliche Abstände bedeuten.',
+          'Ein Zusammenhang beweist keine Ursache: Beides kann zum Beispiel von der Nähe zu einer Regierungspartei abhängen (Begriffe „Drittvariable“ und „Confounding“).',
         ],
       },
     },
     covariance: {
       lastStep: 5,
-      kurz: 'Die Kovarianz sagt, ob zwei Merkmale gemeinsam über oder unter ihrem Durchschnitt liegen: positiv heißt gleichläufig, negativ gegenläufig.',
+      kurz: 'Die Kovarianz sagt, ob zwei Merkmale gemeinsam über oder unter dem jeweiligen Durchschnitt liegen: positiv heißt gleichläufig, negativ gegenläufig.',
       fachlich: 'Die Summe der Abweichungsprodukte geteilt durch n − 1.',
       symbolic: ['sₓᵧ = ', { frac: [{ big: 'Σ', m: 4 }, { part: ['('], m: 3 }, { part: ['x', { sub: 'i' }, ' −'], m: 2 }, ' ', { part: ['x̄'], m: 1 }, { part: [')('], m: 3 }, { part: ['y', { sub: 'i' }, ' −'], m: 2 }, ' ', { part: ['ȳ'], m: 1 }, { part: [')'], m: 3 }], den: [{ part: ['n − 1'], m: 5 }], m: 5 }],
       aria: 's x y gleich Summe über alle Personen i von: x i minus x quer, mal y i minus y quer, geteilt durch n minus 1',
@@ -267,12 +272,13 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
           : 'Ein gerades gemeinsames Muster ist nicht zu erkennen.',
         fachlich: `sₓᵧ = ${num(c.s.cov)}. Das Vorzeichen zeigt die Richtung. Die Größe ist ohne Einheiten schwer zu deuten, dafür gibt es Pearson-r.`,
       }),
+      next: { id: 'pearson', label: 'Weiter zur Pearson-Korrelation' },
       genau: {
         kurz: 'Die Kovarianz zeigt die Richtung, aber ihre Größe hängt von den Einheiten ab.',
         paragraphs: () => [
           'Die Kovarianz einer Variable mit sich selbst ist ihre Varianz: Aus dem Rechteck wird ein Quadrat.',
           'Dass |sₓᵧ| höchstens sₓ · sᵧ sein kann, nutzt Pearson-r, um die Kovarianz auf −1 bis +1 zu bringen.',
-          'Ein Zusammenhang ist keine Ursache: Beides kann zum Beispiel von allgemeinem politischem Vertrauen abhängen (Begriff „Confounding“).',
+          'Ein Zusammenhang beweist keine Ursache: Beides kann zum Beispiel von der Nähe zu einer Regierungspartei abhängen (Begriffe „Drittvariable“ und „Confounding“).',
         ],
       },
     },

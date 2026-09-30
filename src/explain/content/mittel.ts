@@ -15,7 +15,7 @@ export const mittel: Workshop<number[], Series> = {
   presets: [
     { id: 'B', label: 'Gruppe B: 1 3 5 7 9', data: [1, 3, 5, 7, 9] },
     { id: 'A', label: 'Gruppe A: 4 5 5 5 6', data: [4, 5, 5, 5, 6] },
-    { id: 'ausreisser', label: 'Mit Ausreißer: 1 3 5 7 10', data: [1, 3, 5, 7, 10] },
+    { id: 'randwert', label: 'Mit Randwert: 1 3 5 7 10', data: [1, 3, 5, 7, 10] },
   ],
   compute: series,
   glyphs: [
@@ -39,8 +39,10 @@ export const mittel: Workshop<number[], Series> = {
         answer: c => c.s.sum,
         diagnose: (c, v) => {
           if (v === 'NA') return null;
-          if (c.s.xs.some(x => x !== 0 && close(v, c.s.sum - x))) return 'Da fehlt eine Person. Es müssen 5 Summanden sein.';
-          if (c.s.xs.some(x => x !== 0 && close(v, c.s.sum + x))) return 'Eine Person ist doppelt gezählt.';
+          const missing = c.s.xs.findIndex(x => x !== 0 && close(v, c.s.sum - x));
+          if (missing >= 0) return `Ohne Person ${c.names[missing]} (${c.s.xs[missing]}) käme genau das heraus. Fehlt eine Person? Es müssen 5 Summanden sein.`;
+          const twice = c.s.xs.findIndex(x => x !== 0 && close(v, c.s.sum + x));
+          if (twice >= 0) return `Mit Person ${c.names[twice]} (${c.s.xs[twice]}) doppelt käme genau das heraus. Ist eine Person doppelt gezählt?`;
           return null;
         },
       },
@@ -70,9 +72,12 @@ export const mittel: Workshop<number[], Series> = {
   table: {
     columns: [
       { head: 'xᵢ', from: 1, active: [1], cell: (c, i) => String(c.s.xs[i]), sum: c => num(c.s.sum), sumFrom: 1 },
-      { head: 'xᵢ − x̄', from: 2, active: [2], cell: (c, i) => signed(c.s.dev[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer' },
+      { head: 'xᵢ − x̄', from: 2, active: [2], cell: (c, i) => signed(c.s.dev[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer', tone: (c, i) => c.s.dev[i] > 1e-9 ? 'pos' : c.s.dev[i] < -1e-9 ? 'neg' : undefined },
     ],
-    lines: [{ from: 2, step: 2, text: c => `x̄ = ${num(c.s.sum)} / 5 = ${num(c.s.mean)}` }],
+    lines: [
+      { from: 2, step: 2, text: c => `x̄ = ${num(c.s.sum)} / 5 = ${num(c.s.mean)}` },
+      { from: 2, step: 2, text: () => 'Die Spalte xᵢ − x̄ zeigt: So gleichen sich die Abstände aus, ihre Summe ist 0.' },
+    ],
   },
   captions: {
     1: 'Die fünf Einstufungen auf dem Zahlenstrahl. Punkte lassen sich ziehen.',
@@ -80,16 +85,16 @@ export const mittel: Workshop<number[], Series> = {
   },
   think: [
     {
-      question: 'Person E rückt von 9 auf 10. Um wie viel ändert sich x̄?', options: ['um 1', 'um 0,2', 'gar nicht'], correct: 1, step: 2,
+      question: 'In Gruppe B rückt Person E von 9 auf 10. Um wie viel ändert sich x̄?', options: ['um 1', 'um 0,2', 'gar nicht'], correct: 1, step: 2,
       explain: 'Die Summe wächst um 1, geteilt durch n = 5 ergibt +0,2. Jede Person bewegt den Mittelwert um ein n-tel ihrer eigenen Änderung.',
       kurz: 'Einzelne zählen, aber nur anteilig.',
-      tryIt: { label: 'E auf 10', apply: d => d.map((x, i) => i === 4 ? 10 : x) },
+      tryIt: { label: 'Gruppe B, E auf 10', apply: () => [1, 3, 5, 7, 10] },
     },
     {
       question: 'Muss der Mittelwert ein Wert sein, den jemand angegeben hat?', options: ['ja', 'nein'], correct: 1, step: 2,
       explain: 'Bei 1 3 5 7 10 ist x̄ = 5,2, und niemand hat 5,2 angegeben. Der Mittelwert ist ein Rechenwert, kein beobachteter Wert.',
       kurz: 'Der Durchschnitt muss nicht vorkommen.',
-      tryIt: { label: 'Mit Ausreißer', apply: () => [1, 3, 5, 7, 10] },
+      tryIt: { label: 'Mit Randwert', apply: () => [1, 3, 5, 7, 10] },
     },
     {
       question: 'Was ergibt die Summe aller Abweichungen xᵢ − x̄?', options: ['0', 'n', 'hängt von den Daten ab'], correct: 0, step: 2,
@@ -97,7 +102,7 @@ export const mittel: Workshop<number[], Series> = {
       kurz: 'Die Wippe ist immer im Gleichgewicht.',
     },
     {
-      question: 'Ein Tippfehler: Statt 9 steht 90 im Datensatz. Was passiert mit x̄?', options: ['ändert sich kaum', 'springt stark nach oben'], correct: 1, step: 1,
+      question: 'In Gruppe B steht durch einen Tippfehler statt 9 eine 90 im Datensatz. Was passiert mit x̄?', options: ['ändert sich kaum', 'springt stark nach oben'], correct: 1, step: 1,
       explain: 'Die Summe wird 106, geteilt durch 5 ergibt 21,2, weit außerhalb der Skala. Deshalb zuerst die Daten prüfen. Robuster gegen Ausreißer ist der Median.',
       kurz: 'Ein einziger falscher Wert kann den Mittelwert weit verschieben.',
     },
@@ -111,15 +116,16 @@ export const mittel: Workshop<number[], Series> = {
       aria: 'x quer gleich Summe über alle Personen i von x i, geteilt durch n',
       metrics: [{ label: 'Mittelwert x̄', value: c => num(c.s.mean) }],
       interpret: c => ({
-        kurz: `Im Durchschnitt stufen sich die fünf bei ${num(c.s.mean)} ein, ${c.s.mean < 5.5 ? 'links der Skalenmitte 5,5' : c.s.mean === 5.5 ? 'genau auf der Skalenmitte 5,5' : 'rechts der Skalenmitte 5,5'}.`,
+        kurz: `Im Durchschnitt stufen sich die fünf bei ${num(c.s.mean)} ein, ${c.s.mean < 5.5 ? 'links' : 'rechts'} der Skalenmitte 5,5.`,
         fachlich: `x̄ = ${num(c.s.mean)}. Wie einig sich die Gruppe ist, sagt der Mittelwert nicht: Gruppe A und Gruppe B haben beide x̄ = 5. Das misst die Standardabweichung.`,
       }),
+      next: { id: 'sd', label: 'Weiter zur Standardabweichung' },
       genau: {
         kurz: 'Der Mittelwert ist nur sinnvoll, wenn die Abstände zwischen den Werten etwas bedeuten.',
         paragraphs: () => [
           'Die Links-rechts-Skala hier wie eine metrische Skala zu behandeln, ist eine Annahme: Gleiche Zahlenabstände sollen gleiche inhaltliche Abstände bedeuten. Für geordnete Kategorien ohne diese Annahme eignet sich der Median.',
           'Der Mittelwert ist der Wert, für den die Summe der quadrierten Abweichungen am kleinsten ist. Deshalb misst man die Streuung um ihn herum (Werkstatt Standardabweichung).',
-          'In gewichteten Stichproben wie dem ALLBUS zählt jede Person mit ihrem Gewicht: x̄w = Σwᵢxᵢ / Σwᵢ (Begriff „Gewichte“).',
+          'In gewichteten Stichproben wie dem ALLBUS zählt jede Person mit ihrem Gewicht: x̄ (gewichtet) = Σwᵢxᵢ / Σwᵢ (Begriff „Gewichte“).',
         ],
       },
     },

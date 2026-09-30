@@ -26,7 +26,7 @@
 .sandbox .task-grid input,.sandbox .task-grid select{font:15px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink)}
 .task-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:0 0 14px}
 .task-card>h4{font:600 16px/1.4 var(--sans);margin:0 0 8px}
-.learning-data-status .sandbox-link{border:0;background:none;color:var(--green);text-decoration:underline;text-underline-offset:3px;padding:0;font:inherit;cursor:pointer}
+.sandbox-error .sandbox-link{border:0;background:none;color:var(--green);text-decoration:underline;text-underline-offset:3px;padding:0;font:inherit;cursor:pointer}
 @media(max-width:560px){.task-plenum dl{grid-template-columns:1fr}.task-plenum dd{margin-bottom:6px}}
 
 /* Sitzung 1 · Schon gefragt? */
