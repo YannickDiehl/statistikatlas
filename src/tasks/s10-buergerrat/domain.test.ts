@@ -4,7 +4,7 @@ import { fakeSav, fixtureSav } from '../../sandbox/testData';
 import { linkinv, logitOf, type LogitFit } from '../kit/logit';
 import {
   ameCandidates, answerNotes, cellCandidates, cellsOk, chainOk, checkAme, checkCells, checkChain, checkLikelihood, checkModel, checkReport, detect,
-  initialS10, janaCandidates, known, languages, likelihoodOk, likelihoodReveal, modelOk, parseS10, personNumbers, plenumLines, prepare,
+  initialS10, janaCandidates, likelihoodCandidates, orCandidates, readEntries, known, languages, likelihoodOk, likelihoodReveal, modelOk, parseS10, personNumbers, plenumLines, prepare,
   readEntry, recogniseReport, sentenceNotes, statusS10, tafel, tafelNotes, tafelReady, tafelSentences, TIMES_LIKELY, type S10State,
 } from './domain';
 
@@ -66,8 +66,14 @@ test('a model that cannot be estimated gives an explanation instead of numbers',
 test('reads entries with a tolerance of half a unit of the last digit', () => {
   assert.deepEqual(readEntry('3,77'), { x: 3.77, tol: 0.005 + 1e-9, percent: false });
   assert.deepEqual(readEntry('76,4 %'), { x: 76.4, tol: 0.05 + 1e-9, percent: true });
-  assert.equal(readEntry('1.122')!.x, 1122);
-  assert.equal(readEntry('1.122')!.tol, 0.5 + 1e-9);
+  // „1.122“: wie R gedruckt (1,122) oder deutsch mit Tausenderpunkt (1122) – beide Lesarten, die aus R zuerst
+  assert.deepEqual(readEntries('1.122').map(r => [r.x, r.tol]), [[1.122, 0.0005 + 1e-9], [1122, 0.5 + 1e-9]]);
+  assert.deepEqual(readEntries('0.764').map(r => r.x), [0.764]);
+  assert.deepEqual(readEntries('1.122.278').map(r => r.x), [1122278]);
+  const ll = likelihoodCandidates(p).nullLL, orP = orCandidates(p, 1);
+  assert.equal(detect(fmt(m.minus2LLNull, 3).replace(',', '.'), ll, 0.5)!.hits[0].id, 'ok');
+  assert.equal(detect(fmt(m.expB[1], 3).replace(',', '.'), orP, 0.005)!.hits[0].id, 'ok');
+  assert.equal(detect('27.396', ll, 0.5)!.hits[0].id, 'ok');
   assert.equal(readEntry('1122,3')!.tol, 0.05 + 1e-9);
   assert.equal(readEntry('−0,27')!.x, -0.27);
   assert.equal(readEntry('0.764')!.tol, 0.0005 + 1e-9);

@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readSav } from '../../sandbox/readSav';
 import { averageMarginalEffects, type LogitFit } from '../kit/logit';
-import { checkCells, checkChain, checkModel, likelihoodReveal, personNumbers, prepare, recogniseReport, tafel, type Prepared } from './domain';
+import { checkCells, checkChain, checkModel, likelihoodOk, likelihoodReveal, personNumbers, prepare, recogniseReport, tafel, type Prepared } from './domain';
 
 const file = process.env.ALLBUS_SAV;
 const skip = !file && 'ALLBUS_SAV nicht gesetzt';
@@ -31,6 +31,9 @@ test('session 10: the expert model (weighted, n = 2,758) as in the concept', { s
   assert.deepEqual(averageMarginalEffects(m).map(a => r(a.ame, 3)), [0.054, 0.014]);
   assert.equal(r(100 * p.ame[0], 1), 5.4);
   assert.match(checkModel(p, { pflicht: '3,77', interesse: '1,41' })[0].text, /^Stimmt: .*Die 3,77 auf der Folie des Sachverständigen ist bestätigt\./);
+  // so, wie R es druckt (Dezimalpunkt), und gerundet
+  assert.equal(checkModel(p, { pflicht: '3.765', interesse: '1.405' })[0].tone, 'ok');
+  assert.equal(checkModel(p, { pflicht: '3,8', interesse: '1,4' })[0].tone, 'hint');
 });
 
 test('session 10: Jana and Herr Wiegand with and without one step more', { skip }, () => {
@@ -80,5 +83,7 @@ test('session 10: hit rate 95.1 % against 94.8 % for “everyone votes”, 18 of
   assert.equal(r(c.overall, 1), 95.1);
   assert.equal(r(100 * c.n1 / (c.n0 + c.n1), 1), 94.8);
   assert.deepEqual([Math.round(c.n0), Math.round(c.correct0)], [143, 18]);
+  assert.equal(likelihoodOk(p, { hitModel: '95,1', hitAll: '94.81508', nullLL: '1122.278', modelLL: '856.448', sentence: '' }), true);
+  assert.equal(likelihoodOk(p, { hitModel: '95,1 %', hitAll: '94,8', nullLL: '1.122,3', modelLL: '856,4', sentence: '' }), true);
   assert.match(likelihoodReveal(p).join(' '), /Modell 95,1 % gegen 94,8 % .*Von 143 Nichtwählenden erkennt das Modell 18 .*von 1\.122,3 auf 856,4 \(−24 %/);
 });

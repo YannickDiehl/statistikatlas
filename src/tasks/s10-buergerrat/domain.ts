@@ -92,16 +92,21 @@ export function personNumbers(fit: LogitFit, x: Profile): PersonNumbers {
 /* ---------- Wertedetektor ---------- */
 
 export type Reading = { x: number; tol: number; percent: boolean };
-/** Liest eine Eingabe; „%“ am Ende markiert Prozent. Toleranz = eine halbe Einheit der letzten eingegebenen Stelle. */
-export function readEntry(input: string): Reading | null {
+const reading = (x: number, decimals: number, percent: boolean): Reading => ({ x, tol: 0.5 * 10 ** -decimals + 1e-9, percent });
+/** Liest eine Eingabe; „%“ am Ende markiert Prozent. Toleranz = eine halbe Einheit der letzten eingegebenen Stelle.
+ *  „3.765“ ist mehrdeutig: R druckt so Dezimalzahlen, im Deutschen ist es ein Tausenderpunkt – dann gibt es beide Lesarten, die aus R zuerst. */
+export function readEntries(input: string): Reading[] {
   const t = input.trim(), percent = /%$/.test(t);
   const core = t.replace(/%$/, '').trim();
   const x = parseNumber(core);
-  if (x === null) return null;
+  if (x === null) return [];
   const s = core.replace(/\s/g, '').replace(/[−–]/g, '-');
-  const decimals = s.includes(',') ? s.split(',')[1].length : /^-?[1-9]\d{0,2}(\.\d{3})+$/.test(s) ? 0 : (s.split('.')[1] ?? '').length;
-  return { x, tol: 0.5 * 10 ** -decimals + 1e-9, percent };
+  if (s.includes(',')) return [reading(x, s.split(',')[1].length, percent)];
+  if (/^-?\d{1,3}\.\d{3}$/.test(s)) return [reading(Number(s), 3, percent), ...(/^-?[1-9]/.test(s) ? [reading(x, 0, percent)] : [])];
+  if (/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(s)) return [reading(x, 0, percent)];
+  return [reading(x, (s.split('.')[1] ?? '').length, percent)];
 }
+export const readEntry = (input: string): Reading | null => readEntries(input)[0] ?? null;
 
 /** Eine Deutung für eine eingetragene Zahl. prob: Wert ist eine Wahrscheinlichkeit/ein Anteil (Eingabe als Anteil oder in Prozent).
  *  slack: relativer Spielraum für Werte, die man von Hand aus gerundeten Zahlen weiterrechnet (Chance × Exp(B), p aus der Chance). */
@@ -131,14 +136,16 @@ function compare(r: Reading, c: Candidate): { d: number; tol: number } | null {
 export type Detection = { reading: Reading; hits: Candidate[]; imprecise: boolean } | null;
 /** Alle Deutungen, die zur Eingabe passen (die richtige zuerst). maxTol: gröbste zulässige Genauigkeit in der Einheit der Deutung. */
 export function detect(input: string, cands: Candidate[], maxTol: number): Detection {
-  const reading = readEntry(input);
-  if (!reading) return null;
-  const matched = cands.map(c => ({ c, m: compare(reading, c) })).filter(h => h.m !== null)
-    .sort((a, b) => Number(b.c.id === 'ok') - Number(a.c.id === 'ok') || a.m!.d - b.m!.d);
-  const first = matched[0];
-  const tol = first ? first.m!.tol : cands[0]?.prob && (reading.percent || Math.abs(reading.x) > 1) ? reading.tol / 100 : reading.tol;
-  const imprecise = tol > maxTol * (1 + 1e-6) + 1e-9;
-  return { reading, hits: imprecise ? [] : matched.map(h => h.c), imprecise };
+  const options = readEntries(input).map(reading => {
+    const matched = cands.map(c => ({ c, m: compare(reading, c) })).filter(h => h.m !== null)
+      .sort((a, b) => Number(b.c.id === 'ok') - Number(a.c.id === 'ok') || a.m!.d - b.m!.d);
+    const first = matched[0];
+    const tol = first ? first.m!.tol : cands[0]?.prob && (reading.percent || Math.abs(reading.x) > 1) ? reading.tol / 100 : reading.tol;
+    const imprecise = tol > maxTol * (1 + 1e-6) + 1e-9;
+    return { reading, hits: imprecise ? [] : matched.map(h => h.c), imprecise };
+  });
+  if (!options.length) return null;
+  return options.find(o => o.hits[0]?.id === 'ok') ?? options.find(o => o.hits.length) ?? options[0];
 }
 export const isOk = (input: string, cands: Candidate[], maxTol: number) => detect(input, cands, maxTol)?.hits[0]?.id === 'ok';
 
@@ -491,11 +498,13 @@ export function reportCandidates(p: Prepared): ReportCandidate[] {
 
 /** Größenabgleich: Welche Größe steckt hinter der Berichtszahl? Die Einheit entscheidet bei Gleichstand. */
 export function recogniseReport(p: Prepared, input: string, unit: Unit | ''): { kind: ReportKind; reading: Reading } | null {
-  const r = readEntry(input);
-  if (!r) return null;
-  const hits = reportCandidates(p).map(c => ({ c, d: Math.abs((c.abs ? Math.abs(r.x) : r.x) - c.value) / r.tol })).filter(h => h.d <= 1);
-  hits.sort((a, b) => Number(unit !== '' && b.c.units.includes(unit)) - Number(unit !== '' && a.c.units.includes(unit)) || a.d - b.d);
-  return hits[0] ? { kind: hits[0].c.kind, reading: r } : null;
+  const cands = reportCandidates(p);
+  for (const r of readEntries(input)) {
+    const hits = cands.map(c => ({ c, d: Math.abs((c.abs ? Math.abs(r.x) : r.x) - c.value) / r.tol })).filter(h => h.d <= 1);
+    hits.sort((a, b) => Number(unit !== '' && b.c.units.includes(unit)) - Number(unit !== '' && a.c.units.includes(unit)) || a.d - b.d);
+    if (hits[0]) return { kind: hits[0].c.kind, reading: r };
+  }
+  return null;
 }
 
 const UNIT_HINTS: Partial<Record<ReportKind, Partial<Record<Unit, (r: Reading) => string>>>> = {
