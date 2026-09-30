@@ -42,12 +42,14 @@ export function FormelAlsSatz({ template: t, onConcept }: { template: T; onConce
       <Section title="Ein Regler je Zeichen">
         {t.sliders.map(sl => {
           const key = sl.key as keyof Values, value = values[key], id = `xw-slider-${sl.key}`;
+          // Logarithmische Regler laufen über 0–1000 ganzzahlige Stufen, damit beide Enden genau erreichbar sind.
+          const lo = Math.log10(sl.min), hi = Math.log10(sl.max), pos = sl.log ? Math.round((Math.log10(value) - lo) / (hi - lo) * 1000) : value;
           return (
             <div key={sl.key} className="xw-slider">
               <label htmlFor={id}><span className={`xw-fp${mark === sl.key ? ' on' : ''}`}>{sl.key}</span> {sl.label}</label>
               <input id={id} type="range" aria-valuetext={sl.format(value)}
-                min={sl.log ? Math.log10(sl.min) : sl.min} max={sl.log ? Math.log10(sl.max) : sl.max} step={sl.log ? 'any' : sl.step} value={sl.log ? Math.log10(value) : value}
-                onChange={e => setValue(key, sl.log ? Math.round(10 ** Number(e.target.value)) : Number(e.target.value))} />
+                min={sl.log ? 0 : sl.min} max={sl.log ? 1000 : sl.max} step={sl.log ? 1 : sl.step} value={pos}
+                onChange={e => setValue(key, sl.log ? Math.round(10 ** (lo + Number(e.target.value) / 1000 * (hi - lo))) : Number(e.target.value))} />
               <output htmlFor={id}>{sl.format(value)}</output>
             </div>
           );

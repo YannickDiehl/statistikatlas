@@ -1,6 +1,7 @@
 import { useState, type ReactNode, type Ref } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { conceptById } from '../../domain/concepts';
+import { ref, titleFor } from '../../domain/learning';
 import { txt, type Ctx, type Step, type Workshop } from '../../explain/types';
 import { parseAnswer } from '../../explain/format';
 import { KurzGesagt } from './basics';
@@ -98,15 +99,17 @@ export function ConceptLink({ id, onConcept, children }: { id: string; onConcept
 }
 
 /** Lernkarte eines Schritts; auch als Schrittkarte eines Rechenbegriffs (Spezifikation 6.4). */
-export function LearnCard<S>({ step, ctx, compact, onConcept, onWho, header, footer, current, headingRef }: {
+export function LearnCard<S>({ step, ctx, compact, onConcept, onWho, header, footer, current, headingRef, nameLinks = false }: {
   step: Step<S>; ctx: Ctx<S>; compact: boolean; onConcept: (id: string) => void; onWho?: (i: number) => void;
   header?: ReactNode; footer?: ReactNode;
   /** Begriff, der gerade offen ist; auf ihn wird nicht noch einmal verlinkt. */
   current?: string;
   headingRef?: Ref<HTMLDivElement>;
+  /** Auf Schrittkarten den Begriff im Link nennen, weil die Karte zu einem anderen Begriff gehört. */
+  nameLinks?: boolean;
 }) {
   const links = [
-    ...(step.concept !== current ? [{ id: step.concept, label: 'Begriff öffnen' }] : []),
+    ...(step.concept !== current ? [{ id: step.concept, label: nameLinks ? `${titleFor(ref(step.concept))} öffnen` : 'Begriff öffnen' }] : []),
     ...(step.links ?? []).filter(l => l.id !== current),
   ];
   return (

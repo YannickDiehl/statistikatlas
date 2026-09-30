@@ -117,7 +117,7 @@ function StepCardView<D, S>({ card, current, onConcept, onOpen, workshop: w }: S
   const ctx: Ctx<S> = { s: w.compute(w.presets[0].data), who: 0, names: w.names };
   return (
     <div className="xw xw-stepcard">
-      <LearnCard step={step} ctx={ctx} compact={false} onConcept={onConcept} current={current}
+      <LearnCard step={step} ctx={ctx} compact={false} onConcept={onConcept} current={current} nameLinks
         footer={<p className="xw-open"><button type="button" className="xw-button" onClick={() => onOpen(card.variant, card.step)}>
           Ist Schritt {card.step} von {v.lastStep} der Werkstatt {titleFor(ref(card.variant))}: Werkstatt öffnen</button></p>} />
     </div>
