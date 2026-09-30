@@ -175,6 +175,8 @@ const sensible = (way: Way) => {
   const item = ITEMS[way.item];
   return !way.else0 && (sameSet(way.distrust, item.strict) || sameSet(way.distrust, item.wide));
 };
+/** Der Rechenweg der Pressemitteilung: Misstrauende (pe01 1–2) unter den Nichtwählenden (nur „würde nicht wählen“, ohne else=0). */
+const isPartyColumn = (c: Candidate) => c.table.way.item === 'pe01' && partyCell(c) && c.base === 'col' && !c.table.way.nonvote.length && !c.table.way.else0;
 const unreversedPe05 = (c: Candidate) => c.table.way.item === 'pe05' && c.group.every(x => x <= 2) && c.side === 1;
 const notEligible = (joint: Joint, item: ItemId) => [...joint[item].values()].filter(c => c.vote === NOT_ELIGIBLE).reduce((a, c) => a + c.n, 0);
 
@@ -185,8 +187,13 @@ export function checkP1(tables: WayTable[], joint: Joint, pctIn: string, nIn: st
   const pct = parseNumber(pctIn);
   if (pct === null) return [];
   const n = parseNumber(nIn), cands = lookup(tables, pct, n === null ? null : n, !pctIn.includes(',') && !pctIn.includes('.'));
-  if (!cands.length) return [{ tone: 'warn', text: CHECKLIST }];
-  const expected = cands.find(c => c.table.way.item === 'pe01' && partyCell(c) && c.base === 'col' && !c.table.way.nonvote.length && !c.table.way.else0);
+  if (!cands.length) {
+    // Prozentwert richtig, aber eine andere Zahl als die Zellhäufigkeit eingetragen? Dann ohne Häufigkeit noch einmal suchen – und die richtige nicht verraten.
+    const party = n === null ? null : lookup(tables, pct, null, !pctIn.includes(',') && !pctIn.includes('.')).find(c => isPartyColumn(c) && !c.table.way.weighted);
+    if (party) return [{ tone: 'hint', text: 'Der Prozentwert stimmt – so hat der Parteivorstand gerechnet. Die Häufigkeit, nach der ich frage, ist aber die Zahl der Fälle in genau dieser Zelle („misstraut“ und „würde nicht wählen“), nicht die Summe der Spalte. Lies sie aus derselben Tabelle ab.' }];
+    return [{ tone: 'warn', text: CHECKLIST }];
+  }
+  const expected = cands.find(isPartyColumn);
   if (expected && !expected.table.way.weighted) {
     return [{ tone: 'ok', text: `${meaning(expected)} Genau so hat der Parteivorstand gerechnet – die Zahl stimmt.${n === null ? ' Trag noch die Häufigkeit derselben Zelle ein.' : ''}` }];
   }

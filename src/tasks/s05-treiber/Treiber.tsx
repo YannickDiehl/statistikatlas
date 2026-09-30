@@ -11,8 +11,8 @@ import type { MeasureId } from '../kit/stats';
 import type { TaskProps } from '../types';
 import { CARDS, cardById, hintTexts, ROLE, STAMPS, WORKSHOP, type CardId, type Level } from './content';
 import {
-  checkEntry, checkLevel, checkStamp, checkStrata, driverQuestion, fitNotes, MEASURE_IDS, measureLabel, pickCard, plenumLines, prepare,
-  randomCard, rCodeFor, reveal, revealNotes, rSetupFor, scaffoldFor, STAMP_RULE, statusS05, strata, variants, VIEW_LABELS, VIEWS, type S05State,
+  checkEntry, checkLevel, checkStamp, chooseMeasure, checkStrata, driverQuestion, fitNotes, MEASURE_IDS, measureLabel, pickCard, plenumLines, prepare,
+  randomCard, rCodeFor, recognised, reveal, revealNotes, rSetupFor, scaffoldFor, stampRule, statusS05, strata, variants, VIEW_LABELS, VIEWS, type S05State,
 } from './domain';
 import { RankChart } from './RankChart';
 
@@ -25,13 +25,14 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
   const vars = useMemo(() => (card ? variants(p, card) : []), [p, card]);
   const groups = card ? strata(p, card) : [];
   const main = card ? checkEntry(p, card, vars, state) : [];
-  // Die Enthüllung kommt nach dem eigenen Eintrag: Wert, Stempel und Satz.
+  // Die Enthüllung kommt nach dem eigenen Eintrag: Wert, Werte je Teil (West/Ost bzw. Wirtschaftslage), Stempel und Satz.
   const entered = parseNumber(state.value) !== null;
-  const ready = Boolean(card && entered && state.stamp && state.sentence.trim());
-  const strataDone = groups.length > 0 && state.strata.slice(0, groups.length).every(v => v.trim());
+  const strataDone = groups.length > 0 && state.strata.slice(0, groups.length).every(v => parseNumber(v) !== null);
+  const ready = Boolean(card && entered && strataDone && state.stamp && state.sentence.trim());
   const rev = useMemo(() => (ready ? reveal(p) : null), [p, ready]);
   const draw = () => onChange(pickCard(state, randomCard(state.card)));
   const setSecond = (patch: Partial<S05State['second']>) => set({ second: { ...state.second, ...patch } });
+  const setMeasure = (measure: MeasureId | '') => onChange(chooseMeasure(state, measure));
 
   return <div className="task s05">
     <RoleBrief role="Analyst:in im Beratungsbüro" title="Treiber-Rangliste">
@@ -75,11 +76,11 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
         </div>
         <Feedback notes={checkLevel(card, state.level)} />
         <div className="task-grid">
-          <label>Maß<select value={state.measure} onChange={e => set({ measure: e.target.value as MeasureId | '' })}>
+          <label>Maß<select value={state.measure} onChange={e => setMeasure(e.target.value as MeasureId | '')}>
             <option value="">bitte wählen</option>{MEASURE_IDS.map(m => <option key={m} value={m}>{measureLabel(m)}</option>)}
           </select></label>
         </div>
-        <Feedback notes={fitNotes(p, card, vars, state.measure, entered)} />
+        <Feedback notes={fitNotes(p, card, vars, state.measure, recognised(vars, state.value))} />
       </section>
 
       <section className="task-step">
@@ -95,7 +96,7 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
       <section className="task-step">
         <h3>4 · {card.id === 'eastwest' ? 'Innerhalb gleicher Wirtschaftslage' : 'West und Ost'}</h3>
         <p>{card.id === 'eastwest'
-          ? 'Bei dieser Karte ist der Landesteil selbst der Kandidat. Prüfe stattdessen, ob der Unterschied innerhalb gleicher Wirtschaftslage hält (Drittvariable).'
+          ? <>Bei dieser Karte ist der Landesteil selbst der Kandidat. Prüfe stattdessen, ob der Unterschied innerhalb gleicher Wirtschaftslage hält (Drittvariable). Rechne hier Gamma (<code>goodman_gamma()</code>), damit die Richtung sichtbar bleibt.</>
           : 'Rechne dasselbe Maß getrennt für West und Ost. Hält der Zusammenhang in beiden Landesteilen?'}</p>
         <div className="task-grid">
           {groups.map((g, i) => <label key={g.label}>{g.label}<input type="text" inputMode="decimal" maxLength={12} value={state.strata[i] ?? ''}
@@ -107,14 +108,16 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
         </div>
         <Feedback notes={state.stamp && !strataDone
           ? [{ tone: 'hint', text: `Trag zuerst die Werte für ${groups.map(g => g.label).join(' und ')} ein – dann nenne ich meine Lesart nach der offengelegten Regel.` }]
-          : checkStamp(p, card, vars, state.measure, state.stamp)} />
-        <details className="s05-rule"><summary>Die offengelegte Regel</summary><p>{STAMP_RULE}</p></details>
+          : checkStamp(p, card, vars, state.measure, state.stamp, state.strata.slice(0, groups.length))} />
+        <details className="s05-rule"><summary>Die offengelegte Regel</summary><p>{stampRule(card)}</p></details>
       </section>
 
       <section className="task-step">
         <h3>5 · Dein Eintrag</h3>
         <label className="sandbox-label" htmlFor="s05-sentence">Ein Satz für den Fonds (Maß = Wert, Richtung in Worten, Stempel)</label>
-        <textarea id="s05-sentence" maxLength={600} value={state.sentence} placeholder="Maß = Wert: Wer …, ist eher … mit der Demokratie – in West und Ost … (Stempel)."
+        <textarea id="s05-sentence" maxLength={600} value={state.sentence} placeholder={card.id === 'eastwest'
+            ? 'Maß = Wert: Wer …, ist eher … mit der Demokratie – auch innerhalb gleicher Wirtschaftslage … (Stempel).'
+            : 'Maß = Wert: Wer …, ist eher … mit der Demokratie – in West und Ost … (Stempel).'}
           onChange={e => set({ sentence: e.target.value })} />
         <Feedback notes={driverQuestion(state.sentence)} />
       </section>
@@ -132,7 +135,7 @@ export function Treiber({ data, state, onChange, onConcept }: TaskProps<S05State
         <Feedback notes={[
           ...checkEntry(p, card, vars, { measure: state.second.measure, weighted: true, value: state.second.value }),
           ...checkEntry(p, card, vars, { measure: state.measure, weighted: false, value: state.second.unweighted }),
-          ...fitNotes(p, card, vars, state.second.measure, parseNumber(state.second.value) !== null),
+          ...fitNotes(p, card, vars, state.second.measure, recognised(vars, state.second.value)),
         ]} />
         <label className="s04-check"><input type="checkbox" checked={state.second.veto} onChange={e => setSecond({ veto: e.target.checked })} /> Veto: Das Wort „Treiber“ trägt hier nicht</label>
       </section>

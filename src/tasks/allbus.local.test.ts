@@ -8,8 +8,9 @@ import { S02_VARS, sheets } from './s02-datenerfassung/content';
 import { countCode, factorPosition, gradeCell, scanCode } from './s02-datenerfassung/domain';
 import { describeHours, diagnoseSeats, hoursFor, rawCounts, seatsFor, validCodes } from './s03-stuehle/domain';
 import { allTables, checkP1, denominators, fourfold, PARTY, percent, prepare as prepareS04, readings, stairs } from './s04-nenner-check/domain';
-import { cardById } from './s05-treiber/content';
-import { prepare as prepareS05, reveal, variants } from './s05-treiber/domain';
+import { chiSquare, MEASURES } from './kit/stats';
+import { cardById, KONF_ORDERS } from './s05-treiber/content';
+import { cardValues, prepare as prepareS05, reveal, variants } from './s05-treiber/domain';
 
 const file = process.env.ALLBUS_SAV;
 const skip = !file && 'ALLBUS_SAV nicht gesetzt';
@@ -92,12 +93,23 @@ test('session 4: the 87 %, three denominators, 18 readings and the stairs match 
   assert.deepEqual(denominators(joint), { cell: 127, nonvoters: 146, distrusting: 1956, all: 2785 });
   assert.match(checkP1(tables, joint, '87,0', '127')[0].text, /Genau so hat der Parteivorstand gerechnet/);
   assert.match(checkP1(tables, joint, '3,2', '')[0].text, /Lies pe05 noch einmal/);
+  // Richtiger Prozentwert, aber die Spaltensumme (146) statt der Zelle: Hinweis ohne die richtige Zahl.
+  const wrongCount = checkP1(tables, joint, '87,0', '146')[0].text;
+  assert.match(wrongCount, /Der Prozentwert stimmt.*Zahl der Fälle in genau dieser Zelle/);
+  assert.doesNotMatch(wrongCount, /127/);
   const rd = readings(joint).map(x => x.distrusting);
   assert.equal(rd.length, 18);
   assert.deepEqual([r1(Math.min(...rd)), r1(Math.max(...rd))], [6.5, 29.2]);
   const example = fourfold(joint, { item: 'pe05', distrust: [3, 4], nonvote: [-8], else0: false, weighted: false });
   assert.deepEqual([r1(percent(example, 'a', 'row')), example.n.a, r1(percent(example, 'c', 'row'))], [21.5, 386, 11.7]);
   assert.deepEqual(stairs(sav).map(x => r1(x.share)), [1.2, 4.4, 5.6, 8.8]);
+  // Vierfeldertafel der Pressemitteilung: χ² = 20,7, V = .086; 69,3 % der Wählenden misstrauen (pe01 1–2).
+  const { chi2, n } = chiSquare([[party.n.a, party.n.b], [party.n.c, party.n.d]]);
+  assert.deepEqual([r1(chi2), Math.round(Math.sqrt(chi2 / n) * 1000) / 1000], [20.7, 0.086]);
+  assert.equal(r1(percent(party, 'b', 'col')), 69.3);
+  // pe05 ohne Umpolen (Zustimmende als „misstraut“): 3,2 % gegen 6,9 % – die Richtung kippt.
+  const unreversed = fourfold(joint, { item: 'pe05', distrust: [1, 2], nonvote: [], else0: false, weighted: false });
+  assert.deepEqual([r1(percent(unreversed, 'a', 'row')), r1(percent(unreversed, 'c', 'row'))], [3.2, 6.9]);
 });
 
 test('session 5: measures per card, strata and the ranking match mariposa (ps03 reversed)', { skip }, () => {
@@ -111,6 +123,8 @@ test('session 5: measures per card, strata and the ranking match mariposa (ps03 
   assert.deepEqual([0, 1, 2].map(s => get('eastwest', 'gamma', false, s)), [-0.322, -0.373, -0.299]);
   assert.deepEqual([0, 1, 2].map(s => get('eastwest', 'gamma', true, s)), [-0.32, -0.375, -0.297]);
   assert.deepEqual([get('konf', 'V', true), get('konf', 'gamma', true)], [0.105, -0.147]);
+  // Konfession in den drei willkürlichen Reihenfolgen: Gamma wechselt mit der Anordnung (Originalkodierung +.147 / −.135 / −.043, nach dem Umpolen umgekehrt).
+  assert.deepEqual(KONF_ORDERS.map(o => r3(MEASURES.gamma.fn(p.y, cardValues(p, cardById.konf, o.map), p.w))), [-0.147, 0.135, 0.043]);
   assert.equal(get('pt03', 'tau', true), 0.485);
   const r = reveal(p);
   assert.equal(r3(r.weighted.rp01.tau), -0.136);

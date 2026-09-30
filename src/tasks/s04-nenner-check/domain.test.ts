@@ -46,6 +46,22 @@ test('names who the 100 % are and recognises the press-release way', () => {
   assert.deepEqual(checkP1(tables, joint, '', ''), []);
 });
 
+test('the right percentage with the wrong count points to the cell count without giving it away', () => {
+  // 83,3 % stimmt; die Zelle hat 5 Fälle. Falsche Häufigkeiten, die in dieser winzigen Tafel nicht zufällig zu einem anderen Weg passen
+  // (die Spaltensumme 6 tut das hier zufällig: pe01 3), darunter die Zeilensumme 15 und alle 25.
+  for (const wrong of ['7', '99', '15', '25']) {
+    const [note] = checkP1(tables, joint, '83,3', wrong);
+    assert.equal(note.tone, 'hint');
+    assert.match(note.text, /Der Prozentwert stimmt.*Parteivorstand.*Zahl der Fälle in genau dieser Zelle.*nicht die Summe der Spalte/);
+    assert.doesNotMatch(note.text, /\d/);
+  }
+  // Mit richtiger Häufigkeit bleibt es bei der Bestätigung, ohne Häufigkeit bei der Bitte um sie.
+  assert.match(checkP1(tables, joint, '83,3', '5')[0].text, /Genau so hat der Parteivorstand gerechnet/);
+  assert.match(checkP1(tables, joint, '83,3', '')[0].text, /Trag noch die Häufigkeit/);
+  // Ein falscher Prozentwert bleibt bei der Checkliste, auch mit falscher Häufigkeit.
+  assert.match(checkP1(tables, joint, '12,3', '7')[0].text, /finde ich unter den gut 1\.800/);
+});
+
 test('finds the way behind a number, merging mirror twins and silent else=0 variants', () => {
   const hits = lookup(tables, 500 / 6, 5);
   assert.equal(shortcut(hits[0].table.way), 'pe01 1–2 · 91');

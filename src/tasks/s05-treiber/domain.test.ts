@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { fakeSav, fixtureSav } from '../../sandbox/testData';
 import { cardById } from './content';
 import {
-  cardValues, checkEntry, checkLevel, checkStamp, checkStrata, direction, driverQuestion, fitNotes, initialS05, parseS05, pickCard, plenumLines, prepare,
-  randomCard, ranks, rCodeFor, reveal, revealNotes, scaffoldFor, stampReading, statusS05, strata, tolerance, variants,
+  cardValues, checkEntry, checkLevel, checkStamp, checkStrata, chooseMeasure, direction, driverQuestion, fitNotes, initialS05, parseS05, pickCard, plenumLines, prepare,
+  randomCard, ranks, rCodeFor, recognised, reveal, revealNotes, scaffoldFor, stampReading, stampRule, statusS05, strata, tolerance, variants,
 } from './domain';
 
 const p = prepare(fixtureSav());
@@ -55,6 +55,52 @@ test('reads the stamp by the disclosed rule (real ALLBUS values)', () => {
   assert.equal(stampReading(0.059, [0.095, -0.045], true), 'kehrt sich um');
   assert.equal(stampReading(-0.028, [-0.040, 0.005], true), 'nur in einem Landesteil');
   assert.match(checkStamp(p, ep01, vars, 'tau', 'kehrt sich um')[0].text, /die Entscheidung bleibt bei dir/);
+});
+
+test('the stamp reading names numbers only when the own strata values are right', () => {
+  const right = [fmt(value('tau', false, 0)), fmt(value('tau', false, 1))];
+  const total = fmt(value('tau', true)), parts = [fmt(value('tau', false, 0)), fmt(value('tau', false, 1))];
+  for (const stamp of ['trägt', 'kehrt sich um'] as const) {
+    const ok = checkStamp(p, ep01, vars, 'tau', stamp, right)[0].text;
+    assert.ok(ok.includes(total) && parts.every(x => ok.includes(x)), ok);
+    // Falsche, Platzhalter-, leere oder fehlende Teilwerte: nur die Lesart, keine einzige Ziffer.
+    for (const wrong of [['0,999', '0,999'], ['0,000', '0,000'], [right[0], '0,999'], ['x', 'y'], ['', ''], []]) {
+      const text = checkStamp(p, ep01, vars, 'tau', stamp, wrong)[0].text;
+      assert.doesNotMatch(text, /\d/, text);
+      assert.match(text, /Nach der offengelegten Regel lese ich|Meine Lesart nach der offengelegten Regel ist auch/);
+    }
+  }
+  // Ohne Maß lässt sich nichts prüfen, also auch keine Zahl; ohne Teilwerte-Argument ebenso.
+  assert.doesNotMatch(checkStamp(p, ep01, vars, '', 'trägt', right)[0].text, /\d/);
+  assert.doesNotMatch(checkStamp(p, ep01, vars, 'tau', 'trägt')[0].text, /\d/);
+});
+
+test('the disclosed stamp rule names the parts of the card and keeps the thresholds', () => {
+  const ew = cardById.eastwest;
+  assert.match(stampRule(ep01), /Landesteile/);
+  assert.doesNotMatch(stampRule(ep01), /Wirtschaftslage/);
+  assert.match(stampRule(ew), /Gruppen der Wirtschaftslage/);
+  assert.doesNotMatch(stampRule(ew), /Landesteile haben|Landesteile unter|beide/);
+  for (const rule of [stampRule(ep01), stampRule(ew), stampRule(null)]) for (const threshold of ['0,03', 'doppelt so groß', '0,1', '85 %']) assert.ok(rule.includes(threshold), `${threshold}: ${rule}`);
+  assert.equal(stampRule(null), stampRule(ep01));
+  // Die Schwellen gelten für beide Fassungen so, wie stampReading() sie anwendet.
+  assert.equal(stampReading(0.2, [0.03, -0.03], true), 'kehrt sich um');
+  assert.equal(stampReading(0.2, [0.03, 0.2, -0.03], true), 'kehrt sich um');
+  assert.equal(stampReading(0.2, [0.029, -0.2], true), 'nur in einem Landesteil');
+  assert.equal(stampReading(0.3, [0.05, 0.11, 0.3], false), 'nur in einem Landesteil');
+  assert.equal(stampReading(0.3, [0.2, 0.25, 0.3], false), 'schrumpft');
+  assert.equal(stampReading(0.3, [0.26, 0.3, 0.3], false), 'trägt');
+});
+
+test('numbers in the fit prompts need a value the detector recognises', () => {
+  assert.equal(recognised(vars, fmt(value('gamma', true))), true);
+  assert.equal(recognised(vars, fmt(value('tau', false, 1))), true);
+  assert.equal(recognised(vars, fmt(-value('gamma', true))), true);
+  assert.equal(recognised(vars, '0,999'), false);
+  assert.equal(recognised(vars, '12,345'), false);
+  assert.equal(recognised(vars, 'x'), false);
+  assert.equal(recognised(vars, ''), false);
+  assert.equal(recognised(vars, '0,5'), false);
 });
 
 test('gives fit prompts without grading', () => {
@@ -116,7 +162,57 @@ test('the card West oder Ost checks the economy groups with Gamma, whatever meas
   const ew = cardById.eastwest, ev = variants(p, ew);
   const g = (s: number) => ev.find(v => v.measure === 'gamma' && !v.weighted && v.stratum === s && v.reversed)!.value;
   assert.deepEqual(checkStrata(p, ew, ev, 'V', [fmt(g(0)), fmt(g(1)), fmt(g(2))]).map(n => n.tone), ['ok', 'ok', 'ok']);
-  assert.match(checkStamp(p, ew, ev, 'V', 'trägt')[0].text, /Gamma gesamt/);
+  assert.match(checkStamp(p, ew, ev, 'V', 'trägt', [fmt(g(0)), fmt(g(1)), fmt(g(2))])[0].text, /Gamma gesamt/);
+  assert.doesNotMatch(checkStamp(p, ew, ev, 'V', 'trägt', ['0,999', '0,999', '0,999'])[0].text, /\d/);
+});
+
+test('West oder Ost: Cramér-V per group gets the pointer to Gamma, without any reference number', () => {
+  const ew = cardById.eastwest, ev = variants(p, ew);
+  const vPerGroup = (s: number) => ev.find(v => v.measure === 'V' && !v.weighted && v.stratum === s && v.reversed)!.value;
+  const gammaPerGroup = (s: number) => ev.find(v => v.measure === 'gamma' && !v.weighted && v.stratum === s && v.reversed)!.value;
+  // Der Test braucht V-Werte, die nicht zugleich ein Gamma-Wert derselben Gruppe sind.
+  for (const s of [0, 1, 2]) assert.ok(Math.abs(vPerGroup(s) - gammaPerGroup(s)) > 0.01 && Math.abs(vPerGroup(s) + gammaPerGroup(s)) > 0.01);
+  for (const chosen of ['V', 'gamma', ''] as const) {
+    for (const s of [0, 1, 2]) {
+      const inputs = ['', '', ''];
+      inputs[s] = fmt(vPerGroup(s));
+      const [note] = checkStrata(p, ew, ev, chosen, inputs);
+      assert.equal(note.tone, 'warn');
+      assert.match(note.text, /Das ist Cramér-V\. Bei dieser Karte rechnest du je Gruppe Gamma \(goodman_gamma\(\)\)/);
+      assert.ok(!note.text.includes(fmt(vPerGroup(s))) && !note.text.includes(fmt(gammaPerGroup(s))), note.text);
+    }
+  }
+  // Ein Wert, der gar nichts trifft, bekommt den kartenbewussten Rückfalltext: Gamma, nicht „dasselbe Maß“.
+  const [lost] = checkStrata(p, ew, ev, 'V', ['0,999', '', '']);
+  assert.match(lost.text, /Diesen Wert finde ich nicht.*rechne Gamma/);
+  assert.doesNotMatch(lost.text, /dasselbe Maß/);
+  // Andere Karten behalten den alten Text und nennen Gamma nicht als Pflichtmaß.
+  assert.match(checkStrata(p, ep01, vars, 'tau', ['0,999', ''])[0].text, /rechne dasselbe Maß/);
+  // Gamma je Gruppe ist und bleibt richtig.
+  assert.equal(checkStrata(p, ew, ev, 'V', [fmt(gammaPerGroup(0)), '', ''])[0].tone, 'ok');
+});
+
+test('the R solution and scaffold of West oder Ost contain the weighted Gamma total for the stamp', () => {
+  const ew = cardById.eastwest;
+  assert.match(rCodeFor(ew), /allbus %>% goodman_gamma\(zufriedenheit, eastwest, weights = wghtpew\)   # Gesamtwert für den Stempel/);
+  assert.match(scaffoldFor(ew), /allbus %>% goodman_gamma\(zufriedenheit, eastwest, weights = ___\)\n/);
+  // Die Zeile steht vor der Drittvariablen, in beiden Fassungen.
+  for (const code of [rCodeFor(ew), scaffoldFor(ew)]) assert.ok(code.indexOf('goodman_gamma(zufriedenheit, eastwest, weights') < code.indexOf('mutate(lage'), code);
+  // Andere Karten bekommen die Zeile nicht.
+  assert.doesNotMatch(rCodeFor(cardById.konf), /Gesamtwert für den Stempel/);
+  assert.doesNotMatch(scaffoldFor(cardById.konf), /goodman_gamma/);
+});
+
+test('choosing the main measure that is already the second currency clears the second currency and its value', () => {
+  const s = { ...initialS05(), card: 'ep01' as const, measure: 'gamma' as const, value: '-0,544',
+    second: { measure: 'tau' as const, value: '-0,387', unweighted: '-0,553', veto: true } };
+  // Kollision: Das neue Maß ist die zweite Währung → zweite Währung und ihr Wert werden geleert, der Rest bleibt.
+  assert.deepEqual(chooseMeasure(s, 'tau'), { ...s, measure: 'tau', second: { measure: '', value: '', unweighted: '-0,553', veto: true } });
+  // Keine Kollision: nichts außer dem Maß ändert sich.
+  assert.deepEqual(chooseMeasure(s, 'rho'), { ...s, measure: 'rho' });
+  assert.deepEqual(chooseMeasure(s, ''), { ...s, measure: '' });
+  // Leere zweite Währung ist keine Kollision mit dem leeren Maß.
+  assert.deepEqual(chooseMeasure(initialS05(), ''), initialS05());
 });
 
 test('a new card starts the card-bound work from scratch and a draw never repeats the current card', () => {

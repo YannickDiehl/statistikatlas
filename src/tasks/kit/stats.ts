@@ -82,12 +82,13 @@ function below(cells: number[][], i: number, j: number, dir: 1 | -1): number {
   return s;
 }
 
-/** Goodman-Kruskal-Gamma wie mariposa::goodman_gamma(): konkordante gegen diskordante Paare, gewichtet auf gerundeten Zellen. */
+/** Goodman-Kruskal-Gamma wie mariposa::goodman_gamma(): konkordante gegen diskordante Paare, gewichtet auf gerundeten Zellen.
+ *  Gibt es weder konkordante noch diskordante Paare (P + Q = 0), liefert mariposa 0 – nicht NaN. */
 export function gamma(x: Nums, y: Nums, w: Nums | null = null): number {
   const { cells } = tableFor(x, y, w);
   let p = 0, q = 0;
   cells.forEach((row, i) => row.forEach((o, j) => { p += o * below(cells, i, j, 1); q += o * below(cells, i, j, -1); }));
-  return (p - q) / (p + q);
+  return p + q === 0 ? 0 : (p - q) / (p + q);
 }
 
 /** Kendall Tau-b wie mariposa::kendall_tau(); mit Gewichten zählt jedes Paar √(wᵢ·wⱼ) – über Zellsummen von √w und w. */

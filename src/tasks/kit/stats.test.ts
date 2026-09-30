@@ -34,6 +34,14 @@ test('nominal and ordinal measures match mariposa, weighted on rounded cells', (
   }
 });
 
+test('Gamma is 0 (not NaN) when there are no concordant or discordant pairs, like mariposa', () => {
+  assert.equal(gamma([1, 1, 1, 1], [1, 2, 3, 3]), 0);
+  assert.equal(gamma([1, 2, 3], [5, 5, 5], [1, 2, 3]), 0);
+  assert.equal(gamma([NaN], [1]), 0);
+  assert.equal(gamma([1, 2, 3], [1, 2, 3]), 1);
+  assert.equal(gamma([1, 2, 3], [3, 2, 1]), -1);
+});
+
 test('Tau-b, Spearman and Pearson match mariposa', () => {
   const ref: Record<string, number[]> = {
     ep01: [0.6544889972, 0.6458842532, 0.7508144656, 0.7699054185, 0.7573178550],

@@ -73,6 +73,16 @@ export function direction(card: Card, value: number): string {
 
 export type Entry = { measure: MeasureId | ''; weighted: boolean; value: string };
 
+const matching = (vars: Variant[], x: number, tol: number) =>
+  vars.filter(v => Math.abs(v.value - x) <= tol).sort((a, b) => Math.abs(a.value - x) - Math.abs(b.value - x));
+
+/** Erkannt: Die eingetragene Zahl (mit mindestens zwei Nachkommastellen) entspricht irgendeiner Variante dieser Karte.
+ *  Erst dann nennen die Denkanstöße Zahlen – eine beliebige eingetippte Zahl schaltet sie nicht frei. */
+export function recognised(vars: Variant[], value: string): boolean {
+  const x = parseNumber(value), tol = tolerance(value);
+  return x !== null && tol !== null && matching(vars, x, tol).length > 0;
+}
+
 /** Wertedetektor: Welcher Variante entspricht die eingetragene Zahl? */
 export function checkEntry(p: Prepared, card: Card, vars: Variant[], e: Entry): Note[] {
   const x = parseNumber(e.value);
@@ -80,7 +90,7 @@ export function checkEntry(p: Prepared, card: Card, vars: Variant[], e: Entry): 
   const tol = tolerance(e.value);
   if (tol === null) return [{ tone: 'hint', text: 'Trag den Wert mit drei Nachkommastellen ein, so wie R ihn zeigt.' }];
   const groups = strata(p, card).map(s => s.label);
-  const hits = vars.filter(v => Math.abs(v.value - x) <= tol).sort((a, b) => Math.abs(a.value - x) - Math.abs(b.value - x));
+  const hits = matching(vars, x, tol);
   const notes: Note[] = [];
   if (e.measure === 'rho' && e.weighted) notes.push({ tone: 'hint', text: 'spearman_rho() nutzt Gewichte nur zur Fallauswahl – gewichtet und ungewichtet ist ρ hier gleich.' });
   const want = hits.find(v => v.measure === e.measure && v.weighted === e.weighted && v.stratum < 0 && v.reversed);
@@ -107,16 +117,26 @@ export function checkStrata(p: Prepared, card: Card, vars: Variant[], chosen: Me
     const x = parseNumber(input), tol = tolerance(input);
     if (x === null || s >= groups.length) return [];
     if (tol === null) return [{ tone: 'hint', text: `${groups[s]}: bitte mit drei Nachkommastellen.` }];
-    const hit = vars.find(v => v.measure === measure && v.stratum === s && v.reversed && Math.abs(v.value - x) <= tol);
-    const other = vars.find(v => Math.abs(v.value - x) <= tol);
-    return [hit
-      ? { tone: 'ok', text: `${groups[s]}: ${measureLabel(measure)} = ${fmt(hit.value)} – stimmt.` }
-      : { tone: 'warn', text: other ? `${groups[s]}: Das ist ${variantText(other, groups)}.` : `${groups[s]}: Diesen Wert finde ich nicht. Filtere mit filter() oder group_by() und rechne dasselbe Maß.` }];
+    const close = (v: Variant) => Math.abs(v.value - x) <= tol;
+    const hit = vars.find(v => v.measure === measure && v.stratum === s && v.reversed && close(v));
+    if (hit) return [{ tone: 'ok', text: `${groups[s]}: ${measureLabel(measure)} = ${fmt(hit.value)} – stimmt.` }];
+    // Bei „West oder Ost“ gehört in jede Gruppe Gamma; ein anderes Maß derselben Gruppe (z. B. Cramér-V) bekommt den Hinweis ohne Referenzzahl.
+    if (card.id === 'eastwest' && !vars.some(v => v.measure === measure && v.stratum === s && close(v))) {
+      const variant = vars.find(v => v.stratum === s && close(v));
+      if (variant) return [{ tone: 'warn', text: `${groups[s]}: Das ist ${measureLabel(variant.measure)}. Bei dieser Karte rechnest du je Gruppe Gamma (goodman_gamma()), damit die Richtung sichtbar bleibt.` }];
+    }
+    const other = vars.find(close);
+    const notFound = card.id === 'eastwest'
+      ? 'Diesen Wert finde ich nicht. Bilde die Gruppen der Wirtschaftslage mit rec(), filtere je Gruppe mit filter() und rechne Gamma.'
+      : 'Diesen Wert finde ich nicht. Filtere mit filter() oder group_by() und rechne dasselbe Maß.';
+    return [{ tone: 'warn', text: `${groups[s]}: ${other ? `Das ist ${variantText(other, groups)}.` : notFound}` }];
   });
 }
 
-/** Offengelegte Stempel-Regel. */
-export const STAMP_RULE = 'kehrt sich um: Die Landesteile haben verschiedene Vorzeichen, beide mindestens 0,03 vom Nullpunkt entfernt. · nur in einem Landesteil: Ein Wert ist mindestens doppelt so groß wie der andere, und der kleinere liegt unter 0,1. · schrumpft: Im Mittel liegen die Landesteile unter 85 % des Gesamtwerts. · Sonst: trägt.';
+/** Offengelegte Stempel-Regel; bei „West oder Ost“ sind die Teile die drei Gruppen der Wirtschaftslage, die Schwellen bleiben dieselben wie in stampReading(). */
+export const stampRule = (card: Card | null): string => card?.id === 'eastwest'
+  ? 'kehrt sich um: Die Gruppen der Wirtschaftslage haben verschiedene Vorzeichen, mindestens eine liegt bei 0,03 oder darüber, mindestens eine bei −0,03 oder darunter. · nur in einem Landesteil (hier: in einer Gruppe): Der größte Betrag ist mindestens doppelt so groß wie der kleinste, und der kleinste liegt unter 0,1. · schrumpft: Im Mittel liegen die Gruppen unter 85 % des Gesamtwerts. · Sonst: trägt.'
+  : 'kehrt sich um: Die Landesteile haben verschiedene Vorzeichen, beide mindestens 0,03 vom Nullpunkt entfernt. · nur in einem Landesteil: Ein Wert ist mindestens doppelt so groß wie der andere, und der kleinere liegt unter 0,1. · schrumpft: Im Mittel liegen die Landesteile unter 85 % des Gesamtwerts. · Sonst: trägt.';
 
 export function stampReading(total: number, parts: number[], signed: boolean): Stamp {
   const abs = parts.map(Math.abs);
@@ -126,17 +146,24 @@ export function stampReading(total: number, parts: number[], signed: boolean): S
   return 'trägt';
 }
 
-export function checkStamp(p: Prepared, card: Card, vars: Variant[], measure: MeasureId | '', stamp: Stamp | ''): Note[] {
+/** Stimmen alle eingetragenen Werte je Teil (West/Ost bzw. Wirtschaftslage-Gruppe) mit dem Wertedetektor überein? Erst dann nennt der Stempel Zahlen. */
+const strataVerified = (p: Prepared, card: Card, vars: Variant[], measure: MeasureId | '', inputs: string[]) => {
+  const notes = checkStrata(p, card, vars, measure, inputs);
+  return notes.length === strata(p, card).length && notes.every(n => n.tone === 'ok');
+};
+
+/** Die Lesart nach der Regel. Zahlen (Gesamtwert, Werte je Teil) nennt sie nur, wenn die eigenen Teilwerte stimmen. */
+export function checkStamp(p: Prepared, card: Card, vars: Variant[], measure: MeasureId | '', stamp: Stamp | '', strataInputs: string[] = []): Note[] {
   if (!stamp) return [];
   const m = strataMeasure(card, measure || LEVEL_MEASURES[card.level][0]) as MeasureId;
   const total = vars.find(v => v.measure === m && v.weighted && v.stratum < 0 && v.reversed)!.value;
   const parts = strata(p, card).map((_, s) => vars.find(v => v.measure === m && !v.weighted && v.stratum === s && v.reversed)!.value);
   const mine = stampReading(total, parts, SIGNED.includes(m));
   const where = card.id === 'eastwest' ? 'in den drei Wirtschaftslage-Gruppen' : 'in West und Ost';
-  const values = `${measureLabel(m)} gesamt ${fmt(total)}, ${where} ${parts.map(fmt).join(' / ')}`;
+  const values = strataVerified(p, card, vars, measure, strataInputs) ? ` (${measureLabel(m)} gesamt ${fmt(total)}, ${where} ${parts.map(fmt).join(' / ')})` : '';
   return stamp === mine
-    ? [{ tone: 'ok', text: `Meine Lesart nach der offengelegten Regel ist auch „${mine}“ (${values}).` }]
-    : [{ tone: 'hint', text: `Nach der offengelegten Regel lese ich „${mine}“ (${values}). Du stempelst „${stamp}“ – die Entscheidung bleibt bei dir; begründe sie im Satz.` }];
+    ? [{ tone: 'ok', text: `Meine Lesart nach der offengelegten Regel ist auch „${mine}“${values}.` }]
+    : [{ tone: 'hint', text: `Nach der offengelegten Regel lese ich „${mine}“${values}. Du stempelst „${stamp}“ – die Entscheidung bleibt bei dir; begründe sie im Satz.` }];
 }
 
 /** Passung von Maß und Skalenniveau: Denkanstöße, keine Bewertung. */
@@ -254,6 +281,10 @@ export const initialS05 = (): S05State => ({
   second: { measure: '', value: '', unweighted: '', veto: false }, view: 'weighted', recommendation: '',
 });
 
+/** Maß wählen. Wählt man das Maß, das schon als zweite Währung steht, wird die zweite Währung samt Wert geleert – sonst stünde dasselbe Maß zweimal da. */
+export const chooseMeasure = (s: S05State, measure: MeasureId | ''): S05State =>
+  measure && measure === s.second.measure ? { ...s, measure, second: { ...s.second, measure: '', value: '' } } : { ...s, measure };
+
 /** Neue Karte: alles, was an der Karte hängt, beginnt von vorn; nur die Arbeitsform bleibt. */
 export const pickCard = (s: S05State, card: CardId | null): S05State => ({ ...initialS05(), mode: s.mode, card });
 
@@ -315,7 +346,9 @@ export function rCodeFor(card: Card): string {
     `allbus %>% crosstab(${x}, zufriedenheit, percentages = "row", weights = wghtpew) %>% summary()`, '',
   ];
   const measure = card.level === 'nominal'
-    ? ['# Maß: Cramér-V, gewichtet und ohne Gewicht', `allbus %>% cramers_v(zufriedenheit, ${x}, weights = wghtpew)`, `allbus %>% cramers_v(zufriedenheit, ${x})`]
+    ? ['# Maß: Cramér-V, gewichtet und ohne Gewicht', `allbus %>% cramers_v(zufriedenheit, ${x}, weights = wghtpew)`, `allbus %>% cramers_v(zufriedenheit, ${x})`,
+      // Der Stempel der Karte „West oder Ost“ liest Gamma: Gesamtwert gewichtet, je Wirtschaftslage-Gruppe unten.
+      ...(card.id === 'eastwest' ? [`allbus %>% goodman_gamma(zufriedenheit, eastwest, weights = wghtpew)   # Gesamtwert für den Stempel`] : [])]
     : card.level === 'ordinal'
       ? ['# Maß: Gamma und Tau-b, gewichtet (kendall_tau() erst nach unlabel(), sonst sehr langsam)', `allbus %>% goodman_gamma(zufriedenheit, ${x}, weights = wghtpew)`,
         `allbus %>% unlabel(zufriedenheit, ${x}, wghtpew) %>% kendall_tau(zufriedenheit, ${x}, weights = wghtpew)`]
@@ -335,7 +368,7 @@ export function rCodeFor(card: Card): string {
 export function scaffoldFor(card: Card): string {
   const recode = card.recode ? `,\n                             ${card.id} = rec(${card.source}, rules = "___")` : '';
   const head = `allbus <- allbus %>% mutate(zufriedenheit = rec(ps03, rules = "___")${recode})`;
-  if (card.id === 'eastwest') return `${head}\nallbus %>% cramers_v(zufriedenheit, eastwest, weights = ___)\nallbus <- allbus %>% mutate(lage = rec(ep01, rules = "___"))\nallbus %>% filter(lage == ___) %>% goodman_gamma(zufriedenheit, eastwest)`;
+  if (card.id === 'eastwest') return `${head}\nallbus %>% cramers_v(zufriedenheit, eastwest, weights = ___)\nallbus %>% goodman_gamma(zufriedenheit, eastwest, weights = ___)\nallbus <- allbus %>% mutate(lage = rec(ep01, rules = "___"))\nallbus %>% filter(lage == ___) %>% goodman_gamma(zufriedenheit, eastwest)`;
   const fn = card.level === 'nominal' ? 'cramers_v' : card.level === 'ordinal' ? 'goodman_gamma' : 'pearson_cor';
   return `${head}\nallbus %>% ${fn}(zufriedenheit, ${card.id}, weights = ___)\nallbus %>% group_by(___) %>% ${fn}(zufriedenheit, ${card.id})`;
 }
