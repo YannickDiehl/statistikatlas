@@ -8,7 +8,7 @@ import { RoleBrief } from '../kit/RoleBrief';
 import type { TaskProps } from '../types';
 import { hints, INSTITUTE, PLACEHOLDERS, R_SETUP, R_WEIGHTED, ROLE, ROLES, TEXTS, VERSIONS } from './content';
 import {
-  anovaDone, becauseNotes, checkEntry, checkF, checkP, checkR, checkShare, checkTukey, computeFor, gutLocked, lockMarks, markNotes, matrixReady, meansDone, plenumLines, pp,
+  anovaDone, becauseNotes, checkEntry, checkF, checkP, checkR, checkShare, checkTukey, computeFor, gutFixed, withGutLock, lockMarks, markNotes, matrixReady, meansDone, plenumLines, pp,
   rScriptFor, statusS06, toggleMark, toggleTukey, trap, trapReady, tryTukey, TUKEY_KEYS, unlockMarks, versionPair, weightedNotes, type S06State, type TEntry,
 } from './domain';
 import { MatrixMarks, MatrixReveal } from './Matrix';
@@ -20,15 +20,16 @@ const diffText = (grouping: 'rep' | 'amt', diff: number | null) =>
   diff === null ? null : `Deine Differenz aus deinen Quoten: ${grouping === 'rep' ? '„mit“ − „ohne“' : '10 € − 5 €'} = ${pp(diff)}.`;
 
 export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06State>) {
-  const set = (patch: Partial<S06State>) => onChange({ ...state, ...patch });
   const c = useMemo(() => computeFor(data.sav), [data.sav]);
+  const change = (next: S06State) => onChange(withGutLock(c, next));
+  const set = (patch: Partial<S06State>) => change({ ...state, ...patch });
   const role = (r: keyof typeof ROLES) => <span className="s06-role">{roleLabel(r, state.mode)}</span>;
   const setEntry = (station: 's1' | 's3', key: 'rep' | 'amt', e: TEntry) => set({ [station]: { ...state[station], [key]: e } } as Partial<S06State>);
   const s1rep = checkEntry(c, 'all', 'rep', state.s1.rep), s1amt = checkEntry(c, 'all', 'amt', state.s1.amt);
   const s3rep = checkEntry(c, 'online', 'rep', state.s3.rep), s3amt = checkEntry(c, 'online', 'amt', state.s3.amt);
   const rRep = checkR(c, 'wiederholung-papier', state.r.repPaper), rAmt = checkR(c, 'betrag-papier', state.r.amtPaper);
   const means = VERSIONS.map((v, i) => checkShare(c, { scope: 'online', grouping: 'version', level: v.code }, state.anova.means[i]));
-  const tukey = checkTukey(c, state), anova = anovaDone(c, state), gutFixed = gutLocked(c, state);
+  const tukey = checkTukey(c, state), anova = anovaDone(c, state), gutFixedNow = gutFixed(c, state);
   const showMatrix = matrixReady(c, state), showTrap = trapReady(c, state), showWeighted = anova;
   const trapData = showTrap ? trap(c) : null;
   const matrix = state.matrixView === 'weighted' ? c.matrix.weighted : c.matrix.unweighted;
@@ -48,18 +49,18 @@ export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06S
     <section className="task-step">
       <h3>Vorab · Dein Bauchgefühl</h3>
       <p>Welche Fassung würdest du programmieren, und welche Zusagequote erwartest du online?</p>
-      <VersionChips label="Fassung nach Bauchgefühl" value={state.gut.version} disabled={gutFixed} onChange={v => set({ gut: { ...state.gut, version: v } })} />
+      <VersionChips label="Fassung nach Bauchgefühl" value={state.gut.version} disabled={gutFixedNow} onChange={v => set({ gut: { ...state.gut, version: v } })} />
       <div className="task-grid">
-        <label>Erwartete Zusagequote (%)<input type="text" inputMode="decimal" maxLength={12} value={state.gut.rate} disabled={gutFixed} onChange={e => set({ gut: { ...state.gut, rate: e.target.value } })} /></label>
+        <label>Erwartete Zusagequote (%)<input type="text" inputMode="decimal" maxLength={12} value={state.gut.rate} disabled={gutFixedNow} onChange={e => set({ gut: { ...state.gut, rate: e.target.value } })} /></label>
       </div>
-      <p className="sandbox-note">{gutFixed
+      <p className="sandbox-note">{gutFixedNow
         ? 'Dein Bauchgefühl ist festgehalten, seit deine erste Zahl aus Station 1 erkannt ist – es bleibt ein Vorher.'
         : 'Dein Bauchgefühl wird nicht geprüft – es steht am Ende zum Vergleich auf deiner Freigabe-Karte. Sobald deine erste Zahl aus Station 1 erkannt ist, wird es festgehalten.'}</p>
     </section>
 
     <section className="task-step">
       <h3>Station 1 · Erste Auswertung {role('panel')}</h3>
-      <p>Rechne in RStudio: Bilde aus <code>xr21</code> eine 0/1-Variable <code>zusage</code> (ihr Mittelwert ist die Zusagequote), fasse die Fassungen zu <code>wiederholung</code> (ohne/mit) und <code>betrag</code> (5/10 €) zusammen und vergleiche mit zwei t-Tests – über alle Selbstausfüller:innen, online und Papier zusammen. Trag je Test beide Zusagequoten und den Welch-t-Wert ein (Kurzausgabe von <code>t_test()</code> bzw. Zeile „Unequal variances“ in <code>summary()</code>).</p>
+      <p>Rechne in RStudio: Bilde aus <code>xr21</code> eine 0/1-Variable <code>zusage</code> (ihr Mittelwert ist die Zusagequote), fasse die Fassungen zu <code>wiederholung</code> (ohne/mit) und <code>betrag</code> (5/10 €) zusammen und vergleiche mit zwei t-Tests – über alle Selbstausfüller:innen, online und Papier zusammen. Trag je Test beide Zusagequoten ein (Mittelwerte der Gruppen in <code>summary()</code>).</p>
       <RBlock code={R_SETUP} file="letzte-frage-start.R" />
       <TTestFields id="s06-s1-rep" legend="Wiederholung · alle Selbstausfüller:innen" labels={['Zusagequote „ohne“ (%)', 'Zusagequote „mit“ (%)']}
         entry={state.s1.rep} onChange={e => setEntry('s1', 'rep', e)} notes={s1rep.notes} diff={diffText('rep', s1rep.diff)} />
@@ -76,11 +77,11 @@ export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06S
     <section className="task-step">
       <h3>Station 2 · Zufallscheck {role('qs')}</h3>
       <p>Hat das Los die Fassungen verteilt, dürfen sie mit nichts zusammenhängen, was vor dem Los feststand. Markiere zuerst, welche Zellen der Korrelationsmatrix bei echter Auslosung ≈ 0 sein müssten. Dann rechnest du die Matrix in R.</p>
-      <MatrixMarks marks={state.marks} locked={state.locked} onToggle={p => onChange(toggleMark(state, p))} />
+      <MatrixMarks marks={state.marks} locked={state.locked} onToggle={p => change(toggleMark(state, p))} />
       <div className="sandbox-chips">
         {!state.locked
-          ? <button onClick={() => onChange(lockMarks(state))} disabled={!state.marks.length}>Markierung festhalten</button>
-          : <><span className="sandbox-note">Deine Markierung ist festgehalten.</span><button onClick={() => onChange(unlockMarks(state))}>Neu markieren</button></>}
+          ? <button onClick={() => change(lockMarks(state))} disabled={!state.marks.length}>Markierung festhalten</button>
+          : <><span className="sandbox-note">Deine Markierung ist festgehalten.</span><button onClick={() => change(unlockMarks(state))}>Neu markieren</button></>}
       </div>
       {state.locked && <>
         <p>Rechne jetzt die Matrix mit <code>wiederholung</code>, <code>betrag</code>, <code>papier</code> (0 = online, 1 = Papier), <code>age</code> und <code>zusage</code>. Trag zwei Zellen ein:</p>
@@ -137,9 +138,9 @@ export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06S
       <p>Welche Paare unterscheiden sich nach Tukey signifikant (p &lt; 0,05)? Wähle alle aus und prüfe die Auswahl als Ganzes.</p>
       {!anova && <p className="sandbox-note">Die Auswahl öffnet sich, sobald oben F oder p deiner ANOVA erkannt ist.</p>}
       <div className="sandbox-chips" role="group" aria-label="Signifikante Tukey-Paare">
-        {TUKEY_KEYS.map(k => <button key={k} disabled={!anova} aria-pressed={state.tukey.includes(k)} onClick={() => onChange(toggleTukey(state, k))}>{versionPair(k)}</button>)}
-        <button disabled={!anova} aria-pressed={state.tukey.includes('none')} onClick={() => onChange(toggleTukey(state, 'none'))}>kein Paar</button>
-        <button className="primary" disabled={!anova || !state.tukey.length} onClick={() => onChange(tryTukey(state))}>Auswahl prüfen</button>
+        {TUKEY_KEYS.map(k => <button key={k} disabled={!anova} aria-pressed={state.tukey.includes(k)} onClick={() => change(toggleTukey(state, k))}>{versionPair(k)}</button>)}
+        <button disabled={!anova} aria-pressed={state.tukey.includes('none')} onClick={() => change(toggleTukey(state, 'none'))}>kein Paar</button>
+        <button className="primary" disabled={!anova || !state.tukey.length} onClick={() => change(tryTukey(state))}>Auswahl prüfen</button>
       </div>
       <Feedback notes={tukey.notes} />
       {tukey.correct && c.tukey.online && <TukeyTable rows={c.tukey.online} weighted={showWeighted ? c.tukey.onlineW : null} />}
@@ -152,7 +153,7 @@ export function LetzteFrage({ data, state, onChange, onConcept }: TaskProps<S06S
       <HintLadder key="s3b" hint={hints.s3b} onConcept={onConcept} file="letzte-frage-station3b.R" />
     </section>
 
-    <Release c={c} state={state} onChange={onChange} onConcept={onConcept} done={{ meansDone: meansDone(c, state), tukeyDone: tukey.correct }} roleLabel={roleLabel} />
+    <Release c={c} state={state} onChange={change} onConcept={onConcept} done={{ meansDone: meansDone(c, state), tukeyDone: tukey.correct }} roleLabel={roleLabel} />
 
     <PlenumCard title="Freigabe · Die letzte Frage" lines={plenumLines(state)} file="letzte-frage-freigabe.md" />
     {statusS06(state) === 'done' && <details className="s02-solution"><summary>Ein vollständiges R-Skript zum Mitnehmen</summary><RBlock code={rScriptFor(state)} file="letzte-frage.R" /></details>}

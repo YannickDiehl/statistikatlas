@@ -161,12 +161,14 @@ export const parseShare = (input: string) => readAll(input, (x, d) => (Math.abs(
 /** t, r, F: mindestens zwei Nachkommastellen, auch mit Dezimalpunkt wie in R (7.590). */
 export const parseStat = (input: string) => readAll(input, (x, d) => (d >= 2 ? { value: x, tol: halfUnit(d) } : null));
 
-/** p-Wert wie gedruckt: „0,046“, „0.046“, „,046“ oder „< 0,001“. */
+/** p-Wert wie gedruckt: „0,046“, „0.046“, „,046“ oder „< 0,001“. Eine Ungleichung zählt nur so, wie mariposa sie druckt –
+ *  mit einer Schwelle von höchstens 0,001; „< 0,05“ oder „< 1“ wären keine Zahl aus R, sondern geraten. */
 export function parseP(input: string): Parsed {
   const s = clean(input).replace(/^p\s*/i, '').replace(/^=\s*/, '');
   if (s.startsWith('<')) {
     const first = numberReadings(s.slice(1))[0];
-    return first ? { kind: 'below', value: first.x } : { kind: 'text' };
+    if (!first) return { kind: 'text' };
+    return first.x > 0 && first.x <= 0.001 + 1e-12 ? { kind: 'below', value: first.x } : { kind: 'coarse' };
   }
   return readAll(s, (x, d) => (d >= 3 ? { value: x, tol: halfUnit(d) } : null));
 }
@@ -183,10 +185,16 @@ export function parseRate(input: string): number | null {
   return Math.abs(first.x) < 1 && first.decimals >= 1 ? 100 * first.x : first.x;
 }
 
-/** Quote für Karte und Rückmeldung: immer in Prozent (0,67 → „67 %“). */
+const deFree = (x: number) => x.toLocaleString('de-DE', { maximumFractionDigits: 2 }).replace('-', '−');
+/** Quote für Karte und Rückmeldung: immer in Prozent (0,67 → „67 %“); freier Text („ca. 70“) bleibt stehen und bekommt „%“. */
 export const rateText = (input: string) => {
   const x = parseRate(input);
-  return x === null ? input.trim() : `${x.toLocaleString('de-DE', { maximumFractionDigits: 2 }).replace('-', '−')} %`;
+  return x === null ? `${input.trim().replace(/\s*%$/, '')} %` : `${deFree(x)} %`;
+};
+/** Betragseffekt für die Karte: immer in Prozentpunkten (−0,045 → „−4,5 Pp.“); freier Text bleibt stehen. */
+export const amountText = (input: string) => {
+  const p = parseDiff(input);
+  return p.kind === 'ok' ? `${deFree(Number(p.readings[0].value.toFixed(6)))} Pp.` : `${input.trim().replace(/\s*(Pp\.?|%)$/i, '')} Pp.`;
 };
 
 /** Varianten, die zu irgendeiner Lesart passen, die nächste zuerst. */
@@ -342,7 +350,7 @@ export function checkF(c: Computed, input: string): Check<FVariant> {
 export function checkP(c: Computed, input: string): Check<FVariant> {
   const parsed = parseP(input);
   if (parsed.kind === 'empty' || parsed.kind === 'text') return empty();
-  if (parsed.kind === 'coarse') return only({ tone: 'hint', text: 'p mit drei Nachkommastellen, so wie R es druckt (oder „< 0,001“).' });
+  if (parsed.kind === 'coarse') return only({ tone: 'hint', text: 'Trag den p-Wert so ein, wie R ihn druckt: mit drei Nachkommastellen, sehr kleine Werte als „< 0,001“.' });
   const hits = byRank(parsed.kind === 'below' ? c.fs.filter(v => v.p < parsed.value) : closest(c.fs.map(v => ({ ...v, value: v.p })), parsed.readings).map(v => c.fs.find(f => f.scope === v.scope && f.kind === v.kind && f.weighted === v.weighted)!));
   const exact = hits.find(v => v.scope === 'online' && v.kind === 'classical' && !v.weighted);
   if (exact) return { notes: [{ tone: 'ok', text: `Stimmt: ${fmtP(exact.p)} für die ANOVA über die vier Fassungen, nur online. ${exact.p < 0.05 ? 'Irgendeine Fassung unterscheidet sich – welche, sagt erst Tukey.' : 'Kein Unterschied, der bei 5 % trägt.'}` }], hit: exact, valid: true, exact: true };
@@ -489,6 +497,8 @@ export type TEntry = { a: string; b: string; t: string };
 export type S06State = {
   mode: WorkMode;
   gut: { version: VersionId | ''; rate: string };
+  /** Das Bauchgefühl ist festgehalten (gesetzt, sobald die erste Zahl aus Station 1 erkannt ist). */
+  gutFixed: boolean;
   s1: { rep: TEntry; amt: TEntry };
   marks: PairId[];
   locked: boolean;
@@ -507,7 +517,7 @@ export type S06State = {
 
 const entry = (): TEntry => ({ a: '', b: '', t: '' });
 export const initialS06 = (): S06State => ({
-  mode: 'solo', gut: { version: '', rate: '' },
+  mode: 'solo', gut: { version: '', rate: '' }, gutFixed: false,
   s1: { rep: entry(), amt: entry() }, marks: [], locked: false, r: { repPaper: '', amtPaper: '' }, matrixView: 'unweighted', because: '',
   s3: { rep: entry(), amt: entry() }, trapView: 'all', anova: { means: ['', '', '', ''], F: '', p: '' }, tukey: [], tukeyTried: null,
   release: { version: '', rate: '', low: '', high: '', amount: '', notClaimed: '' }, sign: { panel: '', qs: '', veto: false },
@@ -534,6 +544,9 @@ export const gutLocked = (c: Computed, s: S06State) => [
   checkShare(c, { scope: 'all', grouping: 'rep', level: 0 }, s.s1.rep.a), checkShare(c, { scope: 'all', grouping: 'rep', level: 1 }, s.s1.rep.b),
   checkShare(c, { scope: 'all', grouping: 'amt', level: 5 }, s.s1.amt.a), checkShare(c, { scope: 'all', grouping: 'amt', level: 10 }, s.s1.amt.b),
 ].some(x => x.hit !== null);
+/** Einmal festgehalten, bleibt das Bauchgefühl fest – auch wenn die Zahl in Station 1 wieder gelöscht wird. */
+export const withGutLock = (c: Computed, s: S06State): S06State => (!s.gutFixed && gutLocked(c, s) ? { ...s, gutFixed: true } : s);
+export const gutFixed = (c: Computed, s: S06State) => s.gutFixed || gutLocked(c, s);
 
 /** Neue Fassung in der Freigabe: Quote, Spanne und Unterschriften hängen an der Fassung und beginnen von vorn. */
 export const chooseRelease = (s: S06State, version: VersionId | ''): S06State => version === s.release.version ? s : {
@@ -553,6 +566,7 @@ export function parseS06(raw: unknown): S06State {
   return {
     mode: oneOf(r.mode, WORK_MODES, 'solo'),
     gut: { version: oneOf(gut.version, [...VERSION_IDS, ''] as const, ''), rate: str(gut.rate, 12) },
+    gutFixed: bool(r.gutFixed),
     s1: { rep: parseEntry(s1.rep), amt: parseEntry(s1.amt) },
     marks,
     locked: bool(r.locked) && marks.length > 0,
@@ -589,7 +603,7 @@ export function plenumLines(s: S06State): [string, string][] {
   return [
     ['Fassung', v ? `${v.id} · ${v.money}, ${v.placement}` : ''],
     ['Versprochene Online-Quote', r.rate.trim() ? `${rateText(r.rate)}${r.low.trim() && r.high.trim() ? ` (Spanne ${rateText(r.low).replace(/ %$/, '')}–${rateText(r.high)})` : ' (ohne Spanne)'}` : ''],
-    ['10 € bringen', r.amount.trim() ? `${r.amount.trim().replace(/\s*(Pp\.?|%)$/i, '')} Pp.` : ''],
+    ['10 € bringen', r.amount.trim() ? amountText(r.amount) : ''],
     ['Was wir nicht behaupten', r.notClaimed.trim()],
     ['Freigabe', release === 'Veto' ? 'Veto der Qualitätssicherung' : release === 'freigegeben' ? 'freigegeben mit zwei Unterschriften' : 'noch offen'],
     ['Panelaufbau', s.sign.panel.trim()],

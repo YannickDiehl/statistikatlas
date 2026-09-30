@@ -181,6 +181,9 @@ test('gut feeling locks after the first recognised number, t is optional, statio
   assert.match(fixed, /<button disabled="" aria-pressed="true">B2<\/button>/);
   assert.match(fixed, /value="80" disabled=""|disabled="" value="80"/);
   assert.match(fixed, /Dein Bauchgefühl ist festgehalten/);
+  // gelöscht nach dem Festhalten: bleibt fest
+  assert.match(render({ gut: { version: 'B2', rate: '80' }, gutFixed: true }), /<button disabled="" aria-pressed="true">B2<\/button>/);
+  assert.doesNotMatch(open, /Welch-t-Wert ein/);
   assert.match(open, /t \(Welch\) – zur Kontrolle, freiwillig/);
   assert.doesNotMatch(open, /nur online gab es alle vier Fassungen/);
   const card = render({ gut: { version: 'A2', rate: '0,8' }, release: { ...initialS06().release, version: 'B1', rate: '0,67', low: '0,62', high: '0,72' } });

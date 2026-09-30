@@ -82,6 +82,12 @@ test('session 6: correlation matrix, cells and the amount = questionnaire half (
   assert.match(checkT(c, { scope: 'online', grouping: 'amt' }, '-1.892').notes[0].text, /^Stimmt: Welch-t = −1,892/);
   assert.match(checkF(c, '2.681').notes[0].text, /^Stimmt: F\(3, 1519\) = 2,681/);
   assert.match(checkP(c, '0.046').notes[0].text, /^Stimmt: p = 0,046/);
+  // Eine geratene Ungleichung öffnet weder Tukey noch die zweite Enthüllung; „< 0,001“ ist die gepoolte ANOVA, nicht die online.
+  for (const guess of ['< 0,05', '< 1', 'p < 0,95']) {
+    assert.ok(!checkP(c, guess).exact && !checkP(c, guess).hit, guess);
+    assert.doesNotMatch(checkP(c, guess).notes[0].text, /0,046/, guess);
+  }
+  assert.match(checkP(c, '< .001').notes[0].text, /über alle Selbstausfüller:innen/);
   assert.match(checkR(c, 'wiederholung-papier', '-0.583').notes[0].text, /^Stimmt/);
   assert.match(checkShare(c, { scope: 'all', grouping: 'rep', level: 0 }, '0.527').notes[0].text, /^Stimmt/);
   assert.match(checkShare(c, { scope: 'all', grouping: 'rep', level: 0 }, '1.473').notes[0].text, /Mittelwert über 1/);

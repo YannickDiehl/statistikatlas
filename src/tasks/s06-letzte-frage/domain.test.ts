@@ -5,7 +5,7 @@ import type { CorMatrix, TukeyRow } from '../kit/means';
 import { hints, PAIR_IDS, R_S1, rSolution } from './content';
 import {
   anovaDone, becauseNotes, checkAmount, checkEntry, checkF, checkP, checkR, checkRelease, checkShare, checkT, checkTukey, chooseRelease, compute, computeFor,
-  gutLocked, initialS06, lockMarks, markNotes, matrixReady, ownDiff, parseDiff, parseP, parseRate, parseS06, parseShare, parseStat, plenumLines, prepare,
+  amountText, gutFixed, gutLocked, initialS06, withGutLock, lockMarks, markNotes, matrixReady, ownDiff, parseDiff, parseP, parseRate, parseS06, parseShare, parseStat, plenumLines, prepare,
   rateText, readMarks, releaseState, signedEffect, statusS06, toggleMark, toggleTukey, trap, trapReady, tryTukey, tukeyDone, unlockMarks, weightedNotes,
   type Coding, type Computed, type GroupVar, type S06State, type Scope, type TukeyKey,
 } from './domain';
@@ -219,6 +219,43 @@ test('Tukey marks: checked only after the own ANOVA and „Auswahl prüfen“, a
   }
   assert.match(text(checkTukey({ ...c, tukey: { online: null, onlineW: null } }, tried(['4-2'])).notes), /zu wenige Fälle/);
   assert.deepEqual(tryTukey(state({ tukey: ['4-2', '3-1'] })).tukeyTried, ['4-2', '3-1']);
+});
+
+test('a typed inequality counts only as mariposa prints it (< 0,001), never as a guess that opens the gate', () => {
+  for (const guess of ['< 1', '<0,9', '< 0,05', 'p < 0,95', '< 0.5']) {
+    assert.equal(parseP(guess).kind, 'coarse', guess);
+    const res = checkP(c, guess);
+    assert.ok(!res.exact && !res.hit, guess);
+    assert.match(text(res.notes), /Trag den p-Wert so ein, wie R ihn druckt/, guess);
+    assert.equal(anovaDone(c, state({ anova: { means: ['', '', '', ''], F: '', p: guess } })), false, guess);
+  }
+  assert.deepEqual(parseP('< .001'), { kind: 'below', value: 0.001 });
+  // Ist das p online wirklich unter 0,001, bleibt „< 0,001“ ein Treffer.
+  const tiny: Computed = { ...c, fs: c.fs.map(v => (v.scope === 'online' && v.kind === 'classical' && !v.weighted ? { ...v, p: 0.0004 } : v)) };
+  assert.ok(checkP(tiny, '< .001').exact);
+  assert.ok(checkP(tiny, 'p < 0,001').exact);
+  assert.ok(!checkP(c, '< 0,001').exact);   // Testdatei: p = 0,868
+});
+
+test('the gut feeling stays locked once set; card texts keep units for rates, amounts and free text', () => {
+  const recognised = state({ gut: { version: 'B2', rate: '80' }, s1: { rep: { a: pctIn(share('all', 'rep', 0)), b: '', t: '' }, amt: { a: '', b: '', t: '' } } });
+  const locked = withGutLock(c, recognised);
+  assert.equal(locked.gutFixed, true);
+  const cleared = withGutLock(c, { ...locked, s1: initialS06().s1 });
+  assert.equal(cleared.gutFixed, true);
+  assert.equal(gutFixed(c, cleared), true);
+  assert.equal(withGutLock(c, initialS06()).gutFixed, false);
+  assert.equal(gutFixed(c, recognised), true);   // auch ein gespeicherter Stand ohne das Feld bleibt fest
+  assert.equal(parseS06({ gutFixed: 'ja' }).gutFixed, false);
+  assert.equal(parseS06({ gutFixed: true }).gutFixed, true);
+  assert.equal(rateText('ca. 70'), 'ca. 70 %');
+  assert.equal(rateText('ca. 70 %'), 'ca. 70 %');
+  assert.equal(amountText('-0.045'), '−4,5 Pp.');
+  assert.equal(amountText('0,045'), '4,5 Pp.');
+  assert.equal(amountText('4,5 Pp.'), '4,5 Pp.');
+  assert.equal(amountText('etwa 4'), 'etwa 4 Pp.');
+  const card = Object.fromEntries(plenumLines(state({ release: { ...initialS06().release, amount: '-0.045' } })));
+  assert.equal(card['10 € bringen'], '−4,5 Pp.');
 });
 
 test('the balance check reads marks against the matrix without numbers before the reveal', () => {
