@@ -50,10 +50,10 @@ export const sessions: Session[] = [
   },
   {
     id: 5, plan: 'Sitzungsplan 5', title: 'Gewichtung und Zusammenhang', short: 'Gewichte, Zusammenhangsmaße',
-    question: 'Vertraut der Osten dem Bundestag weniger?',
+    question: 'Was hängt mit der Zufriedenheit mit der Demokratie zusammen?',
     repetition: [],
     introduced: [t('Gewichte', 'weights'), t('Drittvariable'), t('Confounding · gemeinsame Ursachen', 'confounding'), t('Phi', 'phi'), t('Cramér-V', 'cramers_v'), t('Goodman–Kruskal-Gamma', 'goodman_gamma'), t('Kendall Tau-b', 'kendall_tau'), t('Spearman-Korrelation', 'spearman'), t('Pearson-Korrelation', 'pearson')],
-    task: null,
+    task: 's05',
   },
   {
     id: 6, plan: 'Sitzungsplan 6', title: 'Mittelwerte vergleichen', short: 't-Test, ANOVA',

@@ -91,3 +91,24 @@
 .s04-questions li{margin:0 0 8px}
 .s04-extra summary{font:600 16px/1.4 var(--sans);cursor:pointer}
 .s04 .sandbox-chips .sandbox-note{margin:0 6px 0 0;align-self:center}
+
+/* Sitzung 5 · Treiber-Rangliste */
+.s05-pick{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.s05-pick select{font:15px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
+.s05-card{margin-top:12px}
+.s05-card h4 code{font-size:14px;color:var(--muted);margin-left:6px}
+.s05-joker{font:600 12px/1 var(--sans);text-transform:uppercase;letter-spacing:.06em;color:#7d6b5d;margin-left:6px}
+.s05-rule{margin:8px 0;font-size:14px}
+.s05-rank{margin:12px 0}
+.s05-rank svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+.s05-rank svg text{font:12px var(--sans);fill:var(--muted)}
+.s05-rank svg text.head{font-weight:600;fill:var(--ink)}
+.s05-rank svg .own text{fill:var(--ink);font-weight:600}
+.s05-rank-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+.s05-rank-table caption{text-align:left;color:var(--muted);margin-bottom:4px}
+.s05-rank-table th,.s05-rank-table td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:right}
+.s05-rank-table th[scope=row],.s05-rank-table thead th:first-child{text-align:left}
+.s05-rank-table tr.own{background:var(--soft);font-weight:600}
+.s05-notes{margin:10px 0;padding-left:20px;font-size:15px}
+.s05-notes li{margin:0 0 6px}
+@media(max-width:560px){.s05-rank-table{font-size:12px}.s05-rank-table th,.s05-rank-table td{padding:3px 4px}}
