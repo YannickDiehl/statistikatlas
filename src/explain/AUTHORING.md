@@ -127,6 +127,26 @@ Wahlabsicht, Vertrauen in den Bundestag, Lernzeit, Miete. Keine Würfel- oder Ur
 
 ---
 
+## 2a. Fachliche Leitplanken
+
+Der Ton allein macht eine Erklärung nicht richtig. Diese Deutungsfehler passieren am häufigsten; die Begutachtung prüft sie.
+
+- **p-Wert immer mit Bedingung:** „Gäbe es keinen Unterschied (Zusammenhang), käme … in etwa k von 100 Stichproben vor.“ Nie „Wahrscheinlichkeit, dass die Nullhypothese stimmt“, nie „Wahrscheinlichkeit, dass das Ergebnis Zufall ist“. Das gilt auch in `rechnung`, `explain` und Rückmeldungen, die für sich allein stehen.
+- **Konfidenzintervall:** „Bei wiederholten Zufallsstichproben enthielten etwa 95 % solcher Intervalle den wahren Wert“; im Alltagston „plausible Werte“. Nie „liegt mit 95 % Wahrscheinlichkeit“.
+- **Keine Ursachenwörter** bei Beobachtungsdaten (Lehrdatensatz, ALLBUS): „hängt zusammen mit“, „geht einher mit“, „unterscheidet sich“; nicht „Einfluss“, „wirkt“, „führt zu“. Ausnahmen nur in B12 (Kausalität, Zufallszuteilung).
+- **Mitte:** Im Atlas heißt x̄ „die Mitte“. Den Median nennst du „mittlerer Wert der Reihe nach“, nie nur „die Mitte“.
+- **Standardabweichung:** „typischer Abstand“ nur zusammen mit dem Hinweis, dass s kein durchschnittlicher Abstand ist (unter „Genau genommen“ oder in der Fachsprache). In Aussagen über die 200 lieber datenwahr („141 von 200 liegen höchstens s entfernt“) oder „grob gesagt“.
+- **„signifikant“** nur zusammen mit α; neben p immer die Größe des Effekts.
+- **Richtung aus dem Vorzeichen:** Eine Deutung, die eine Richtung nennt („wer mehr lernt, löst mehr“), leitet sie aus dem Vorzeichen des Ergebnisses ab, nie aus den Spaltennamen. Nach „Umpolen“ oder eigenen Daten kann sich die Richtung drehen.
+- **Richtung von R:** Wo R eine Differenz meldet (t-Test: Gruppe 0 minus Gruppe 1), rechnest und nennst du sie im Text in derselben Richtung („ohne minus mit Weiterbildung“).
+- **Faustregeln** (Cohen, n > 30) als Faustregel kennzeichnen.
+- **Lehrdatensatz:** Befunde sind synthetisch, keine Aussagen über Deutschland. Wer die 200 sind, steht in Abschnitt 8.2.
+- **Wie im Alltag:** Ein Vergleich darf keine falsche Lesart nahelegen. Gegenbeispiel: r „wie eine Prozentangabe“ legt „r = 0,5 heißt 50 %“ nahe.
+- **Nachkommastellen:** höchstens zwei, außer bei kleinen Kennwerten wie SE oder p: Dort so viele, dass zwei gültige Ziffern sichtbar sind („0,013“); p unter 0,001 als „p < 0,001“.
+- **Rückmeldungen auf Auswahlfragen:** „Fast!“ für jede Antwort, hinter der ein typischer Denkfehler steht (auch „groß und wichtig“ beim p-Wert); „Noch nicht ganz.“ nur für Antworten ohne erkennbaren Denkfehler.
+
+---
+
 ## 3. Die Vorlagen im Einzelnen
 
 Alle Typen stehen in `src/explain/types.ts`. Inhalte sind reines TypeScript ohne React. Texte, die von den Daten abhängen, sind Funktionen `(c: Ctx<S>) => string` (Typ `Text<S>`); `c.s` sind die Kennwerte, `c.who` die gewählte Person, `c.names` ihre Namen.
@@ -308,12 +328,12 @@ Die Daten für R: den Lehrdatensatz als `Statistikatlas-200-Befragte.sav` aus de
  *   atlas %>% t_test(lernzeit, group = weiterbildung)   # t(175.8) = 0.156, p = 0.876
  */
 test('B9: p-Wert der Lernzeit nach Weiterbildung wie in R', () => {
-  assert.ok(close(pFor(0.07), 0.880639, 1e-6));
+  assert.ok(close(pFor(0.07), 0.880639, 1e-6), 'p bei 0,07 h wie in R');
 });
 ```
 
 - Rechne dabei die Werte zusätzlich im Test aus den Daten nach (`createSurvey()`, `src/tasks/kit/means.ts`, `src/tasks/kit/dist.ts`), damit eine Änderung des Lehrdatensatzes auffällt.
-- **ALLBUS nur als Aggregat** (Häufigkeiten, Mittelwerte), nie Mikrodaten im Repository, im Build oder in Fixtures. Die Datei liest du nur in R oder in Tests über `process.env.ALLBUS_SAV`.
+- **ALLBUS nur als Aggregat** (Häufigkeiten, Mittelwerte), nie Mikrodaten im Repository, im Build oder in Fixtures. Die Datei liest du nur in R oder in Tests über `process.env.ALLBUS_SAV`. Im sichtbaren Text nennst du das Jahr und, ob gewichtet wurde („ALLBUS 2023, ungewichtet“).
 - mariposa-Referenzversion ist **0.7.4** (Quellstand per `pkgload::load_all`), in allen sichtbaren Angaben.
 - Höchstens zwei Nachkommastellen in Texten; R-Ausgaben behalten ihr Format und werden als R-Ausgabe kenntlich gemacht.
 
@@ -366,6 +386,8 @@ Jeder Begriff bekommt die Reiterleiste (Spezifikation Ausbau, Abschnitt 5; Lehrd
 
 Du trägst die Reiter im Index deines Bereichs ein, im selben Commit wie die Erklärung: `tabs: { validity: { next: … }, … }` (Typ `ConceptTabs`, `src/explain/types.ts`). „Kurz gesagt“ über den Reitern kommt aus deiner Erklärung; die Vorlagen lassen ihren eigenen Kasten dann weg. Die Reiter bleiben eingehängt (Zustand bleibt beim Wechsel erhalten), der gewählte Reiter gilt je Begriff für die Sitzung. Am Ende von „Verstehen“ führt „Weiter mit 200 Befragten“ in den Reiter `sample` und setzt dort denselben Schritt.
 
+**Rangwege:** Ein Rechenweg mit `basis: 'ranks'` (etwa Spearman unter Korrelation) zeigt keine Reiter. Brücke, Vorhersagen und Leitaufruf rechnen mit Rohwerten; Zahlen dazu wären für die Rangfassung falsch. Der Weg zeigt nur seine Erklärung.
+
 Vorbilder: `src/explain/content/pilot-tabs.ts` (sieben Pilotbegriffe, Brücken der Pilot-Werkstätten) und `src/explain/content/muster/index.ts` (`p_value` und `dummy`: Auswertung und Katalog-Leitaufruf).
 
 ### 8.1 Weiter (`NextTab`)
@@ -380,10 +402,13 @@ next: {
 ```
 
 - `next` steht hervorgehoben oben („Als Nächstes“). Jedes `why` ist ein Satz, höchstens zwei, je höchstens 25 Wörter, ohne den Titel des Ziels zu wiederholen (der steht fett darüber).
-- Alle `id` gibt es in `concepts.ts`; kein Ziel steht zweimal in `before`, `after` und `more`; kein Verweis auf den Begriff selbst.
-- Lässt du `before` oder `after` leer (`[]`), füllt der Reiter die Liste aus den Bezügen der Karte. Alle übrigen Bezüge der Karte stehen zugeklappt unter „Weitere Verwendungen und Rechenwege“. Doppelte Ziele führt die Oberfläche zu einem Eintrag zusammen (`src/explain/relations.ts`).
+- Nennt ein `why` Zahlen aus den Daten, schreib es als Funktion `c => …` (Typ `SampleCtx`: `c.rows`, Spalten der Spaltenwahl in `c.columns.x`, `c.columns.y`); dann stimmt es auch nach „Ausprobieren“. Vorbild: der Satz zum Standardfehler in `pilot-tabs.ts` (`seSentence`). Feste Zahlen in festen Sätzen veralten.
+- Alle `id` gibt es in `concepts.ts`; kein Ziel steht zweimal, auch „Als Nächstes“ nicht noch einmal in `before`, `after` oder `more`; kein Verweis auf den Begriff selbst.
+- Lässt du `before` oder `after` leer (`[]`), füllt der Reiter die Liste aus den Bezügen der Karte. Alle übrigen Bezüge der Karte stehen zugeklappt unter „Weitere Verwendungen und Rechenwege“. Jedes Ziel erscheint im ganzen Reiter höchstens einmal; Ziele aus der Karte, die schon weiter oben stehen, fallen weg (`nextLists` in `src/explain/relations.ts`).
 
 ### 8.2 Mit 200 Befragten (`SampleTab`)
+
+**Der Lehrdatensatz:** 200 synthetische Befragte, Erwachsene von 18 bis 75 Jahren, keine Studierenden. Spalten, Fragetexte, Einheiten und Wertebereiche stehen in `src/domain/survey.ts` (`surveyColumns`). Übernimm die Zeitbezüge wörtlich: Lernzeit „in den letzten sieben Tagen“, Weiterbildung „in den letzten zwölf Monaten“, Wissenstest „0 bis 20 Aufgaben eines fiktiven Tests“. Nenne die Menschen „Befragte“ oder „Personen“. Spaltentitel kommen in Texte nur über `c.col.title` bzw. `sampleColumnInfo(id).title`: Dort ist der Mittelpunkt der Datensatztitel schon durch ein Komma ersetzt („Wissenstest, Zeitpunkt 2“).
 
 Zwei Arten:
 
@@ -404,8 +429,9 @@ sample: { kind: 'bridge', workshop: 'streuung', variant: 'sd', variable: 'lernze
 | `interpret(c, variant)` | `kurz` (Aussage über Menschen, höchstens drei Sätze), `fachlich`, `zusatz` (eine datenwahre Aussage, zum Beispiel „141 von 200 Befragten lernen zwischen 4,51 und 10,99 Stunden.“) |
 | `voraussetzung(c, variant)` | wann das Ergebnis gilt |
 | `picture(c, step)` | was das Bild in Schritt `step` zeigt (`BridgePicture`): `center` (x̄ bzw. [x̄, ȳ]), `deviation`, `band` ([x̄ − s, x̄ + s]), `contributions` (Beiträge aller 200, etwa die Quadrate in Schritt 4), `quadrants` |
+| `value(c, variant)` | das Ergebnis als Zahl (s, r, x̄ …) oder null; daran prüft der Test deine Vorhersagen |
 
-Der Kontext `c` (`BridgeCtx<S>`): `c.s` sind die Kennwerte deiner Werkstatt für alle 200, `c.who` die gewählte Person, `c.names` P001 bis P200, `c.values` (und `c.values2`) die Spaltenwerte, `c.col`/`c.col2` Titel, Einheit und Frage, `c.u(v)` Zahl mit Einheit („3,24 h“, `{ squared: true }` → „10,48 h²“). Texte hängen von den Daten ab: nach „Ausprobieren“ und eigenen Änderungen stimmen sie trotzdem. Schreib sie für jede Spalte (Titel und Einheit aus `c.col`), nicht nur für die Lernzeit.
+Der Kontext `c` (`BridgeCtx<S>`): `c.s` sind die Kennwerte deiner Werkstatt für alle 200, `c.who` die gewählte Person, `c.names` P001 bis P200, `c.values` (und `c.values2`) die Spaltenwerte, `c.col`/`c.col2` Titel, Einheit, Frage, Skalenniveau (`scale`) und `likert`, `c.u(v)` Zahl mit Einheit („3,24 h“, `{ squared: true }` → „10,48 h²“). Texte hängen von den Daten ab: nach „Ausprobieren“ und eigenen Änderungen stimmen sie trotzdem. Schreib sie für jede Spalte, die die Spaltenwahl für deinen Begriff anbietet (Titel, Einheit und Skalenniveau aus `c.col`), nicht nur für die Lernzeit; der Test rechnet alle diese Spalten durch. Proben und Rechnungen im Text gehen mit den sichtbaren, gerundeten Zahlen auf („3,24 · 3,24 ≈ 10,5, bis auf Rundung die 10,48“).
 
 **`analysis`** (alle übrigen Begriffe): Kurz gesagt, Ergebnis mit Deutung, Voraussetzung, mindestens eine Vorhersagefrage.
 
@@ -419,9 +445,9 @@ sample: {
 }
 ```
 
-Ohne `columns` gelten die Spalten der Spaltenwahl (`c.columns.x`, `c.columns.y`) und die Rollen der R-Einstellungen (`group`, `items` …), und oben steht die Spaltenwahl. Mit `columns` rechnet der Reiter immer mit diesen Spalten. Unter der Deutung zeigt der Inspector bei Begriffen der Karte die bisherigen Auswertungen (Fallwahl, Formel mit Zahlen, Verteilung, Experiment), am Ende zugeklappt den Baukasten. `result` muss für die Ausgangsdaten und für jede Vorhersage lesbar bleiben (der Test rechnet alle durch).
+Ohne `columns` gelten die Spalten der Spaltenwahl (`c.columns.x`, `c.columns.y`) und die Rollen der R-Einstellungen (`group`, `items` …), und oben steht die Spaltenwahl. Mit `columns` rechnet der Reiter immer mit diesen Spalten. Unter der Deutung zeigt der Inspector bei Begriffen der Karte die bisherigen Auswertungen (Fallwahl, Formel mit Zahlen, Verteilung, Experiment), am Ende zugeklappt den Baukasten. `result` muss für die Ausgangsdaten und für jede Vorhersage lesbar bleiben (der Test rechnet alle durch). `value: c => …` gibt das Ergebnis als Zahl (p, SE …) für die Prüfung der Vorhersagen.
 
-**Vorhersagen (`ThinkSample`)**, für beide Arten: Frage, Antworten, `correct`, `explain` (Begründung mit Verweis auf den Schritt), `kurz`, optional `step` (der Schritt, den die Antwort markiert) und `tryIt`:
+**Vorhersagen (`ThinkSample`)**, für beide Arten: Frage, Antworten, `correct`, `explain` (Begründung mit Verweis auf den Schritt), `kurz`, `tryIt`, `expect` und nur in Brücken `step` (der Formelschritt, den die Antwort markiert; in einer Auswertung gibt es keine Schritte, der Test lehnt `step` dort ab):
 
 | `op` | wirkt auf die Spalte `column` (`'x'` oder `'y'`) |
 |---|---|
@@ -431,7 +457,21 @@ Ohne `columns` gelten die Spalten der Spaltenwahl (`c.columns.x`, `c.columns.y`)
 | `constant` | alle bekommen `value` (sonst den Mittelwert) |
 | `reverse` | umpolen: Minimum + Maximum − Wert |
 
-`label` beschreibt die Änderung („alle doppelt so lange“), die Oberfläche setzt „Ausprobieren:“ davor. Das Ergebnis muss zur Spalte passen (Wertebereich, Schrittweite, Antwortcodes): Der Test wendet jede Änderung auf die Ausgangsdaten an und prüft das mit `fitsColumn`. Bei `outlier` hängt die Wirkung von der gewählten Person ab; formuliere Frage und Antwort so, dass sie für jede Person stimmen. Die Rechnung steckt in `applyOp` (`src/explain/sample.ts`), Kennwerte für deine Tests liefern `sampleSeries`, `samplePairs`, `countWithin`.
+`label` beschreibt die Änderung („alle doppelt so lange“), die Oberfläche setzt „Ausprobieren:“ davor. Das Ergebnis muss zur Spalte passen (Wertebereich, Schrittweite, Antwortcodes): Der Test wendet jede Änderung auf die Ausgangsdaten an und prüft das mit `fitsColumn`. Die Rechnung steckt in `applyOp` (`src/explain/sample.ts`), Kennwerte für deine Tests liefern `sampleSeries`, `samplePairs`, `countWithin`.
+
+**`expect`: Was die markierte Antwort behauptet, rechnet der Test nach.** Er wendet `tryIt` auf die Ausgangsdaten und auf die Daten nach jeder anderen Vorhersage des Reiters an, bei `outlier` für jede der 200 Personen, und vergleicht die Ergebniszahl (`Bridge.value` bzw. `analysis.value`, oder `expect.measure` für eine eigene Zahl) vorher und nachher:
+
+| `expect` | heißt |
+|---|---|
+| `{ change: 'same' }` | bleibt gleich |
+| `{ change: 'factor', factor: 2 }` | verdoppelt sich (4: vervierfacht) |
+| `{ change: 'plus', amount: 1 }` | steigt um genau 1 |
+| `{ change: 'sign' }` | wechselt das Vorzeichen |
+| `{ change: 'up', atLeast?, atMost? }`, `'down'` | steigt bzw. sinkt, wahlweise um mindestens oder höchstens so viel („ein wenig“: `atMost`) |
+| `{ change: 'weaker' }`, `'stronger'` | der Betrag sinkt bzw. steigt (für r: der Zusammenhang wird schwächer) |
+| `{ change: 'equals', value: 200, measure: c => … }` | ist danach genau dieser Wert |
+
+Gilt die Behauptung nicht für jede Person und jeden Datenstand, formuliere die Antwort vorsichtiger (Vorbild Pearson: „er wird schwächer, je nach ihrem Wissenstest kaum oder deutlich“ statt „ja, deutlich“) und halte im Bereichstest fest, was R dazu sagt.
 
 ### 8.3 In R (`RTab`)
 
@@ -445,10 +485,10 @@ r: {
 ```
 
 - **Leitaufruf:** die Katalogvariante `entry`/`variant`. Ihr Code ist `analysisCode()` mit den Standardspalten; „So antwortet R“ zeigt die in R erfasste Ausgabe für die Ausgangsdaten (`CATALOG_OUTPUT[`${entry}:${variant}`]`, nachgeladen) mit dem Hinweis „Ausgabe für die Ausgangsdaten“ und, nach Datenänderungen, „Deine Daten sind verändert; R würde andere Zahlen zeigen.“ Alle weiteren Varianten stehen unter „Anderer Aufruf“. Gehört der Aufruf zu einem anderen Begriff (p-Wert → `t_test`), trag dessen Katalog-ID ein.
-- **`live`** gibt es nur für die Leitaufrufe, deren Druck der Atlas selbst nachbaut (`describe` mit `show`, `pearson_cor`, `cov`, `frequency`, `rec_frequency`); dann folgt die Ausgabe den Daten. Für B3 (`describe`, `frequency`) kann das passen; sonst nimm die Katalogvariante.
+- **`live`** gibt es nur für die Leitaufrufe, deren Druck der Atlas selbst nachbaut (`describe` mit `show`, `pearson_cor`, `cov`, `frequency`, `rec_frequency` = `rec(x, rules = "rev")` mit den gespiegelten Wertelabels und danach `frequency()`); dann folgt die Ausgabe den Daten. Für B3 (`describe`, `frequency`) kann das passen; sonst nimm die Katalogvariante.
 - **Ausgabe ansehen:** `node --import tsx -e "import('./src/explain/catalogOutput.ts').then(m => console.log(m.CATALOG_OUTPUT['t_test:0'].output))"`. Leere Ausgaben (Zuweisungen, Schreibfunktionen) taugen nicht als Leitaufruf mit `outputMap`.
 - **`tokens`** ergänzen die allgemeine Codelegende (`RTOKENS` in `src/domain/rTokens.ts`): Schlüssel ist das Zeichen, wie es im Code steht (Funktionen ohne Klammern, Argumente ohne „=“, Zeichenketten mit Anführungszeichen: `'"sd"'`). Spalten, `atlas` und mariposa-Funktionen bekommen ohne eigene Karte eine aus ihren Metadaten. `term` ist der Fachbegriff (Kartentitel, wo es einen Begriff gibt), `kurz` höchstens zwei Sätze, `fehler` ein typischer Fehler mit der echten Meldung von R oder mariposa 0.7.4 (in R nachprüfen, nicht raten).
-- **`outputMap`:** `match` findet eine Stelle in der Ausgabe, in dieser Reihenfolge: (1) „match = Zahl“ oder „match < Zahl“, auch mit Klammer („r = 0.539“, „mean=3.26“, „t(175.8) = 0.156“, „p < 0.001“); (2) `match` als Spaltenkopf in einer Zeile ohne eigene Zahlen, darunter die erste Zahl unter dem Kopf („SD“ über „3.238“, „N“ in der Häufigkeitstabelle); (3) sonst der Text selbst („200 × 4“, „<dbl>“). Die Stelle wird antippbar und zeigt „SD 3.238 ↔ s ≈ 3,24, Schritt 6: Zurück zur Skala“ mit `explain`. `atlas` ist der Name im Atlas (Zeichen oder Begriff), `step` der Formelschritt (ein Knopf springt dorthin, in der Brücke oder in „Verstehen“). Ob eine Stelle gefunden wird, prüfst du mit `locate(output, match)` aus `src/explain/rRead.ts`.
+- **`outputMap`:** `match` findet eine Stelle in der Ausgabe, in dieser Reihenfolge: (1) „match = Zahl“ oder „match < Zahl“, auch mit Klammer („r = 0.539“, „mean=3.26“, „t(175.8) = 0.156“, „p < 0.001“); (2) `match` als Spaltenkopf in einer Zeile ohne eigene Zahlen, darunter die erste Zahl unter dem Kopf („SD“ über „3.238“, „N“ in der Häufigkeitstabelle); (3) sonst der Text selbst („200 × 4“, „<dbl>“). Die Stelle wird antippbar und zeigt „SD 3.238 ↔ s ≈ 3,24, Schritt 6: Zurück zur Skala“ mit `explain`. `atlas` ist der Name im Atlas (Zeichen oder Begriff), `step` der Schritt, zu dem „Schritt k ansehen“ springt: in der Brücke, sonst in „Verstehen“ (Schritte der Werkstatt, Bausteine der Begriffskarte, Schritte des Tabellen-Werkzeugs). Hat dein Begriff keine Schritte (Formel als Satz, Schrittkarte), lass `step` weg; der Test prüft, dass es Schritt k gibt. Ob eine Stelle gefunden wird, prüfst du mit `locate(output, match)` aus `src/explain/rRead.ts`.
 - **`check`** („Kurz prüfen“): Die Antworten sind die Stellen aus `outputMap` und `wrong`, in der Reihenfolge der Ausgabe. `correct` ist ein `match` aus `outputMap`; jeder Schlüssel in `wrong` muss in der Ausgabe vorkommen, jede Rückmeldung beginnt mit „Fast!“. Die richtige Rückmeldung baut die Oberfläche: „Genau, SD 3.238 ist s.“
 
 ### 8.4 Was du nicht tun musst
@@ -457,10 +497,13 @@ Download der `.sav`-Datei, Startblock, Kopieren, R-Skript, „Anderer Aufruf“,
 
 ### 8.5 Was `src/explain/tabs.test.ts` prüft
 
-- jede registrierte Erklärung hat `tabs[id].next`; Ziele existieren, keine Doppelungen, Ton jedes `why`;
-- Brücke: Werkstatt mit `bridge`, Schrittzeilen für jeden Schritt, alle Texte für alle 200 Personen und nach jeder Vorhersage ohne `NaN` und im Ton des Sprachleitfadens; jede Vorhersage passt zur Spalte;
-- Auswertung: `result` für die Ausgangsdaten und nach jeder Vorhersage, Ton, mindestens eine Vorhersage;
-- In R: Katalogeintrag und erfasste Ausgabe vorhanden, erfasster Code gleich dem Katalogcode; jede `outputMap`-Stelle wird gefunden; `check` mit „Fast!“-Rückmeldungen; jedes Zeichen aus `tokens` kommt im Leitaufruf vor.
+- jede registrierte Erklärung hat `tabs[id].next`; Ziele existieren; kein Ziel doppelt, auch nicht mit den Bezügen der Karte; Ton jedes `why`, auch der rechnenden für veränderte Daten;
+- Brücke: Werkstatt mit `bridge` und `value`, Schrittzeilen für jeden Schritt, alle Texte für alle 200 Personen und nach jeder Vorhersage ohne `NaN` und im Ton des Sprachleitfadens; dieselben Texte für jede Spalte, die die Spaltenwahl anbietet (kein „·“ aus Spaltentiteln); bei Paaren passt jede Richtungsangabe zum Vorzeichen, auch nach „Umpolen“;
+- Vorhersagen: jede passt zur Spalte, und `expect` stimmt für jede Person und jeden Datenstand (siehe 8.2);
+- Auswertung: `result` für die Ausgangsdaten und nach jeder Vorhersage, Ton, mindestens eine Vorhersage, kein `step`;
+- In R: Katalogeintrag und erfasste Ausgabe vorhanden, erfasster Code gleich dem Katalogcode; jede `outputMap`-Stelle wird gefunden, jedes `step` gibt es; `check` mit „Fast!“-Rückmeldungen; jedes Zeichen aus `tokens` kommt im Leitaufruf vor; hat der Katalog Aufrufe zum Begriff, gibt es `r`.
+
+Dazu prüft `src/explain/render.test.ts`: Code und Ausgabe in „In R“ haben je genau einen Tabstopp (Pfeiltasten wandern), Rangwege rendern ohne Reiterleiste.
 
 ## 9. Prüfen vor dem Commit
 
@@ -478,7 +521,16 @@ PATH="$PWD/node_modules/.bin:$PATH" npm run build
 BASE=http://127.0.0.1:<port> IDS=validity,nominal OUT=<scratch-ordner> node scripts/check-explanations.cjs
 ```
 
-Es öffnet jeden Begriff über die Suche der Karte (`/?ansicht=karte`, Suchfeld „Begriff im Netzwerk finden“; findet die Suche ihn nicht eindeutig, über das Atlas-Werkzeug `open_atlas_concept`), geht alle Reiter per Tastatur durch (Pfeiltasten, Pos1, Ende), klappt in jedem Reiter alle Abschnitte auf und meldet Konsolenfehler und -warnungen, Schrift unter 13 px, seitliches Überlaufen von Seite und Inspector, leere Reiter und verlorene Schritte nach einem Reiterwechsel. Begriffe ohne Reiter prüft es genauso. Weitere Variablen: `SIZES=1920,1440,1280,1024,390` (Standard `1440,390`), `MODE=kompakt` für die Ansicht Kompakt, `SHOTS=1` für Bildschirmfotos je Reiter nach `<OUT>/shots`. Je Begriff schreibt es `<OUT>/<id>.json` (alle Messungen), dazu `<OUT>/summary.json` (nur Befunde) und eine JSON-Zeile je Begriff und Breite auf die Konsole; bei einem Befund endet es mit Code 1. Danach den Server beenden.
+Es öffnet jeden Begriff über die Suche der Karte (`/?ansicht=karte`, Suchfeld „Begriff im Netzwerk finden“; findet die Suche ihn nicht eindeutig, über das Atlas-Werkzeug `open_atlas_concept` und meldet das als Hinweis) und prüft:
+
+- gleich nach dem Öffnen: Die Reiterleiste ist im sichtbaren Teil des Inspectors (auf dem Telefon im Blatt unter dem Kopf), alle Reiter liegen ganz in der Leiste, nichts ist abgeschnitten;
+- Tastatur: Pfeil rechts durch alle Reiter, Pfeil links, Ende, Pos1; jedes Panel hat Inhalt, die anderen sind verborgen;
+- in jedem Reiter, alle Abschnitte aufgeklappt: Konsolenfehler und -warnungen (Meldungen beim Laden zählen zum ersten Begriff), Schrift unter 13 px, seitliches Überlaufen von Seite und Inspector, Steuerelemente ohne zugänglichen Namen;
+- Zustand: Ein gewählter Schritt bleibt nach einem Reiterwechsel erhalten;
+- „Weiter“: kein Ziel doppelt;
+- Fokus: „Schritt k ansehen“ in „In R“ zeigt Schritt k mit dem Fokus dort; nach „Ausprobieren“ und „Ausgangsdaten wiederherstellen“ und nach dem Link „Als Nächstes“ liegt der Fokus nicht auf der Seite.
+
+Weitere Variablen: `SIZES=1920,1440,1280,1024,390` (Standard `1440,390`), `MODE=kompakt` für die Ansicht Kompakt, `SHOTS=1` für Bildschirmfotos je Reiter nach `<OUT>/shots`. Prüfe vor dem Bericht beide Ansichten bei allen fünf Breiten. Je Begriff schreibt es `<OUT>/<id>.json` (alle Messungen), dazu `<OUT>/summary.json` (nur Befunde) und eine JSON-Zeile je Begriff und Breite auf die Konsole; bei einem Befund endet es mit Code 1. Danach den Server beenden.
 
 **Tests schreiben:** Gib jeder Zusicherung eine Meldung mit (`assert.ok(x, 'was fehlt')`). Ohne Meldung liest node:test bei einem Fehlschlag die Quelle nach, und mit tsx kann der Testlauf dann hängen bleiben, statt den Fehler zu melden.
 
@@ -488,4 +540,5 @@ Checkliste je Begriff:
 2. Bestehende Inhalte gelesen (`concepts.ts`, `learning.ts`, `explanations.ts`, `foundations/catalog.ts`, `mariposaCatalog.ts`), nichts Fachliches verloren; Feinheiten unter „Genau genommen“.
 3. Ton wie in der Streuung: Handlung als Titel, Mut-Satz, Das nennt man …, Aufgepasst, „Fast!“-Diagnosen, Aussage über Menschen.
 4. Jede Zahl in R nachgerechnet und im Bereichstest festgehalten.
+4a. Jede Vorhersage mit `expect` (8.2); Deutungen nennen ihre Richtung aus dem Vorzeichen, nicht aus Spaltennamen.
 5. Tests, `tsc`, Build grün; Browserprüfung ohne Befund.
