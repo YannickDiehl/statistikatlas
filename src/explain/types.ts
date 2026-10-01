@@ -5,6 +5,7 @@
  * Inhalte sind reines TypeScript ohne React, damit sie in Node getestet werden können.
  * Wie man damit schreibt, steht in src/explain/AUTHORING.md.
  */
+import type { TokenNote } from '../domain/rTokens';
 import type { Pairs, PairStats, Series } from './math';
 
 /** Kontext zum Füllen der Texte: Kennwerte der Beispieldaten und gewählte Person/Zelle. */
@@ -221,7 +222,8 @@ export type SampleTab =
 export interface SampleCtx { rows: import('../domain/survey').SurveyRow[]; columns: Record<string, string[]> }
 export interface ThinkSample extends ThinkItem { tryIt: { label: string; op: 'shift' | 'double' | 'outlier' | 'constant'; column: 'x' | 'y'; value?: number } }
 /** Lernkarte zu einem Zeichen im R-Code (Codelegende); F2 deklariert dieselbe Form in src/domain/rTokens.ts. */
-export interface TokenNote { sym: string; term: string; say?: string; kurz: string; fehler: string }
+/** Karte der Codelegende; eine Quelle für Katalog und Erklärungen (src/domain/rTokens.ts). */
+export type { TokenNote };
 export interface RTab {
   entry: string;                         // Katalog-ID in mariposaCatalog
   variant: number;                       // Leitaufruf
