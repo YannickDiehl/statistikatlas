@@ -280,7 +280,7 @@ export interface TableTool {
 
 /**
  * Reiter „Mit 200 Befragten“. `bridge` für Werkstätten mit `Workshop.bridge` (Formel mit 200, Schritte, Person, Bild);
- * `variable` ist die Spalte, für die die Vorhersagefragen geschrieben sind (bei Paaren die Spalte x).
+ * `variable` ist die Spalte, für die die Vorhersagefragen geschrieben sind, bei Paaren „x,y“ (etwa „lernzeit,wissenstest“).
  * `analysis` für alle übrigen Begriffe: Kurz gesagt, Ergebnis mit Deutung aus den aktuellen Daten, Voraussetzung,
  * mindestens eine Vorhersagefrage. Ohne `columns` gelten die Spalten der Spaltenwahl (x, y) und der R-Einstellungen
  * (Rollen wie `group`), und oben steht die Spaltenwahl; mit `columns` (Rolle → Spalten-ID) rechnet der Reiter fest damit.

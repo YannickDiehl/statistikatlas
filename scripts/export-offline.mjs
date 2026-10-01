@@ -6,8 +6,20 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
 let html = await fs.readFile(path.join(dist, 'index.html'), 'utf8');
 const scripts = [...html.matchAll(/<script\b[^>]*src="([^"]+)"[^>]*><\/script>/g)];
+// Nachgeladene Teile (dynamisches import(), etwa die in R erfassten Katalogausgaben) als data:-Adresse einbetten,
+// damit sie auch aus der einzelnen HTML-Datei (file://) laden. Die Teile dürfen selbst nichts weiter importieren.
+async function inlineChunks(source, dir) {
+  let out = source;
+  for (const m of source.matchAll(/import\(\s*([`'"])\.\/([\w.-]+\.js)\1\s*\)/g)) {
+    const chunk = (await fs.readFile(path.join(dir, m[2]), 'utf8')).replace(/\/\/# sourceMappingURL=.*$/gm, '');
+    if (/\bimport\b[\s\S]*?from\s*['"`]/.test(chunk)) throw new Error(`export-offline: ${m[2]} importiert weitere Teile und lässt sich so nicht einbetten.`);
+    out = out.split(m[0]).join(`import(${m[1]}data:text/javascript;base64,${Buffer.from(chunk).toString('base64')}${m[1]})`);
+  }
+  return out;
+}
 for (const match of scripts) {
-  const source = await fs.readFile(path.join(dist, match[1]), 'utf8');
+  const file = path.join(dist, match[1]);
+  const source = await inlineChunks(await fs.readFile(file, 'utf8'), path.dirname(file));
   const safe = source.replace(/\/\/# sourceMappingURL=.*$/gm, '').replace(/<\/script/gi, '<\\/script');
   html = html.replace(match[0], () => `<script type="module">${safe}</script>`);
 }
