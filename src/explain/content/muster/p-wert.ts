@@ -23,6 +23,7 @@ export const pFor = (v: number) => pTwoSided(v / L.se, L.df);
 
 export const pWert: ConceptCard = {
   concept: 'p_value',
+  picture: 'muster-p-wert',
   wofuer: 'Lernen Studierende mit Weiterbildung mehr als die anderen? Im Lehrdatensatz unterscheiden sich die beiden Gruppen ein klein wenig. Der p-Wert hilft bei der Frage, ob so ein Unterschied auch durch Zufall entstehen könnte.',
   kurz: 'Der p-Wert sagt dir, wie überraschend dein Ergebnis wäre, wenn es in Wahrheit keinen Unterschied gäbe. Je kleiner er ist, desto überraschender.',
   stellDirVor: {

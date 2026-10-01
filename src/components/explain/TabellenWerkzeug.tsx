@@ -3,6 +3,7 @@ import type { TableTool } from '../../explain/types';
 import { close } from '../../explain/format';
 import { Genau, KurzGesagt, MutBox, Section, useExplainMode } from './basics';
 import { CheckQuestion, NameBox, ThinkQuestions } from './pieces';
+import { pictureFor } from './pictures/register';
 
 type Columns = TableTool['columns'];
 type Rows = TableTool['rows'];
@@ -36,6 +37,8 @@ export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onCo
   const after = useMemo(() => t.apply(t.rows, option), [t, option]);
   const fresh = useMemo(() => new Set(after.columns.map(c => c.key).filter(k => !t.columns.some(c => c.key === k))), [after, t.columns]);
   const chosen = t.options.find(o => o.id === option)?.label ?? option;
+  const draw = pictureFor(t.picture, 'tabelle');
+  const summary = `Deine Wahl: ${chosen}. ${fresh.size ? `Neue Spalten: ${after.columns.filter(c => fresh.has(c.key)).map(c => c.label).join(', ')}.` : 'Keine neuen Spalten.'}`;
   return (
     <div className={`xw xw-tabelle${compact ? ' xw-compact' : ''}`}>
       {!compact && <div className="xw-wofuer"><h2>Wofür?</h2><p>{t.wofuer}</p></div>}
@@ -48,7 +51,7 @@ export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onCo
       <Section title="Vorher"><DataTable columns={t.columns} rows={t.rows} caption="Die Daten vorher" /></Section>
       <Section title="Schritt für Schritt">
         {t.steps.map((st, i) => (
-          <div className="xw-card" key={st.title}>
+          <div className="xw-card" key={i}>
             <span className="xw-label">Schritt {i + 1} von {t.steps.length}</span>
             <h3 className="xw-step-title">{st.title}</h3>
             <h4>Was passiert?</h4><p>{st.was}</p>
@@ -61,9 +64,11 @@ export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onCo
           </div>
         ))}
       </Section>
-      <Section title="Nachher" note={`Deine Wahl: ${chosen}. Neue Spalten sind hervorgehoben.`}>
-        <div aria-live="polite"><DataTable columns={after.columns} rows={after.rows} fresh={fresh} caption={`Die Daten nachher, Wahl: ${chosen}`} /></div>
+      <Section title="Nachher">
+        <p className="xw-note" aria-live="polite">{summary} Neue Spalten sind hervorgehoben.</p>
+        <DataTable columns={after.columns} rows={after.rows} fresh={fresh} caption={`Die Daten nachher, Wahl: ${chosen}`} />
       </Section>
+      {draw && <Section title="Das Bild dazu">{draw({ tool: t, option, before: { columns: t.columns, rows: t.rows }, after })}</Section>}
       <Section title="So sieht es in R aus"><pre className="xw-code-block"><code>{t.rCode(option)}</code></pre></Section>
       {!compact && <CheckQuestion key={option} question={t.check.question}
         evaluate={value => {

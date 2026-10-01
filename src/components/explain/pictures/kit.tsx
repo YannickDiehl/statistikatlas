@@ -1,5 +1,5 @@
 /**
- * Bild-Baukasten für die Werkstätten. Alle Bausteine zeichnen in Bildschirmpixeln: `useWidth` misst die Breite,
+ * Bild-Baukasten für alle Vorlagen (Werkstatt, Begriffskarte, Formel als Satz, Tabellen-Werkzeug). Alle Bausteine zeichnen in Bildschirmpixeln: `useWidth` misst die Breite,
  * die Zeichnung rechnet ihre Koordinaten selbst aus. So bleiben Schrift (Klasse `xw-t`, 14 px) und Punkte auch im
  * schmalen Inspector und auf dem Telefon lesbar; nichts wird über `viewBox` verkleinert.
  *
@@ -8,9 +8,9 @@
  * Beispiele: src/components/explain/pictures/pilot.tsx. Anleitung: src/explain/AUTHORING.md.
  */
 import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode, type RefObject } from 'react';
-import type { Workshop } from '../../../explain/types';
+import type { AnySentence, ConceptCard, TableTool, Workshop } from '../../../explain/types';
 
-/** Was ein Bild einer Werkstatt bekommt; `PICTURES[workshop.picture]` in Formelwerkstatt.tsx ruft es auf. */
+/** Was ein Bild einer Werkstatt bekommt (`Workshop.picture`). */
 export type PictureProps<D = any, S = any> = {
   workshop: Workshop<D, S>;
   data: D; s: S; step: number; who: number;
@@ -19,7 +19,26 @@ export type PictureProps<D = any, S = any> = {
   /** Person wählen, zum Beispiel beim Anklicken eines Punkts. */
   pickWho: (i: number) => void;
 };
-export type Picture = (p: PictureProps) => ReactNode;
+/** Was ein Bild einer Begriffskarte bekommt (`ConceptCard.picture`): der aktuelle Wert des Reglers, ohne Regler null. */
+export type CardPictureProps = { card: ConceptCard; value: number | null };
+/** Was ein Bild der Formel als Satz bekommt (`SentenceTemplate.picture`): Reglerwerte, Kennwerte, markiertes Zeichen. */
+export type SentencePictureProps<S = any> = { template: AnySentence; values: Record<string, number>; s: S; mark: string };
+/** Was ein Bild des Tabellen-Werkzeugs bekommt (`TableTool.picture`): die Wahl und die Tabelle vorher und nachher. */
+export type TablePictureProps = { tool: TableTool; option: string; before: ReturnType<TableTool['apply']>; after: ReturnType<TableTool['apply']> };
+
+/**
+ * Eintrag im Bild-Register. Die Art legt fest, zu welcher Vorlage das Bild gehört und welche Werte es bekommt;
+ * gebaut wird er mit `forWorkshop`, `forCard`, `forSentence` oder `forTable`.
+ */
+export type Picture =
+  | { kind: 'werkstatt'; draw: (p: PictureProps) => ReactNode }
+  | { kind: 'begriff'; draw: (p: CardPictureProps) => ReactNode }
+  | { kind: 'satz'; draw: (p: SentencePictureProps) => ReactNode }
+  | { kind: 'tabelle'; draw: (p: TablePictureProps) => ReactNode };
+export const forWorkshop = (draw: (p: PictureProps) => ReactNode): Picture => ({ kind: 'werkstatt', draw });
+export const forCard = (draw: (p: CardPictureProps) => ReactNode): Picture => ({ kind: 'begriff', draw });
+export const forSentence = (draw: (p: SentencePictureProps) => ReactNode): Picture => ({ kind: 'satz', draw });
+export const forTable = (draw: (p: TablePictureProps) => ReactNode): Picture => ({ kind: 'tabelle', draw });
 
 export type Bounds = { min: number; max: number };
 /** Auf eine ganze Zahl innerhalb der Grenzen runden (Ziehen und Pfeiltasten). */

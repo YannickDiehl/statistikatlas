@@ -2,17 +2,19 @@ import { useState } from 'react';
 import type { AnySentence } from '../../explain/types';
 import { close } from '../../explain/format';
 import { AllGlyphs, FormulaView, Genau, KurzGesagt, Section, useExplainMode } from './basics';
-import { CheckQuestion, ConceptLink, ThinkQuestions } from './pieces';
+import { CheckQuestion, ConceptLink, termFor, ThinkQuestions } from './pieces';
+import { pictureFor } from './pictures/register';
 
 type Values = Record<string, number>;
 
-/** Formel als Satz (Vorlage 2): Satz mit antippbaren Teilen, ein Regler je Zeichen, Vorgerechnet in Mini-Schritten. */
+/** Formel als Satz (Vorlage 2): Satz mit antippbaren Teilen, ein Regler je Zeichen (optional mit Bild darüber), Vorgerechnet in Mini-Schritten. */
 export function FormelAlsSatz({ template: t, onConcept }: { template: AnySentence; onConcept: (id: string) => void }) {
   const [mode] = useExplainMode(), compact = mode === 'kompakt';
   const [values, setValues] = useState<Values>(t.initial);
   const [mark, setMark] = useState<string>(t.sliders[0]?.key ?? t.glyphs[0].key);
   const s = t.compute(values);
   const glyph = t.glyphs.find(g => g.key === mark) ?? t.glyphs[0];
+  const draw = pictureFor(t.picture, 'satz');
   const setValue = (key: string, v: number) => { setValues(old => ({ ...old, [key]: v })); setMark(key); };
 
   return (
@@ -24,9 +26,9 @@ export function FormelAlsSatz({ template: t, onConcept }: { template: AnySentenc
       <FormulaView className="xw-numeric" nodes={t.numeric(s)} active={mark} onMark={m => setMark(m as string)} />
       <div className="xw-card xw-glyph-card" aria-live="polite">
         <span className="xw-label">Das nennt man</span>
-        <p className="xw-name-term"><strong>{glyph.term}</strong><span className="xw-sym">{glyph.sym}</span><small>sprich „{glyph.say}“</small></p>
+        <p className="xw-name-term"><strong>{glyph.concept ? termFor(glyph.concept) : glyph.term}</strong><span className="xw-sym">{glyph.sym}</span><small>sprich „{glyph.say}“</small></p>
         <p>{glyph.plain}</p>
-        <ConceptLink id={glyph.concept} onConcept={onConcept} />
+        {glyph.concept && glyph.concept !== t.concept && <ConceptLink id={glyph.concept} onConcept={onConcept} />}
       </div>
       <Section title="Als Satz gelesen">
         <p className="xw-sentence">{t.sentence.map((part, i) => typeof part === 'string' ? part
@@ -37,6 +39,7 @@ export function FormelAlsSatz({ template: t, onConcept }: { template: AnySentenc
         <h3 className="xw-warn-head">Aufgepasst</h3><p>{t.fehler}</p>
       </Section>}
       <Section title="Ein Regler je Zeichen">
+        {draw?.({ template: t, values, s, mark })}
         {t.sliders.map(sl => {
           const value = values[sl.key], id = `xw-slider-${sl.key}`;
           // Logarithmische Regler laufen über 0–1000 ganzzahlige Stufen, damit beide Enden genau erreichbar sind.

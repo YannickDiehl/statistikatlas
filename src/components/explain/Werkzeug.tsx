@@ -4,7 +4,7 @@ import type { RecodeTemplate } from '../../explain/types';
 import { parseRules, recode, RuleError, type Program } from '../../explain/rules';
 import { count, fixed, num } from '../../explain/format';
 import { Genau, KurzGesagt, MutBox, Section, useExplainMode } from './basics';
-import { CheckQuestion, ConceptLink, ThinkQuestions } from './pieces';
+import { CheckQuestion, ConceptLink, termFor, ThinkQuestions } from './pieces';
 
 const ROW = 34;
 
@@ -41,7 +41,7 @@ export function Werkzeug({ template: t, onConcept }: { template: RecodeTemplate;
       {!compact && <MutBox text={t.mut} />}
       {!compact && <Section title="Die Fachbegriffe">
         <div className="xw-legend static">{t.terms.map(x => (
-          <div key={x.term} className="xw-legend-item"><strong>{x.term}</strong><span>{x.plain}</span>{x.concept && <ConceptLink id={x.concept} onConcept={onConcept} />}</div>
+          <div key={x.term} className="xw-legend-item"><strong>{x.term}</strong><span>{x.plain}</span>{x.concept && <ConceptLink id={x.concept} onConcept={onConcept}>{termFor(x.concept)} öffnen</ConceptLink>}</div>
         ))}</div>
       </Section>}
       <Section title="Die Zeichen der Regel">

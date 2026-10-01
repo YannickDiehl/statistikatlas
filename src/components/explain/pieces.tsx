@@ -139,14 +139,14 @@ export function ConceptLink({ id, onConcept, children }: { id: string; onConcept
 
 /**
  * Kasten „Das nennt man …“: Fachbegriff (Titel des Begriffs in der Karte), Zeichen, Aussprache, darunter klein
- * „In der Fachsprache: …“ und die Links. Ohne `concept` steht nur der Fachsprache-Satz da.
+ * „In der Fachsprache: …“ und die Links. Ohne Begriff und Zeichen steht nur der Fachsprache-Satz da (ohne „Das nennt man“).
  */
 export function NameBox({ concept, sym, say, fach, links = [], onConcept }: {
   concept?: string; sym?: string; say?: string; fach: string; links?: { id: string; label: string }[]; onConcept: (id: string) => void;
 }) {
   return (
     <div className="xw-name">
-      <span className="xw-label">Das nennt man</span>
+      {(concept || sym) && <span className="xw-label">Das nennt man</span>}
       {(concept || sym) && <p className="xw-name-term">
         {concept && <strong>{termFor(concept)}</strong>}
         {sym && <span className="xw-sym">{sym}</span>}

@@ -9,7 +9,8 @@ import { Werkzeug } from '../components/explain/Werkzeug';
 import { Begriffskarte } from '../components/explain/Begriffskarte';
 import { TabellenWerkzeug } from '../components/explain/TabellenWerkzeug';
 import { Explanation, EXPLAIN_LABEL } from '../components/explain/Explanation';
-import { AreaUnder, Axis, Bar, Curve, DragPoint, GridCell, linear, MarkLine } from '../components/explain/pictures/kit';
+import { AreaUnder, Axis, Bar, Curve, DragPoint, forCard, forSentence, forTable, forWorkshop, GridCell, linear, MarkLine } from '../components/explain/pictures/kit';
+import { pictureFor } from '../components/explain/pictures/register';
 import { EXPLANATIONS, explainFor, STEP_CARD_IDS, stepCardFor, WORKSHOPS } from './registry';
 import { standardfehler } from './content/standardfehler';
 import { rekodieren } from './content/rekodieren';
@@ -45,10 +46,35 @@ test('every workshop variant renders the new learn card in Ausführlich and fewe
   }
 });
 
-test('every workshop has a picture in the register, and picture keys are unique', () => {
-  for (const w of WORKSHOPS) assert.equal(typeof PICTURES[w.picture], 'function', `${w.id}: Bild „${w.picture}“ fehlt in PICTURES`);
+test('every picture key of every explanation is in the register with the right kind, and keys are unique', () => {
+  for (const w of WORKSHOPS) assert.equal(PICTURES[w.picture]?.kind, 'werkstatt', `${w.id}: Bild „${w.picture}“ fehlt in PICTURES oder ist kein Werkstattbild (forWorkshop)`);
+  for (const [id, e] of Object.entries(EXPLANATIONS)) {
+    const key = e.kind === 'begriff' ? e.card.picture : e.kind === 'satz' ? e.template.picture : e.kind === 'tabelle' ? e.tool.picture : undefined;
+    const maker = { begriff: 'forCard', satz: 'forSentence', tabelle: 'forTable' }[e.kind as string];
+    if (key !== undefined) assert.equal(PICTURES[key]?.kind, e.kind, `${id}: Bild „${key}“ fehlt in PICTURES oder ist nicht mit ${maker} gebaut`);
+  }
   assert.deepEqual(['mittel', 'streuung', 'zusammenhang'].filter(k => !PICTURES[k]), []);
-  assert.throws(() => mergePictures({ pilot: { a: () => null }, b05: { a: () => null } }), /Bild „a“ ist doppelt vergeben: pilot und b05/);
+  assert.equal(pictureFor('mittel', 'begriff'), null, 'falsche Art liefert kein Bild');
+  assert.equal(pictureFor('gibtsnicht', 'werkstatt'), null);
+  assert.throws(() => mergePictures({ pilot: { a: forWorkshop(() => null) }, b05: { a: forCard(() => null) } }), /Bild „a“ ist doppelt vergeben: pilot und b05/);
+});
+
+test('pictures show in every template: card with its slider value, sentence with its values, table with before and after', () => {
+  // Begriffskarte: das echte Bild des p-Werts, gesteuert vom Regler.
+  const card = text(renderToStaticMarkup(createElement(Begriffskarte, { card: pWert, onConcept: noop })));
+  assert.ok(card.includes('Das Bild dazu') && card.includes('Markierte Fläche: p ≈ 0,88') && card.includes('t, wenn es keinen Unterschied gäbe'), 'Bild der Begriffskarte fehlt');
+  assert.ok(card.indexOf('Das Bild dazu') < card.indexOf('Das nennt man') && card.indexOf(pWert.regler!.label) < card.indexOf('Das nennt man'), 'Bild und Regler stehen nach „Stell dir vor“');
+  assert.equal(card.split(pWert.regler!.label).length, 2, 'der Regler steht nur einmal da');
+  // Formel als Satz und Tabellen-Werkzeug mit vorübergehend eingetragenen Bildern.
+  PICTURES['test-satz'] = forSentence(p => createElement('svg', { 'aria-label': `Satzbild ${p.mark} ${p.values.n} ${typeof p.s.se}` }));
+  PICTURES['test-tabelle'] = forTable(p => createElement('svg', { 'aria-label': `Tabellenbild ${p.option} ${p.before.rows.length} ${p.after.columns.length}` }));
+  try {
+    const se = renderToStaticMarkup(createElement(FormelAlsSatz, { template: { ...standardfehler, picture: 'test-satz' }, onConcept: noop }));
+    assert.ok(se.includes('aria-label="Satzbild s 5225 number"'), 'Bild der Formel als Satz fehlt');
+    const tool = renderToStaticMarkup(createElement(TabellenWerkzeug, { tool: { ...dummy, picture: 'test-tabelle' }, onConcept: noop }));
+    assert.ok(tool.includes('aria-label="Tabellenbild 0 5 6"'), 'Bild des Tabellen-Werkzeugs fehlt');
+    assert.ok(!renderToStaticMarkup(createElement(FormelAlsSatz, { template: { ...standardfehler, picture: 'test-tabelle' }, onConcept: noop })).includes('Tabellenbild'), 'Bild der falschen Art erscheint nicht');
+  } finally { delete PICTURES['test-satz']; delete PICTURES['test-tabelle']; }
 });
 
 test('step cards name their term and offer the jump into their workshop', () => {
@@ -111,18 +137,34 @@ test('Tabellen-Werkzeug (Dummy) renders before, steps, after and the R call', ()
     assert.ok(t.includes(part), `dummy: „${part}“ fehlt`);
   assert.ok(!/\bohne\s+=\s+rec/.test(t), 'die Vergleichsgruppe bekommt keine eigene Spalte');
   assert.ok(full.includes('<th scope="col" class="on">haupt</th>'), 'neue Spalten sind hervorgehoben');
+  assert.ok(t.includes('Deine Wahl: Ohne Schulabschluss. Neue Spalten: haupt, mittel, fhr, abitur.'), 'Zusammenfassung der Wahl fehlt');
+  assert.ok(!/aria-live="polite"><div class="xw-table-wrap"/.test(full), 'die Tabelle selbst wird nicht vorgelesen');
+  const first = t.slice(t.indexOf('Eine Vergleichsgruppe wählen'), t.indexOf('Für jede andere Gruppe'));
+  assert.ok(first.includes('In der Fachsprache') && !first.includes('Das nennt man'), 'ohne Begriff und Zeichen kein „Das nennt man“');
   const c = text(compact);
   for (const part of ['Kurz gesagt', 'Vorher', 'Nachher', 'So sieht es in R aus']) assert.ok(c.includes(part), `dummy kompakt: „${part}“ fehlt`);
   for (const part of ['Probier es selbst', 'Mitdenken', 'Genau genommen']) assert.ok(!c.includes(part), `dummy kompakt: „${part}“ sollte fehlen`);
 });
 
-test('every registered explanation renders through Explanation without broken values', () => {
+test('every registered explanation renders through Explanation in Ausführlich and Kompakt without broken values', () => {
   for (const [id, explain] of Object.entries(EXPLANATIONS)) {
-    const html = renderToStaticMarkup(createElement(Explanation, { id, explain, onConcept: noop }));
-    sound(html, id);
-    assert.ok(text(html).includes('Kurz gesagt'), `${id}: Kurz gesagt fehlt`);
+    const { full, compact } = both(() => renderToStaticMarkup(createElement(Explanation, { id, explain, onConcept: noop })));
+    for (const [mode, html] of [['ausführlich', full], ['kompakt', compact]]) {
+      sound(html, `${id} ${mode}`);
+      assert.ok(text(html).includes('Kurz gesagt'), `${id} ${mode}: Kurz gesagt fehlt`);
+    }
+    assert.ok(text(compact).length < text(full).length, `${id}: Kompakt ist nicht kürzer`);
     assert.ok(EXPLAIN_LABEL[explain.kind]);
   }
+});
+
+test('the data note counts the example people or uses the workshop note', () => {
+  const mittel = WORKSHOPS.find(w => w.id === 'mittel')!;
+  assert.ok(text(renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: mittel, variant: 'mean', onConcept: noop }))).includes('Fünf Beispielpersonen. Die Punkte im Bild lassen sich ziehen.'));
+  const six = { ...mittel, names: ['A', 'B', 'C', 'D', 'E', 'F'], presets: [{ id: 'x', label: 'Sechs Werte', data: [1, 2, 3, 4, 5, 6] }] };
+  assert.ok(text(renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: six, variant: 'mean', onConcept: noop }))).includes('Sechs Beispielpersonen.'));
+  const own = { ...mittel, dataNote: 'Zwei Gruppen aus dem Lehrdatensatz.' };
+  assert.ok(text(renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: own, variant: 'mean', onConcept: noop }))).includes('Zwei Gruppen aus dem Lehrdatensatz.'));
 });
 
 test('picture kit: building blocks draw in screen pixels and keep the slider role', () => {

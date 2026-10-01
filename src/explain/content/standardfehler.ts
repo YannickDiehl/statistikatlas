@@ -27,7 +27,7 @@ export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
     { key: 'se', sym: 'SE', say: 'S E', term: 'Standardfehler', plain: 'wie stark der Mittelwert von Stichprobe zu Stichprobe schwanken würde', concept: 'se' },
     { key: 's', sym: 's', say: 's', term: 'Standardabweichung', plain: 'wie verschieden die Befragten antworten', concept: 'sd' },
     { key: 'sqrt', sym: '√', say: 'Wurzel', term: 'Quadratwurzel', plain: 'welche Zahl ergibt mal sich selbst n?', concept: 'sqrt' },
-    { key: 'n', sym: 'n', say: 'n', term: 'Fallzahl', plain: 'wie viele gültige Antworten es gibt', concept: 'validn' },
+    { key: 'n', sym: 'n', say: 'n', term: 'Fallzahl', plain: 'wie viele gültige Antworten es gibt' },
   ],
   symbolic: [{ part: ['SE'], m: 'se' }, ' = ', { frac: [{ part: ['s'], m: 's' }], den: [{ big: '√', m: 'sqrt' }, { root: [{ part: ['n'], m: 'n' }], m: 'sqrt' }], m: 'sqrt' }],
   aria: 'S E gleich s geteilt durch Wurzel aus n',

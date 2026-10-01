@@ -2,7 +2,7 @@
 import type { KeyboardEvent } from 'react';
 import type { Series, PairStats, Pairs } from '../../../explain/math';
 import { num, signed } from '../../../explain/format';
-import { Axis, clamp, DragPoint, keyStep, linear, useDrag, useWidth, type Bounds, type Picture } from './kit';
+import { Axis, clamp, DragPoint, forWorkshop, keyStep, linear, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Zahlenstrahl mit einer Zeile je Person (Werkstätten Mittel und Streuung). */
 export function NumberLine({ values, s, step, kind, who, names, bounds, onChange, onWho }: {
@@ -178,10 +178,10 @@ export function Rectangles({ data, s, step, who, names, bounds, onChange, onWho 
 
 /** Bilder der Pilot-Werkstätten für das Register `PICTURES` (Schlüssel = `Workshop.picture`). */
 export const pilotPictures: Record<string, Picture> = {
-  mittel: p => <NumberLine values={p.data} s={p.s} step={p.step} kind="mittel" who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />,
-  streuung: p => <>
+  mittel: forWorkshop(p => <NumberLine values={p.data} s={p.s} step={p.step} kind="mittel" who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
+  streuung: forWorkshop(p => <>
     <NumberLine values={p.data} s={p.s} step={p.step} kind="streuung" who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />
     {p.step >= 3 && <Squares s={p.s} step={p.step} who={p.who} names={p.workshop.names} />}
-  </>,
-  zusammenhang: p => <Rectangles data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />,
+  </>),
+  zusammenhang: forWorkshop(p => <Rectangles data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
 };

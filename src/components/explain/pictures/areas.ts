@@ -1,5 +1,6 @@
-// Bilder aller Bereiche, je Bereich eine Datei. Formelwerkstatt.tsx führt sie mit den Pilotbildern zu `PICTURES` zusammen.
+// Bilder aller Bereiche, je Bereich eine Datei. ./register.ts führt sie mit den Pilotbildern zu `PICTURES` zusammen.
 import type { Picture } from './kit';
+import { pictures as muster } from './muster';
 import { pictures as b01 } from './b01-messen';
 import { pictures as b02 } from './b02-datenwerkzeuge';
 import { pictures as b03 } from './b03-lage';
@@ -16,6 +17,7 @@ import { pictures as b13 } from './b13-regression';
 import { pictures as b14 } from './b14-faktoren';
 
 export const AREA_PICTURES: Record<string, Record<string, Picture>> = {
+  muster,
   b01,
   b02,
   b03,

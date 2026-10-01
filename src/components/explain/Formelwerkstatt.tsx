@@ -5,39 +5,27 @@ import { close, num } from '../../explain/format';
 import { takeStep, type StepCard as StepCardData } from '../../explain/registry';
 import { AllGlyphs, FormulaView, Genau, KurzGesagt, MutBox, Section, StepNav, useExplainMode, useWorkbenchLayout } from './basics';
 import { CheckQuestion, ConceptLink, LearnCard, ThinkQuestions, WorkTable } from './pieces';
-import type { Picture } from './pictures/kit';
-import { pilotPictures } from './pictures/pilot';
-import { AREA_PICTURES } from './pictures/areas';
+import { pictureFor } from './pictures/register';
 
-/** Führt Bildregister zusammen; ein Schlüssel darf nur einmal vorkommen. */
-export function mergePictures(groups: Record<string, Record<string, Picture>>): Record<string, Picture> {
-  const out: Record<string, Picture> = {}, owner: Record<string, string> = {};
-  for (const [group, pictures] of Object.entries(groups)) for (const [key, picture] of Object.entries(pictures)) {
-    if (owner[key]) throw new Error(`Bild „${key}“ ist doppelt vergeben: ${owner[key]} und ${group}.`);
-    owner[key] = group; out[key] = picture;
-  }
-  return out;
-}
-
-/**
- * Bild-Register der Werkstätten: Schlüssel = `Workshop.picture`. Die Pilotbilder heißen `mittel`, `streuung`
- * und `zusammenhang`; die Bereiche tragen ihre Bilder in src/components/explain/pictures/<bereich>.tsx ein.
- */
-export const PICTURES: Record<string, Picture> = mergePictures({ pilot: pilotPictures, ...AREA_PICTURES });
+/** Bild-Register aller Vorlagen (Schlüssel `mittel`, `streuung`, `zusammenhang` und die der Bereiche), siehe ./pictures/register.ts. */
+export { mergePictures, PICTURES } from './pictures/register';
 
 const RIGHT_NA = 'Genau, NA. Hier lässt sich kein Wert berechnen.';
+const NUMBER_WORDS = ['Null', 'Eine', 'Zwei', 'Drei', 'Vier', 'Fünf', 'Sechs', 'Sieben', 'Acht', 'Neun', 'Zehn', 'Elf', 'Zwölf'];
+/** „Fünf Beispielpersonen“, „Eine Beispielperson“, „15 Beispielpersonen“. */
+const people = (n: number) => n === 1 ? 'Eine Beispielperson' : `${NUMBER_WORDS[n] ?? n} Beispielpersonen`;
 const GENERAL = 'Noch nicht ganz. Schau oben in die Rechnung, sie zeigt jeden Zwischenschritt.';
 
 /** Werkstatt (Vorlage 1). `variant` ist der Begriff, zum Beispiel „sd“. */
 export function Formelwerkstatt({ workshop, variant, onConcept }: { workshop: AnyWorkshop; variant: string; onConcept: (id: string) => void }) {
   const w: Workshop<any, any> = workshop;
-  return <WorkshopView workshop={w} variant={variant} onConcept={onConcept} picture={PICTURES[w.picture]} />;
+  return <WorkshopView workshop={w} variant={variant} onConcept={onConcept} />;
 }
 
-function WorkshopView<D, S>({ workshop: w, variant, onConcept, picture }: {
-  workshop: Workshop<D, S>; variant: string; onConcept: (id: string) => void; picture: Picture | undefined;
+function WorkshopView<D, S>({ workshop: w, variant, onConcept }: {
+  workshop: Workshop<D, S>; variant: string; onConcept: (id: string) => void;
 }) {
-  const v = w.variants[variant];
+  const v = w.variants[variant], picture = pictureFor(w.picture, 'werkstatt');
   const [mode] = useExplainMode(), compact = mode === 'kompakt';
   const [data, setDataRaw] = useState(w.presets[0].data);
   const [step, setStepRaw] = useState(1);
@@ -86,7 +74,7 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept, picture }: {
       {!compact && <MutBox text={w.mut} />}
       <div className="xw-presets" role="group" aria-label="Beispieldaten">
         {w.presets.map(p => <button type="button" key={p.id} aria-pressed={JSON.stringify(p.data) === active} onClick={() => setData(p.data)}>{p.label}</button>)}
-        <span className="xw-note">Fünf Beispielpersonen. Die Punkte im Bild lassen sich ziehen.</span>
+        <span className="xw-note">{w.dataNote ?? `${people(w.names.length)}. Die Punkte im Bild lassen sich ziehen.`}</span>
       </div>
       <div className="xw-metrics">{v.metrics.map(m => <div key={m.label}><span>{m.label}</span><strong>{m.value(ctx)}</strong></div>)}</div>
       {/* Gleicher Baum in beiden Anordnungen, damit Eingaben und Fokus beim Wechsel erhalten bleiben; nur das Bild wandert. */}

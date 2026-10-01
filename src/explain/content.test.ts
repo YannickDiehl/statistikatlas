@@ -234,7 +234,10 @@ function checkSentence(t: AnySentence) {
   clean(`${l} wofür`, t.wofuer); clean(`${l} kurz`, t.kurz, KURZ); clean(`${l} fachlich`, t.fachlich); clean(`${l} Aufgepasst`, t.fehler);
   const s = t.compute(t.initial);
   t.metrics.forEach(m => clean(`${l} Kennzahl`, m.value(s)));
-  t.glyphs.forEach(g => { concept(l, g.concept); clean(`${l} Zeichen`, g.term); clean(`${l} Zeichen`, g.plain); symbol(l, g.sym, g.say); });
+  t.glyphs.forEach(g => {
+    clean(`${l} Zeichen`, g.term); clean(`${l} Zeichen`, g.plain); symbol(l, g.sym, g.say);
+    if (g.concept) { concept(l, g.concept); assert.equal(g.term, conceptById[g.concept].title, `${l}: Zeichen ${g.sym} heißt „${g.term}“, der Begriff „${g.concept}“ in der Karte aber „${conceptById[g.concept].title}“ (Regel 2)`); }
+  });
   t.worked(s).forEach(w => { clean(`${l} Vorgerechnet`, w.title); clean(`${l} Vorgerechnet`, w.text); });
   clean(`${l} Formel`, flat(t.numeric(s))); clean(`${l} Vergleich`, t.compare(s));
   const i = t.interpret(s); clean(`${l} Deutung`, i.kurz, DEUTUNG); clean(`${l} Deutung`, i.fachlich);
@@ -405,7 +408,7 @@ test('review fixes: strength rounding, shift keeps s, named person, fixed format
 });
 
 test('Formel als Satz and Werkzeug: all label texts are clean and linked concepts exist', () => {
-  standardfehler.glyphs.forEach(g => { concept('SE', g.concept); clean('SE Zeichen', g.term); clean('SE Zeichen', g.plain); });
+  standardfehler.glyphs.forEach(g => { if (g.concept) concept('SE', g.concept); clean('SE Zeichen', g.term); clean('SE Zeichen', g.plain); });
   rekodieren.terms.forEach(t => { if (t.concept) concept('rec', t.concept); clean('rec Begriff', t.plain); });
   rekodieren.signs.forEach(x => { clean('rec Zeichen', x.plain); clean('rec Zeichen', x.say); });
   const gap = parseRules('1:2=1; 4:5=0', rekodieren.scale);

@@ -114,8 +114,10 @@ export interface Workshop<D, S> {
   wofuer: string;
   /** Mut-Satz zu Beginn (Regel 6): Formel in kleine bekannte Handlungen zerlegen, R rechnet später. */
   mut: string;
-  /** Schlüssel im Bild-Register `PICTURES` (src/components/explain/Formelwerkstatt.tsx). */
+  /** Schlüssel im Bild-Register `PICTURES` (src/components/explain/pictures/register.ts), Bild mit `forWorkshop`. */
   picture: string;
+  /** Hinweis neben den Voreinstellungen; ohne Angabe „Fünf Beispielpersonen. Die Punkte im Bild lassen sich ziehen.“ (Zahl aus `names`). */
+  dataNote?: string;
   names: readonly string[];
   bounds: { min: number; max: number };
   presets: { id: string; label: string; data: D }[];
@@ -132,7 +134,11 @@ export interface Workshop<D, S> {
 
 // Formel als Satz (Vorlage 2) ---------------------------------------------------------
 
-export interface SentenceGlyph { key: string; sym: string; say: string; term: string; plain: string; concept: string }
+/**
+ * Zeichen der Formel als Satz. Mit `concept` ist `term` der Titel dieses Begriffs in concepts.ts (Regel 2, geprüft)
+ * und die Karte verlinkt ihn; ohne `concept` (kein passender Begriff in der Karte) steht `term` frei da.
+ */
+export interface SentenceGlyph { key: string; sym: string; say: string; term: string; plain: string; concept?: string }
 export interface Slider { key: string; label: string; min: number; max: number; step: number; log?: boolean; format: (v: number) => string }
 
 export interface SentenceTemplate<V extends Record<string, number>, S> {
@@ -160,6 +166,8 @@ export interface SentenceTemplate<V extends Record<string, number>, S> {
   interpret: (s: S) => { kurz: string; fachlich: string };
   think: { question: string; options: string[]; correct: number; mark: string; explain: string; kurz: string; hint: string };
   genau: { kurz: string; paragraphs: string[] };
+  /** Optionales Bild über den Reglern; Schlüssel im Bild-Register, Bild mit `forSentence`. */
+  picture?: string;
 }
 
 // Begriffskarte und Tabellen-Werkzeug (Vorlagen 3 und 4) ------------------------------
@@ -184,6 +192,8 @@ export interface ConceptCard {
   check: { question: string; options: string[]; correct: number; right: string; diagnose: Partial<Record<number, string>> };
   fuerDich: string;
   genau: { kurz: string; paragraphs: string[] };
+  /** Optionales Bild nach „Stell dir vor …“, mit dem Regler darunter; Schlüssel im Bild-Register, Bild mit `forCard`. */
+  picture?: string;
 }
 
 /** Tabellen-Werkzeug: fünf Personen vorher, die Operation in Schritten, nachher, der mariposa-Aufruf. */
@@ -199,6 +209,8 @@ export interface TableTool {
   check: { question: string; answer: (option: string) => number | 'NA'; right: string; diagnose: (option: string, v: number | 'NA') => string | null };
   think: ThinkItem[];
   genau: { kurz: string; paragraphs: string[] };
+  /** Optionales Bild nach der Tabelle „Nachher“; Schlüssel im Bild-Register, Bild mit `forTable`. */
+  picture?: string;
 }
 
 // Reiter (Oberfläche in F3, Typen schon hier) ------------------------------------------
