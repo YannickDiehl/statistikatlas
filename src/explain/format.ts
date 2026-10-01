@@ -21,6 +21,12 @@ export function paren(v: number, digits = 2): string {
   return t.startsWith('−') ? `(${t})` : t;
 }
 
+/** Zahl mit Einheit in Einzahl oder Mehrzahl, nach der angezeigten Zahl: „1 Punkt“, „0,71 Punkte“, „2 Stunden“. */
+export function unit(v: number, one: string, many: string, digits = 2): string {
+  const t = num(v, digits);
+  return `${t} ${t === '1' || t === '−1' ? one : many}`;
+}
+
 /** Prozent mit einer Nachkommastelle: 33,3 %. */
 export function pct(share: number, digits = 1): string {
   return `${num(share * 100, digits)} %`;

@@ -1,7 +1,7 @@
 // Vorlage „Formel als Satz“ am Beispiel Standardfehler. Ton nach dem gebilligten Beispiel der Streuung (src/explain/content/streuung.ts).
 import type { SentenceTemplate } from '../types';
 import { standardError } from '../math';
-import { num, count, close } from '../format';
+import { num, count, close, unit } from '../format';
 
 /** ALLBUS 2023, politisches Interesse (pa02a) umgepolt, ungewichtet, aggregiert. */
 export const INTEREST = { mean: 3.297, sd: 0.94, n: 5225 } as const;
@@ -37,7 +37,7 @@ export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
   worked: s => [
     { title: 'Die Wurzel aus der Fallzahl ziehen', text: `√${count(s.n)} ≈ ${num(s.root)}. Probe: ${num(s.root)} · ${num(s.root)} ≈ ${count(s.n)}.` },
     { title: 'Die Standardabweichung durch diese Zahl teilen', text: `${num(s.s)} / ${num(s.root)} ≈ ${num(s.se, 3)}.` },
-    { title: 'Die Einheit prüfen', text: `Das Ergebnis hat die Einheit der Daten: ${num(s.se, 3)} Punkte auf der Skala des politischen Interesses.` },
+    { title: 'Die Einheit prüfen', text: `Das Ergebnis hat die Einheit der Daten: ${unit(s.se, 'Punkt', 'Punkte', 3)} auf der Skala des politischen Interesses.` },
   ],
   fehler: 'Standardabweichung und Standardfehler klingen ähnlich, messen aber Verschiedenes. s sagt, wie verschieden die Befragten sind, und wird mit mehr Befragten nicht kleiner. SE sagt, wie genau der Mittelwert ist, und schrumpft mit mehr Befragten.',
   sliders: [
@@ -60,7 +60,7 @@ export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
       : 'Noch nicht ganz. Rechne erst √100 aus und teile dann s durch dieses Ergebnis.',
   },
   interpret: s => ({
-    kurz: `In etwa 95 von 100 Zufallsstichproben mit ${count(s.n)} Befragten läge der Mittelwert höchstens rund ${num(s.moe, 3)} Punkte vom wahren Mittelwert aller Erwachsenen entfernt.`,
+    kurz: `In etwa 95 von 100 Zufallsstichproben mit ${count(s.n)} Befragten läge der Mittelwert höchstens rund ${unit(s.moe, 'Punkt', 'Punkte', 3)} vom wahren Mittelwert aller Erwachsenen entfernt.`,
     fachlich: `SE ≈ ${num(s.se, 3)}. Das 95-%-Konfidenzintervall reicht von x̄ − 1,96 · SE bis x̄ + 1,96 · SE, hier von ${num(INTEREST.mean, 3)} − ${num(s.moe, 3)} ≈ ${num(s.lo)} bis ${num(INTEREST.mean, 3)} + ${num(s.moe, 3)} ≈ ${num(s.hi)}. Bei wiederholten Zufallsstichproben würden etwa 95 % solcher Intervalle den wahren Mittelwert enthalten.`,
   }),
   think: {

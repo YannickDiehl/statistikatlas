@@ -2,7 +2,7 @@
 // Welch-t-Test wie mariposa::t_test(lernzeit, group = weiterbildung). Alle Zahlen sind in R nachgerechnet,
 // die Referenzwerte und R-Befehle stehen in src/explain/content/muster/muster.test.ts.
 import type { ConceptCard } from '../../types';
-import { num } from '../../format';
+import { num, unit } from '../../format';
 import { pTwoSided } from '../../../tasks/kit/dist';
 
 /** Lernzeit (Stunden in der letzten Woche) nach Weiterbildung im Lehrdatensatz; Welch-t-Test, zweiseitig. */
@@ -94,7 +94,7 @@ export const pWert: ConceptCard = {
       const often = p >= 0.01 ? `in etwa ${Math.round(p * 100)} von 100` : p >= 0.001 ? 'in weniger als 1 von 100' : 'in weniger als 1 von 1.000';
       const shown = p >= 0.01 ? `p ≈ ${num(p)}` : p >= 0.001 ? 'p < 0,01' : 'p < 0,001';
       const verdict = p >= 0.2 ? 'Das wäre gar nicht überraschend.' : p >= 0.05 ? 'Das wäre etwas überraschend, kommt aber oft genug vor.' : p >= 0.01 ? 'Das wäre überraschend.' : 'Das wäre sehr überraschend.';
-      return `Gäbe es keinen Unterschied, käme ein Unterschied von ${num(v)} ${num(v) === '1' ? 'Stunde' : 'Stunden'} oder mehr ${often} Wiederholungen der Befragung vor (${shown}). ${verdict}`;
+      return `Gäbe es keinen Unterschied, käme ein Unterschied von ${unit(v, 'Stunde', 'Stunden')} oder mehr ${often} Wiederholungen der Befragung vor (${shown}). ${verdict}`;
     },
   },
   check: {

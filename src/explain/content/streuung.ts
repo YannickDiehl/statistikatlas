@@ -3,7 +3,7 @@
 // Vorbild für alle Werkstätten; siehe src/explain/AUTHORING.md.
 import type { Ctx, FNode, Workshop } from '../types';
 import { series, type Series } from '../math';
-import { num, signed, paren, close } from '../format';
+import { num, signed, paren, close, unit } from '../format';
 
 type C = Ctx<Series>;
 const NAMES = ['A', 'B', 'C', 'D', 'E'] as const;
@@ -12,8 +12,8 @@ const GROUP_A = series([4, 5, 5, 5, 6]), GROUP_B = series([1, 3, 5, 7, 9]);
 const same = (xs: number[], ys: number[]) => xs.length === ys.length && xs.every((x, i) => x === ys[i]);
 /** Welche Voreinstellung gerade gilt: „A“, „B“ oder null für eigene Daten. */
 const group = (c: C) => same(c.s.xs, GROUP_A.xs) ? 'A' : same(c.s.xs, GROUP_B.xs) ? 'B' : null;
-/** „gut 3“ für 3,16, sonst die Zahl mit höchstens zwei Nachkommastellen. */
-const roughly = (v: number) => { const f = v - Math.floor(v); return v >= 1 && f >= 0.05 && f < 0.35 ? `gut ${Math.floor(v)}` : num(v); };
+/** „gut 3 Punkte“ für 3,16, sonst die Zahl mit höchstens zwei Nachkommastellen und Einheit („1 Punkt“, „0,71 Punkte“). */
+const roughly = (v: number) => { const f = v - Math.floor(v); return v >= 2 && f >= 0.05 && f < 0.35 ? `gut ${Math.floor(v)} Punkte` : unit(v, 'Punkt', 'Punkte'); };
 /** Größte Verschiebung (2 oder 1, sonst 0), die alle Werte auf der Skala lässt; bevorzugt nach rechts. */
 const shiftWithin = (d: number[], lo: number, hi: number) => {
   const up = hi - Math.max(...d), down = Math.min(...d) - lo;
@@ -72,7 +72,7 @@ export const streuung: Workshop<number[], Series> = {
       was: 'Für jede Person rechnen wir: ihre Antwort minus die Mitte. Das Ergebnis sagt, wie weit sie weg ist und auf welcher Seite.',
       rechnung: c => {
         const d = c.s.dev[c.who];
-        const side = d < -1e-9 ? `also ${num(-d)} Punkte links der Mitte` : d > 1e-9 ? `also ${num(d)} Punkte rechts der Mitte` : 'also genau auf der Mitte';
+        const side = d < -1e-9 ? `also ${unit(-d, 'Punkt', 'Punkte')} links der Mitte` : d > 1e-9 ? `also ${unit(d, 'Punkt', 'Punkte')} rechts der Mitte` : 'also genau auf der Mitte';
         return `Person ${P(c)}: ${c.s.xs[c.who]} − ${num(c.s.mean)} = ${signed(d)}, ${side}.`;
       },
       fach: 'Die Abweichung vom Mittelwert ist der Wert einer Person minus x̄. Ihr Vorzeichen zeigt die Richtung.',
@@ -219,10 +219,10 @@ export const streuung: Workshop<number[], Series> = {
       metrics: [{ label: 'Mitte x̄', value: c => num(c.s.mean) }, { label: 'Standardabweichung s', value: c => num(c.s.sd) }],
       interpret: c => ({
         kurz: c.s.sd < 0.005 ? 'Alle haben dieselbe Antwort gegeben. Es gibt keine Streuung, s ist 0.'
-          : group(c) === 'B' ? `In Gruppe B liegen die Antworten typischerweise ${roughly(GROUP_B.sd)} Punkte von der Mitte entfernt. In Gruppe A sind es nur ${num(GROUP_A.sd)} Punkte: Dort sind sich fast alle einig. Gleicher Durchschnitt, ganz andere Gruppe.`
-          : group(c) === 'A' ? `In Gruppe A liegen die Antworten typischerweise nur ${num(GROUP_A.sd)} Punkte von der Mitte entfernt: Dort sind sich fast alle einig. In Gruppe B sind es ${roughly(GROUP_B.sd)} Punkte. Gleicher Durchschnitt, ganz andere Gruppe.`
-          : `In deiner Gruppe liegen die Antworten typischerweise ${roughly(c.s.sd)} Punkte von der Mitte entfernt. ${Math.abs(c.s.sd - GROUP_A.sd) <= Math.abs(c.s.sd - GROUP_B.sd) ? 'Das ist eher wie in Gruppe A: Dort sind sich fast alle einig.' : 'Das ist eher wie in Gruppe B: Dort gehen die Meinungen weit auseinander.'}`,
-        fachlich: `Die Standardabweichung beträgt s = ${num(c.s.sd)} Skalenpunkte. Die Antworten liegen also typischerweise etwa ${num(c.s.sd)} Punkte von der Mitte ${num(c.s.mean)} entfernt, grob zwischen ${num(c.s.mean - c.s.sd)} und ${num(c.s.mean + c.s.sd)}. Zum Vergleich: Gruppe A hat s = ${num(GROUP_A.sd)}, Gruppe B s = ${num(GROUP_B.sd)}. Je kleiner s, desto einiger ist sich eine Gruppe. Der Mittelwert allein hätte diesen Unterschied nicht gezeigt.`,
+          : group(c) === 'B' ? `In Gruppe B liegen die Antworten typischerweise ${roughly(GROUP_B.sd)} von der Mitte entfernt. In Gruppe A sind es nur ${roughly(GROUP_A.sd)}: Dort sind sich fast alle einig. Gleicher Durchschnitt, ganz andere Gruppe.`
+          : group(c) === 'A' ? `In Gruppe A liegen die Antworten typischerweise nur ${roughly(GROUP_A.sd)} von der Mitte entfernt: Dort sind sich fast alle einig. In Gruppe B sind es ${roughly(GROUP_B.sd)}. Gleicher Durchschnitt, ganz andere Gruppe.`
+          : `In deiner Gruppe liegen die Antworten typischerweise ${roughly(c.s.sd)} von der Mitte entfernt. ${Math.abs(c.s.sd - GROUP_A.sd) <= Math.abs(c.s.sd - GROUP_B.sd) ? 'Das ist eher wie in Gruppe A: Dort sind sich fast alle einig.' : 'Das ist eher wie in Gruppe B: Dort gehen die Meinungen weit auseinander.'}`,
+        fachlich: `Die Standardabweichung beträgt s = ${unit(c.s.sd, 'Skalenpunkt', 'Skalenpunkte')}. Die Antworten liegen also typischerweise etwa ${unit(c.s.sd, 'Punkt', 'Punkte')} von der Mitte ${num(c.s.mean)} entfernt, grob zwischen ${num(c.s.mean - c.s.sd)} und ${num(c.s.mean + c.s.sd)}. Zum Vergleich: Gruppe A hat s = ${num(GROUP_A.sd)}, Gruppe B s = ${num(GROUP_B.sd)}. Je kleiner s, desto einiger ist sich eine Gruppe. Der Mittelwert allein hätte diesen Unterschied nicht gezeigt.`,
       }),
       genau: {
         kurz: 'Mit n − 1 wird die Varianz in der Bevölkerung im Mittel über viele Stichproben nicht zu klein geschätzt. Und s ist etwas anderes als der durchschnittliche Abstand.',
@@ -242,10 +242,10 @@ export const streuung: Workshop<number[], Series> = {
       metrics: [{ label: 'Mitte x̄', value: c => num(c.s.mean) }, { label: 'Varianz s²', value: c => num(c.s.variance) }],
       interpret: c => ({
         kurz: c.s.variance < 0.005 ? 'Alle haben dieselbe Antwort gegeben. Es gibt keine Streuung, s² ist 0.'
-          : group(c) === 'B' ? `In Gruppe B ist ein typisches Abweichungsquadrat ${num(GROUP_B.variance)} Punkte² groß, in Gruppe A nur ${num(GROUP_A.variance)}. Gleicher Durchschnitt, ganz andere Gruppe.`
-          : group(c) === 'A' ? `In Gruppe A ist ein typisches Abweichungsquadrat nur ${num(GROUP_A.variance)} Punkte² groß, in Gruppe B ${num(GROUP_B.variance)}. Gleicher Durchschnitt, ganz andere Gruppe.`
-          : `In deiner Gruppe ist ein typisches Abweichungsquadrat ${num(c.s.variance)} Punkte² groß. ${Math.abs(c.s.variance - GROUP_A.variance) <= Math.abs(c.s.variance - GROUP_B.variance) ? 'Das ist eher wie in Gruppe A: Dort sind sich fast alle einig.' : 'Das ist eher wie in Gruppe B: Dort gehen die Meinungen weit auseinander.'}`,
-        fachlich: `Die Varianz beträgt s² = ${num(c.s.variance)} Skalenpunkte zum Quadrat. Als Fläche ist sie schwer zu deuten; ihre Wurzel, die Standardabweichung s ≈ ${num(c.s.sd)}, ist wieder in Skalenpunkten.`,
+          : group(c) === 'B' ? `In Gruppe B ist ein typisches Abweichungsquadrat ${unit(GROUP_B.variance, 'Punkt²', 'Punkte²')} groß, in Gruppe A nur ${num(GROUP_A.variance)}. Gleicher Durchschnitt, ganz andere Gruppe.`
+          : group(c) === 'A' ? `In Gruppe A ist ein typisches Abweichungsquadrat nur ${unit(GROUP_A.variance, 'Punkt²', 'Punkte²')} groß, in Gruppe B ${num(GROUP_B.variance)}. Gleicher Durchschnitt, ganz andere Gruppe.`
+          : `In deiner Gruppe ist ein typisches Abweichungsquadrat ${unit(c.s.variance, 'Punkt²', 'Punkte²')} groß. ${Math.abs(c.s.variance - GROUP_A.variance) <= Math.abs(c.s.variance - GROUP_B.variance) ? 'Das ist eher wie in Gruppe A: Dort sind sich fast alle einig.' : 'Das ist eher wie in Gruppe B: Dort gehen die Meinungen weit auseinander.'}`,
+        fachlich: `Die Varianz beträgt s² = ${unit(c.s.variance, 'Skalenpunkt zum Quadrat', 'Skalenpunkte zum Quadrat')}. Als Fläche ist sie schwer zu deuten; ihre Wurzel, die Standardabweichung s ≈ ${num(c.s.sd)}, ist wieder in Skalenpunkten.`,
       }),
       next: { id: 'sd', label: 'Weiter zur Standardabweichung' },
       genau: {

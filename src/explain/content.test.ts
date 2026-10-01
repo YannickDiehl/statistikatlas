@@ -64,6 +64,7 @@ const LOOSE = WORKSHOPS as Workshop<any, any>[];
 test('every workshop text resolves for every preset, variant and person and follows the tone guide', () => {
   for (const w of LOOSE) {
     clean(`${w.id} wofür`, w.wofuer); clean(`${w.id} Mut`, w.mut, SHORT);
+    if (w.dataNote !== undefined) clean(`${w.id} Hinweis`, w.dataNote);
     assert.ok(w.picture.trim(), `${w.id}: Bild fehlt`);
     w.glyphs.forEach(g => { clean(`${w.id} Zeichen`, g.term); clean(`${w.id} Zeichen`, g.plain); symbol(`${w.id} Zeichen ${g.sym}`, g.sym, g.say); assert.ok(g.step >= 1 && g.step <= w.steps.length); });
     const fastByStep = new Map<number, number>();
@@ -72,6 +73,7 @@ test('every workshop text resolves for every preset, variant and person and foll
       assert.equal(v.lastStep <= w.steps.length, true);
       clean(`${w.id}/${id} kurz`, v.kurz, KURZ); clean(`${w.id}/${id} fachlich`, v.fachlich); clean(`${w.id}/${id} aria`, v.aria);
       clean(`${w.id}/${id} genau`, v.genau.kurz, KURZ);
+      v.metrics.forEach(m => clean(`${w.id}/${id} Kennzahl`, m.label));
       for (const preset of w.presets) {
         const s = w.compute(preset.data), tries = probes(s);
         for (let who = 0; who < w.names.length; who++) {
@@ -120,6 +122,7 @@ test('every workshop text resolves for every preset, variant and person and foll
     Object.values(w.captions).forEach(cap => clean(`${w.id} Bildunterschrift`, cap!));
     w.think.forEach(t => {
       clean(`${w.id} Denkfrage kurz`, t.kurz, KURZ); clean(`${w.id} Denkfrage`, t.question);
+      Object.values(t.questionFor ?? {}).forEach(q => clean(`${w.id} Denkfrage`, q));
       t.options.forEach(o => clean(`${w.id} Antwort`, o));
       assert.ok(t.correct >= 0 && t.correct < t.options.length);
       if (t.tryIt) {
@@ -165,6 +168,7 @@ function checkCard(card: ConceptCard) {
   assert.ok(Number.isInteger(ch.correct) && ch.correct >= 0 && ch.correct < ch.options.length, `${l}: genau eine richtige Antwort`);
   assert.equal(ch.diagnose[ch.correct], undefined, `${l}: die richtige Antwort bekommt keine Diagnose`);
   assert.match(ch.right, /^Genau/, `${l}: Rückmeldung zur richtigen Antwort beginnt mit „Genau“`);
+  clean(`${l} richtig`, ch.right);
   ch.options.forEach((o, k) => {
     clean(`${l} Antwort`, o);
     if (k === ch.correct) return;
@@ -219,33 +223,54 @@ function checkTool(t: TableTool) {
     }
   }
   assert.ok(fast > 0, `${l}: keine Fehlantwort löst eine „Fast!“-Diagnose aus`);
-  clean(`${l} Frage`, t.check.question); assert.match(t.check.right, /^Genau/);
+  clean(`${l} Frage`, t.check.question); assert.match(t.check.right, /^Genau/); clean(`${l} richtig`, t.check.right);
   t.think.forEach(q => {
-    clean(`${l} Denkfrage`, q.question); clean(`${l} Denkfrage`, q.explain); clean(`${l} Denkfrage kurz`, q.kurz, KURZ);
+    clean(`${l} Denkfrage`, q.question); clean(`${l} Denkfrage`, q.explain); clean(`${l} Denkfrage kurz`, q.kurz, KURZ); q.options.forEach(o => clean(`${l} Antwort`, o));
     assert.ok(q.correct >= 0 && q.correct < q.options.length);
     if (q.step !== undefined) assert.ok(q.step >= 1 && q.step <= t.steps.length);
   });
   clean(`${l} genau`, t.genau.kurz, KURZ); t.genau.paragraphs.forEach(p => clean(`${l} genau`, p));
 }
 
+/** Zustände einer Formel als Satz: Startwerte, jeder Kurzbefehl (einmal und zweimal) und jeder Regler an beiden Enden. */
+function sentenceStates(t: AnySentence): Record<string, number>[] {
+  const states: Record<string, number>[] = [t.initial];
+  for (const q of t.quick) { const once = q.apply(t.initial); states.push(once, q.apply(once)); }
+  for (const sl of t.sliders) for (const v of [sl.min, sl.max]) states.push({ ...t.initial, [sl.key]: v });
+  states.push(Object.fromEntries(t.sliders.map(sl => [sl.key, sl.min])), Object.fromEntries(t.sliders.map(sl => [sl.key, sl.max])));
+  return states;
+}
+
 function checkSentence(t: AnySentence) {
   const l = `Formel als Satz ${t.concept}`;
   concept(l, t.concept);
   clean(`${l} wofür`, t.wofuer); clean(`${l} kurz`, t.kurz, KURZ); clean(`${l} fachlich`, t.fachlich); clean(`${l} Aufgepasst`, t.fehler);
-  const s = t.compute(t.initial);
-  t.metrics.forEach(m => clean(`${l} Kennzahl`, m.value(s)));
+  clean(`${l} aria`, t.aria);
+  clean(`${l} Satz`, t.sentence.map(p => typeof p === 'string' ? p : p.t).join(''));
+  t.sentence.forEach(p => { if (typeof p !== 'string') assert.ok(t.glyphs.some(g => g.key === p.m), `${l}: Satzteil „${p.t}“ ohne Zeichen ${p.m}`); });
+  t.metrics.forEach(m => clean(`${l} Kennzahl`, m.label));
+  t.sliders.forEach(sl => { clean(`${l} Regler`, sl.label); assert.ok(t.glyphs.some(g => g.key === sl.key), `${l}: Regler ${sl.key} ohne Zeichen`); });
+  t.quick.forEach(q => { clean(`${l} Kurzbefehl`, q.label); assert.ok(t.glyphs.some(g => g.key === q.mark)); });
   t.glyphs.forEach(g => {
     clean(`${l} Zeichen`, g.term); clean(`${l} Zeichen`, g.plain); symbol(l, g.sym, g.say);
     if (g.concept) { concept(l, g.concept); assert.equal(g.term, conceptById[g.concept].title, `${l}: Zeichen ${g.sym} heißt „${g.term}“, der Begriff „${g.concept}“ in der Karte aber „${conceptById[g.concept].title}“ (Regel 2)`); }
   });
-  t.worked(s).forEach(w => { clean(`${l} Vorgerechnet`, w.title); clean(`${l} Vorgerechnet`, w.text); });
-  clean(`${l} Formel`, flat(t.numeric(s))); clean(`${l} Vergleich`, t.compare(s));
-  const i = t.interpret(s); clean(`${l} Deutung`, i.kurz, DEUTUNG); clean(`${l} Deutung`, i.fachlich);
-  assert.match(t.check.right, /^Genau/);
+  for (const v of sentenceStates(t)) {
+    const s = t.compute(v), sl = `${l} bei ${JSON.stringify(v)}`;
+    t.metrics.forEach(m => clean(`${sl} Kennzahl`, m.value(s)));
+    t.sliders.forEach(x => clean(`${sl} Regler`, x.format(v[x.key])));
+    t.worked(s).forEach(w => { clean(`${sl} Vorgerechnet`, w.title); clean(`${sl} Vorgerechnet`, w.text); });
+    clean(`${sl} Formel`, flat(t.numeric(s))); clean(`${sl} Vergleich`, t.compare(s));
+    const i = t.interpret(s); clean(`${sl} Deutung`, i.kurz, DEUTUNG); clean(`${sl} Deutung`, i.fachlich);
+  }
+  clean(`${l} Frage`, t.check.question);
+  assert.match(t.check.right, /^Genau/); clean(`${l} richtig`, t.check.right);
   const said = probes(t.check.answer).filter(v => !close(v, t.check.answer, t.check.tolerance)).map(v => t.check.diagnose(v));
   said.forEach(d => { clean(`${l} Diagnose`, d); assert.match(d, LEADS); });
   assert.ok(said.some(d => FAST.test(d)), `${l}: keine „Fast!“-Diagnose`);
   clean(`${l} Denkfrage`, t.think.question); clean(`${l} Denkfrage`, t.think.explain); clean(`${l} Denkfrage kurz`, t.think.kurz, KURZ);
+  t.think.options.forEach(o => clean(`${l} Antwort`, o));
+  if (t.think.hint) clean(`${l} Hinweis`, t.think.hint);
   clean(`${l} genau`, t.genau.kurz, KURZ); t.genau.paragraphs.forEach(p => clean(`${l} genau`, p));
 }
 
@@ -275,6 +300,28 @@ const at = <S,>(w: { compute: (d: never) => S; names: readonly string[] }, data:
 
 test('Streuung: the approved wording, Gruppe B, Person A', () => {
   const s = streuung.steps, c = at(streuung, [1, 3, 5, 7, 9], 0);
+  // Wortlaut des gebilligten Tonbeispiels (Aufgabe F1, Schritt 3), vollständig.
+  assert.equal(streuung.mut, 'Die Formel sieht nach viel aus. Sie besteht aber nur aus sechs kleinen Schritten, die du alle schon kannst: zusammenzählen, abziehen, malnehmen, teilen und am Ende die Wurzel ziehen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.');
+  assert.equal(streuung.wofuer, 'Zwei Gruppen mit je fünf Personen sagen, wo sie sich politisch einordnen: von 1 (ganz links) bis 10 (ganz rechts). Beide Gruppen landen im Durchschnitt bei 5. Und doch sind sie ganz verschieden: In Gruppe A sind sich fast alle einig, in Gruppe B gehen die Meinungen weit auseinander. Die Standardabweichung macht diesen Unterschied sichtbar, mit einer einzigen Zahl.');
+  // Einzige Abweichung: „; große“ statt „. Große“, weil „Kurz gesagt“ höchstens zwei Sätze hat (Regel 3).
+  assert.equal(streuung.variants.sd.kurz, 'Die Standardabweichung sagt dir, wie weit die Antworten typischerweise von der Mitte entfernt sind. Kleine Zahl: alle nah beieinander; große Zahl: weit verstreut.');
+  const approved: [string, string, string, string?][] = [
+    ['Wir zählen alle fünf Antworten zusammen und teilen durch fünf. So finden wir die Mitte der Gruppe.', 'Gleich messen wir, wie weit jede Person von der Mitte weg ist. Dafür brauchen wir zuerst die Mitte.', 'Hier teilst du durch alle fünf Personen. Das „n − 1“ aus der Formel kommt erst in Schritt 5 dran.', 'Summe aller Werte geteilt durch die Fallzahl n.'],
+    ['Für jede Person rechnen wir: ihre Antwort minus die Mitte. Das Ergebnis sagt, wie weit sie weg ist und auf welcher Seite.', 'Streuung bedeutet: Wie weit sind die Leute von der Mitte weg? Genau das messen wir hier, Person für Person.', 'Das Minus darf bleiben, es zeigt die Seite. Kleine Überraschung: Alle Abstände zusammen ergeben immer 0, links und rechts gleichen sich aus.'],
+    ['Jeden Abstand nehmen wir mit sich selbst mal. Danach sind alle Zahlen positiv.', 'Zwei Gründe: Plus und Minus heben sich nicht mehr auf. Und wer weit weg ist, zählt stärker, denn 2 wird zu 4, aber 4 wird zu 16.', 'Im Taschenrechner Klammern setzen: (−4)² = 16. Ohne Klammern zeigt er −16. Ein Quadrat ist nie negativ, daran erkennst du den Fehler sofort.'],
+    ['Wir zählen die fünf Quadrate zusammen.', 'So steckt die Streuung der ganzen Gruppe in einer Zahl.', 'Zusammengezählt werden die Quadrate, nicht die Abstände. Die Abstände allein ergäben immer 0.', 'Σ ist ein griechisches S und bedeutet: alles zusammenzählen, jede Person genau einmal.'],
+    ['Wir teilen die Summe durch die Zahl der Personen minus eins, hier also durch 4.', 'Durch das Teilen werden große und kleine Gruppen vergleichbar. Und warum minus eins? Damit die Streuung nicht zu klein geschätzt wird. Mehr dazu steht unter „Genau genommen“.', 'Wer durch 5 teilt, bekommt 8 statt 10. Das passiert sehr vielen. Merksatz: Bei der Streuung teilst du durch n − 1.'],
+    ['Wir ziehen die Wurzel. Damit machen wir das Quadrieren aus Schritt 3 wieder rückgängig.', 'Die 10 aus Schritt 5 ist in „Punkten zum Quadrat“, damit kann niemand etwas anfangen. Nach der Wurzel sind wir wieder in Punkten auf der Skala.', 'Nicht bei der 10 stehen bleiben. Das ist die Varianz. Die Standardabweichung ist ihre Wurzel.'],
+  ];
+  approved.forEach(([was, warum, acht, fach], k) => {
+    assert.equal(txt(s[k].was, c), was, `Schritt ${k + 1} was`); assert.equal(txt(s[k].warum, c), warum, `Schritt ${k + 1} warum`); assert.equal(txt(s[k].acht, c), acht, `Schritt ${k + 1} acht`);
+    if (fach) assert.equal(txt(s[k].fach, c), fach, `Schritt ${k + 1} fach`);
+  });
+  assert.equal(streuung.variants.sd.interpret(at(streuung, [4, 5, 5, 5, 6], 0)).kurz, 'In Gruppe A liegen die Antworten typischerweise nur 0,71 Punkte von der Mitte entfernt: Dort sind sich fast alle einig. In Gruppe B sind es gut 3 Punkte. Gleicher Durchschnitt, ganz andere Gruppe.');
+  // Einzahl bei genau 1: s = 1 bei 4 4 5 6 6.
+  assert.match(streuung.variants.sd.interpret(at(streuung, [4, 4, 5, 6, 6], 0)).kurz, /typischerweise 1 Punkt von der Mitte/);
+  assert.match(streuung.variants.variance.interpret(at(streuung, [4, 4, 5, 6, 6], 0)).kurz, /1 Punkt² groß/);
+  assert.match(txt(s[1].rechnung, at(streuung, [4, 4, 5, 6, 6], 0)), /also 1 Punkt links der Mitte/);
   assert.deepEqual(s.map(st => st.title), ['Die Mitte finden', 'Abstände messen', 'Abstände quadrieren', 'Alles zusammenzählen', 'Gerecht teilen', 'Zurück zur Skala']);
   assert.deepEqual(s.map(st => [st.sym, st.say]), [['x̄', 'x quer'], ['xᵢ − x̄', 'x i minus x quer'], ['( )²', 'hoch zwei'], ['Σ', 'Sigma'], ['s²', 's Quadrat'], ['s', 's']]);
   assert.deepEqual(s.map(st => txt(st.check.question, c)), ['Wo liegt die Mitte dieser Gruppe?', 'Wie weit ist Person A von der Mitte weg? Mit Vorzeichen.', 'Was kommt heraus, wenn du (−4) mit sich selbst malnimmst?', 'Wie groß ist die Summe der fünf Quadrate?', 'Was kommt heraus, wenn du die Summe durch 4 teilst?', 'Und jetzt die Wurzel daraus? Zwei Nachkommastellen reichen.']);
@@ -411,6 +458,10 @@ test('Formel als Satz and Werkzeug: all label texts are clean and linked concept
   standardfehler.glyphs.forEach(g => { if (g.concept) concept('SE', g.concept); clean('SE Zeichen', g.term); clean('SE Zeichen', g.plain); });
   rekodieren.terms.forEach(t => { if (t.concept) concept('rec', t.concept); clean('rec Begriff', t.plain); });
   rekodieren.signs.forEach(x => { clean('rec Zeichen', x.plain); clean('rec Zeichen', x.say); });
+  rekodieren.terms.forEach(t => clean('rec Begriff', t.term));
+  rekodieren.presets.forEach(p => clean('rec Voreinstellung', p.label));
+  rekodieren.codes.forEach((_, i) => clean('rec Frage', rekodieren.check.question(rekodieren.check.codeFor(i))));
+  rekodieren.think.forEach(q => q.options.forEach(o => clean('rec Antwort', o)));
   const gap = parseRules('1:2=1; 4:5=0', rekodieren.scale);
   assert.match(rekodieren.warnUnmatched([rekodieren.codes[2]]).text, /Der Code 3 passt zu keiner Regel und wird NA/);
   assert.match(rekodieren.warnUnmatched([rekodieren.codes[2], rekodieren.codes[3]]).text, /Die Codes 3 und 4 passen zu keiner Regel und werden NA/);
