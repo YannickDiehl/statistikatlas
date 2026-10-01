@@ -29,7 +29,7 @@ export const rekodieren = {
   newName: 'interesse',
   codes: PA02A,
   scale: SCALE,
-  wofuer: 'Im ALLBUS 2023 steht beim politischen Interesse (pa02a) die 1 für „sehr stark“ und die 5 für „überhaupt nicht“. Wer lieber „höhere Zahl heißt mehr Interesse“ lesen will, muss die Skala umdrehen. Und wer zwei Gruppen vergleichen will, fasst Codes zusammen.',
+  wofuer: 'Im ALLBUS 2023 (ungewichtet) steht beim politischen Interesse (pa02a) die 1 für „sehr stark“ und die 5 für „überhaupt nicht“. Wer lieber „höhere Zahl heißt mehr Interesse“ lesen will, muss die Skala umdrehen. Und wer zwei Gruppen vergleichen will, fasst Codes zusammen.',
   mut: 'Hier rechnest du nichts aus. Du schreibst Regeln, nach denen Antworten neue Zahlen bekommen, und siehst sofort, was passiert.',
   kurz: 'Rekodieren gibt Antworten neue Zahlen. Was die Befragten geantwortet haben, bleibt dasselbe.',
   fachlich: 'Rekodieren ordnet den Codes einer Variable nach Regeln neue Codes und Wertelabels zu. Umpolen kehrt die Reihenfolge einer Skala um, Dichotomisieren fasst sie zu zwei Gruppen zusammen.',

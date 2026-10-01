@@ -122,7 +122,7 @@ export function tabsFor(id: string): ConceptTabs | null {
   return PILOT_TABS[id] ?? merged.tabs[id] ?? null;
 }
 
-/** Alle Begriffe mit Reitern (Pilot und Bereiche), für Tests und das Prüfskript scripts/check-explanations.cjs. */
+/** Alle Begriffe mit Reitern (Pilot und Bereiche), für tabs.test.ts und render.test.ts. Das Prüfskript (CommonJS, ohne TypeScript) bekommt seine IDs über IDS. */
 export const TAB_IDS: string[] = [...Object.keys(PILOT_TABS), ...Object.keys(merged.tabs)];
 
 /** Werkstatt mit dieser Kennung (Pilot oder Bereich), sonst null. */
