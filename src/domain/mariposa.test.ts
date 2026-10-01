@@ -6,7 +6,7 @@ import {Children,createElement,isValidElement,type ReactElement,type ReactNode} 
 import {PackageInspector} from '../components/PackageInspector';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {mariposaExports,mariposaEntries,entryById,functionToConcept,formulaParts,formulaTargets} from './mariposaCatalog';
-import {exampleVariants,analysisCode,bootstrapCode,initialRSettings,validateRSettings,eligible,surveyCsv,rolesFor} from './mariposa';
+import {exampleVariants,analysisCode,startBlock,initialRSettings,validateRSettings,eligible,surveyCsv,rolesFor} from './mariposa';
 import {createSurvey,migrateSurvey,surveyColumns,columnById,defaultSelection} from './survey';
 import {concepts,conceptById,connections} from './concepts';
 import {mapRelations,incomingPaths,regions,regionConcepts,places,referenceInMap} from './network';
@@ -41,13 +41,13 @@ test('the expanded dataset preserves old edited cells and adds coherent learning
  const old=rows.map(r=>({...r,values:Object.fromEntries(surveyColumns.slice(0,16).map(c=>[c.id,r.values[c.id]]))}));old[10].values.einkommen=4321;
  const upgraded=migrateSurvey(old)!;assert.equal(upgraded[10].values.einkommen,4321);assert.equal(upgraded.length,200);assert.deepEqual(upgraded.map(r=>r.id),old.map(r=>r.id));
  for(const row of upgraded)for(const col of surveyColumns.slice(0,16))assert.equal(row.values[col.id],old.find(r=>r.id===row.id)!.values[col.id]);
- assert.ok(surveyColumns.filter(c=>/^methoden[1-5]$/.test(c.id)).every(c=>c.categories?.length===7));assert.equal(surveyCsv(rows).split('\r\n').length,201);assert.match(bootstrapCode(),/rep\("numeric", 28\)/);
+ assert.ok(surveyColumns.filter(c=>/^methoden[1-5]$/.test(c.id)).every(c=>c.categories?.length===7));assert.equal(surveyCsv(rows).split('\r\n').length,201);assert.match(startBlock(),/read_spss\("Statistikatlas-200-Befragte\.sav"\)/);
 });
 test('R snippets retain the selected Y axis and the exact Spearman rank transformation',()=>{
  const props={onSelect:noop,onHover:noop,selection:{...defaultSelection,x:'lernzeit',y:'schlafdauer'}};
- const y=renderToStaticMarkup(createElement(MariposaPanel,{...props,entry:entryById.sd,reference:ref('sd','y')}));assert.match(y,/w_sd\(d, schlafdauer\)/);assert.doesNotMatch(y,/w_sd\(d, lernzeit\)/);
+ const y=renderToStaticMarkup(createElement(MariposaPanel,{...props,entry:entryById.sd,reference:ref('sd','y')}));assert.match(y,/w_sd\(schlafdauer\)/);assert.doesNotMatch(y,/w_sd\(lernzeit\)/);
  const selection={...defaultSelection,x:'schulabschluss',y:'finanzlage'},ranked=renderToStaticMarkup(createElement(MariposaPanel,{...props,selection,entry:entryById.pearson,reference:ref('pearson','x',undefined,'ranks')}));
- assert.match(ranked,/ties.method/);assert.match(ranked,/rank\(d\$schulabschluss/);assert.match(ranked,/rank\(d\$finanzlage/);assert.match(ranked,/pearson_cor\(d, schulabschluss, finanzlage/);assert.doesNotMatch(ranked,/Spaltenauswahl anpassen/);
+ assert.match(ranked,/ties.method/);assert.match(ranked,/schulabschluss = rank\(schulabschluss/);assert.match(ranked,/finanzlage = rank\(finanzlage/);assert.match(ranked,/pearson_cor\(schulabschluss, finanzlage/);assert.doesNotMatch(ranked,/Spaltenauswahl anpassen/);
  const spearman=renderToStaticMarkup(createElement(MariposaPanel,{...props,selection:{...defaultSelection,x:'lernplanung5'},entry:entryById.spearman,reference:ref('spearman')}));assert.doesNotMatch(spearman,/Die Rechnung nimmt gleich große Abstände/);
 });
 test('all map regions contain stable individual concept places',()=>{
