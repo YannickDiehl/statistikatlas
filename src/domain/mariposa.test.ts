@@ -73,10 +73,13 @@ test('package inspector gives its sibling panels distinct keys',()=>{
  }
 });
 test('the R panel leads with Kurz gesagt, offers the .sav and shows no developer notes',()=>{
+ assert.equal(surveyCsv(rows).charCodeAt(0),0xfeff,'CSV mit BOM für Excel');
  for(const kind of ['quantitative','ordered','category','twoGroups','binary','continuous','items','repeated','pairedBinary','multiple','predictor','factors','interaction','likert'] as const){const t=roleExplanation({key:'x',label:'X',kind,default:[],many:false});assert.ok(t.kurz&&t.fach,kind);assert.ok((t.kurz.match(/[.!?](\s|$)/g)||[]).length<=2,kind);assert.doesNotMatch(t.kurz,/einfach|offensichtlich|trivial|natürlich|bekanntlich|leicht zu sehen/,kind);}
  for(const id of ['sd','t_test','linear_regression','data_import']){
   const html=renderToStaticMarkup(createElement(MariposaPanel,{onSelect:noop,onHover:noop,rows,selection:defaultSelection,entry:entryById[id],reference:ref(id)}));
   assert.doesNotMatch(html,/Geprüft an mariposa|kein mariposa-Ergebnis|Namespace|Quellstand|Implementierung|0\.7\.2|read\.csv2|stopifnot/,id);
+  // Nur sichtbarer Text: SVG-Pfade der Symbole enthalten Zahlenfolgen wie 1.1.9.
+  for(const version of html.replace(/<[^>]*>/g,' ').match(/\b\d+\.\d+\.\d+\b/g)||[])assert.equal(version,'0.7.4',id);
   assert.match(html,/mariposa 0\.7\.4/,id);assert.match(html,/Lehrdatensatz als SPSS-Datei \(\.sav\)/,id);assert.match(html,/auch als CSV/,id);assert.match(html,/library\(dplyr\)\nlibrary\(mariposa\)\n\natlas &lt;- read_spss/,id);
   if(id!=='data_import')assert.match(html,/<strong>Kurz gesagt:<\/strong>/,id);
  }

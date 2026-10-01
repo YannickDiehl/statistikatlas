@@ -122,3 +122,10 @@ test('values of the first and the last respondent, including own changes', () =>
   const edited = rows.map(r => r.id === 'P002' ? { ...r, values: { ...r.values, lernzeit: 40 } } : r);
   assert.equal(readSav(writeSav(edited)).rows[1][1 + surveyColumns.findIndex(c => c.id === 'lernzeit')], 40);
 });
+
+test('an empty or invalid cell becomes SYSMIS, which SPSS and haven read as missing', () => {
+  // Im Atlas können Zellen nicht leer werden (validSurvey); der Zweig schützt die Datei trotzdem vor NaN.
+  const lernzeit = 1 + surveyColumns.findIndex(c => c.id === 'lernzeit');
+  const empty = rows.map(r => r.id === 'P003' ? { ...r, values: { ...r.values, lernzeit: Number.NaN } } : r);
+  assert.equal(readSav(writeSav(empty)).rows[2][lernzeit], -Number.MAX_VALUE);
+});

@@ -28,6 +28,8 @@ const rows=createSurvey();
 writeFileSync(resolve(directory,'examples.json'),JSON.stringify(examples,null,1));
 writeFileSync(resolve(directory,SAV_NAME),writeSav(rows,new Date(Date.UTC(2026,9,1,12))));
 writeFileSync(resolve(directory,'Statistikatlas-200-Befragte-synthetisch.csv'),surveyCsv(rows));
+// verify-sav.R prüft Werte und Labels; haven liest das Messniveau nicht aus. `measure` dokumentiert nur die Erwartung,
+// geprüft wird es im TS-Rundlauf (src/domain/savWriter.test.ts).
 writeFileSync(resolve(directory,'codebook-check.json'),JSON.stringify(surveyColumns.map(c=>({id:c.id,label:savVariableLabel(c),measure:savMeasure(c),categories:c.categories||[]})),null,1));
 writeFileSync(resolve(directory,'start.R'),startBlock()+'\n');
 console.log(`${examples.length} R-Prüfbeispiele und ${SAV_NAME} in ${directory}`);

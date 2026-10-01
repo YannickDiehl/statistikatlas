@@ -58,7 +58,11 @@ export function analysisCode(entry:AtlasEntry,s:RSettings,ranked=false){
  const replacements:Record<string,string>={...Object.fromEntries(Object.entries(data).map(([k,value])=>[k,value.join(', ')])),predictors_formula:(data.predictors||[]).join(' + '),predictors_interaction:(data.predictors||[]).join(' * '),lo:String(c?.min??0),hi:String(c?.max??1),reverse_rules:c?.categories?.map(k=>`${k.value}=${c.min+c.max-k.value}`).join('; ')||'',item_count:String(data.items?.length||0)};
  // Each placeholder comes only from validated column metadata, never free-form R input.
  let call=v.code.replace(/\{([a-z_]+)\}/g,(_,key)=>replacements[key]??`UNKNOWN_${key}`);
- if(assignments.length)call=call.replace('atlas %>%\n',`atlas %>%\n${mutateStep(assignments)}`);
+ if(assignments.length){
+  // Ränge und Faktoren entstehen im mutate() direkt hinter `atlas %>%`; fehlt die Pipe, wäre der Aufruf falsch.
+  if(!call.includes('atlas %>%\n'))throw new Error(`analysisCode: Die Vorlage von ${entry.id} (${v.label}) braucht "atlas %>%", um Spalten umzuwandeln.`);
+  call=call.replace('atlas %>%\n',`atlas %>%\n${mutateStep(assignments)}`);
+ }
  return `${startBlock()}\n\n${call}`;
 }
 /** Kommentarzeilen mit höchstens 78 Zeichen. */
@@ -81,7 +85,7 @@ export function scriptFor(entry:AtlasEntry,s:RSettings,ranked=false){
   '',
  ].join('\n');
 }
-export function surveyCsv(rows:SurveyRow[]){return '﻿'+['id;'+surveyColumns.map(c=>c.id).join(';'),...rows.map(r=>[r.id,...surveyColumns.map(c=>String(r.values[c.id]).replace('.',','))].join(';'))].join('\r\n');}
+export function surveyCsv(rows:SurveyRow[]){return '\uFEFF'+['id;'+surveyColumns.map(c=>c.id).join(';'),...rows.map(r=>[r.id,...surveyColumns.map(c=>String(r.values[c.id]).replace('.',','))].join(';'))].join('\r\n');}
 export function codebookJson(){return JSON.stringify({dataset:'Vollständig synthetischer Lehrdatensatz, 200 Personen',mariposa:mariposaVersion,likert:'Ordinal erhoben; standardmäßig metrische Näherung',columns:surveyColumns},null,2);}
 export function downloadText(name:string,data:string|Uint8Array<ArrayBuffer>,mime='text/plain;charset=utf-8'){const url=URL.createObjectURL(new Blob([data],{type:mime})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 export const packageSearch=(id:string)=>{const e=entryById[id];return e?[e.title,e.intro,...e.variants.flatMap(v=>[v.fn,v.label])].join(' '):'';};

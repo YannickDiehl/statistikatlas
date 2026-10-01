@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { analysisCode, exampleVariants, initialRSettings, scriptFor, startBlock, SAV_NAME } from './mariposa';
-import { entryById } from './mariposaCatalog';
+import { entryById, type AtlasEntry } from './mariposaCatalog';
 
 /** POR- und native SAS-Dateien kann mariposa nicht schreiben; diese Aufrufe lesen eine fremde Datei ein. */
 const readsForeignFile = (fn: string) => fn === 'read_por' || fn === 'read_sas';
@@ -26,10 +26,11 @@ test('every catalog call starts with the start block and uses the pipe without b
     assert.doesNotMatch(code, /(^|[^_a-z])factor\(/, label);
     assert.doesNotMatch(code, /read\.csv2/, label);
     assert.doesNotMatch(code, /ifelse\(/, label);
-    assert.doesNotMatch(code, /0\.7\.2/, label);
+    for (const version of [...code.matchAll(/\b\d+\.\d+\.\d+\b/g)].map(m => m[0])) assert.equal(version, '0.7.4', label);
     assert.doesNotMatch(code, /UNKNOWN_|\{[a-z_]+\}/, label);
     const script = scriptFor(entry, settings);
     assert.doesNotMatch(script, /stopifnot/, label);
+    for (const version of [...script.matchAll(/\b\d+\.\d+\.\d+\b/g)].map(m => m[0])) assert.equal(version, '0.7.4', label);
     assert.ok(script.includes(startBlock()), label);
     assert.ok(script.includes(code.slice(startBlock().length).trim()), label);
   }
@@ -62,4 +63,15 @@ test('categorical predictors with more than two categories become factors with r
 test('rank variants rank inside mutate() before the call', () => {
   const code = analysisCode(entryById.pearson, { variant: 0, columns: { x: ['schulabschluss'], y: ['finanzlage'] } }, true);
   assert.match(code, /atlas %>%\n {2}mutate\(\n {4}schulabschluss = rank\(schulabschluss, ties\.method = "average"\),\n {4}finanzlage = rank\(finanzlage, ties\.method = "average"\)\n {2}\) %>%\n {2}pearson_cor\(schulabschluss, finanzlage/);
+});
+
+test('templates without atlas %>% are only the two imports of foreign files, and conversions never get lost', () => {
+  const withoutPipe = exampleVariants().filter(({ variant }) => !variant.code.includes('atlas %>%\n')).map(({ variant }) => variant.fn);
+  assert.deepEqual(withoutPipe, ['read_por', 'read_sas']);
+  for (const { entry, settings } of exampleVariants()) {
+    const ranked = analysisCode(entry, settings, true), axes = ['x', 'y'].filter(k => settings.columns[k]?.length);
+    if (axes.length) assert.match(ranked, /= rank\(/, entry.id);
+  }
+  const broken: AtlasEntry = { ...entryById.pearson, variants: [{ label: 'ohne Pipe', fn: 'pearson_cor', code: 'pearson_cor(atlas, {x}, {y})' }] };
+  assert.throws(() => analysisCode(broken, { variant: 0, columns: { x: ['schulabschluss'], y: ['finanzlage'] } }, true), /braucht "atlas %>%"/);
 });
