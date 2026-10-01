@@ -98,8 +98,8 @@ export const RTOKENS: Record<string, TokenNote> = {
   },
   use: {
     sym: 'use =', term: 'Fehlende Angaben',
-    kurz: 'Legt fest, wer bei fehlenden Angaben mitzählt. "listwise" nimmt nur Personen mit allen Werten, "pairwise" je Paar alle mit beiden Werten.',
-    fehler: 'Andere Wörter kennt das Argument nicht. use = "complete" ergibt: \'arg\' sollte eines von “pairwise”, “listwise” sein.',
+    kurz: 'Legt fest, wer bei fehlenden Angaben mitzählt. "listwise" (bei efa() "complete") nimmt nur Personen mit allen Werten, "pairwise" je Paar alle mit beiden Werten.',
+    fehler: 'Welche Wörter erlaubt sind, hängt von der Funktion ab. Ein Tippfehler wie use = "listweise" ergibt bei pearson_cor(): \'arg\' sollte eines von “pairwise”, “listwise” sein.',
   },
   'na.rm': {
     sym: 'na.rm =', term: 'Fehlende Angaben',
@@ -211,10 +211,14 @@ export const RTOKENS: Record<string, TokenNote> = {
     kurz: 'TRUE heißt ja, FALSE heißt nein. Beide stehen ohne Anführungszeichen und in Großbuchstaben.',
     fehler: 'true in Kleinbuchstaben kennt R nicht und meldet: Objekt \'true\' nicht gefunden.',
   },
+  FALSE: {
+    sym: 'FALSE', term: 'Wahrheitswert',
+    kurz: 'FALSE heißt nein, TRUE heißt ja. Beide stehen ohne Anführungszeichen und in Großbuchstaben.',
+    fehler: 'false in Kleinbuchstaben kennt R nicht und meldet: Objekt \'false\' nicht gefunden.',
+  },
   predict: {
     sym: 'predict()', term: 'Vorhersage',
     kurz: 'Berechnet für jede Person den Wert, den das Modell erwartet. Beim Logitmodell liefert type = "response" Wahrscheinlichkeiten.',
     fehler: 'Ohne type = "response" zeigt das Logitmodell Logits statt Wahrscheinlichkeiten, also auch negative Zahlen.',
   },
 };
-RTOKENS.FALSE = { ...RTOKENS.TRUE, sym: 'FALSE' };

@@ -61,3 +61,12 @@ test('the argument tokens of the legend appear in the generated calls', () => {
   for (const key of ['library', '<-', 'read_spss', '%>%', 'mutate', 'rec', 'rules', 'summary', 'c', 'show', 'weights', 'group', 'use', 'conf.level', 'mu', 'alternative', 'var.equal', 'p_adjust', 'na.rm', 'suffix', 'pick', 'pull', 'head', 'select', 'starts_with', 'filter', '==', '~', 'TRUE', 'FALSE', 'predict'])
     assert.ok(code.includes(key), key);
 });
+
+test('no typical mistake calls a fragment wrong that the generated calls use', () => {
+  // „use = "complete" ergibt …“ wäre bei efa() falsch: Dort ist "complete" erlaubt.
+  const code = exampleVariants().map(v => analysisCode(v.entry, v.settings)).join('\n');
+  for (const [key, note] of Object.entries(RTOKENS))
+    for (const [, fragment] of note.fehler.matchAll(/([\w.]+ = (?:"[^"]*"|[\w.]+)) (?:ergibt|meldet)/g))
+      assert.ok(!code.includes(fragment), `${key}: „${fragment}“ steht im erzeugten Code`);
+  assert.notEqual(RTOKENS.FALSE.fehler, RTOKENS.TRUE.fehler);
+});
