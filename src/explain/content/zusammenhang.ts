@@ -1,4 +1,4 @@
-// Werkstatt „Zusammenhang“ (Stufe 1) für Kovarianz und Pearson-r. Wortlaut: docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt/03-zusammenhang.md
+// Werkstatt „Zusammenhang“ für Kovarianz und Pearson-r. Ton nach dem gebilligten Beispiel der Streuung (src/explain/content/streuung.ts).
 import type { Ctx, FNode, Workshop } from '../types';
 import { pairStats, type PairStats, type Pairs } from '../math';
 import { num, signed, paren, close } from '../format';
@@ -24,7 +24,9 @@ const strength = (r: number) => {
 
 export const zusammenhang: Workshop<Pairs, PairStats> = {
   id: 'zusammenhang',
-  wofuer: 'Vertraut, wer dem Bundestag vertraut, auch eher der Bundesregierung? Fünf Beispielpersonen beantworten zwei ALLBUS-Fragen auf einer Skala von 1 (gar kein Vertrauen) bis 7 (großes Vertrauen). Die Formel fragt: Liegen die beiden Antworten einer Person meist auf derselben Seite des jeweiligen Durchschnitts?',
+  wofuer: 'Vertraut, wer dem Bundestag vertraut, auch eher der Bundesregierung? Fünf Personen beantworten beide Fragen, jeweils von 1 (gar kein Vertrauen) bis 7 (großes Vertrauen). Die Formel prüft, ob die beiden Antworten einer Person meist auf derselben Seite des Durchschnitts liegen.',
+  mut: 'Die Formel sieht nach viel aus. Sie besteht aber aus sechs kleinen Schritten, die du schon kennst: Mitte finden, Abstände messen, malnehmen, zusammenzählen und teilen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
+  picture: 'zusammenhang',
   names: NAMES,
   bounds: { min: 1, max: 7 },
   presets: [
@@ -34,138 +36,137 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
   ],
   compute: pairStats,
   glyphs: [
-    { sym: 'x̄, ȳ', say: '„x quer, y quer“', term: 'Mittelwerte', plain: 'die Mitte jeder Frage', step: 1 },
-    { sym: 'xᵢ, yᵢ', say: '„x i, y i“', term: 'Zusammengehöriges Wertepaar', plain: 'die beiden Antworten von Person i', step: 2 },
-    { sym: '( ) · ( )', say: '„mal“', term: 'Abweichungsprodukt', plain: 'die beiden Abweichungen malnehmen', step: 3 },
-    { sym: 'Σ', say: '„Sigma“', term: 'Summenzeichen', plain: 'alles addieren, jede Person einmal', step: 4 },
-    { sym: 'n − 1', say: '„n minus eins“', term: 'Freiheitsgrade', plain: 'eins weniger als Personen', step: 5 },
-    { sym: 'sₓᵧ', say: '„s x y“', term: 'Stichprobenkovarianz', plain: 'die durchschnittliche Fläche mit Vorzeichen', step: 5 },
-    { sym: 'sₓ, sᵧ', say: '„s x, s y“', term: 'Standardabweichungen', plain: 'typische Abstände jeder Frage', step: 6 },
-    { sym: 'r', say: '„r“', term: 'Pearson-Korrelation', plain: 'Zusammenhang zwischen −1 und +1', step: 6 },
+    { sym: 'x̄, ȳ', say: 'x quer, y quer', term: 'Mittelwerte', plain: 'die Mitte jeder Frage', step: 1 },
+    { sym: 'xᵢ, yᵢ', say: 'x i, y i', term: 'Zusammengehöriges Wertepaar', plain: 'die beiden Antworten von Person i', step: 2 },
+    { sym: '( ) · ( )', say: 'mal', term: 'Abweichungsprodukt', plain: 'die beiden Abweichungen malnehmen', step: 3 },
+    { sym: 'Σ', say: 'Sigma', term: 'Summenzeichen', plain: 'alles addieren, jede Person einmal', step: 4 },
+    { sym: 'n − 1', say: 'n minus eins', term: 'Freiheitsgrade', plain: 'eins weniger als Personen', step: 5 },
+    { sym: 'sₓᵧ', say: 's x y', term: 'Stichprobenkovarianz', plain: 'die durchschnittliche Fläche mit Vorzeichen', step: 5 },
+    { sym: 'sₓ, sᵧ', say: 's x, s y', term: 'Standardabweichungen', plain: 'typische Abstände jeder Frage', step: 6 },
+    { sym: 'r', say: 'r', term: 'Pearson-Korrelation', plain: 'Zusammenhang zwischen −1 und +1', step: 6 },
   ],
   steps: [
     {
-      button: 'x̄ und ȳ', sym: 'x̄, ȳ', concept: 'mean', also: 'Mittelwerte beider Variablen', perPerson: false,
-      kurz: 'Wir suchen für beide Fragen die Mitte. Zusammen bilden die beiden Mitten ein Achsenkreuz.',
-      fachlich: 'Die arithmetischen Mittel x̄ und ȳ sind die Bezugspunkte für die Abweichungen beider Variablen.',
-      vorgerechnet: c => `x̄ = (${c.s.xs.join(' + ')}) / 5 = ${num(c.s.x.mean)}; ȳ = (${c.s.ys.join(' + ')}) / 5 = ${num(c.s.y.mean)}. Das Achsenkreuz liegt bei (${num(c.s.x.mean)} | ${num(c.s.y.mean)}).`,
-      alltag: 'Wie ein Fadenkreuz: Es teilt das Diagramm in vier Felder, rechts oben, links oben, links unten, rechts unten.',
-      warum: 'Ob zwei Merkmale gemeinsam variieren, sieht man erst relativ zu ihren Mitten: Liegt jemand in beiden Fragen über oder unter dem Durchschnitt?',
-      fehler: 'Nur eine Mitte berechnen. Die Kovarianz braucht beide.',
+      button: 'x̄ und ȳ', title: 'Zwei Mitten finden', sym: 'x̄, ȳ', say: 'x quer, y quer', concept: 'mean', perPerson: false,
+      was: 'Wir suchen für beide Fragen die Mitte. Zusammen bilden die beiden Mitten ein Achsenkreuz.',
+      rechnung: c => `x̄ = (${c.s.xs.join(' + ')}) / 5 = ${num(c.s.x.mean)} und ȳ = (${c.s.ys.join(' + ')}) / 5 = ${num(c.s.y.mean)}`,
+      fach: 'Die arithmetischen Mittel x̄ und ȳ sind die Bezugspunkte für die Abweichungen beider Variablen.',
+      warum: 'Ob zwei Antworten zusammenhängen, siehst du erst im Vergleich zur Mitte: Liegt jemand bei beiden Fragen darüber oder darunter?',
+      acht: 'Du brauchst zwei Mitten, eine für jede Frage. Mit nur einer Mitte fehlt die Hälfte des Achsenkreuzes.',
+      alltag: 'Wie ein Fadenkreuz: Es teilt das Bild in vier Felder, rechts oben, links oben, links unten und rechts unten.',
       check: {
-        question: 'Wie groß ist ȳ?',
+        question: 'Wo liegt die Mitte der zweiten Frage, also ȳ?',
         answer: c => c.s.y.mean,
         diagnose: (c, v) => v === 'NA' ? null
-          : close(v, c.s.y.sum) ? 'Das ist die Summe. Jetzt durch n = 5 teilen.'
-          : !close(c.s.x.mean, c.s.y.mean) && close(v, c.s.x.mean) ? 'Das ist x̄. Gefragt ist der Mittelwert der zweiten Frage, ȳ.'
+          : close(v, c.s.y.sum) ? 'Fast! Das ist die Summe. Jetzt noch durch 5 teilen.'
+          : !close(c.s.x.mean, c.s.y.mean) && close(v, c.s.x.mean) ? 'Fast! Das ist die Mitte der ersten Frage, x̄. Gefragt ist ȳ, die Mitte beim Vertrauen in die Bundesregierung.'
           : null,
       },
     },
     {
-      button: 'Abweichungen', sym: 'xᵢ − x̄, yᵢ − ȳ', concept: 'deviation', also: 'zwei je Person', perPerson: true,
-      kurz: 'Für jede Person messen wir in beiden Fragen: Wie weit liegt sie von der Mitte weg, und auf welcher Seite?',
-      fachlich: 'Je Person gibt es zwei Abweichungen vom Mittelwert, xᵢ − x̄ und yᵢ − ȳ, jeweils mit Vorzeichen. Beide gehören zu derselben Person (zusammengehöriges Wertepaar).',
-      vorgerechnet: c => {
+      button: 'Abweichungen', title: 'Abstände messen', sym: 'xᵢ − x̄, yᵢ − ȳ', say: 'x i minus x quer, y i minus y quer', concept: 'deviation', perPerson: true,
+      was: 'Für jede Person messen wir bei beiden Fragen: Wie weit liegt sie von der Mitte weg, und auf welcher Seite?',
+      rechnung: c => {
         const dx = c.s.x.dev[c.who], dy = c.s.y.dev[c.who];
-        return `Person ${P(c)}: x = ${c.s.xs[c.who]}, y = ${c.s.ys[c.who]}. xᵢ − x̄ = ${c.s.xs[c.who]} − ${num(c.s.x.mean)} = ${signed(dx)}, yᵢ − ȳ = ${c.s.ys[c.who]} − ${num(c.s.y.mean)} = ${signed(dy)}. ${P(c)} liegt beim Vertrauen in den Bundestag ${side(dx)} dem Durchschnitt und bei der Bundesregierung ${side(dy)} dem Durchschnitt.`;
+        return `Person ${P(c)}: ${c.s.xs[c.who]} − ${num(c.s.x.mean)} = ${signed(dx)} und ${c.s.ys[c.who]} − ${num(c.s.y.mean)} = ${signed(dy)}. Beim Bundestag liegt ${P(c)} ${side(dx)} dem Durchschnitt, bei der Bundesregierung ${side(dy)} dem Durchschnitt.`;
       },
-      alltag: 'Wie eine Adresse im Fadenkreuz: so weit nach links oder rechts, so weit nach unten oder oben.',
+      fach: 'Je Person gibt es zwei Abweichungen vom Mittelwert, xᵢ − x̄ und yᵢ − ȳ, jeweils mit Vorzeichen. Beide gehören zu derselben Person.',
       warum: 'Die beiden Vorzeichen zeigen, in welchem der vier Felder eine Person liegt.',
-      fehler: 'Abweichungen verschiedener Personen mischen, etwa nach getrenntem Sortieren der Spalten. Beide Abweichungen gehören zu derselben Person.',
+      acht: 'Beide Abstände gehören zu derselben Person. Wer die Spalten getrennt sortiert, mischt die Personen durcheinander.',
+      alltag: 'Wie eine Adresse im Fadenkreuz: so weit nach links oder rechts, so weit nach unten oder oben.',
       check: {
-        question: c => `Wie groß ist yᵢ − ȳ für Person ${P(c)}?`,
+        question: c => `Wie weit liegt Person ${P(c)} beim Vertrauen in die Bundesregierung von der Mitte weg? Mit Vorzeichen.`,
         answer: c => c.s.y.dev[c.who],
         diagnose: (c, v) => {
           if (v === 'NA') return null;
           const dx = c.s.x.dev[c.who], dy = c.s.y.dev[c.who];
-          if (Math.abs(dy) > 1e-9 && close(v, -dy)) return `Der Betrag stimmt, das Vorzeichen nicht. Rechne Wert minus Mittelwert: ${c.s.ys[c.who]} − ${num(c.s.y.mean)}.`;
-          if (!close(dx, dy) && close(v, dx)) return 'Das ist die Abweichung in x. Gefragt ist y.';
+          if (Math.abs(dy) > 1e-9 && close(v, -dy)) return 'Fast! Der Abstand stimmt, nur die Seite nicht. Rechne Antwort minus Mitte.';
+          if (!close(dx, dy) && close(v, dx)) return 'Fast! Das ist der Abstand beim Bundestag. Gefragt ist die Bundesregierung, also y.';
           return null;
         },
       },
     },
     {
-      button: '( ) · ( )', sym: '(xᵢ − x̄)(yᵢ − ȳ)', concept: 'crossproduct', perPerson: true,
-      kurz: 'Die beiden Abweichungen einer Person werden malgenommen. Das Ergebnis ist eine Rechteckfläche mit Vorzeichen.',
-      fachlich: 'Das Abweichungsprodukt (xᵢ − x̄)(yᵢ − ȳ) ist positiv, wenn eine Person in beiden Variablen auf derselben Seite der Mitte liegt, und negativ, wenn sie auf verschiedenen Seiten liegt.',
-      vorgerechnet: c => {
+      button: '( ) · ( )', title: 'Die Abstände malnehmen', sym: '(xᵢ − x̄)(yᵢ − ȳ)', say: 'x i minus x quer, mal y i minus y quer', concept: 'crossproduct', perPerson: true,
+      was: 'Wir nehmen die beiden Abstände einer Person miteinander mal. Heraus kommt eine Rechteckfläche mit Vorzeichen.',
+      rechnung: c => {
         const dx = c.s.x.dev[c.who], dy = c.s.y.dev[c.who], p = c.s.prod[c.who];
-        const how = p > 1e-9 ? `Positiv: ${P(c)} liegt in beiden Fragen auf derselben Seite, das passt zu einem gleichläufigen Muster.`
-          : p < -1e-9 ? `Negativ: ${P(c)} liegt auf verschiedenen Seiten, das spricht gegen ein gleichläufiges Muster.`
-          : `Null: ${P(c)} liegt in einer Frage genau im Durchschnitt und trägt nichts bei.`;
-        return `${P(c)}: ${paren(dx)} · ${paren(dy)} = ${num(p)}. ${how} Im Bild: ein Rechteck mit den Seiten ${num(Math.abs(dx))} und ${num(Math.abs(dy))}.`;
+        const how = p > 1e-9 ? `Plus: ${P(c)} liegt bei beiden Fragen auf derselben Seite.`
+          : p < -1e-9 ? `Minus: ${P(c)} liegt auf verschiedenen Seiten.`
+          : `Null: ${P(c)} liegt bei einer Frage genau in der Mitte.`;
+        return `Person ${P(c)}: ${paren(dx)} · ${paren(dy)} = ${num(p)}. ${how}`;
       },
-      alltag: 'Wie zwei Wetterfahnen: Zeigen beide in dieselbe Richtung, zählt das als Übereinstimmung, sonst als Widerspruch. Je stärker der Wind, desto mehr zählt es.',
-      warum: 'Das Vorzeichen des Produkts sagt, ob diese Person zum gleichläufigen oder zum gegenläufigen Muster beiträgt, die Fläche, wie deutlich. Das Abweichungsquadrat der Standardabweichung ist der Sonderfall, in dem eine Variable mit sich selbst malgenommen wird.',
-      fehler: 'Die Vorzeichenregel vergessen: Minus mal Minus ergibt Plus, Plus mal Minus ergibt Minus.',
+      fach: 'Das Abweichungsprodukt ist positiv, wenn eine Person in beiden Variablen auf derselben Seite des Mittelwerts liegt, und negativ, wenn sie auf verschiedenen Seiten liegt.',
+      warum: 'Das Vorzeichen sagt, ob diese Person zum gleichläufigen oder zum gegenläufigen Muster passt. Die Größe der Fläche sagt, wie deutlich.',
+      acht: 'Denk an die Vorzeichenregel: Minus mal Minus ergibt Plus, Plus mal Minus ergibt Minus.',
+      alltag: 'Wie zwei Wetterfahnen: Zeigen beide in dieselbe Richtung, zählt das als Übereinstimmung, sonst als Widerspruch.',
       check: {
-        question: c => `Wie groß ist das Abweichungsprodukt von Person ${P(c)}?`,
+        question: c => `Was kommt heraus, wenn du die beiden Abstände von Person ${P(c)} malnimmst?`,
         answer: c => c.s.prod[c.who],
         diagnose: (c, v) => {
           if (v === 'NA') return null;
           const p = c.s.prod[c.who], dx = c.s.x.dev[c.who], dy = c.s.y.dev[c.who];
-          if (Math.abs(p) > 1e-9 && close(v, -p)) return 'Vorzeichenregel: Minus mal Minus ergibt Plus, Plus mal Minus ergibt Minus.';
-          if (!close(dx + dy, p) && close(v, dx + dy)) return 'Das ist die Summe der Abweichungen. Gefragt ist ihr Produkt.';
+          if (Math.abs(p) > 1e-9 && close(v, -p)) return 'Fast! Achte auf das Vorzeichen: Minus mal Minus ergibt Plus, Plus mal Minus ergibt Minus.';
+          if (!close(dx + dy, p) && close(v, dx + dy)) return 'Fast! Das ist die Summe der beiden Abstände. Gefragt ist ihr Produkt.';
           return null;
         },
       },
     },
     {
-      button: 'Σ', sym: 'Σ(xᵢ − x̄)(yᵢ − ȳ)', concept: 'crossproduct_sum', perPerson: false,
-      kurz: 'Alle Rechteckflächen werden verrechnet: Plusflächen gegen Minusflächen.',
-      fachlich: 'Die Summe der Abweichungsprodukte fasst die gemeinsame Abweichung aller Personen zusammen.',
-      vorgerechnet: c => `${c.s.prod.map(p => paren(p)).join(' + ')} = ${num(c.s.cp)}. Plusflächen zusammen ${num(c.s.pos)}, Minusflächen ${num(c.s.neg)}. ${c.s.cp > 1e-9 ? 'Die Plusflächen überwiegen.' : c.s.cp < -1e-9 ? 'Die Minusflächen überwiegen.' : 'Plus- und Minusflächen heben sich auf.'}`,
-      alltag: 'Wie eine Abstimmung: Gleichläufige Personen stimmen für Plus, gegenläufige für Minus, und deutlichere Stimmen zählen mehr.',
+      button: 'Σ', title: 'Alles zusammenzählen', sym: 'Σ', say: 'Sigma', concept: 'crossproduct_sum', perPerson: false,
+      was: 'Wir zählen die fünf Flächen zusammen, mit ihren Vorzeichen. Plusflächen und Minusflächen verrechnen sich dabei.',
+      rechnung: c => `${c.s.prod.map(p => paren(p)).join(' + ')} = ${num(c.s.cp)}. ${c.s.cp > 1e-9 ? 'Die Plusflächen überwiegen.' : c.s.cp < -1e-9 ? 'Die Minusflächen überwiegen.' : 'Plus und Minus heben sich auf.'}`,
+      fach: 'Die Summe der Abweichungsprodukte fasst die gemeinsame Abweichung aller Personen zusammen.',
       warum: 'Erst über alle Personen hinweg zeigt sich, welches Muster überwiegt.',
-      fehler: 'Negative Produkte weglassen oder positiv zählen. Sie gehören mit ihrem Minus in die Summe.',
+      acht: 'Negative Flächen zählen mit ihrem Minus. Wer sie weglässt oder positiv zählt, macht den Zusammenhang stärker, als er ist.',
+      alltag: 'Wie eine Abstimmung: Gleichläufige Personen stimmen für Plus, gegenläufige für Minus, und deutlichere Stimmen zählen mehr.',
       check: {
-        question: 'Wie groß ist die Summe der Abweichungsprodukte?',
+        question: 'Wie groß ist die Summe der fünf Produkte?',
         answer: c => c.s.cp,
         diagnose: (c, v) => {
           if (v === 'NA') return null;
           const abs = c.s.pos - c.s.neg;
-          if (c.s.neg < -1e-9 && close(v, abs)) return 'Du hast die negativen Produkte positiv gezählt.';
-          if (Math.abs(c.s.cp) > 1e-9 && close(v, 0)) return '0 ist die Summe der Abweichungen einer Variable. Gefragt ist die Summe der Produkte.';
+          if (c.s.neg < -1e-9 && close(v, abs)) return 'Fast! Du hast die negativen Produkte positiv gezählt. Sie gehören mit Minus in die Summe.';
+          if (Math.abs(c.s.cp) > 1e-9 && close(v, 0)) return 'Fast! 0 ist die Summe der Abstände einer Frage. Gefragt ist die Summe der Produkte.';
           return null;
         },
       },
     },
     {
-      button: '÷ (n − 1)', sym: 'sₓᵧ', concept: 'covariance', perPerson: false,
-      kurz: 'Die verrechneten Flächen werden auf n − 1 verteilt. Das ergibt eine durchschnittliche Fläche mit Vorzeichen.',
-      fachlich: 'Die Summe der Abweichungsprodukte geteilt durch n − 1 ergibt die Stichprobenkovarianz sₓᵧ.',
-      vorgerechnet: c => `${num(c.s.cp)} / (5 − 1) = ${num(c.s.cov)}. Einheit: Vertrauenspunkte beim Bundestag mal Vertrauenspunkte bei der Bundesregierung.`,
-      alltag: 'Wie bei der Varianz: gerecht auf n − 1 Stücke verteilen.',
-      warum: 'Teilen macht die Kovarianz unabhängig davon, wie viele Personen befragt wurden; n − 1 aus demselben Grund wie bei der Varianz.',
-      fehler: 'Die Größe der Kovarianz als Stärke lesen. Sie hängt von den Einheiten ab: Misst man beide Fragen auf einer Skala von 10 bis 70, wird sie hundertmal so groß, ohne dass der Zusammenhang stärker wird.',
+      button: '÷ (n − 1)', title: 'Gerecht teilen', sym: 'sₓᵧ', say: 's x y', concept: 'covariance', perPerson: false,
+      was: 'Wir teilen die Summe durch die Zahl der Personen minus eins, hier also durch 4.',
+      rechnung: c => `${num(c.s.cp)} / (5 − 1) = ${num(c.s.cp)} / 4 = ${num(c.s.cov)}`,
+      fach: 'Die Summe der Abweichungsprodukte geteilt durch n − 1 ergibt die Stichprobenkovarianz sₓᵧ.',
+      warum: 'Durch das Teilen werden große und kleine Gruppen vergleichbar. Das minus eins hat denselben Grund wie bei der Varianz.',
+      acht: 'Die Größe der Kovarianz ist noch keine Stärke. Auf einer Skala von 10 bis 70 wäre sie hundertmal so groß, ohne dass sich am Zusammenhang etwas ändert.',
       check: {
-        question: 'Wie groß ist die Kovarianz sₓᵧ?',
+        question: 'Was kommt heraus, wenn du die Summe durch 4 teilst?',
         answer: c => c.s.cov,
         diagnose: (c, v) => v === 'NA' || Math.abs(c.s.cp) < 1e-9 ? null
-          : close(v, c.s.cp / 5) ? 'Du hast durch n = 5 geteilt. Die Formel teilt durch n − 1 = 4.'
-          : close(v, c.s.cp) ? 'Das ist noch die Summe. Es fehlt das Teilen durch n − 1.'
+          : close(v, c.s.cp / 5) ? 'Fast! Du hast durch 5 geteilt. Hier teilst du durch 4, also n − 1.'
+          : close(v, c.s.cp) ? 'Fast! Das ist noch die Summe. Jetzt noch durch 4 teilen.'
           : null,
       },
     },
     {
-      button: '÷ (sₓ · sᵧ)', sym: 'r', concept: 'pearson', also: 'Nenner: Produkt der Standardabweichungen', perPerson: false,
+      button: '÷ (sₓ · sᵧ)', title: 'Mit dem Größtmöglichen vergleichen', sym: 'r', say: 'r', concept: 'pearson', perPerson: false,
       links: [{ id: 'sd_product', label: 'Produkt der Standardabweichungen' }, { id: 'sd', label: 'Standardabweichung' }],
-      kurz: 'Wir vergleichen die durchschnittliche Fläche mit der größtmöglichen. So entsteht eine Zahl zwischen −1 und +1.',
-      fachlich: 'Pearson-r ist die Kovarianz geteilt durch das Produkt der beiden Standardabweichungen. Das Ergebnis hat keine Einheit und liegt zwischen −1 und +1.',
-      vorgerechnet: c => c.s.r === null
-        ? `sₓ ≈ ${num(c.s.x.sd)} und sᵧ ≈ ${num(c.s.y.sd)}. Eine Standardabweichung ist 0, deshalb ist r nicht definiert: Man kann nicht durch 0 teilen.`
-        : `sₓ ≈ ${num(c.s.x.sd)} und sᵧ ≈ ${num(c.s.y.sd)} (je aus der Werkstatt Standardabweichung), also sₓ · sᵧ ≈ ${num(c.s.sxy)}. r = ${num(c.s.cov)} / ${num(c.s.sxy)} ≈ ${num(c.s.r)}.`,
+      was: 'Wir teilen durch das Produkt der beiden Standardabweichungen. So entsteht eine Zahl zwischen −1 und +1.',
+      rechnung: c => c.s.r === null
+        ? `sₓ ≈ ${num(c.s.x.sd)} und sᵧ ≈ ${num(c.s.y.sd)}. Eine Standardabweichung ist 0. Durch 0 kann man nicht teilen, r ist hier nicht definiert.`
+        : `${num(c.s.cov)} / (${num(c.s.x.sd)} · ${num(c.s.y.sd)}) = ${num(c.s.cov)} / ${num(c.s.sxy)} ≈ ${num(c.s.r)}`,
+      fach: 'Pearson-r ist die Kovarianz geteilt durch das Produkt der beiden Standardabweichungen. Das Ergebnis hat keine Einheit und liegt zwischen −1 und +1.',
+      warum: 'Die Kovarianz kann höchstens so groß werden wie sₓ · sᵧ. Teilen wir dadurch, verschwinden die Einheiten, und ganz verschiedene Fragen werden vergleichbar.',
+      acht: 'r ist kein Anteil von Personen. r = 0,5 heißt nicht, dass die Hälfte übereinstimmt. Es sagt, wie eng die Punkte an einer Geraden liegen.',
       alltag: 'Wie eine Prozentangabe: nicht wie viele Punkte, sondern welcher Anteil vom Höchstmöglichen.',
-      warum: 'Die Kovarianz liegt immer zwischen −sₓ · sᵧ und +sₓ · sᵧ. Teilt man durch sₓ · sᵧ, verschwinden die Einheiten, und Zusammenhänge zwischen ganz verschiedenen Fragen werden vergleichbar.',
-      fehler: 'r als Anteil der Personen lesen. r = 0,5 heißt nicht, dass die Hälfte übereinstimmt. Es beschreibt, wie eng die Punkte an einer steigenden Geraden liegen.',
       check: {
-        question: c => c.s.r === null ? 'Wie groß ist r? Hier ist eine Standardabweichung 0. Tippe NA, wenn r nicht definiert ist.' : 'Wie groß ist r?',
+        question: c => c.s.r === null ? 'Wie groß ist r? Eine Standardabweichung ist hier 0. Tippe NA, wenn r nicht definiert ist.' : 'Wie groß ist r? Zwei Nachkommastellen reichen.',
         answer: c => c.s.r === null ? 'NA' : c.s.r,
         diagnose: (c, v) => {
           if (v === 'NA' || c.s.r === null || Math.abs(c.s.cov) < 1e-9) return null;
-          if (close(v, c.s.cov / (c.s.x.sd + c.s.y.sd))) return 'Im Nenner steht das Produkt sₓ · sᵧ, nicht die Summe.';
-          if (close(v, c.s.cov / (c.s.x.variance * c.s.y.variance))) return 'Im Nenner stehen die Standardabweichungen, nicht die Varianzen.';
-          if (!close(c.s.cov, c.s.r) && close(v, c.s.cov)) return 'Das ist noch die Kovarianz. Es fehlt das Teilen durch sₓ · sᵧ.';
+          if (close(v, c.s.cov / (c.s.x.sd + c.s.y.sd))) return 'Fast! Im Nenner steht das Produkt sₓ · sᵧ, nicht die Summe.';
+          if (close(v, c.s.cov / (c.s.x.variance * c.s.y.variance))) return 'Fast! Im Nenner stehen die Standardabweichungen, nicht die Varianzen.';
+          if (!close(c.s.cov, c.s.r) && close(v, c.s.cov)) return 'Fast! Das ist noch die Kovarianz. Jetzt noch durch sₓ · sᵧ teilen.';
           return null;
         },
       },
@@ -193,8 +194,8 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
     ],
   },
   captions: {
-    1: 'Das Achsenkreuz aus x̄ und ȳ teilt das Diagramm in vier Felder. Punkte lassen sich ziehen.',
-    2: 'Jede Person hat zwei Abweichungen: waagerecht zu x̄, senkrecht zu ȳ.',
+    1: 'Das Achsenkreuz aus x̄ und ȳ teilt das Bild in vier Felder. Du kannst die Punkte ziehen.',
+    2: 'Jede Person hat zwei Abstände: waagerecht zu x̄, senkrecht zu ȳ.',
     3: 'Rechts oben und links unten: gleichläufig, die Fläche zählt plus. Die anderen Felder zählen minus.',
     4: 'Der Balken legt alle Plusflächen und alle Minusflächen gegeneinander.',
     5: 'Geteilt durch n − 1 ergibt sich die durchschnittliche Fläche mit Vorzeichen: die Kovarianz.',
@@ -231,7 +232,7 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
   variants: {
     pearson: {
       lastStep: 6,
-      kurz: 'r sagt, wie eng die Punkte an einer Geraden liegen, von −1 (perfekt gegenläufig) über 0 bis +1 (perfekt gleichläufig).',
+      kurz: 'r sagt dir, wie eng die Punkte an einer Geraden liegen, von −1 (perfekt gegenläufig) über 0 bis +1 (perfekt gleichläufig).',
       fachlich: 'Die Kovarianz geteilt durch das Produkt der beiden Standardabweichungen.',
       symbolic: ['r = ', { frac: [
         { frac: [{ big: 'Σ', m: 4 }, { part: ['('], m: 3 }, { part: ['x', { sub: 'i' }, ' −'], m: 2 }, ' ', { part: ['x̄'], m: 1 }, { part: [')('], m: 3 }, { part: ['y', { sub: 'i' }, ' −'], m: 2 }, ' ', { part: ['ȳ'], m: 1 }, { part: [')'], m: 3 }], den: [{ part: ['n − 1'], m: 5 }], m: 5 },
@@ -239,12 +240,13 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
       aria: 'r gleich: Summe über alle Personen i von x i minus x quer, mal y i minus y quer, geteilt durch n minus 1; das Ganze geteilt durch s x mal s y',
       metrics: [{ label: 'Kovarianz sₓᵧ', value: c => num(c.s.cov) }, { label: 'Pearson-r', value: c => c.s.r === null ? 'nicht definiert' : num(c.s.r) }],
       interpret: c => {
-        if (c.s.r === null) return { kurz: 'Eine Frage hat keine Streuung. Dann lässt sich kein Zusammenhang berechnen.', fachlich: 'Eine Standardabweichung ist 0, deshalb ist r nicht definiert.' };
-        const r = c.s.r;
+        if (c.s.r === null) return { kurz: 'Bei einer Frage haben alle dasselbe geantwortet. Dann lässt sich kein Zusammenhang berechnen.', fachlich: 'Eine Standardabweichung ist 0, deshalb ist r nicht definiert.' };
+        const r = c.s.r, dir = r > 0 ? 'gleichläufiger' : 'gegenläufiger';
+        const people = r > 0 ? 'Wer dem Bundestag mehr vertraut, vertraut hier eher auch der Bundesregierung mehr.' : 'Wer dem Bundestag mehr vertraut, vertraut hier der Bundesregierung eher weniger.';
         return {
-          kurz: shown(r) < 0.1 ? 'Kein gerader Zusammenhang.'
-            : strength(r) === 'perfekt' ? `Ein perfekt ${r > 0 ? 'gleichläufiger' : 'gegenläufiger'} Zusammenhang: Alle Punkte liegen auf einer Geraden.`
-            : `Ein ${r > 0 ? 'gleichläufiger' : 'gegenläufiger'}, ${{ schwach: 'schwacher', mittel: 'mittelstarker', stark: 'starker', perfekt: 'perfekter' }[strength(r)]} Zusammenhang${strength(r) === 'stark' ? ', aber kein perfekter' : ''}.`,
+          kurz: shown(r) < 0.1 ? 'Zwischen den beiden Antworten gibt es hier keinen geraden Zusammenhang.'
+            : strength(r) === 'perfekt' ? `Alle Punkte liegen auf einer Geraden: ein perfekt ${dir} Zusammenhang.`
+            : `${people} Das ist ein ${dir}, ${{ schwach: 'schwacher', mittel: 'mittelstarker', stark: 'starker', perfekt: 'perfekter' }[strength(r)]} Zusammenhang${strength(r) === 'stark' ? ', aber kein perfekter' : ''}.`,
           fachlich: `r = ${num(r)}. Nach der verbreiteten Faustregel von Cohen ist ein Betrag ab 0,1 schwach, ab 0,3 mittel, ab 0,5 stark. Bei nur fünf Personen ist r sehr unsicher; die Werkstatt zeigt die Rechnung, nicht einen Befund über Deutschland.`,
         };
       },

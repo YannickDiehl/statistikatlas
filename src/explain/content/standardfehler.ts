@@ -1,4 +1,4 @@
-// Vorlage „Formel als Satz“ (Stufe 2) am Beispiel Standardfehler. Wortlaut: docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt/04-standardfehler.md
+// Vorlage „Formel als Satz“ am Beispiel Standardfehler. Ton nach dem gebilligten Beispiel der Streuung (src/explain/content/streuung.ts).
 import type { SentenceTemplate } from '../types';
 import { standardError } from '../math';
 import { num, count, close } from '../format';
@@ -11,8 +11,8 @@ export type SeStats = SeValues & { root: number; se: number; moe: number; lo: nu
 
 export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
   concept: 'se',
-  wofuer: 'Umfragen berichten Mittelwerte oft mit einem ±. Das politische Interesse liegt im ALLBUS 2023 im Mittel bei 3,30 (umgepolt: 1 = überhaupt nicht, 5 = sehr stark). Wie genau ist diese Zahl, wenn 5.225 Befragte gültig geantwortet haben?',
-  kurz: 'Der Standardfehler sagt, wie genau ein Mittelwert aus einer Stichprobe ist. Je kleiner, desto genauer.',
+  wofuer: 'Umfragen melden Mittelwerte oft mit einem ±. Im ALLBUS 2023 liegt das politische Interesse im Mittel bei 3,30, auf einer Skala von 1 (überhaupt nicht) bis 5 (sehr stark). 5.225 Menschen haben gültig geantwortet. Wie genau ist diese Zahl?',
+  kurz: 'Der Standardfehler sagt dir, wie genau ein Mittelwert aus einer Stichprobe ist. Je kleiner er ist, desto genauer.',
   fachlich: 'Die geschätzte Standardabweichung der Stichprobenverteilung des Mittelwerts.',
   initial: { s: INTEREST.sd, n: INTEREST.n },
   compute: v => {
@@ -24,10 +24,10 @@ export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
     { label: 'Standardfehler SE', value: s => num(s.se, 3) },
   ],
   glyphs: [
-    { key: 'se', sym: 'SE', say: '„S E“', term: 'Standardfehler', plain: 'wie stark der Mittelwert von Stichprobe zu Stichprobe schwanken würde', concept: 'se' },
-    { key: 's', sym: 's', say: '„s“', term: 'Standardabweichung', plain: 'wie verschieden die Befragten antworten', concept: 'sd' },
-    { key: 'sqrt', sym: '√', say: '„Wurzel“', term: 'Quadratwurzel', plain: 'welche Zahl ergibt mal sich selbst n?', concept: 'sqrt' },
-    { key: 'n', sym: 'n', say: '„n“', term: 'Fallzahl', plain: 'wie viele gültige Antworten es gibt', concept: 'validn' },
+    { key: 'se', sym: 'SE', say: 'S E', term: 'Standardfehler', plain: 'wie stark der Mittelwert von Stichprobe zu Stichprobe schwanken würde', concept: 'se' },
+    { key: 's', sym: 's', say: 's', term: 'Standardabweichung', plain: 'wie verschieden die Befragten antworten', concept: 'sd' },
+    { key: 'sqrt', sym: '√', say: 'Wurzel', term: 'Quadratwurzel', plain: 'welche Zahl ergibt mal sich selbst n?', concept: 'sqrt' },
+    { key: 'n', sym: 'n', say: 'n', term: 'Fallzahl', plain: 'wie viele gültige Antworten es gibt', concept: 'validn' },
   ],
   symbolic: [{ part: ['SE'], m: 'se' }, ' = ', { frac: [{ part: ['s'], m: 's' }], den: [{ big: '√', m: 'sqrt' }, { root: [{ part: ['n'], m: 'n' }], m: 'sqrt' }], m: 'sqrt' }],
   aria: 'S E gleich s geteilt durch Wurzel aus n',
@@ -35,11 +35,11 @@ export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
     ` = ${num(s.s)} / ${num(s.root)} ≈ ${num(s.se, 3)}`],
   sentence: ['Der ', { m: 'se', t: 'Standardfehler' }, ' ist ', { m: 's', t: 'die Standardabweichung der Antworten' }, ', geteilt durch ', { m: 'sqrt', t: 'die Quadratwurzel' }, ' aus ', { m: 'n', t: 'der Fallzahl' }, '.'],
   worked: s => [
-    { title: 'Quadratwurzel der Fallzahl', text: `√${count(s.n)} ≈ ${num(s.root)}. Probe: ${num(s.root)} · ${num(s.root)} ≈ ${count(s.n)}.` },
-    { title: 'Standardabweichung durch diese Zahl teilen', text: `${num(s.s)} / ${num(s.root)} ≈ ${num(s.se, 3)}.` },
-    { title: 'Einheit prüfen', text: `Das Ergebnis hat die Einheit der Daten: ${num(s.se, 3)} Punkte auf der Skala des politischen Interesses.` },
+    { title: 'Die Wurzel aus der Fallzahl ziehen', text: `√${count(s.n)} ≈ ${num(s.root)}. Probe: ${num(s.root)} · ${num(s.root)} ≈ ${count(s.n)}.` },
+    { title: 'Die Standardabweichung durch diese Zahl teilen', text: `${num(s.s)} / ${num(s.root)} ≈ ${num(s.se, 3)}.` },
+    { title: 'Die Einheit prüfen', text: `Das Ergebnis hat die Einheit der Daten: ${num(s.se, 3)} Punkte auf der Skala des politischen Interesses.` },
   ],
-  fehler: 'Standardabweichung und Standardfehler verwechseln. s beschreibt, wie verschieden die Befragten sind, und wird mit mehr Befragten nicht kleiner. SE beschreibt, wie genau der Mittelwert ist, und schrumpft mit mehr Befragten.',
+  fehler: 'Standardabweichung und Standardfehler klingen ähnlich, messen aber Verschiedenes. s sagt, wie verschieden die Befragten sind, und wird mit mehr Befragten nicht kleiner. SE sagt, wie genau der Mittelwert ist, und schrumpft mit mehr Befragten.',
   sliders: [
     { key: 's', label: 'Standardabweichung', min: 0.2, max: 2, step: 0.02, format: v => num(v) },
     { key: 'n', label: 'Fallzahl', min: 10, max: 40000, step: 1, log: true, format: v => count(v) },
@@ -53,11 +53,11 @@ export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
   check: {
     question: 'Wie groß ist der Standardfehler bei s = 1 und n = 100?',
     answer: 0.1, tolerance: 0.0011,
-    right: 'Stimmt: 1 / √100 = 1 / 10 = 0,1.',
-    diagnose: v => close(v, 0.01, 0.0011) ? 'Du hast durch n geteilt. Geteilt wird durch √n, also durch 10.'
-      : close(v, 10, 0.0011) ? 'Umgekehrt: s wird durch √n geteilt, nicht √n durch s.'
-      : close(v, 1, 0.0011) ? 'Das ist noch s selbst. Es fehlt das Teilen durch √n.'
-      : 'Erst √100 ausrechnen, dann s durch dieses Ergebnis teilen.',
+    right: 'Genau, 0,1: 1 / √100 = 1 / 10 = 0,1.',
+    diagnose: v => close(v, 0.01, 0.0011) ? 'Fast! Du hast durch n geteilt. Geteilt wird durch √n, also durch 10.'
+      : close(v, 10, 0.0011) ? 'Fast! Andersherum: s wird durch √n geteilt, nicht √n durch s.'
+      : close(v, 1, 0.0011) ? 'Fast! Das ist noch s selbst. Jetzt noch durch √n teilen.'
+      : 'Noch nicht ganz. Rechne erst √100 aus und teile dann s durch dieses Ergebnis.',
   },
   interpret: s => ({
     kurz: `In etwa 95 von 100 Zufallsstichproben mit ${count(s.n)} Befragten läge der Mittelwert höchstens rund ${num(s.moe, 3)} Punkte vom wahren Mittelwert aller Erwachsenen entfernt.`,
@@ -68,7 +68,7 @@ export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
     options: ['doppelt so viele', 'viermal so viele', 'zehnmal so viele'], correct: 1, mark: 'sqrt',
     explain: 'Die Fallzahl steht unter der Wurzel: √(4 · n) = 2 · √n. Viermal so viele Befragte teilen den Standardfehler nur durch 2.',
     kurz: 'Doppelte Genauigkeit kostet vierfache Fallzahl.',
-    hint: 'Probiere oben „n mal 4“.',
+    hint: 'Probier oben „n mal 4“ aus.',
   },
   genau: {
     kurz: 'Die Formel gilt für einfache Zufallsstichproben. Beim ALLBUS ist der echte Standardfehler etwas größer.',

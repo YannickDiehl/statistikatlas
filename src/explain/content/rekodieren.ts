@@ -1,4 +1,4 @@
-// Vorlage „Werkzeug“ (Stufe 3) am Beispiel Rekodieren mit mariposa::rec() 0.7.4. Wortlaut: docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt/05-rekodieren.md
+// Vorlage „Werkzeug“ am Beispiel Rekodieren mit mariposa::rec() 0.7.4. Ton nach dem gebilligten Beispiel der Streuung (src/explain/content/streuung.ts).
 import { apply, trace, type Code, type Outcome, type Program, type Rule } from '../rules';
 import { num, count, pct, fixed } from '../format';
 
@@ -25,7 +25,8 @@ export const rekodieren = {
   newName: 'interesse',
   codes: PA02A,
   scale: SCALE,
-  wofuer: 'Im ALLBUS heißt beim politischen Interesse (pa02a) der Code 1 „sehr stark“ und 5 „überhaupt nicht“. Wer „höhere Zahl = mehr Interesse“ lesen will, muss umpolen. Wer zwei Gruppen vergleichen will, fasst Codes zusammen.',
+  wofuer: 'Im ALLBUS steht beim politischen Interesse (pa02a) die 1 für „sehr stark“ und die 5 für „überhaupt nicht“. Wer lieber „höhere Zahl heißt mehr Interesse“ lesen will, muss die Skala umdrehen. Und wer zwei Gruppen vergleichen will, fasst Codes zusammen.',
+  mut: 'Hier rechnest du nichts aus. Du schreibst Regeln, nach denen Antworten neue Zahlen bekommen, und siehst sofort, was passiert.',
   kurz: 'Rekodieren gibt Antworten neue Zahlen. Was die Befragten geantwortet haben, bleibt dasselbe.',
   fachlich: 'Rekodieren ordnet den Codes einer Variable nach Regeln neue Codes und Wertelabels zu. Umpolen kehrt die Reihenfolge einer Skala um, Dichotomisieren fasst sie zu zwei Gruppen zusammen.',
   terms: [
@@ -93,7 +94,7 @@ export const rekodieren = {
     kurz: 'Diese Antworten gehen verloren, wenn du nichts tust.',
   }),
   warnCaptured: (v: number, label: string | null) => ({
-    text: `Achtung: Auch die 21 fehlenden Angaben treffen hier eine Regel. Sie zählen jetzt als ${num(v)}${label ? ` ${q(label)}` : ''}. Sicherer ist es, die Codes ausdrücklich zu nennen.`,
+    text: `Aufgepasst: Auch die 21 fehlenden Angaben treffen hier eine Regel. Sie zählen jetzt als ${num(v)}${label ? ` ${q(label)}` : ''}. Sicherer ist es, die Codes ausdrücklich zu nennen.`,
     kurz: 'Aus „keine Angabe“ wird eine Antwort, die niemand gegeben hat.',
   }),
   warnOutside: (p: Extract<Program, { kind: 'rev' }>, codes: Code[]) => ({
@@ -108,15 +109,15 @@ export const rekodieren = {
   },
   /** R-Code im Lernpfad-Stil; Anführungszeichen und Backslashes der Regel werden für den R-String maskiert. */
   rCode: (rule: string) => `library(dplyr)\nlibrary(mariposa)\n\nallbus <- read_spss("ZA8831_v1-3-0.sav")\n\nallbus %>%\n  mutate(interesse = rec(pa02a, rules = "${rule.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}")) %>%\n  frequency(interesse)`,
-  fehler: '„else“ schreiben und vergessen, dass es auch fehlende Angaben erfasst. Nach dem Umpolen die alte Bedeutung im Kopf behalten: Jetzt heißt 5 „sehr stark“.',
+  fehler: 'Zwei Stolperstellen: „else“ erfasst auch fehlende Angaben. Und nach dem Umpolen heißt die 5 „sehr stark“, nicht mehr „überhaupt nicht“.',
   check: {
     /** Code für die Frage: die gewählte Person, bei „fehlend“ Code 2. */
     codeFor: (who: number) => PA02A[who].k === 'M' ? PA02A[1] : PA02A[who],
     question: (c: Code) => `Eine Person hat ${c.k} angegeben (${q(c.label)}). Welchen neuen Code bekommt sie mit der aktuellen Regel? Tippe eine Zahl oder NA.`,
     answer: (p: Program, c: Code): number | 'NA' => { const o = apply(p, c); return o.t === 'val' ? o.v : 'NA'; },
     diagnose: (p: Program, c: Code, v: number | 'NA') => p.kind === 'rev' && v !== 'NA' && v === c.k
-      ? `Das ist noch der alte Code. Umpolen heißt ${num(p.lo + p.hi)} − alt.`
-      : 'Geh die Regeln von links nach rechts durch. Die erste passende gewinnt; passt keine, wird der Code NA.',
+      ? `Fast! Das ist noch der alte Code. Umpolen heißt ${num(p.lo + p.hi)} − alt.`
+      : 'Noch nicht ganz. Geh die Regeln von links nach rechts durch. Die erste passende gewinnt; passt keine, wird der Code NA.',
   },
   think: [
     {
@@ -138,5 +139,3 @@ export const rekodieren = {
     ],
   },
 };
-
-export type RecodeTemplate = typeof rekodieren;
