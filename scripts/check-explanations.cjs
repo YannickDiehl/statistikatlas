@@ -15,12 +15,20 @@
  *   PLAYWRIGHT  Pfad zum Playwright-Paket (Standard: das npx-Paket dieses Rechners)
  *
  * Je Begriff und Breite: öffnet den Begriff über die Suche der Karte (`/?ansicht=karte`, Suchfeld „Begriff im
- * Netzwerk finden“; findet die Suche ihn nicht eindeutig, über das Atlas-Werkzeug `open_atlas_concept`), geht alle
- * Reiter per Tastatur durch (Pfeiltasten, Pos1, Ende), klappt in jedem Reiter alle Abschnitte auf und misst:
- * Konsolenfehler und -warnungen, kleinste Schrift sichtbarer Texte im Inspector, seitliches Überlaufen von Seite und
- * Inspector, ob jeder Reiter Inhalt hat und ob ein gewählter Schritt nach einem Reiterwechsel erhalten bleibt.
- * Begriffe ohne Reiter werden genauso geprüft (ohne die Reiterpunkte). Gibt je Begriff eine JSON-Zeile aus und
- * endet mit Code 1, wenn ein Befund auftritt.
+ * Netzwerk finden“; findet die Suche ihn nicht eindeutig, über das Atlas-Werkzeug `open_atlas_concept`, das steht
+ * dann als Hinweis da) und prüft:
+ * - gleich nach dem Öffnen: Die Reiterleiste ist im sichtbaren Teil des Inspectors zu sehen (auch im Blatt auf dem
+ *   Telefon), alle Reiter liegen ganz in der Leiste (nichts abgeschnitten, kein seitliches Schieben nötig);
+ * - Tastatur: Pfeil rechts durch alle Reiter, Pfeil links zurück, Ende, Pos1; jedes Panel hat Inhalt, die anderen sind verborgen;
+ * - in jedem Reiter (alle Abschnitte aufgeklappt): Konsolenfehler und -warnungen, kleinste Schrift sichtbarer Texte
+ *   (berechnete font-size; Bilder zeichnet der Baukasten 1 : 1, eine Skalierung des SVG misst das Skript nicht),
+ *   seitliches Überlaufen von Seite und Inspector, Steuerelemente ohne zugänglichen Namen (Barrierefreiheitsbaum);
+ * - Zustand: Ein gewählter Schritt bleibt nach einem Reiterwechsel erhalten;
+ * - „Weiter“: jedes Ziel nur einmal;
+ * - Fokus: nach „Schritt k ansehen“ in „In R“ steht der Fokus bei Schritt k im richtigen Reiter, nach „Ausprobieren“
+ *   und „Ausgangsdaten wiederherstellen“ und nach dem Link „Als Nächstes“ nicht auf der Seite (body).
+ * Begriffe ohne Reiter werden ohne die Reiterpunkte geprüft. Konsolenmeldungen beim Laden der Seite zählen zum
+ * ersten Begriff. Gibt je Begriff eine JSON-Zeile aus und endet mit Code 1, wenn ein Befund auftritt.
  */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -95,7 +103,6 @@ async function openConcept(page, id) {
 }
 
 async function checkConcept(page, id, width, errors) {
-  errors.length = 0;
   const problems = [], result = { id, width };
   const opened = await openConcept(page, id);
   Object.assign(result, { title: opened.title, openedVia: opened.via });
@@ -106,6 +113,22 @@ async function checkConcept(page, id, width, errors) {
   const n = await tabs.count();
   result.tabs = n ? await tabs.allTextContents() : [];
   result.panels = [];
+  if (opened.via !== 'Suche') result.hinweise = [`über das Werkzeug geöffnet, die Suche fand „${opened.title}“ nicht eindeutig`];
+  if (n) {
+    // Gleich nach dem Öffnen: Leiste sichtbar (nicht unter dem Kopf, nicht unter dem Rand des Blatts), alle Reiter ganz darin.
+    const bar = await page.evaluate(() => {
+      const ins = document.getElementById('atlas-inspector'), bar = ins.querySelector('[role=tablist]'), head = ins.querySelector('.inspector-top');
+      const ib = ins.getBoundingClientRect(), bb = bar.getBoundingClientRect(), hb = head?.getBoundingClientRect();
+      const top = Math.max(ib.top, getComputedStyle(head ?? ins).position === 'sticky' ? hb.bottom : ib.top), bottom = Math.min(ib.bottom, innerHeight);
+      const cut = [...bar.querySelectorAll('[role=tab]')].filter(t => { const r = t.getBoundingClientRect(); return r.left < bb.left - 1 || r.right > bb.right + 1 || t.scrollWidth > t.clientWidth + 1; }).map(t => t.textContent);
+      return { visible: bb.top >= top - 1 && bb.bottom <= bottom + 1, scrolls: bar.scrollWidth > bar.clientWidth + 1, cut, top: Math.round(bb.top), area: [Math.round(top), Math.round(bottom)] };
+    });
+    if (!bar.visible) problems.push(`Reiterleiste beim Öffnen nicht im sichtbaren Teil (oben ${bar.top}, sichtbar ${bar.area.join(' bis ')})`);
+    if (bar.scrolls || bar.cut.length) problems.push(`Reiterleiste abgeschnitten: ${bar.cut.join(', ') || 'seitlich zu schieben'}`);
+  }
+  /** Steuerelemente ohne Namen im Barrierefreiheitsbaum des Inspectors (nur sichtbare Teile). */
+  const unnamed = async () => (await ins.ariaSnapshot()).split('\n')
+    .filter(l => /^\s*- (button|slider|textbox|combobox|checkbox|radio|link|tab|spinbutton|switch|searchbox)(?=:|$)/.test(l)).map(l => l.trim());
   const visit = async label => {
     // Alle Abschnitte im sichtbaren Teil aufklappen, dann messen.
     await page.evaluate(() => document.querySelectorAll('#atlas-inspector details:not([open])').forEach(d => { if (!d.closest('[hidden]')) d.open = true; }));
@@ -114,6 +137,8 @@ async function checkConcept(page, id, width, errors) {
     if (m.minFont !== null && m.minFont < MIN_FONT) problems.push(`${label}: Schrift ${m.minFont} px (${m.minAt})`);
     if (m.pageOverflow) problems.push(`${label}: Seite läuft seitlich über`);
     if (m.inspectorOverflow) problems.push(`${label}: Inspector läuft seitlich über`);
+    const nameless = await unnamed();
+    if (nameless.length) problems.push(`${label}: Steuerelemente ohne Namen: ${[...new Set(nameless)].slice(0, 4).join(' | ')}`);
     if (process.env.SHOTS) await page.screenshot({ path: path.join(OUT, 'shots', `${id}-${width}-${result.panels.length}.png`) });
     return m;
   };
@@ -138,6 +163,8 @@ async function checkConcept(page, id, width, errors) {
     }
     await page.keyboard.press('ArrowRight');
     if (await tabs.first().getAttribute('aria-selected') !== 'true') problems.push('Pfeil rechts springt am Ende nicht zum ersten Reiter');
+    await page.keyboard.press('ArrowLeft');
+    if (await tabs.nth(n - 1).getAttribute('aria-selected') !== 'true') problems.push('Pfeil links springt am Anfang nicht zum letzten Reiter');
     await page.keyboard.press('End');
     if (await tabs.nth(n - 1).getAttribute('aria-selected') !== 'true') problems.push('Ende wählt nicht den letzten Reiter');
     await page.keyboard.press('Home');
@@ -158,6 +185,62 @@ async function checkConcept(page, id, width, errors) {
     }
     result.stateChecked = Object.keys(chosen).length;
     await tabs.first().click();
+    const tabIndex = name => result.tabs.findIndex(t => t.startsWith(name));
+    // Fokus nach „Schritt k ansehen“: Der Sprung landet bei Schritt k (Schrittknopf gedrückt oder Karte markiert), der Fokus dort.
+    const rTab = tabIndex('In R');
+    if (rTab >= 0) {
+      await tabs.nth(rTab).click();
+      const nums = ins.locator('[role=tabpanel]:not([hidden]) .xw-num');
+      for (let i = 0; i < await nums.count(); i++) {
+        await nums.nth(i).click();
+        const go = ins.locator('[role=tabpanel]:not([hidden])').getByRole('button', { name: /^Schritt \d+ ansehen$/ });
+        if (!await go.count()) continue;
+        const k = Number((await go.textContent()).match(/\d+/)[0]);
+        await go.click();
+        await page.waitForTimeout(300);
+        const jump = await page.evaluate(k => {
+          const panel = document.querySelector('#atlas-inspector [role=tabpanel]:not([hidden])'), a = document.activeElement;
+          const pressed = [...panel.querySelectorAll('.xw-steps button[aria-pressed=true]')].some(b => b.textContent.includes(`Schritt ${k}`));
+          const marked = !!panel.querySelector(`[aria-current=step]`) && panel.querySelector('[aria-current=step]').textContent.includes(`Schritt ${k} von`);
+          return { ok: pressed || marked, focus: a && a !== document.body && panel.contains(a) };
+        }, k);
+        if (!jump.ok) problems.push(`„Schritt ${k} ansehen“ zeigt Schritt ${k} nicht`);
+        if (!jump.focus) problems.push(`„Schritt ${k} ansehen“: Fokus nicht beim Schritt`);
+        break;
+      }
+      await tabs.first().click();
+    }
+    // Fokus nach Ausprobieren und Zurücksetzen (gemeinsamer Lehrdatensatz).
+    const sTab = tabIndex('Mit 200 Befragten');
+    if (sTab >= 0) {
+      await tabs.nth(sTab).click();
+      const panel = ins.locator('[role=tabpanel]:not([hidden])'), q = panel.locator('.xw-question').first();
+      if (await q.count()) {
+        await q.locator('.xw-options button').first().click();
+        const tryIt = q.getByRole('button', { name: /^Ausprobieren/ });
+        if (await tryIt.count()) {
+          await tryIt.click();
+          const reset = panel.getByRole('button', { name: 'Ausgangsdaten wiederherstellen' });
+          if (await reset.count()) {
+            await reset.click();
+            await page.waitForTimeout(300);
+            if (await page.evaluate(() => document.activeElement === document.body)) problems.push('Fokus nach „Ausgangsdaten wiederherstellen“ verloren');
+          }
+        }
+      }
+      await tabs.first().click();
+    }
+    // „Weiter“: jedes Ziel einmal; der Link „Als Nächstes“ öffnet den Begriff, der Fokus landet nicht auf der Seite.
+    const wTab = tabIndex('Weiter');
+    if (wTab >= 0) {
+      await tabs.nth(wTab).click();
+      const titles = await ins.locator('[role=tabpanel]:not([hidden]) .relation-link strong').allTextContents();
+      const twice = titles.filter((t, i) => titles.indexOf(t) !== i);
+      if (twice.length) problems.push(`Weiter: doppelte Ziele ${[...new Set(twice)].join(', ')}`);
+      await ins.locator('[role=tabpanel]:not([hidden]) .xw-next-main button').first().click();
+      await page.waitForTimeout(400);
+      if (await page.evaluate(() => document.activeElement === document.body)) problems.push('Fokus nach dem Link „Als Nächstes“ verloren');
+    }
   }
   result.consoleErrors = [...errors];
   if (errors.length) problems.push(`Konsole: ${errors.slice(0, 3).join(' | ')}`);
@@ -185,8 +268,9 @@ async function checkConcept(page, id, width, errors) {
         let r;
         try { r = await checkConcept(page, id, width, errors); }
         catch (e) { r = { id, width, problems: [`Abbruch: ${String(e).split('\n')[0]}`] }; }
+        errors.length = 0;                                   // Meldungen beim Laden zählen zum ersten Begriff
         (all[id] ??= []).push(r);
-        console.log(JSON.stringify({ id, width, mode: process.env.MODE === 'kompakt' ? 'kompakt' : 'ausführlich', title: r.title, via: r.openedVia, tabs: r.tabs, minFont: r.minFont, problems: r.problems }));
+        console.log(JSON.stringify({ id, width, mode: process.env.MODE === 'kompakt' ? 'kompakt' : 'ausführlich', title: r.title, via: r.openedVia, tabs: r.tabs, minFont: r.minFont, problems: r.problems, ...(r.hinweise ? { hinweise: r.hinweise } : {}) }));
       }
       await context.close();
     }

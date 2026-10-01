@@ -350,8 +350,9 @@
 
 /* Reiterleiste auf dem Desktop oben festhalten; die stehende Formel der Werkbank rückt darunter (--xw-tabs-h aus ExplainTabs). */
 @media(min-width:761px){
-.network-inspector .xw-tabs{position:sticky;top:0;z-index:4;background:var(--paper);padding-top:6px}
-.network-inspector.has-tabs{scroll-padding-top:calc(var(--xw-tabs-scroll, 56px))}
+/* Klebende Elemente halten am Inhaltsrand; der Schatten deckt den Innenabstand darüber ab, damit nichts darüber durchscheint. */
+.network-inspector .xw-tabs{position:sticky;top:0;z-index:4;background:var(--paper);padding-top:6px;box-shadow:0 -40px 0 var(--paper)}
+.network-inspector.has-tabs{scroll-padding-top:calc(var(--xw-tabs-h, 48px) + 12px)}
 .xw-tabbed .xw-stage.stick,.xw-tabbed .xw-stage-formula.stick{top:var(--xw-tabs-h,0px)}
 }
 /* Telefon: Die Reiter stehen direkt unter dem Titel, damit sie im Blatt sofort zu sehen sind; „Kurz gesagt“ folgt darunter. */
@@ -370,3 +371,4 @@
 .network-inspector details>summary{min-height:24px;padding:2px 0}
 .network-inspector input[type=checkbox]{width:18px;height:18px}
 .network-reset-button{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:4px;background:#f6eedc;color:#6b4b16;padding:4px 9px;font:14px var(--sans);white-space:nowrap;margin-left:8px}
+.xw-wide .xw-study>.xw-steps{margin-top:18px}

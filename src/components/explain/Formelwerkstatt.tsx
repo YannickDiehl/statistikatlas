@@ -53,8 +53,9 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept }: {
   const formula = <>
     <FormulaView className="xw-symbolic" nodes={v.symbolic} active={step} onMark={m => setStep(m as number)} label={v.aria} />
     <FormulaView className="xw-numeric" nodes={w.numeric(ctx, v.lastStep)} active={step} onMark={m => setStep(m as number)} />
-    <StepNav steps={w.steps.slice(0, v.lastStep)} active={step} onStep={setStep} />
   </>;
+  // In der breiten Werkbank stehen die Schrittknöpfe rechts über der Lernkarte: So bleibt die Formel links klein genug zum Stehenbleiben.
+  const stepNav = <StepNav steps={w.steps.slice(0, v.lastStep)} active={step} onStep={setStep} />;
   const learnCard = <LearnCard step={stepData} ctx={ctx} compact={compact} onConcept={onConcept} onWho={pickWho} current={variant} headingRef={cardHeading}
     position={{ step, last: v.lastStep, onStep: setStep }} />;
   const table = !compact && <Section title="Die Rechentabelle" note="So rechnest du es auch auf Papier. Mit jedem Schritt kommt eine Spalte dazu.">
@@ -86,10 +87,10 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept }: {
       {/* Gleicher Baum in beiden Anordnungen, damit Eingaben und Fokus beim Wechsel erhalten bleiben; nur das Bild wandert. */}
       <div className={`xw-work${wide ? ' wide' : ''}`}>
         <div className={`xw-stage${wide && layout.stick === 'all' ? ' stick' : ''}`}>
-          <div ref={layout.formula} className={`xw-stage-formula${wide && layout.stick === 'formula' ? ' stick' : ''}`}>{formula}</div>
+          <div ref={layout.formula} className={`xw-stage-formula${wide && layout.stick === 'formula' ? ' stick' : ''}`}>{formula}{!wide && stepNav}</div>
           {wide && <div ref={layout.image}>{image}</div>}
         </div>
-        <div className="xw-study">{learnCard}{table}{!wide && image}{check}</div>
+        <div className="xw-study">{wide && stepNav}{learnCard}{table}{!wide && image}{check}</div>
       </div>
       {!compact && (() => {
         const i = v.interpret(ctx);

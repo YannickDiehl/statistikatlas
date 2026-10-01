@@ -96,8 +96,9 @@ export function ExplainTabs({ concept, tabs, kurz, steps, render }: {
   const links: TabLinks = { goSample, stepLink };
   // Höhe der Reiterleiste als CSS-Variable: Darunter bleibt die Formel der Werkbank stehen (die Leiste klebt oben).
   useLayoutEffect(() => {
-    const el = bar.current, box = root.current;
+    const el = bar.current, box = root.current?.closest<HTMLElement>('.network-inspector') ?? root.current;
     if (!el || !box || typeof ResizeObserver === 'undefined') return;
+    // Am Inspector gesetzt: Die klebende Formel rückt darunter, und scroll-padding hält fokussierte Elemente unter der Leiste frei.
     const write = () => box.style.setProperty('--xw-tabs-h', `${el.offsetHeight}px`);
     write();
     const observer = new ResizeObserver(write);
@@ -127,7 +128,7 @@ export function ExplainTabs({ concept, tabs, kurz, steps, render }: {
           ref={el => { panels.current[t.id] = el; }}>
           {t.id === 'verstehen' ? <TabLinkContext.Provider value={link}>
             {render('verstehen', links)}
-            {ids.includes('sample') && <p className="xw xw-onward"><button type="button" className="xw-button" onClick={() => { setGoSample(g => ({ step: understandStep.current, n: (g?.n ?? 0) + 1 })); show('sample'); }}>Weiter mit 200 Befragten</button></p>}
+            {ids.includes('sample') && <p className="xw xw-onward"><button type="button" className="xw-button" onClick={() => { setGoSample(g => ({ step: understandStep.current, n: (g?.n ?? 0) + 1 })); show('sample', !steps || steps !== 'sample'); }}>Weiter mit 200 Befragten</button></p>}
           </TabLinkContext.Provider> : render(t.id, links)}
         </div>
       ))}

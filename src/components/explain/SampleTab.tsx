@@ -139,8 +139,8 @@ function BridgeView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'brid
   const formula = <>
     <FormulaView className="xw-symbolic" nodes={v.symbolic} active={step} onMark={m => typeof m === 'number' && setStep(m)} label={v.aria} />
     <FormulaView className="xw-numeric" nodes={numeric} active={step} onMark={m => typeof m === 'number' && setStep(m)} label={`Eingesetzt: ${flat(numeric)}`} />
-    <StepNav steps={workshop.steps.slice(0, last)} active={step} onStep={setStep} />
   </>;
+  const stepNav = <StepNav steps={workshop.steps.slice(0, last)} active={step} onStep={setStep} />;
   const image = <Section title="Das Bild dazu"><SamplePicture kind={bridge.data} values={c.values} values2={c.values2} names={c.names} who={c.who} pic={pic} col={c.col} col2={c.col2} onWho={i => p.onCase(c.names[i])} /></Section>;
   const card = (
     <div className="xw-card">
@@ -161,10 +161,10 @@ function BridgeView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'brid
       <div className="xw-metrics">{bridge.metrics(c, tab.variant).map(m => <div key={m.label}><span>{m.label}</span><strong>{m.value}</strong></div>)}</div>
       <div className={`xw-work${wide ? ' wide' : ''}`}>
         <div className={`xw-stage${wide && layout.stick === 'all' ? ' stick' : ''}`}>
-          <div ref={layout.formula} className={`xw-stage-formula${wide && layout.stick === 'formula' ? ' stick' : ''}`}>{formula}</div>
+          <div ref={layout.formula} className={`xw-stage-formula${wide && layout.stick === 'formula' ? ' stick' : ''}`}>{formula}{!wide && stepNav}</div>
           {wide && <div ref={layout.image}>{image}</div>}
         </div>
-        <div className="xw-study"><PersonPicker names={c.names} who={c.who} onCase={p.onCase} />{card}{!wide && image}</div>
+        <div className="xw-study">{wide && stepNav}<PersonPicker names={c.names} who={c.who} onCase={p.onCase} />{card}{!wide && image}</div>
       </div>
       <Section title="Was heißt das Ergebnis?">
         <p className="xw-deutung">{i.kurz}</p>

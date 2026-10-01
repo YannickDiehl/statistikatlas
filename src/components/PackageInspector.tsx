@@ -56,7 +56,7 @@ export function PackageInspector(p:RPanelProps&PackageTabProps&{selected:Ref;onC
      case 'sample':return <SampleTab tab={tabs.sample!} rows={rows} onRows={p.onRows} onReset={p.onReset} modified={modified} reference={p.selected} selection={p.selection} onColumns={p.onColumns} columnNotice={p.columnNotice} settingsColumns={p.settings?.columns} caseId={p.caseId??rows[1]?.id??''} onCase={p.onCase??(()=>{})} goTo={tabLinks.goSample}/>;
      case 'r':return <RTab {...p} tab={tabs.r!} title={e.title} rows={rows} modified={modified} reference={p.selected} onStepLink={tabLinks.stepLink} stepTitle={n=>targets?.titles[n-1]} onConcept={open}/>;
      case 'weiter':return <NextTab tab={tabs.next} edges={links} ctx={ctx} selected={p.selected} route={route} contextAnchor={p.contextAnchor} onSelect={p.onSelect} onHover={p.onHover} trace={p.trace} onTrace={p.onTrace}
-      extra={<details className="xw-more"><summary>Voraussetzungen und Einordnung</summary>{conditions}{sources}</details>}/>;
+      extra={(e.notes.length>0||sources)&&<details className="xw-more"><summary>Einordnung</summary><section className="package-conditions"><ul>{e.notes.map((text,i)=><li key={i}>{text}</li>)}</ul></section>{sources}</details>}/>;
     }
    }}/>
   </aside>;
