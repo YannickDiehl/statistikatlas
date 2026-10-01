@@ -52,6 +52,33 @@ test('sentences: Satzenden, Abkürzungen, Zahlen und Anführungszeichen', () => 
   assert.deepEqual(sentences(''), []);
 });
 
+test('Regel 5: auch gebeugte Formen und Ableitungen, mit Ausnahmen für Fachbegriffe', () => {
+  for (const t of ['Das ist einfacher als gedacht.', 'Ein offensichtlicher Fehler.', 'Das folgt trivialerweise.', 'Natürliche Schwankung gibt es immer.', 'Der einfachste Weg.'])
+    assert.ok(styleProblems(t).length > 0, t);
+  for (const t of ['Die Formel gilt für einfache Zufallsstichproben.', 'Bei einfacher Zufallsauswahl ist jede Teilmenge gleich wahrscheinlich.', 'Logit nutzt den natürlichen Logarithmus.', 'ln ist der natürliche Logarithmus.', 'Das ist ein natürliches Experiment.', 'Die Antwort ist vereinfacht dargestellt.'])
+    assert.deepEqual(styleProblems(t), [], t);
+});
+
+test('Regel 11: Bindestrich als Minus zwischen Rechengrößen', () => {
+  for (const t of ['Teile durch n - 1.', 'Das ergibt 1 - α.', 'Rechne x̄ - s.', 'Rechne 7 - 2 = 5.', 'Rechne n-1.', 'Dann gilt x-2 = 3.'])
+    assert.ok(has(styleProblems(t), 'Minus'), t);
+  for (const t of ['Die Links-rechts-Skala, der t-Test und der z-Wert.', 'Das 95-%-Intervall und die x-Achse.', 'Die Codes 1–5.'])
+    assert.deepEqual(styleProblems(t), [], t);
+});
+
+test('Regel 11: Mittelpunkt als Malzeichen auch neben einem Wort, aber nicht zwischen zwei Wörtern', () => {
+  assert.deepEqual(styleProblems('Jeder Beitrag zählt 2 · Abstand.'), []);
+  assert.deepEqual(styleProblems('Am Ende rechnest du Summe · 2.'), []);
+  assert.ok(has(styleProblems('Likert · 5 Stufen'), 'Mittelpunkt'));
+  assert.ok(has(styleProblems('Breite · Höhe'), 'Mittelpunkt'), 'zwischen zwei Wörtern lieber „mal“ schreiben');
+});
+
+test('sentences: Datumsangaben und Ordnungszahlen vor Monaten beenden keinen Satz', () => {
+  assert.deepEqual(sentences('Am 3. Oktober wird gewählt. Danach zählen wir.'), ['Am 3. Oktober wird gewählt.', 'Danach zählen wir.']);
+  assert.deepEqual(sentences('Der 20. Bundestag tagt im 3. Semester der Studierenden.'), ['Der 20. Bundestag tagt im 3. Semester der Studierenden.']);
+  assert.deepEqual(sentences('Die Summe ist 25. Das ist viel.'), ['Die Summe ist 25.', 'Das ist viel.']);
+});
+
 test('mehrere Probleme in einem Text werden alle gemeldet', () => {
   const problems = styleProblems('Das ist natürlich einfach. Mittelwert · Varianz -4.', { maxSentences: 1 });
   for (const part of ['„natürlich“', '„einfach“', 'Mittelpunkt', 'Minus', 'Sätze']) assert.ok(has(problems, part), part);
