@@ -4,7 +4,7 @@ import { conceptById } from '../../domain/concepts';
 import { ref, titleFor } from '../../domain/learning';
 import { txt, type Ctx, type Step, type Workshop } from '../../explain/types';
 import { parseAnswer } from '../../explain/format';
-import { KurzGesagt, Progress, StepArrows } from './basics';
+import { KurzGesagt, Progress, StepArrows, tight } from './basics';
 
 /** Fachbegriff eines Begriffs: sein Titel in concepts.ts (Regel 2), sonst der Anzeigetitel. */
 export const termFor = (id: string) => conceptById[id]?.title ?? titleFor(ref(id));
@@ -12,7 +12,7 @@ export const termFor = (id: string) => conceptById[id]?.title ?? titleFor(ref(id
 /** Rückmeldung mit fett gesetztem Anfang („Genau,“, „Fast!“, „Noch nicht ganz.“). */
 export function Feedback({ ok, message, children }: { ok: boolean; message: string; children?: ReactNode }) {
   const lead = message.match(/^(Genau[,.]?|Fast!|Noch nicht ganz\.)/)?.[0] ?? '';
-  return <p className={ok ? 'xw-right' : 'xw-wrong'}>{lead && <strong>{lead}</strong>}{message.slice(lead.length)}{children}</p>;
+  return <p className={ok ? 'xw-right' : 'xw-wrong'}>{lead && <strong>{lead}</strong>}{tight(message.slice(lead.length))}{children}</p>;
 }
 
 /**
@@ -152,7 +152,7 @@ export function NameBox({ concept, sym, say, fach, links = [], onConcept }: {
         {sym && <span className="xw-sym">{sym}</span>}
         {say && <small>sprich „{say}“</small>}
       </p>}
-      <p className="xw-fach">In der Fachsprache: {fach}</p>
+      <p className="xw-fach">In der Fachsprache: {tight(fach)}</p>
       {links.length > 0 && <p className="xw-links-row">{links.map(l => <ConceptLink key={l.id} id={l.id} onConcept={onConcept}>{l.label}</ConceptLink>)}</p>}
     </div>
   );
@@ -184,7 +184,7 @@ export function LearnCard<S>({ step, ctx, compact, onConcept, onWho, position, f
       {position && <div className="xw-card-top"><Progress step={position.step} last={position.last} /><StepArrows step={position.step} last={position.last} onStep={position.onStep} /></div>}
       <h3 className="xw-step-title" ref={headingRef} tabIndex={-1}>{step.title}</h3>
       <h4>Was passiert?</h4>
-      <p>{txt(step.was, ctx)}</p>
+      <p>{tight(txt(step.was, ctx))}</p>
       <div className="xw-worked-head">
         <h4>{people ? 'Rechnung für Person' : 'Rechnung'}</h4>
         {people && (
@@ -193,11 +193,11 @@ export function LearnCard<S>({ step, ctx, compact, onConcept, onWho, position, f
           </span>
         )}
       </div>
-      <p className="xw-rechnung">{txt(step.rechnung, ctx)}</p>
+      <p className="xw-rechnung">{tight(txt(step.rechnung, ctx))}</p>
       <NameBox concept={step.concept} sym={step.sym} say={step.say} fach={txt(step.fach, ctx)} links={links} onConcept={onConcept} />
       {!compact && <>
-        <h4>Warum?</h4><p>{txt(step.warum, ctx)}</p>
-        <h4 className="xw-warn-head">Aufgepasst</h4><p>{txt(step.acht, ctx)}</p>
+        <h4>Warum?</h4><p>{tight(txt(step.warum, ctx))}</p>
+        <h4 className="xw-warn-head">Aufgepasst</h4><p>{tight(txt(step.acht, ctx))}</p>
         {step.alltag && <><h4>Wie im Alltag</h4><p>{step.alltag}</p></>}
       </>}
       {footer}

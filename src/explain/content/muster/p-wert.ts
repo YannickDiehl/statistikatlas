@@ -36,7 +36,7 @@ export const pWert: ConceptCard = {
   },
   heisst: {
     sym: 'p', say: 'p',
-    fach: 'die Wahrscheinlichkeit, unter der Nullhypothese und den Annahmen des Tests eine Prüfgröße zu erhalten, die mindestens so extrem ist wie die beobachtete.',
+    fach: 'Die Wahrscheinlichkeit, unter der Nullhypothese und den Annahmen des Tests eine Prüfgröße zu erhalten, die mindestens so extrem ist wie die beobachtete.',
   },
   bausteine: [
     {
@@ -49,7 +49,7 @@ export const pWert: ConceptCard = {
     {
       title: 'Den Unterschied in eine Prüfgröße übersetzen',
       was: 'Der t-Test teilt den Unterschied durch seinen Standardfehler. So sieht man, ob der Unterschied groß ist im Vergleich zum üblichen Schwanken.',
-      rechnung: `t = ${num(L.diff)} / ${num(L.se)} ≈ ${num(shown2(L.diff) / shown2(L.se))}. Mit allen Nachkommastellen rechnet R ${num(L.t)}.`,
+      rechnung: `t = ${num(L.diff)} / ${num(L.se)} ≈ ${num(shown2(L.diff) / shown2(L.se))}. Mit allen Nachkommastellen kommt R auf ${num(L.t)}.`,
       warum: 'Ob ein Unterschied groß ist, hängt davon ab, wie stark die Werte ohnehin schwanken. t misst den Unterschied in Standardfehlern.',
       acht: 'Ein großes t heißt nicht automatisch ein wichtiger Unterschied. Bei sehr vielen Befragten wird auch ein winziger Unterschied groß.',
       concept: 'test_statistic',
@@ -93,7 +93,7 @@ export const pWert: ConceptCard = {
       const often = p >= 0.01 ? `in etwa ${Math.round(p * 100)} von 100` : p >= 0.001 ? 'in weniger als 1 von 100' : 'in weniger als 1 von 1.000';
       const shown = p >= 0.01 ? `p ≈ ${num(p)}` : p >= 0.001 ? 'p < 0,01' : 'p < 0,001';
       const verdict = p >= 0.2 ? 'Das wäre gar nicht überraschend.' : p >= 0.05 ? 'Das wäre etwas überraschend, kommt aber oft genug vor.' : p >= 0.01 ? 'Das wäre überraschend.' : 'Das wäre sehr überraschend.';
-      return `Gäbe es keinen Unterschied, käme ein Unterschied von ${num(v)} Stunden oder mehr ${often} Wiederholungen der Befragung vor (${shown}). ${verdict}`;
+      return `Gäbe es keinen Unterschied, käme ein Unterschied von ${num(v)} ${num(v) === '1' ? 'Stunde' : 'Stunden'} oder mehr ${often} Wiederholungen der Befragung vor (${shown}). ${verdict}`;
     },
   },
   check: {

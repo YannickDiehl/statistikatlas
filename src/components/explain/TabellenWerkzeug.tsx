@@ -42,6 +42,7 @@ export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onCo
       <KurzGesagt text={t.kurz} />
       {!compact && t.mut && <MutBox text={t.mut} />}
       <div className="xw-presets" role="group" aria-label="Deine Wahl">
+        <span className="xw-note">Deine Wahl:</span>
         {t.options.map(o => <button type="button" key={o.id} aria-pressed={o.id === option} onClick={() => setOption(o.id)}>{o.label}</button>)}
       </div>
       <Section title="Vorher"><DataTable columns={t.columns} rows={t.rows} caption="Die Daten vorher" /></Section>

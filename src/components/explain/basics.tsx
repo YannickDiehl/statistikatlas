@@ -60,19 +60,25 @@ export function useWorkbenchLayout(): {
   return { root, formula, image, wide, stick };
 }
 
+/**
+ * Kurze Rechenausdrücke im Fließtext („n − 1“, „xᵢ − x̄“, „s = 0“) nicht umbrechen: Die Leerzeichen um das
+ * Rechenzeichen werden geschützt, wenn links und rechts höchstens drei Zeichen stehen.
+ */
+export const tight = (s: string) => s.replace(/(^|[\s(„])([^\s(„]{1,3}) ([−+·÷=≈]) (?=[^\s.,;:!?)“]{1,3}(?:[\s.,;:!?)“]|$))/g, '$1$2\u00a0$3\u00a0');
+
 export function KurzGesagt({ text, fach }: { text: string; fach?: string }) {
   return (
     <div className="xw-kurz">
       <strong>Kurz gesagt</strong>
-      <p>{text}</p>
-      {fach && <p className="xw-fach">In der Fachsprache: {fach}</p>}
+      <p>{tight(text)}</p>
+      {fach && <p className="xw-fach">In der Fachsprache: {tight(fach)}</p>}
     </div>
   );
 }
 
 /** Mut-Satz zu Beginn einer Werkstatt (Regel 6): die Formel in kleine, bekannte Handlungen zerlegt. */
 export function MutBox({ text }: { text: string }) {
-  return <p className="xw-mut">{text}</p>;
+  return <p className="xw-mut">{tight(text)}</p>;
 }
 
 /** „Schritt k von n“ mit Fortschritt („noch m kleine Schritte“) und einer Leiste aus n Stücken. */
@@ -165,7 +171,7 @@ export function Genau({ kurz, paragraphs }: { kurz: string; paragraphs: string[]
     <details className="xw-genau">
       <summary>Genau genommen</summary>
       <KurzGesagt text={kurz} />
-      {paragraphs.map((p, i) => <p key={i}>{p}</p>)}
+      {paragraphs.map((p, i) => <p key={i}>{tight(p)}</p>)}
     </details>
   );
 }
