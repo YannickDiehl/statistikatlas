@@ -6,7 +6,7 @@ import {Children,createElement,isValidElement,type ReactElement,type ReactNode} 
 import {PackageInspector} from '../components/PackageInspector';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {mariposaExports,mariposaEntries,entryById,functionToConcept,formulaParts,formulaTargets} from './mariposaCatalog';
-import {exampleVariants,analysisCode,bootstrapCode,initialRSettings,validateRSettings,eligible,surveyCsv,rolesFor} from './mariposa';
+import {exampleVariants,analysisCode,startBlock,initialRSettings,validateRSettings,eligible,surveyCsv,rolesFor,roleExplanation} from './mariposa';
 import {createSurvey,migrateSurvey,surveyColumns,columnById,defaultSelection} from './survey';
 import {concepts,conceptById,connections} from './concepts';
 import {mapRelations,incomingPaths,regions,regionConcepts,places,referenceInMap} from './network';
@@ -41,13 +41,13 @@ test('the expanded dataset preserves old edited cells and adds coherent learning
  const old=rows.map(r=>({...r,values:Object.fromEntries(surveyColumns.slice(0,16).map(c=>[c.id,r.values[c.id]]))}));old[10].values.einkommen=4321;
  const upgraded=migrateSurvey(old)!;assert.equal(upgraded[10].values.einkommen,4321);assert.equal(upgraded.length,200);assert.deepEqual(upgraded.map(r=>r.id),old.map(r=>r.id));
  for(const row of upgraded)for(const col of surveyColumns.slice(0,16))assert.equal(row.values[col.id],old.find(r=>r.id===row.id)!.values[col.id]);
- assert.ok(surveyColumns.filter(c=>/^methoden[1-5]$/.test(c.id)).every(c=>c.categories?.length===7));assert.equal(surveyCsv(rows).split('\r\n').length,201);assert.match(bootstrapCode(),/rep\("numeric", 28\)/);
+ assert.ok(surveyColumns.filter(c=>/^methoden[1-5]$/.test(c.id)).every(c=>c.categories?.length===7));assert.equal(surveyCsv(rows).split('\r\n').length,201);assert.match(startBlock(),/read_spss\("Statistikatlas-200-Befragte\.sav"\)/);
 });
 test('R snippets retain the selected Y axis and the exact Spearman rank transformation',()=>{
  const props={onSelect:noop,onHover:noop,selection:{...defaultSelection,x:'lernzeit',y:'schlafdauer'}};
- const y=renderToStaticMarkup(createElement(MariposaPanel,{...props,entry:entryById.sd,reference:ref('sd','y')}));assert.match(y,/w_sd\(d, schlafdauer\)/);assert.doesNotMatch(y,/w_sd\(d, lernzeit\)/);
+ const y=renderToStaticMarkup(createElement(MariposaPanel,{...props,entry:entryById.sd,reference:ref('sd','y')}));assert.match(y,/w_sd\(schlafdauer\)/);assert.doesNotMatch(y,/w_sd\(lernzeit\)/);
  const selection={...defaultSelection,x:'schulabschluss',y:'finanzlage'},ranked=renderToStaticMarkup(createElement(MariposaPanel,{...props,selection,entry:entryById.pearson,reference:ref('pearson','x',undefined,'ranks')}));
- assert.match(ranked,/ties.method/);assert.match(ranked,/rank\(d\$schulabschluss/);assert.match(ranked,/rank\(d\$finanzlage/);assert.match(ranked,/pearson_cor\(d, schulabschluss, finanzlage/);assert.doesNotMatch(ranked,/Spaltenauswahl anpassen/);
+ assert.match(ranked,/ties.method/);assert.match(ranked,/schulabschluss = rank\(schulabschluss/);assert.match(ranked,/finanzlage = rank\(finanzlage/);assert.match(ranked,/pearson_cor\(schulabschluss, finanzlage/);assert.doesNotMatch(ranked,/Spaltenauswahl anpassen/);
  const spearman=renderToStaticMarkup(createElement(MariposaPanel,{...props,selection:{...defaultSelection,x:'lernplanung5'},entry:entryById.spearman,reference:ref('spearman')}));assert.doesNotMatch(spearman,/Die Rechnung nimmt gleich große Abstände/);
 });
 test('all map regions contain stable individual concept places',()=>{
@@ -70,5 +70,17 @@ test('package inspector gives its sibling panels distinct keys',()=>{
   function Probe(){const tree=PackageInspector({onSelect:noop,onHover:noop,rows,selection:defaultSelection,entry:entryById[id],selected:ref(id),onClose:noop,onFocusMap:noop,trace:false,onTrace:noop}) as ReactElement<{children:ReactNode}>;keys=Children.toArray(tree.props.children).filter(isValidElement).map(c=>String(c.key));return null;}
   renderToStaticMarkup(createElement(Probe));
   assert.ok(keys.length>3,id);assert.equal(new Set(keys).size,keys.length,`${id}: ${keys.join(' ')}`);
+ }
+});
+test('the R panel leads with Kurz gesagt, offers the .sav and shows no developer notes',()=>{
+ assert.equal(surveyCsv(rows).charCodeAt(0),0xfeff,'CSV mit BOM für Excel');
+ for(const kind of ['quantitative','ordered','category','twoGroups','binary','continuous','items','repeated','pairedBinary','multiple','predictor','factors','interaction','likert'] as const){const t=roleExplanation({key:'x',label:'X',kind,default:[],many:false});assert.ok(t.kurz&&t.fach,kind);assert.ok((t.kurz.match(/[.!?](\s|$)/g)||[]).length<=2,kind);assert.doesNotMatch(t.kurz,/einfach|offensichtlich|trivial|natürlich|bekanntlich|leicht zu sehen/,kind);}
+ for(const id of ['sd','t_test','linear_regression','data_import']){
+  const html=renderToStaticMarkup(createElement(MariposaPanel,{onSelect:noop,onHover:noop,rows,selection:defaultSelection,entry:entryById[id],reference:ref(id)}));
+  assert.doesNotMatch(html,/Geprüft an mariposa|kein mariposa-Ergebnis|Namespace|Quellstand|Implementierung|0\.7\.2|read\.csv2|stopifnot/,id);
+  // Nur sichtbarer Text: SVG-Pfade der Symbole enthalten Zahlenfolgen wie 1.1.9.
+  for(const version of html.replace(/<[^>]*>/g,' ').match(/\b\d+\.\d+\.\d+\b/g)||[])assert.equal(version,'0.7.4',id);
+  assert.match(html,/mariposa 0\.7\.4/,id);assert.match(html,/Lehrdatensatz als SPSS-Datei \(\.sav\)/,id);assert.match(html,/auch als CSV/,id);assert.match(html,/library\(dplyr\)\nlibrary\(mariposa\)\n\natlas &lt;- read_spss/,id);
+  if(id!=='data_import')assert.match(html,/<strong>Kurz gesagt:<\/strong>/,id);
  }
 });

@@ -1,6 +1,6 @@
 {
   "package": "mariposa",
-  "version": "0.7.2",
+  "version": "0.7.4",
   "exports": [
     "ancova",
     "binomial_test",
@@ -82,5 +82,11 @@
     "write_stata",
     "write_xlsx",
     "write_xpt"
+  ],
+  "reexports": [
+    "%>%"
+  ],
+  "replacementForms": [
+    "var_label<-"
   ]
 }

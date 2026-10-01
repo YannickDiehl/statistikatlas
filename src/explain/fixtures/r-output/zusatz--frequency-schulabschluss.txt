@@ -1,0 +1,20 @@
+
+Frequency Analysis Results
+--------------------------
+
+schulabschluss (Welchen höchsten allgemeinbildenden Schulabschluss haben Sie?)
+# total N=200 valid N=200 mean=1.99 sd=1.43 skewness=0.01
+
++-------+------------------------------------+-----+--------+---------+--------+
+| Value | Label                              |   N |  Raw % | Valid % | Cum. % |
++-------+------------------------------------+-----+--------+---------+--------+
+|     0 | Ohne Schulabschluss                |  42 |  21.00 |   21.00 |  21.00 |
+|     1 | Haupt-/Volksschulabschluss         |  40 |  20.00 |   20.00 |  41.00 |
+|     2 | Mittlerer Abschluss                |  37 |  18.50 |   18.50 |  59.50 |
+|     3 | Fachhochschulreife                 |  41 |  20.50 |   20.50 |  80.00 |
+|     4 | Abitur / fachgebundene             |  40 |  20.00 |   20.00 | 100.00 |
+|       | Hochschulreife                     |     |        |         |        |
++-------+------------------------------------+-----+--------+---------+--------+
+| Total                                      | 200 | 100.00 |  100.00 |        |
++-------+------------------------------------+-----+--------+---------+--------+
+

@@ -146,3 +146,4 @@ small{font-size:max(13px,.85em)}
 
 /* Größere Schrift (1. Oktober 2026): Auf dem Telefon bleibt die Linienlegende in einer Zeile und lässt sich seitlich schieben. */
 @media(max-width:760px){.network-footer{flex-wrap:nowrap}.network-legend{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;white-space:nowrap;min-width:0}.network-legend>span,.network-footer>a{flex:none;white-space:nowrap}}
+.survey-downloads{display:flex;gap:6px}.survey-grid-tools button.primary,.r-actions button.primary{background:var(--green);border-color:var(--green);color:var(--paper)}.r-actions button.primary:hover{background:#245c4b}

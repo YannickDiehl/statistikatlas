@@ -1,11 +1,12 @@
 import { foundationEntries } from './foundations/catalog';
-// Audited against the local mariposa 0.7.2 source and NAMESPACE, 2026-09-10.
+// Audited against the local mariposa 0.7.4 source and NAMESPACE (scripts/verify-mariposa.R), 2026-10-01.
+// Code templates use the pipe style of the start block (src/domain/mariposa.ts): atlas %>% fn(…).
 // Formula tokens link to the same permanent concepts as the map edges.
 export type RoleKind='quantitative'|'ordered'|'category'|'twoGroups'|'binary'|'continuous'|'items'|'repeated'|'pairedBinary'|'multiple'|'predictor'|'factors'|'interaction'|'likert';
 export type ColumnRole={key:string;label:string;kind:RoleKind;default:string[];many:boolean};
 export type MethodVariant={label:string;fn:string;code:string;roles?:ColumnRole[];formula?:string;note?:string;external?:boolean};
 export type AtlasEntry={id:string;title:string;region:string;intro:string;formula:string;requires:{id:string;reason:string}[];notes:string[];output:string;variants:MethodVariant[];roles:ColumnRole[];existing:boolean;lab?:string;inputExclusions?:string[];sources?:{title:string;url:string}[]};
-export const mariposaVersion='0.7.2';
+export const mariposaVersion='0.7.4';
 export const mariposaExports:string[]=["ancova", "binomial_test", "center", "chi_square", "chisq_gof", "codebook", "copy_labels", "cramers_v", "crosstab", "describe", "drop_labels", "dunn_test", "efa", "factorial_anova", "find_var", "fisher_test", "fre", "frequency", "friedman_test", "goodman_gamma", "kendall_tau", "kruskal_wallis", "levene_test", "linear_regression", "logistic_regression", "mann_whitney", "marginal_effects", "mcnemar_test", "multiple_response", "na_frequencies", "normality_test", "oneway_anova", "pairwise_wilcoxon", "partial_cor", "pearson_cor", "phi", "pomps", "read_por", "read_sas", "read_spss", "read_stata", "read_xlsx", "read_xpt", "rec", "reliability", "row_count", "row_means", "row_sums", "scheffe_test", "set_na", "spearman_rho", "std", "strip_tags", "t_test", "to_character", "to_dummy", "to_label", "to_labelled", "to_numeric", "tukey_test", "unlabel", "untag_na", "val_labels", "var_label", "w_iqr", "w_kurtosis", "w_mean", "w_median", "w_modus", "w_quantile", "w_range", "w_sd", "w_se", "w_skew", "w_var", "wilcoxon_test", "write_spss", "write_stata", "write_xlsx", "write_xpt"];
 export const mariposaEntries:AtlasEntry[]=[
  {
@@ -66,12 +67,13 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Standardfehler des Mittels",
     "fn": "w_se",
-    "code": "w_se(d, {x})"
+    "code": "atlas %>%\n  w_se({x})"
    },
    {
     "label": "Einheitsgewichte",
     "fn": "w_se",
-    "code": "d$gewicht <- rep(1, nrow(d))\nw_se(d, {x}, weights = gewicht)"
+    "code": "atlas %>%\n  mutate(gewicht = 1) %>%\n  w_se({x}, weights = gewicht)",
+    "note": "Gewichte von 1 ändern nichts. So sieht der Aufruf mit Gewicht aus; im ALLBUS heißt das Gewicht wghtpew."
    }
   ],
   "roles": [
@@ -442,13 +444,13 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Ohne Gewichte",
     "fn": "w_mean",
-    "code": "w_mean(d, {x})"
+    "code": "atlas %>%\n  w_mean({x})"
    },
    {
     "label": "Mit Einheitsgewichten",
     "fn": "w_mean",
-    "code": "d$gewicht <- rep(1, nrow(d))\nw_mean(d, {x}, weights = gewicht)",
-    "note": "Einheitsgewichte demonstrieren die Schnittstelle. Sie sind keine Repräsentativitätsgewichte."
+    "code": "atlas %>%\n  mutate(gewicht = 1) %>%\n  w_mean({x}, weights = gewicht)",
+    "note": "Gewichte von 1 ändern nichts. So sieht der Aufruf mit Gewicht aus; im ALLBUS heißt das Gewicht wghtpew."
    }
   ],
   "roles": [
@@ -480,13 +482,13 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Ohne Gewichte",
     "fn": "w_var",
-    "code": "w_var(d, {x})"
+    "code": "atlas %>%\n  w_var({x})"
    },
    {
     "label": "Mit Einheitsgewichten",
     "fn": "w_var",
-    "code": "d$gewicht <- rep(1, nrow(d))\nw_var(d, {x}, weights = gewicht)",
-    "note": "Einheitsgewichte demonstrieren die Schnittstelle. Sie sind keine Repräsentativitätsgewichte."
+    "code": "atlas %>%\n  mutate(gewicht = 1) %>%\n  w_var({x}, weights = gewicht)",
+    "note": "Gewichte von 1 ändern nichts. So sieht der Aufruf mit Gewicht aus; im ALLBUS heißt das Gewicht wghtpew."
    }
   ],
   "roles": [
@@ -518,13 +520,13 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Ohne Gewichte",
     "fn": "w_sd",
-    "code": "w_sd(d, {x})"
+    "code": "atlas %>%\n  w_sd({x})"
    },
    {
     "label": "Mit Einheitsgewichten",
     "fn": "w_sd",
-    "code": "d$gewicht <- rep(1, nrow(d))\nw_sd(d, {x}, weights = gewicht)",
-    "note": "Einheitsgewichte demonstrieren die Schnittstelle. Sie sind keine Repräsentativitätsgewichte."
+    "code": "atlas %>%\n  mutate(gewicht = 1) %>%\n  w_sd({x}, weights = gewicht)",
+    "note": "Gewichte von 1 ändern nichts. So sieht der Aufruf mit Gewicht aus; im ALLBUS heißt das Gewicht wghtpew."
    }
   ],
   "roles": [
@@ -556,13 +558,13 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Ohne Gewichte",
     "fn": "w_median",
-    "code": "w_median(d, {x})"
+    "code": "atlas %>%\n  w_median({x})"
    },
    {
     "label": "Mit Einheitsgewichten",
     "fn": "w_median",
-    "code": "d$gewicht <- rep(1, nrow(d))\nw_median(d, {x}, weights = gewicht)",
-    "note": "Einheitsgewichte demonstrieren die Schnittstelle. Sie sind keine Repräsentativitätsgewichte."
+    "code": "atlas %>%\n  mutate(gewicht = 1) %>%\n  w_median({x}, weights = gewicht)",
+    "note": "Gewichte von 1 ändern nichts. So sieht der Aufruf mit Gewicht aus; im ALLBUS heißt das Gewicht wghtpew."
    }
   ],
   "roles": [
@@ -594,12 +596,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Häufigkeitstabelle",
     "fn": "frequency",
-    "code": "frequency(d, {x}, show_unused = TRUE)"
+    "code": "atlas %>%\n  frequency({x}, show_unused = TRUE)"
    },
    {
     "label": "Kurzname fre",
     "fn": "fre",
-    "code": "fre(d, {x})"
+    "code": "atlas %>%\n  fre({x})"
    }
   ],
   "roles": [
@@ -630,12 +632,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Zeilenprozente",
     "fn": "crosstab",
-    "code": "crosstab(d, row = {x}, col = {y}, percentages = \"row\")"
+    "code": "atlas %>%\n  crosstab(row = {x}, col = {y}, percentages = \"row\")"
    },
    {
     "label": "Spaltenprozente",
     "fn": "crosstab",
-    "code": "crosstab(d, row = {x}, col = {y}, percentages = \"col\")"
+    "code": "atlas %>%\n  crosstab(row = {x}, col = {y}, percentages = \"col\")"
    }
   ],
   "roles": [
@@ -676,12 +678,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Gemeinsame vollständige Fälle",
     "fn": "pearson_cor",
-    "code": "pearson_cor(d, {x}, {y}, use = \"listwise\", conf.level = .95)"
+    "code": "atlas %>%\n  pearson_cor({x}, {y}, use = \"listwise\", conf.level = .95)"
    },
    {
     "label": "Paarweiser Ausschluss",
     "fn": "pearson_cor",
-    "code": "pearson_cor(d, {x}, {y}, use = \"pairwise\")"
+    "code": "atlas %>%\n  pearson_cor({x}, {y}, use = \"pairwise\")"
    }
   ],
   "roles": [
@@ -722,7 +724,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Rangkorrelation",
     "fn": "spearman_rho",
-    "code": "spearman_rho(d, {x}, {y}, use = \"listwise\")"
+    "code": "atlas %>%\n  spearman_rho({x}, {y}, use = \"listwise\")"
    }
   ],
   "roles": [
@@ -762,7 +764,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Neue zentrierte Spalte",
     "fn": "center",
-    "code": "d <- center(d, {x}, suffix = \"_zentriert\")"
+    "code": "atlas %>%\n  center({x}, suffix = \"_zentriert\") %>%\n  describe({x}, {x}_zentriert, show = c(\"mean\", \"sd\"))"
    }
   ],
   "roles": [
@@ -794,24 +796,24 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "z-Werte · Standardabweichung",
     "fn": "std",
-    "code": "d <- std(d, {x}, method = \"sd\", suffix = \"_z\")"
+    "code": "atlas %>%\n  std({x}, method = \"sd\", suffix = \"_z\") %>%\n  describe({x}, {x}_z, show = c(\"mean\", \"sd\"))"
    },
    {
     "label": "Zwei Standardabweichungen",
     "fn": "std",
-    "code": "d <- std(d, {x}, method = \"2sd\", suffix = \"_2sd\")",
+    "code": "atlas %>%\n  std({x}, method = \"2sd\", suffix = \"_2sd\") %>%\n  describe({x}, {x}_2sd, show = c(\"mean\", \"sd\"))",
     "formula": "uᵢ = ([[xᵢ|series|Einzelwert]] − [[x̄|mean|Mittelwert]]) / (2·[[s|sd|Standardabweichung]])"
    },
    {
     "label": "MAD · robuste Skalierung",
     "fn": "std",
-    "code": "d <- std(d, {x}, method = \"mad\", suffix = \"_mad\")",
+    "code": "atlas %>%\n  std({x}, method = \"mad\", suffix = \"_mad\") %>%\n  describe({x}, {x}_mad, show = c(\"mean\", \"sd\"))",
     "formula": "uᵢ = ([[xᵢ|series|Einzelwert]] − [[Median|median|Median der Reihe]]) / MAD; MAD = 1,4826 · Median(|xᵢ−Median(X)|)"
    },
    {
     "label": "Gini-Mitteldifferenz",
     "fn": "std",
-    "code": "d <- std(d, {x}, method = \"gmd\", suffix = \"_gmd\")",
+    "code": "atlas %>%\n  std({x}, method = \"gmd\", suffix = \"_gmd\") %>%\n  describe({x}, {x}_gmd, show = c(\"mean\", \"sd\"))",
     "formula": "uᵢ = ([[xᵢ|series|Einzelwert]] − [[x̄|mean|Mittelwert]]) / GMD; GMD = ΣᵢΣⱼ|xᵢ−xⱼ| / n²"
    }
   ],
@@ -858,7 +860,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Welch · zwei unabhängige Gruppen",
     "fn": "t_test",
-    "code": "t_test(d, {x}, group = gruppe, var.equal = FALSE)",
+    "code": "atlas %>%\n  t_test({x}, group = {group}, var.equal = FALSE)",
     "roles": [
      {
       "key": "x",
@@ -883,7 +885,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Student · gleiche Varianzen",
     "fn": "t_test",
-    "code": "t_test(d, {x}, group = gruppe, var.equal = TRUE)",
+    "code": "atlas %>%\n  t_test({x}, group = {group}, var.equal = TRUE)",
     "roles": [
      {
       "key": "x",
@@ -909,7 +911,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Eine Stichprobe · gegen 7",
     "fn": "t_test",
-    "code": "t_test(d, {x}, mu = 7, alternative = \"two.sided\")",
+    "code": "atlas %>%\n  t_test({x}, mu = 7, alternative = \"two.sided\")",
     "roles": [
      {
       "key": "x",
@@ -926,7 +928,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Verbundene Mittelwerte · Differenz gegen 0",
     "fn": "t_test",
-    "code": "d$differenz <- d${y} - d${x}\nt_test(d, differenz, mu = 0)",
+    "code": "atlas %>%\n  mutate(differenz = {y} - {x}) %>%\n  t_test(differenz, mu = 0)",
     "roles": [
      {
       "key": "x",
@@ -952,7 +954,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Erste Gruppe kleiner · einseitig",
     "fn": "t_test",
-    "code": "t_test(d, {x}, group = gruppe, alternative = \"less\")",
+    "code": "atlas %>%\n  t_test({x}, group = {group}, alternative = \"less\")",
     "roles": [
      {
       "key": "x",
@@ -973,12 +975,12 @@ export const mariposaEntries:AtlasEntry[]=[
       "many": false
      }
     ],
-    "note": "Die erste Gruppe ist die erste Faktorstufe aus dem Codebuch. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
+    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
    },
    {
     "label": "Erste Gruppe größer · einseitig",
     "fn": "t_test",
-    "code": "t_test(d, {x}, group = gruppe, alternative = \"greater\")",
+    "code": "atlas %>%\n  t_test({x}, group = {group}, alternative = \"greater\")",
     "roles": [
      {
       "key": "x",
@@ -999,7 +1001,7 @@ export const mariposaEntries:AtlasEntry[]=[
       "many": false
      }
     ],
-    "note": "Die erste Gruppe ist die erste Faktorstufe aus dem Codebuch. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
+    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
    }
   ],
   "roles": [
@@ -1053,12 +1055,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Klassischen Rechenweg erklären",
     "fn": "oneway_anova",
-    "code": "a <- oneway_anova(d, {x}, group = gruppe)\nsummary(a)"
+    "code": "a <- atlas %>%\n  oneway_anova({x}, group = {group})\n\nsummary(a)"
    },
    {
     "label": "Welch-Rechenweg erklären",
     "fn": "oneway_anova",
-    "code": "a <- oneway_anova(d, {x}, group = gruppe)\nsummary(a)",
+    "code": "a <- atlas %>%\n  oneway_anova({x}, group = {group})\n\nsummary(a)",
     "formula": "wⱼ = nⱼ/[[sⱼ²|variance|Gruppenvarianz]]; W=Σwⱼ; x̄w=Σwⱼx̄ⱼ/W; B=Σ(1−wⱼ/W)²/(nⱼ−1); F_W=[Σwⱼ(x̄ⱼ−x̄w)²/(k−1)]/[1+2(k−2)B/(k²−1)]; df₂=(k²−1)/(3B)",
     "note": "Beide Rechenwege stehen in derselben R-Ausgabe. Welch benötigt positive Gruppenvarianzen und genügend Fälle je Gruppe; df₁=k−1."
    }
@@ -1110,7 +1112,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Zwei Faktoren mit Interaktion",
     "fn": "factorial_anova",
-    "code": "factorial_anova(d, dv = {x}, between = c({factors}), ss_type = 3)"
+    "code": "atlas %>%\n  factorial_anova(dv = {x}, between = c({factors}), ss_type = 3)"
    }
   ],
   "roles": [
@@ -1161,12 +1163,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Ein Faktor plus Kovariaten",
     "fn": "ancova",
-    "code": "ancova(d, dv = {x}, between = gruppe, covariate = c({controls}), ss_type = 3)"
+    "code": "atlas %>%\n  ancova(dv = {x}, between = {group}, covariate = c({controls}), ss_type = 3)"
    },
    {
     "label": "Mehrere Faktoren plus Kovariaten",
     "fn": "ancova",
-    "code": "ancova(d, dv = {x}, between = c({factors}), covariate = c({controls}), ss_type = 3)",
+    "code": "atlas %>%\n  ancova(dv = {x}, between = c({factors}), covariate = c({controls}), ss_type = 3)",
     "roles": [
      {
       "key": "x",
@@ -1253,13 +1255,13 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Brown–Forsythe · Median",
     "fn": "levene_test",
-    "code": "levene_test(d, {x}, group = gruppe, center = \"median\")",
+    "code": "atlas %>%\n  levene_test({x}, group = {group}, center = \"median\")",
     "formula": "zᵢⱼ = |[[xᵢⱼ|series|Messwert]] − [[Medianⱼ|median|Median der jeweiligen Gruppe]]| → [[ANOVA|oneway_anova|Gruppenvergleich der absoluten Abstände]]"
    },
    {
     "label": "Levene · Mittelwert",
     "fn": "levene_test",
-    "code": "levene_test(d, {x}, group = gruppe, center = \"mean\")"
+    "code": "atlas %>%\n  levene_test({x}, group = {group}, center = \"mean\")"
    }
   ],
   "roles": [
@@ -1310,7 +1312,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Beide Normalitätstests",
     "fn": "normality_test",
-    "code": "normality_test(d, {x})"
+    "code": "atlas %>%\n  normality_test({x})"
    }
   ],
   "roles": [
@@ -1345,19 +1347,19 @@ export const mariposaEntries:AtlasEntry[]=[
   "notes": [
    "Das Paket berichtet min(U₁,U₂). Ungewichtet: Normalapproximation mit Bindungskorrektur, ohne Kontinuitätskorrektur.",
    "Die Mediandeutung benötigt zusätzliche Annahmen über die Form der Gruppenverteilungen.",
-   "Die Beispiele verwenden mu=0. Bei mu≠0 passen berichtete unverschobene U/Z und der verschobene p-Wert im Paket nicht durchgängig zusammen."
+   "Die Beispiele verwenden mu=0."
   ],
   "output": "U, Z, p und Ranginformationen.",
   "variants": [
    {
     "label": "Zweiseitiger Rangvergleich",
     "fn": "mann_whitney",
-    "code": "mann_whitney(d, {x}, group = gruppe, mu = 0, alternative = \"two.sided\")"
+    "code": "atlas %>%\n  mann_whitney({x}, group = {group}, mu = 0, alternative = \"two.sided\")"
    },
    {
     "label": "Erste Gruppe kleiner · einseitig",
     "fn": "mann_whitney",
-    "code": "mann_whitney(d, {x}, group = gruppe, alternative = \"less\")",
+    "code": "atlas %>%\n  mann_whitney({x}, group = {group}, alternative = \"less\")",
     "roles": [
      {
       "key": "x",
@@ -1378,12 +1380,12 @@ export const mariposaEntries:AtlasEntry[]=[
       "many": false
      }
     ],
-    "note": "Die erste Gruppe ist die erste Faktorstufe aus dem Codebuch. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
+    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
    },
    {
     "label": "Erste Gruppe größer · einseitig",
     "fn": "mann_whitney",
-    "code": "mann_whitney(d, {x}, group = gruppe, alternative = \"greater\")",
+    "code": "atlas %>%\n  mann_whitney({x}, group = {group}, alternative = \"greater\")",
     "roles": [
      {
       "key": "x",
@@ -1404,7 +1406,7 @@ export const mariposaEntries:AtlasEntry[]=[
       "many": false
      }
     ],
-    "note": "Die erste Gruppe ist die erste Faktorstufe aus dem Codebuch. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
+    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
    }
   ],
   "roles": [
@@ -1454,7 +1456,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Gruppen über Ränge vergleichen",
     "fn": "kruskal_wallis",
-    "code": "kw <- kruskal_wallis(d, {x}, group = gruppe)\nsummary(kw)"
+    "code": "kw <- atlas %>%\n  kruskal_wallis({x}, group = {group})\n\nsummary(kw)"
    }
   ],
   "roles": [
@@ -1501,7 +1503,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Messung X gegen Messung Y",
     "fn": "wilcoxon_test",
-    "code": "wilcoxon_test(d, {x}, {y})"
+    "code": "atlas %>%\n  wilcoxon_test({x}, {y})"
    }
   ],
   "roles": [
@@ -1547,7 +1549,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Drei Testzeitpunkte",
     "fn": "friedman_test",
-    "code": "fr <- friedman_test(d, {times})\nsummary(fr)"
+    "code": "fr <- atlas %>%\n  friedman_test({times})\n\nsummary(fr)"
    }
   ],
   "roles": [
@@ -1589,7 +1591,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Paarvergleiche",
     "fn": "dunn_test",
-    "code": "kw <- kruskal_wallis(d, {x}, group = gruppe)\ndunn_test(kw, p_adjust = \"holm\")"
+    "code": "atlas %>%\n  kruskal_wallis({x}, group = {group}) %>%\n  dunn_test(p_adjust = \"holm\")"
    }
   ],
   "roles": [
@@ -1639,7 +1641,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Paarvergleiche",
     "fn": "tukey_test",
-    "code": "a <- oneway_anova(d, {x}, group = gruppe)\ntukey_test(a)"
+    "code": "atlas %>%\n  oneway_anova({x}, group = {group}) %>%\n  tukey_test()"
    }
   ],
   "roles": [
@@ -1689,7 +1691,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Paarvergleiche",
     "fn": "scheffe_test",
-    "code": "a <- oneway_anova(d, {x}, group = gruppe)\nscheffe_test(a)"
+    "code": "atlas %>%\n  oneway_anova({x}, group = {group}) %>%\n  scheffe_test()"
    }
   ],
   "roles": [
@@ -1738,7 +1740,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Paarvergleiche",
     "fn": "pairwise_wilcoxon",
-    "code": "fr <- friedman_test(d, {times})\npairwise_wilcoxon(fr, p_adjust = \"holm\")"
+    "code": "atlas %>%\n  friedman_test({times}) %>%\n  pairwise_wilcoxon(p_adjust = \"holm\")"
    }
   ],
   "roles": [
@@ -1760,7 +1762,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "id": "binomial_test",
   "title": "Binomialtest",
   "region": "categorical",
-  "intro": "Prüfe den Anteil einer binären Antwort gegen einen festgelegten Wert. Das Beispiel setzt Ja ausdrücklich als erste Faktorstufe und vergleicht mit 50 %.",
+  "intro": "Prüfe den Anteil einer binären Antwort gegen einen festgelegten Wert. Das Beispiel vergleicht den Anteil mit 50 %.",
   "formula": "P(K=k) = C(n,k) [[p₀|hypothesis|Vorgegebener Anteil]]ᵏ (1−p₀)ⁿ⁻ᵏ",
   "requires": [
    {
@@ -1773,7 +1775,7 @@ export const mariposaEntries:AtlasEntry[]=[
    }
   ],
   "notes": [
-   "mariposa testet immer die erste Kategorie zweiseitig. Bei unbearbeiteten 0/1-Werten wäre das der Nein-Anteil.",
+   "Wie in SPSS ist Gruppe 1 die Kategorie der ersten Person mit gültigem Wert. Bei p = .5 ist der Test zweiseitig, bei anderen Werten einseitig.",
    "Das Paket verlangt zwei beobachtete Kategorien. Gewichte werden gerundet; Standardbeispiel ungewichtet."
   ],
   "output": "Exakter p-Wert und exaktes Konfidenzintervall für den Anteil.",
@@ -1781,7 +1783,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Ja-Anteil gegen 50 %",
     "fn": "binomial_test",
-    "code": "d$ereignis <- factor(d${x}, levels = c(1, 0), labels = c(\"Ja\", \"Nein\"))\nbinomial_test(d, ereignis, p = .5)"
+    "code": "atlas %>%\n  binomial_test({x}, p = .5)"
    }
   ],
   "roles": [
@@ -1818,12 +1820,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Ohne Kontinuitätskorrektur",
     "fn": "chi_square",
-    "code": "chi_square(d, {x}, {y}, correct = FALSE)"
+    "code": "atlas %>%\n  chi_square({x}, {y}, correct = FALSE)"
    },
    {
     "label": "Kontinuitätskorrektur bei 2×2",
     "fn": "chi_square",
-    "code": "chi_square(d, {x}, {y}, correct = TRUE)",
+    "code": "atlas %>%\n  chi_square({x}, {y}, correct = TRUE)",
     "roles": [
      {
       "key": "x",
@@ -1894,12 +1896,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Gleichverteilung als Lehrhypothese",
     "fn": "chisq_gof",
-    "code": "chisq_gof(d, {x})"
+    "code": "atlas %>%\n  chisq_gof({x})"
    },
    {
     "label": "Vorgegebene Bildungsanteile",
     "fn": "chisq_gof",
-    "code": "chisq_gof(d, schulabschluss, expected = c(.1, .2, .3, .2, .2))",
+    "code": "atlas %>%\n  chisq_gof(schulabschluss, expected = c(.1, .2, .3, .2, .2))",
     "roles": [],
     "note": "Lehrhypothese in Codebuchreihenfolge 0–4: 10 %, 20 %, 30 %, 20 %, 20 %. Keine Behauptung über eine reale Bildungsbevölkerung."
    }
@@ -1943,7 +1945,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Feste Ränder · zweiseitig",
     "fn": "fisher_test",
-    "code": "fisher_test(d, row = {x}, col = {y})"
+    "code": "atlas %>%\n  fisher_test(row = {x}, col = {y})"
    }
   ],
   "roles": [
@@ -1990,12 +1992,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Mit Kontinuitätskorrektur",
     "fn": "mcnemar_test",
-    "code": "mcnemar_test(d, {x}, {y}, correct = TRUE)"
+    "code": "atlas %>%\n  mcnemar_test({x}, {y}, correct = TRUE)"
    },
    {
     "label": "Ohne Kontinuitätskorrektur",
     "fn": "mcnemar_test",
-    "code": "mcnemar_test(d, {x}, {y}, correct = FALSE)",
+    "code": "atlas %>%\n  mcnemar_test({x}, {y}, correct = FALSE)",
     "formula": "χ² = ([[b − c|crosstab|Unterschied der Wechselzahlen]])² / (b+c)"
    }
   ],
@@ -2037,7 +2039,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Zwei binäre Merkmale",
     "fn": "phi",
-    "code": "phi(d, {x}, {y})"
+    "code": "atlas %>%\n  phi({x}, {y})"
    }
   ],
   "roles": [
@@ -2078,7 +2080,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Kategoriale Zusammenhangsstärke",
     "fn": "cramers_v",
-    "code": "cramers_v(d, {x}, {y})"
+    "code": "atlas %>%\n  cramers_v({x}, {y})"
    }
   ],
   "roles": [
@@ -2123,7 +2125,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Geordnete Kategorien",
     "fn": "goodman_gamma",
-    "code": "goodman_gamma(d, {x}, {y})"
+    "code": "atlas %>%\n  goodman_gamma({x}, {y})"
    }
   ],
   "roles": [
@@ -2162,14 +2164,14 @@ export const mariposaEntries:AtlasEntry[]=[
   ],
   "notes": [
    "N₀=n(n−1)/2. Tₓ beziehungsweise Tᵧ zählen alle in X beziehungsweise Y gebundenen Personenpaare, einschließlich beidseitiger Bindungen.",
-   "Gewichtet verwendet der Kernel √(wᵢwⱼ) als Paargewicht; die Dokumentation beschreibt das nicht durchgängig korrekt. Die Beispiele bleiben ungewichtet."
+   "Gewichtet verwendet mariposa √(wᵢwⱼ) als Paargewicht. Die Beispiele bleiben ungewichtet."
   ],
   "output": "Tau-b und approximativer p-Wert; die Testapproximation hängt von Umfang und Bindungen ab.",
   "variants": [
    {
     "label": "Tau-b ohne Gewichte",
     "fn": "kendall_tau",
-    "code": "kendall_tau(d, {x}, {y}, use = \"listwise\")"
+    "code": "atlas %>%\n  kendall_tau({x}, {y}, use = \"listwise\")"
    }
   ],
   "roles": [
@@ -2216,7 +2218,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Lineare Kontrolle",
     "fn": "partial_cor",
-    "code": "partial_cor(d, {x}, {y}, controls = c({controls}))"
+    "code": "atlas %>%\n  partial_cor({x}, {y}, controls = c({controls}))"
    }
   ],
   "roles": [
@@ -2277,12 +2279,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Additives Modell",
     "fn": "linear_regression",
-    "code": "modell <- linear_regression(d, {x} ~ {predictors_formula}, use = \"listwise\", standardized = TRUE)\nsummary(modell)\npredict(modell, newdata = d)"
+    "code": "modell <- atlas %>%\n  linear_regression({x} ~ {predictors_formula}, use = \"listwise\", standardized = TRUE)\n\nsummary(modell)\n\npredict(modell)"
    },
    {
     "label": "Interaktion zweier Prädiktoren",
     "fn": "linear_regression",
-    "code": "modell <- linear_regression(d, {x} ~ {predictors_interaction}, use = \"listwise\")\nsummary(modell)",
+    "code": "modell <- atlas %>%\n  linear_regression({x} ~ {predictors_interaction}, use = \"listwise\")\n\nsummary(modell)",
     "roles": [
      {
       "key": "x",
@@ -2356,7 +2358,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Binäres Logitmodell",
     "fn": "logistic_regression",
-    "code": "modell <- logistic_regression(d, {x} ~ {predictors_formula}, factors = \"dummy\")\nsummary(modell)\npredict(modell, newdata = d, type = \"response\")"
+    "code": "modell <- atlas %>%\n  logistic_regression({x} ~ {predictors_formula}, factors = \"dummy\")\n\nsummary(modell)\n\npredict(modell, type = \"response\")"
    }
   ],
   "roles": [
@@ -2404,7 +2406,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Effekte eines Logitmodells",
     "fn": "marginal_effects",
-    "code": "modell <- logistic_regression(d, {x} ~ {predictors_formula})\nmarginal_effects(modell)"
+    "code": "atlas %>%\n  logistic_regression({x} ~ {predictors_formula}) %>%\n  marginal_effects()"
    }
   ],
   "roles": [
@@ -2452,7 +2454,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Fünf gleichgerichtete Lehritems",
     "fn": "reliability",
-    "code": "rel <- reliability(d, {items}, na.rm = TRUE)\nsummary(rel)"
+    "code": "rel <- atlas %>%\n  reliability({items}, na.rm = TRUE)\n\nsummary(rel)"
    }
   ],
   "roles": [
@@ -2491,27 +2493,27 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Eine Hauptkomponente · PCA",
     "fn": "efa",
-    "code": "efa(d, {items}, extraction = \"pca\", n_factors = 1, rotation = \"none\", use = \"complete\")"
+    "code": "atlas %>%\n  efa({items}, extraction = \"pca\", n_factors = 1, rotation = \"none\", use = \"complete\")"
    },
    {
     "label": "Ein gemeinsamer Faktor · ML",
     "fn": "efa",
-    "code": "efa(d, {items}, extraction = \"ml\", n_factors = 1, rotation = \"none\", use = \"complete\")"
+    "code": "atlas %>%\n  efa({items}, extraction = \"ml\", n_factors = 1, rotation = \"none\", use = \"complete\")"
    },
    {
     "label": "Zwei Komponenten · Varimax",
     "fn": "efa",
-    "code": "efa(d, {items}, extraction = \"pca\", n_factors = 2, rotation = \"varimax\", use = \"complete\")"
+    "code": "atlas %>%\n  efa({items}, extraction = \"pca\", n_factors = 2, rotation = \"varimax\", use = \"complete\")"
    },
    {
     "label": "Zwei Komponenten · Oblimin",
     "fn": "efa",
-    "code": "efa(d, {items}, extraction = \"pca\", n_factors = 2, rotation = \"oblimin\", use = \"complete\")"
+    "code": "atlas %>%\n  efa({items}, extraction = \"pca\", n_factors = 2, rotation = \"oblimin\", use = \"complete\")"
    },
    {
     "label": "Zwei Komponenten · Promax",
     "fn": "efa",
-    "code": "efa(d, {items}, extraction = \"pca\", n_factors = 2, rotation = \"promax\", use = \"complete\")"
+    "code": "atlas %>%\n  efa({items}, extraction = \"pca\", n_factors = 2, rotation = \"promax\", use = \"complete\")"
    }
   ],
   "roles": [
@@ -2546,7 +2548,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Alle Kennwerte",
     "fn": "describe",
-    "code": "describe(d, {variables}, show = \"all\")"
+    "code": "atlas %>%\n  describe({variables}, show = \"all\")"
    }
   ],
   "roles": [
@@ -2579,12 +2581,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Quartile nach Type 6",
     "fn": "w_quantile",
-    "code": "w_quantile(d, {x}, probs = c(.25, .5, .75))"
+    "code": "atlas %>%\n  w_quantile({x}, probs = c(.25, .5, .75))"
    },
    {
     "label": "Interquartilsabstand",
     "fn": "w_iqr",
-    "code": "w_iqr(d, {x})"
+    "code": "atlas %>%\n  w_iqr({x})"
    }
   ],
   "roles": [
@@ -2616,7 +2618,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Beobachtete Spannweite",
     "fn": "w_range",
-    "code": "w_range(d, {x})"
+    "code": "atlas %>%\n  w_range({x})"
    }
   ],
   "roles": [
@@ -2648,7 +2650,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Häufigste Ausprägung",
     "fn": "w_modus",
-    "code": "w_modus(d, {x})"
+    "code": "atlas %>%\n  w_modus({x})"
    }
   ],
   "roles": [
@@ -2680,19 +2682,19 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Schiefe",
     "fn": "w_skew",
-    "code": "w_skew(d, {x})",
+    "code": "atlas %>%\n  w_skew({x})",
     "formula": "mᵣ = Σ([[xᵢ−x̄|deviation|Abweichungen]])ʳ/n; G₁ = √(n(n−1))/(n−2) · m₃/m₂^(3/2)"
    },
    {
     "label": "Kurtosis · Exzess",
     "fn": "w_kurtosis",
-    "code": "w_kurtosis(d, {x}, excess = TRUE)",
+    "code": "atlas %>%\n  w_kurtosis({x}, excess = TRUE)",
     "formula": "mᵣ = Σ([[xᵢ−x̄|deviation|Abweichungen]])ʳ/n; g₂=m₄/m₂²−3; G₂=((n+1)g₂+6)(n−1)/((n−2)(n−3))"
    },
    {
     "label": "Kurtosis · ohne Abzug 3",
     "fn": "w_kurtosis",
-    "code": "w_kurtosis(d, {x}, excess = FALSE)",
+    "code": "atlas %>%\n  w_kurtosis({x}, excess = FALSE)",
     "formula": "mᵣ = Σ([[xᵢ−x̄|deviation|Abweichungen]])ʳ/n; g₂=m₄/m₂²−3; G₂=((n+1)g₂+6)(n−1)/((n−2)(n−3)); Kurtosis = G₂+3"
    }
   ],
@@ -2725,7 +2727,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Lernquellen · Mehrfachauswahl",
     "fn": "multiple_response",
-    "code": "multiple_response(d, {items}, counted = 1)"
+    "code": "atlas %>%\n  multiple_response({items}, counted = 1)"
    }
   ],
   "roles": [
@@ -2758,12 +2760,12 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Codebuch erzeugen",
     "fn": "codebook",
-    "code": "codebook(d, view = FALSE)"
+    "code": "atlas %>%\n  codebook(view = FALSE)"
    },
    {
     "label": "Lernvariablen finden",
     "fn": "find_var",
-    "code": "find_var(d, \"lern\", search = \"name_label\")"
+    "code": "atlas %>%\n  find_var(\"lern\", search = \"name_label\")"
    }
   ],
   "roles": [],
@@ -2785,27 +2787,27 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Fragetext setzen",
     "fn": "var_label",
-    "code": "d <- var_label(d, lernzeit = \"Lernzeit in den letzten sieben Tagen\")"
+    "code": "atlas <- atlas %>%\n  var_label(lernzeit = \"Lernzeit in den letzten sieben Tagen\")"
    },
    {
     "label": "Antworttexte setzen",
     "fn": "val_labels",
-    "code": "d <- val_labels(d, erwerbstaetig = c(\"Nein\" = 0, \"Ja\" = 1))"
+    "code": "atlas <- atlas %>%\n  val_labels(erwerbstaetig = c(\"Nein\" = 0, \"Ja\" = 1))"
    },
    {
     "label": "Labels kopieren",
     "fn": "copy_labels",
-    "code": "quelle <- val_labels(d, erwerbstaetig = c(\"Nein\" = 0, \"Ja\" = 1))\nd <- copy_labels(unlabel(quelle), quelle)"
+    "code": "kopie <- atlas %>%\n  unlabel() %>%\n  copy_labels(atlas)"
    },
    {
     "label": "Unbenutzte Labels entfernen",
     "fn": "drop_labels",
-    "code": "d <- val_labels(d, erwerbstaetig = c(\"Nein\" = 0, \"Ja\" = 1))\nd <- drop_labels(d[d$erwerbstaetig == 1, ])"
+    "code": "erwerbstaetige <- atlas %>%\n  filter(erwerbstaetig == 1) %>%\n  drop_labels()"
    },
    {
     "label": "Labels entfernen",
     "fn": "unlabel",
-    "code": "d <- unlabel(d)"
+    "code": "ohne_labels <- atlas %>%\n  unlabel()"
    }
   ],
   "roles": [],
@@ -2832,22 +2834,22 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Labels zu Faktoren",
     "fn": "to_label",
-    "code": "d <- val_labels(d, erwerbstaetig = c(\"Nein\" = 0, \"Ja\" = 1))\nd <- to_label(d, erwerbstaetig)"
+    "code": "atlas %>%\n  to_label(erwerbstaetig) %>%\n  frequency(erwerbstaetig)"
    },
    {
     "label": "Gelabelter Vektor",
     "fn": "to_labelled",
-    "code": "antwort <- to_labelled(d$erwerbstaetig, labels = c(\"Nein\" = 0, \"Ja\" = 1), label = \"Erwerbstätig\")"
+    "code": "atlas %>%\n  mutate(erwerbstaetig = to_labelled(erwerbstaetig, labels = c(\"Nein\" = 0, \"Ja\" = 1), label = \"Erwerbstätig\")) %>%\n  frequency(erwerbstaetig)"
    },
    {
     "label": "Labels zu Text",
     "fn": "to_character",
-    "code": "d <- val_labels(d, erwerbstaetig = c(\"Nein\" = 0, \"Ja\" = 1))\nd <- to_character(d, erwerbstaetig)"
+    "code": "atlas %>%\n  to_character(erwerbstaetig) %>%\n  frequency(erwerbstaetig)"
    },
    {
     "label": "Numerische Werte",
     "fn": "to_numeric",
-    "code": "d <- to_numeric(d, erwerbstaetig)"
+    "code": "atlas %>%\n  to_numeric(erwerbstaetig) %>%\n  frequency(erwerbstaetig)"
    }
   ],
   "roles": [],
@@ -2861,7 +2863,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "formula": "−9 → [[NA|missing|Fehlende Angabe]] → gültige Fallauswahl",
   "requires": [],
   "notes": [
-   "Die Beispiele setzen nur in einer R-Kopie einen Lehr-Missing-Code. Der Atlasdatensatz bleibt vollständig.",
+   "Die Beispiele setzen nur innerhalb des Aufrufs bei P001 den Lehr-Missing-Code −9. atlas selbst bleibt vollständig.",
    "untag_na stellt geeignete ursprüngliche Codes wieder her. strip_tags erhält den Missing-Status und vereinheitlicht zu gewöhnlichem NA."
   ],
   "output": "Bereinigte Werte oder eine Häufigkeitstabelle der Missing-Typen.",
@@ -2869,22 +2871,22 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Code als fehlend markieren",
     "fn": "set_na",
-    "code": "d$einkommen[1] <- -9\nd <- set_na(d, einkommen = -9)"
+    "code": "atlas %>%\n  mutate(einkommen = replace(einkommen, id == \"P001\", -9)) %>%\n  set_na(einkommen = -9) %>%\n  describe(einkommen, show = c(\"mean\", \"sd\"))"
    },
    {
     "label": "Fehlende Angaben zählen",
     "fn": "na_frequencies",
-    "code": "d$einkommen[1] <- -9\nd <- set_na(d, einkommen = -9)\nna_frequencies(d$einkommen)"
+    "code": "atlas %>%\n  mutate(einkommen = replace(einkommen, id == \"P001\", -9)) %>%\n  set_na(einkommen = -9) %>%\n  pull(einkommen) %>%\n  na_frequencies()"
    },
    {
     "label": "Missing-Code zurückholen",
     "fn": "untag_na",
-    "code": "d$einkommen[1] <- -9\nd <- set_na(d, einkommen = -9)\nuntag_na(d$einkommen)"
+    "code": "atlas %>%\n  mutate(einkommen = replace(einkommen, id == \"P001\", -9)) %>%\n  set_na(einkommen = -9) %>%\n  pull(einkommen) %>%\n  untag_na() %>%\n  head(3)"
    },
    {
     "label": "Missing-Tags entfernen",
     "fn": "strip_tags",
-    "code": "d$einkommen[1] <- -9\nd <- set_na(d, einkommen = -9)\nstrip_tags(d$einkommen)"
+    "code": "atlas %>%\n  mutate(einkommen = replace(einkommen, id == \"P001\", -9)) %>%\n  set_na(einkommen = -9) %>%\n  pull(einkommen) %>%\n  strip_tags() %>%\n  head(3)"
    }
   ],
   "roles": [],
@@ -2899,14 +2901,14 @@ export const mariposaEntries:AtlasEntry[]=[
   "requires": [],
   "notes": [
    "Umpolen ist eine inhaltliche Entscheidung: Erst die Frage entscheidet, welche Richtung „mehr“ bedeutet.",
-   "Ein Suffix bewahrt die ursprünglichen Werte. Kategorien zusammenfassen verändert die verfügbare Information."
+   "Eine neue Spalte bewahrt die ursprünglichen Werte. Kategorien zusammenfassen verändert die verfügbare Information."
   ],
   "output": "Eine neue Spalte mit expliziter Rekodierregel.",
   "variants": [
    {
     "label": "Itemrichtung umkehren",
     "fn": "rec",
-    "code": "d <- rec(d, {x}, rules = \"{reverse_rules}\", suffix = \"_umgepolt\")"
+    "code": "atlas %>%\n  mutate({x}_umgepolt = rec({x}, rules = \"{reverse_rules}\")) %>%\n  frequency({x}_umgepolt)"
    }
   ],
   "roles": [
@@ -2938,7 +2940,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Indikatoren mit Referenzkategorie",
     "fn": "to_dummy",
-    "code": "d <- to_dummy(d, {x}, ref = {lo})"
+    "code": "atlas %>%\n  to_dummy({x}, ref = {lo}) %>%\n  select(starts_with(\"{x}_\"))"
    }
   ],
   "roles": [
@@ -2970,7 +2972,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Theoretische Skalenbreite",
     "fn": "pomps",
-    "code": "d$pomp <- pomps(d${x}, scale_min = {lo}, scale_max = {hi})"
+    "code": "atlas %>%\n  mutate(pomp = pomps({x}, scale_min = {lo}, scale_max = {hi})) %>%\n  describe({x}, pomp, show = c(\"mean\", \"min\", \"max\"))"
    }
   ],
   "roles": [
@@ -3003,7 +3005,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Itemmittel pro Person",
     "fn": "row_means",
-    "code": "d$methoden_mittel <- row_means(d, {items}, min_valid = {item_count})",
+    "code": "atlas %>%\n  mutate(methoden_mittel = row_means(pick({items}), min_valid = {item_count})) %>%\n  describe(methoden_mittel, show = c(\"mean\", \"sd\", \"min\", \"max\"))",
     "roles": [
      {
       "key": "items",
@@ -3023,7 +3025,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Itemsumme pro Person",
     "fn": "row_sums",
-    "code": "d$methoden_summe <- row_sums(d, {items}, min_valid = {item_count})",
+    "code": "atlas %>%\n  mutate(methoden_summe = row_sums(pick({items}), min_valid = {item_count})) %>%\n  describe(methoden_summe, show = c(\"mean\", \"sd\", \"min\", \"max\"))",
     "roles": [
      {
       "key": "items",
@@ -3043,7 +3045,7 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "Anzahl gewählter Lernquellen",
     "fn": "row_count",
-    "code": "d$quellen_anzahl <- row_count(d, {items}, count = 1)",
+    "code": "atlas %>%\n  mutate(quellen_anzahl = row_count(pick({items}), count = 1)) %>%\n  frequency(quellen_anzahl)",
     "roles": [
      {
       "key": "items",
@@ -3080,49 +3082,49 @@ export const mariposaEntries:AtlasEntry[]=[
   "id": "data_import",
   "title": "Daten nach R einlesen",
   "region": "prepare",
-  "intro": "Lies Daten mit ihren Formaten und Metadaten ein. Für den Atlas-CSV-Export verwendet das Startskript read.csv2; mariposa ergänzt Formate mit Labels und Missing-Informationen.",
+  "intro": "Lies Daten mit ihren Formaten und Metadaten ein. Den Lehrdatensatz liest der Startblock mit read_spss() als SPSS-Datei ein, zusammen mit Variablen- und Wertelabels.",
   "formula": "Datei → [[Datentabelle|series|Werte je Person]] + [[Codebuch|codebook|Variablen und Labels]]",
   "requires": [],
   "notes": [
-   "Die folgenden Aufrufe setzen die jeweilige Datei voraus. Die Dateinamen sind Beispiele, keine mitgelieferten Dateien.",
-   "SAV, DTA, POR, SAS und XPT nutzen haven; Excel nutzt openxlsx2. POR und native SAS-Dateien brauchen eine externe Quelldatei."
+   "Damit die Beispiele ohne fremde Datei laufen, schreiben sie den Lehrdatensatz zuerst in das Format und lesen ihn dann als daten wieder ein.",
+   "SAV, DTA, POR, SAS und XPT nutzen haven; Excel nutzt openxlsx2. POR- und native SAS-Dateien kann mariposa nicht schreiben; dafür brauchst du eine Datei aus einer anderen Quelle."
   ],
   "output": "Ein Dataframe als Grundlage der weiteren Analyse.",
   "variants": [
    {
     "label": "SPSS · SAV",
     "fn": "read_spss",
-    "code": "d <- read_spss(\"atlas.sav\")",
+    "code": "atlas %>%\n  write_spss(\"atlas.sav\")\n\ndaten <- read_spss(\"atlas.sav\")",
     "external": true
    },
    {
     "label": "SPSS Portable · POR",
     "fn": "read_por",
-    "code": "d <- read_por(\"atlas.por\")",
+    "code": "daten <- read_por(\"atlas.por\")",
     "external": true
    },
    {
     "label": "Stata · DTA",
     "fn": "read_stata",
-    "code": "d <- read_stata(\"atlas.dta\")",
+    "code": "atlas %>%\n  write_stata(\"atlas.dta\")\n\ndaten <- read_stata(\"atlas.dta\")",
     "external": true
    },
    {
     "label": "SAS · native Datei",
     "fn": "read_sas",
-    "code": "d <- read_sas(\"atlas.sas7bdat\", catalog_file = \"atlas.sas7bcat\")",
+    "code": "daten <- read_sas(\"atlas.sas7bdat\", catalog_file = \"atlas.sas7bcat\")",
     "external": true
    },
    {
     "label": "SAS Transport · XPT",
     "fn": "read_xpt",
-    "code": "d <- read_xpt(\"atlas.xpt\")",
+    "code": "atlas %>%\n  write_xpt(\"atlas.xpt\", version = 8, name = \"atlas\")\n\ndaten <- read_xpt(\"atlas.xpt\")",
     "external": true
    },
    {
     "label": "Excel · XLSX",
     "fn": "read_xlsx",
-    "code": "d <- read_xlsx(\"atlas.xlsx\")",
+    "code": "atlas %>%\n  write_xlsx(\"atlas.xlsx\")\n\ndaten <- read_xlsx(\"atlas.xlsx\")",
     "external": true
    }
   ],
@@ -3146,31 +3148,31 @@ export const mariposaEntries:AtlasEntry[]=[
    {
     "label": "SPSS · SAV",
     "fn": "write_spss",
-    "code": "write_spss(d, \"atlas.sav\")",
+    "code": "atlas %>%\n  write_spss(\"atlas.sav\")",
     "external": true
    },
    {
     "label": "Stata · DTA",
     "fn": "write_stata",
-    "code": "write_stata(d, \"atlas.dta\")",
+    "code": "atlas %>%\n  write_stata(\"atlas.dta\")",
     "external": true
    },
    {
     "label": "SAS Transport · XPT",
     "fn": "write_xpt",
-    "code": "write_xpt(d, \"atlas.xpt\", version = 8, name = \"atlas\")",
+    "code": "atlas %>%\n  write_xpt(\"atlas.xpt\", version = 8, name = \"atlas\")",
     "external": true
    },
    {
     "label": "Excel · Daten",
     "fn": "write_xlsx",
-    "code": "write_xlsx(d, \"atlas.xlsx\")",
+    "code": "atlas %>%\n  write_xlsx(\"atlas.xlsx\")",
     "external": true
    },
    {
     "label": "Excel · Codebuch",
     "fn": "write_xlsx",
-    "code": "write_xlsx(codebook(d, view = FALSE), \"codebuch.xlsx\")",
+    "code": "atlas %>%\n  codebook(view = FALSE) %>%\n  write_xlsx(\"codebuch.xlsx\")",
     "external": true
    }
   ],

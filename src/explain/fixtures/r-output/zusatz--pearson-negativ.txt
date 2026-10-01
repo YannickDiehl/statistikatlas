@@ -1,0 +1,3 @@
+Pearson Correlation: lernzeit x schlafdauer
+  r = -0.133, p = 0.060, N = 200
+Use summary() for detailed output.

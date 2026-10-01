@@ -1,0 +1,4 @@
+# A tibble: 1 × 1
+  kovarianz
+      <dbl>
+1      5.44
