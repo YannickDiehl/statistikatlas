@@ -17,6 +17,12 @@ import { rekodieren } from './content/rekodieren';
 import { pWert } from './content/muster/p-wert';
 import { dummy } from './content/muster/dummy';
 import { modeStore } from './mode';
+import { ConceptInspector } from '../components/ConceptInspector';
+import { forgetTabs, kurzOf, tabList } from '../components/explain/ExplainTabs';
+import { TAB_IDS, tabsFor } from './registry';
+import { applyOp } from './sample';
+import { columnById, createSurvey, defaultSelection, projectPairs, type ColumnSelection, type SurveyRow } from '../domain/survey';
+import { lessonContext, ref } from '../domain/learning';
 
 const noop = () => {};
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
@@ -183,4 +189,107 @@ test('picture kit: building blocks draw in screen pixels and keep the slider rol
   for (const part of ['role="slider"', 'aria-valuenow="4"', 'r="20"', 'class="xw-area-pos"', 'class="xw-curve"', 'class="xw-bar-neg"', 'class="xw-cell xw-cell-pos"', 'Stunden', 'erwartet 9', 'x̄ = 5'])
     assert.ok(svg.includes(part), `Baukasten: „${part}“ fehlt`);
   assert.ok(!/font-size="?\d/.test(svg), 'Schriftgrößen kommen aus dem CSS (mindestens 13 px), nicht aus Attributen');
+});
+
+// ---------- Reiter (Aufgabe F3) ----------
+
+const surveyRows = createSurvey();
+const inspector = (id: string, opts: { rows?: SurveyRow[]; selection?: ColumnSelection } = {}) => {
+  const selection = opts.selection ?? defaultSelection, rows = opts.rows ?? surveyRows;
+  const context = lessonContext(projectPairs(rows, selection), 'P002', 'covariance', { x: columnById[selection.x], y: columnById[selection.y] }, selection.likertMetric);
+  return renderToStaticMarkup(createElement(ConceptInspector, {
+    selected: ref(id), context, selection, rows, onColumns: noop, onData: noop, onRows: noop, highlight: null, onHighlight: noop, onSelect: noop, onHover: noop, onClose: noop,
+    onFocusMap: noop, onCase: noop, onPairs: noop, onReset: noop, resetRevision: 0, onVariable: noop, onRoute: noop, trace: false, onTrace: noop,
+    experimentOpen: false, experimentRequest: 0, onExperimentFocused: noop, onExperiment: noop,
+  }));
+};
+/** Text ohne Tags und ohne zusätzliche Leerzeichen, für Code, in dem jedes Zeichen ein eigener Knopf ist. */
+const plain = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
+const tabNames = (html: string) => [...html.matchAll(/role="tab"[^>]*>([^<]*)</g)].map(m => m[1]);
+const panelOf = (html: string, id: string, tab: string) => {
+  const start = html.indexOf(`id="xp-${id}-${tab}"`), next = html.indexOf('role="tabpanel"', html.indexOf('>', start));
+  return start < 0 ? '' : html.slice(start, next < 0 ? undefined : next);
+};
+
+test('tabs: four for sd, three for recode, Weiter for every concept with tabs, named after their template', () => {
+  forgetTabs();
+  const expected: Record<string, string[]> = {
+    sd: ['Verstehen (5 Personen)', 'Mit 200 Befragten', 'In R', 'Weiter'],
+    mean: ['Verstehen (5 Personen)', 'Mit 200 Befragten', 'In R', 'Weiter'],
+    pearson: ['Verstehen (5 Personen)', 'Mit 200 Befragten', 'In R', 'Weiter'],
+    se: ['Verstehen', 'Mit 200 Befragten', 'In R', 'Weiter'],
+    recode: ['Werkzeug', 'In R', 'Weiter'],
+    p_value: ['Verstehen', 'Mit 200 Befragten', 'In R', 'Weiter'],
+    dummy: ['Werkzeug', 'Mit 200 Befragten', 'In R', 'Weiter'],
+  };
+  for (const [id, names] of Object.entries(expected)) assert.deepEqual(tabNames(inspector(id)), names, id);
+  for (const id of TAB_IDS) {
+    const { full, compact } = both(() => inspector(id));
+    sound(full, `${id} Reiter`);
+    const names = tabNames(full), tabs = tabsFor(id)!;
+    assert.deepEqual(names, tabList(explainFor(id), tabs).map(t => t.label), id);
+    assert.equal(names.at(-1), 'Weiter', `${id}: Reiter „Weiter“ fehlt`);
+    assert.deepEqual(tabNames(compact), names, `${id}: Kompakt zeigt andere Reiter`);
+    assert.ok(text(compact).length < text(full).length, `${id}: Kompakt ist nicht kürzer`);
+    // ARIA-Muster „Tabs“: ein gewählter Reiter mit Fokus, alle Panels eingehängt, nur eines sichtbar.
+    assert.equal((full.match(/role="tablist"/g) ?? []).length, 1);
+    assert.equal((full.match(/aria-selected="true"/g) ?? []).length, 1);
+    assert.match(full, new RegExp(`id="xt-${id}-verstehen" role="tab" aria-selected="true" aria-controls="xp-${id}-verstehen" tabindex="0"`));
+    const panels = [...full.matchAll(/role="tabpanel"[^>]*>/g)].map(m => m[0]);
+    assert.equal(panels.length, names.length, `${id}: nicht alle Panels eingehängt`);
+    assert.equal(panels.filter(p => !p.includes('hidden')).length, 1, `${id}: mehr als ein Panel sichtbar`);
+    // Kurz gesagt steht über den Reitern und nur einmal da.
+    const kurz = kurzOf(explainFor(id));
+    if (kurz) {
+      assert.ok(full.indexOf(kurz.text.slice(0, 40)) < full.indexOf('role="tablist"'), `${id}: Kurz gesagt steht nicht über den Reitern`);
+      assert.equal(full.split(kurz.text.slice(0, 40)).length, 2, `${id}: Kurz gesagt doppelt`);
+    }
+    assert.ok(text(panelOf(full, id, 'weiter')).includes('Als Nächstes'), `${id}: Weiter ohne Als Nächstes`);
+  }
+});
+
+test('tabs: the pilot contents in each tab of the standard deviation', () => {
+  const html = inspector('sd'), t = (tab: string) => text(panelOf(html, 'sd', tab));
+  for (const part of ['Wofür?', 'Die Mitte finden', 'Das Bild dazu', 'Weiter mit 200 Befragten']) assert.ok(t('verstehen').includes(part), `Verstehen: „${part}“ fehlt`);
+  for (const part of ['Dieselbe Formel wie mit fünf Personen, jetzt mit allen 200 Befragten des Lehrdatensatzes.', 'Mit welcher Variable?', 'Wie viele Stunden haben Sie',
+    'Standardabweichung s', '3,24 h', 'Vorgerechnet für Person', 'Ihr Beitrag ist in Formel und Bild markiert.', 'Schritt 1 für alle 200', 'Vorgerechnet für P002',
+    'Was heißt das Ergebnis?', '141 von 200 Befragten lernen zwischen 4,51 und 10,99 Stunden.', 'Voraussetzung', 'Erst tippen, dann ausprobieren', 'Die Rechnung als Baukasten entfalten'])
+    assert.ok(t('sample').includes(part), `Mit 200 Befragten: „${part}“ fehlt`);
+  assert.match(panelOf(html, 'sd', 'sample'), /class="xw-fp xw-who"/, 'der Summand der gewählten Person ist umrahmt');
+  for (const part of ['In R rechnet mariposa dieselbe Zahl.', 'Lehrdatensatz als SPSS-Datei (.sav)', 'auch als CSV', 'describe(lernzeit, show = c("mean", "sd", "var"))', 'Descriptive Statistics',
+    'R schreibt Punkt statt Komma', 'Kurz prüfen', 'Welche Zahl in der Ausgabe ist s?', 'Anderer Aufruf', 'w_sd(lernzeit)', 'Aufruf kopieren', 'R-Skript', 'Weitere Funktionen und Hilfe', '?mariposa::describe'])
+    assert.ok(plain(panelOf(html, 'sd', 'r')).includes(part), `In R: „${part}“ fehlt`);
+  assert.match(panelOf(html, 'sd', 'r'), /<button type="button" class="xw-num" aria-pressed="false" aria-label="SD 3\.238: im Atlas zeigen">3\.238<\/button>/);
+  assert.match(panelOf(html, 'sd', 'r'), /aria-label="%&gt;%: erklären"/, 'der Pipe-Operator ist antippbar');
+  for (const part of ['Von hier aus weiter', 'Als Nächstes', 'Standardfehler', 'Das geht voraus', 'Varianz', 'Daraus entsteht', 'z-Standardisierung', 'Weitere Verwendungen und Rechenwege'])
+    assert.ok(t('weiter').includes(part), `Weiter: „${part}“ fehlt`);
+  assert.ok(!text(html).includes('Mit dem Lehrdatensatz (200 Befragte)'), 'die alte Überschrift wandert in den Reiter');
+});
+
+test('tabs: changed data show a note with reset in the sample tab and the live R output follows the data', () => {
+  const changed = inspector('sd', { rows: applyOp(surveyRows, 'lernzeit', 'outlier', 40, 1) });
+  assert.ok(text(panelOf(changed, 'sd', 'sample')).includes('Deine Daten sind verändert.') && text(panelOf(changed, 'sd', 'sample')).includes('Ausgangsdaten wiederherstellen'), 'Hinweis mit Rücksetzknopf fehlt');
+  assert.ok(plain(panelOf(changed, 'sd', 'r')).includes('3.960'), 'die Ausgabe zeigt s = 3.960 nach dem Ausreißer');
+  assert.ok(text(panelOf(changed, 'sd', 'r')).includes('Die Ausgabe zeigt deine veränderten Daten'), 'Hinweis zur Ausgabe fehlt');
+  assert.ok(!text(inspector('sd')).includes('Deine Daten sind verändert.'), 'Hinweis ohne Änderung');
+  // Andere Spalte gewählt: Die Vorhersagen nennen ihre Spalte und bieten den Wechsel an.
+  const other = inspector('sd', { selection: { ...defaultSelection, x: 'schlafdauer' } });
+  assert.ok(text(panelOf(other, 'sd', 'sample')).includes('Die Vorhersagefragen sind für „Lernzeit“ geschrieben.'), 'Hinweis zur Spalte der Vorhersagen fehlt');
+  assert.ok(plain(panelOf(other, 'sd', 'r')).includes('describe(schlafdauer'), 'der Leitaufruf folgt der Spaltenwahl');
+});
+
+test('tabs: package concepts (se, p_value, dummy, recode) show their sample and R tabs', () => {
+  const has = (html: string, id: string, tab: string, part: string) => assert.ok(plain(panelOf(html, id, tab)).includes(part), `${id}/${tab}: „${part}“ fehlt`);
+  const se = inspector('se');
+  has(se, 'se', 'sample', 'SE = 3,24 / √200 ≈ 0,23 h');
+  has(se, 'se', 'r', 'describe(lernzeit, show = c("mean", "sd", "se"))'); has(se, 'se', 'r', '0.229');
+  const p = inspector('p_value');
+  has(p, 'p_value', 'sample', 'p ≈ 0,88');
+  has(p, 'p_value', 'r', 't_test(lernzeit, group = weiterbildung, var.equal = FALSE)');
+  has(p, 'p_value', 'r', 'Ausgabe für die Ausgangsdaten, in R erfasst.');
+  has(p, 'p_value', 'weiter', 'Signifikanzniveau α');
+  const rec = inspector('recode');
+  has(rec, 'recode', 'r', 'lernplanung5_umgepolt (Ich plane feste Zeiten zum Lernen ein. (recoded))');
+  has(rec, 'recode', 'r', 'mean=2.74');
+  has(inspector('dummy'), 'dummy', 'sample', 'haupt 40, mittel 37, fhr 41, abitur 40');
 });
