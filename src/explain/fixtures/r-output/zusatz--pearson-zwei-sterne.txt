@@ -1,0 +1,3 @@
+Pearson Correlation: haushaltsgroesse x lernzeit
+  r = 0.184, p = 0.009 **, N = 200
+Use summary() for detailed output.

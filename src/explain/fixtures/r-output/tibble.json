@@ -1,0 +1,146 @@
+[
+  {
+    "value": 620.213638190954,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1      620."
+  },
+  {
+    "value": -124.7008040201,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1     -125."
+  },
+  {
+    "value": -0.353918341708543,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1    -0.354"
+  },
+  {
+    "value": 2035319.23175879,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1  2035319."
+  },
+  {
+    "value": 5.43891,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1      5.44"
+  },
+  {
+    "value": 0.0123456,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1    0.0123"
+  },
+  {
+    "value": -2.5,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1      -2.5"
+  },
+  {
+    "value": 1234.5678,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1     1235."
+  },
+  {
+    "value": 12.3456,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1      12.3"
+  },
+  {
+    "value": 100,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1       100"
+  },
+  {
+    "value": 0.5,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1       0.5"
+  },
+  {
+    "value": -0.000123456,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1 -0.000123"
+  },
+  {
+    "value": 123456.7,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1   123457."
+  },
+  {
+    "value": 1e-10,
+    "output": "# A tibble: 1 × 1\n     kovarianz\n         <dbl>\n1 0.0000000001"
+  },
+  {
+    "value": 0,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1         0"
+  },
+  {
+    "value": 3,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1         3"
+  },
+  {
+    "value": -45.678,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1     -45.7"
+  },
+  {
+    "value": 999.99,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1     1000."
+  },
+  {
+    "value": 0.999,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1     0.999"
+  },
+  {
+    "value": 9.999,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1     10.00"
+  },
+  {
+    "value": 99.95,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1     100.0"
+  },
+  {
+    "value": 0.00999,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1   0.00999"
+  },
+  {
+    "value": 1000000,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1   1000000"
+  },
+  {
+    "value": 12345678.9,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1 12345679."
+  },
+  {
+    "value": 1.5e-05,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1  0.000015"
+  },
+  {
+    "value": -0.5,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1      -0.5"
+  },
+  {
+    "value": 10,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1        10"
+  },
+  {
+    "value": 1.05,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1      1.05"
+  },
+  {
+    "value": 2.0001,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1      2.00"
+  },
+  {
+    "value": 1e+15,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1      1e15"
+  },
+  {
+    "value": 0.1,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1       0.1"
+  },
+  {
+    "value": 123.456,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1      123."
+  },
+  {
+    "value": -1234.5,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1    -1234."
+  },
+  {
+    "value": 1.234e+20,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1   1.23e20"
+  },
+  {
+    "value": 2.5e-14,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1   2.5e-14"
+  },
+  {
+    "value": -7.77e-09,
+    "output": "# A tibble: 1 × 1\n  kovarianz\n      <dbl>\n1  -7.77e-9"
+  }
+]
