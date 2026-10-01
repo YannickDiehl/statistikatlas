@@ -6,7 +6,7 @@ import {Children,createElement,isValidElement,type ReactElement,type ReactNode} 
 import {PackageInspector} from '../components/PackageInspector';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {mariposaExports,mariposaEntries,entryById,functionToConcept,formulaParts,formulaTargets} from './mariposaCatalog';
-import {exampleVariants,analysisCode,startBlock,initialRSettings,validateRSettings,eligible,surveyCsv,rolesFor} from './mariposa';
+import {exampleVariants,analysisCode,startBlock,initialRSettings,validateRSettings,eligible,surveyCsv,rolesFor,roleExplanation} from './mariposa';
 import {createSurvey,migrateSurvey,surveyColumns,columnById,defaultSelection} from './survey';
 import {concepts,conceptById,connections} from './concepts';
 import {mapRelations,incomingPaths,regions,regionConcepts,places,referenceInMap} from './network';
@@ -70,5 +70,14 @@ test('package inspector gives its sibling panels distinct keys',()=>{
   function Probe(){const tree=PackageInspector({onSelect:noop,onHover:noop,rows,selection:defaultSelection,entry:entryById[id],selected:ref(id),onClose:noop,onFocusMap:noop,trace:false,onTrace:noop}) as ReactElement<{children:ReactNode}>;keys=Children.toArray(tree.props.children).filter(isValidElement).map(c=>String(c.key));return null;}
   renderToStaticMarkup(createElement(Probe));
   assert.ok(keys.length>3,id);assert.equal(new Set(keys).size,keys.length,`${id}: ${keys.join(' ')}`);
+ }
+});
+test('the R panel leads with Kurz gesagt, offers the .sav and shows no developer notes',()=>{
+ for(const kind of ['quantitative','ordered','category','twoGroups','binary','continuous','items','repeated','pairedBinary','multiple','predictor','factors','interaction','likert'] as const){const t=roleExplanation({key:'x',label:'X',kind,default:[],many:false});assert.ok(t.kurz&&t.fach,kind);assert.ok((t.kurz.match(/[.!?](\s|$)/g)||[]).length<=2,kind);assert.doesNotMatch(t.kurz,/einfach|offensichtlich|trivial|natürlich|bekanntlich|leicht zu sehen/,kind);}
+ for(const id of ['sd','t_test','linear_regression','data_import']){
+  const html=renderToStaticMarkup(createElement(MariposaPanel,{onSelect:noop,onHover:noop,rows,selection:defaultSelection,entry:entryById[id],reference:ref(id)}));
+  assert.doesNotMatch(html,/Geprüft an mariposa|kein mariposa-Ergebnis|Namespace|Quellstand|Implementierung|0\.7\.2|read\.csv2|stopifnot/,id);
+  assert.match(html,/mariposa 0\.7\.4/,id);assert.match(html,/Lehrdatensatz als SPSS-Datei \(\.sav\)/,id);assert.match(html,/auch als CSV/,id);assert.match(html,/library\(dplyr\)\nlibrary\(mariposa\)\n\natlas &lt;- read_spss/,id);
+  if(id!=='data_import')assert.match(html,/<strong>Kurz gesagt:<\/strong>/,id);
  }
 });

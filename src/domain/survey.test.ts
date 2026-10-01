@@ -13,6 +13,7 @@ import { nodeTypes, nodeInteraction } from '../components/NetworkMap';
 import { Formula } from '../components/Formula';
 import { ConceptInspector } from '../components/ConceptInspector';
 import { SurveyData } from '../components/SurveyData';
+import { ColumnPicker } from '../components/ColumnPicker';
 import { SurveyExperiment } from '../components/SurveyExperiment';
 import { concepts } from './concepts';
 const rows=createSurvey(),noop=()=>{},close=(a:number|null,b:number)=>assert.ok(a!==null&&Math.abs(a-b)<1e-10,`${a} != ${b}`);
@@ -112,4 +113,13 @@ test('household income, binary means and ordinal medians use the correct interpr
 
 test('projection safeguards also retain X edits if a caller supplies a duplicate column mapping',()=>{
  const selection={...defaultSelection,y:defaultSelection.x},pairs=projectPairs(rows,selection),next=updateProjectedPairs(rows,selection,[{...pairs[0],x:12.5}]);assert.equal(next[0].values.lernzeit,12.5);
+});
+
+test('small fixes: result sentences name the variable with two decimals, the scale shows once, the dataset dialog offers the .sav',()=>{
+ const c=context();assert.equal(interpretation(ref('sd'),c),'Die Streuung von „Lernzeit“ beträgt 3,24 h. Sie ist kein durchschnittlicher absoluter Abstand.');
+ assert.match(interpretation(ref('deviation'),c),/Mittelwert von „Lernzeit“\./);assert.doesNotMatch(interpretation(ref('ss'),c),/\d,\d{3}/);
+ const picker=renderToStaticMarkup(createElement(ColumnPicker,{reference:ref('mean'),selection:{...defaultSelection,x:'lernplanung5'},onChange:noop}));
+ assert.match(picker,/>Lernplanung · 5 Stufen</);assert.doesNotMatch(picker,/Stufen · \d+ Stufen/);assert.match(picker,/>Lernzeit \(metrisch\)</);
+ const dataset=renderToStaticMarkup(createElement(SurveyData,{rows,selection:defaultSelection,caseId:'P137',procedure:'mean',onCase:noop,onChange:noop,onSelection:noop,onReset:noop,onClose:noop}));
+ assert.match(dataset,/class="primary"[^>]*>.*SPSS-Datei \(\.sav\)/);assert.match(dataset,/>CSV</);assert.doesNotMatch(dataset,/\d · /);
 });

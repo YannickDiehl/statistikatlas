@@ -1,7 +1,7 @@
 import { referenceInMap } from '../domain/network';
 import { useEffect, useState } from 'react';
 import { Copy, Download, ArrowUpRight } from 'lucide-react';
-import { columnById, surveyColumns, scaleName, type ColumnSelection, type SurveyRow } from '../domain/survey';
+import { columnById, surveyColumns, columnChoiceLabel, type ColumnSelection, type SurveyRow } from '../domain/survey';
 import { writeSav } from '../domain/savWriter';
 import { analysisCode, codebookJson, downloadText, eligible, initialRSettings, roleExplanation, rolesFor, SAV_NAME, scriptFor, startBlock, surveyCsv, validateRSettings, type RSettings } from '../domain/mariposa';
 import { formulaParts, mariposaVersion, type AtlasEntry } from '../domain/mariposaCatalog';
@@ -27,7 +27,7 @@ export function MariposaPanel(p:RPanelProps){
   {variant.note&&<p className="context-note">{variant.note}</p>}
   {roles.length>0&&<div className="r-roles"><h2>Spalten für den R-Aufruf</h2>{roles.map(role=>{const columns=surveyColumns.filter(c=>eligible(role,c,p.selection?.likertMetric??true)),values=s.columns[role.key]||[],fixed=entry.existing&&p.selection&&['x','y'].includes(role.key);
    return <fieldset key={role.key}><legend>{role.label}</legend>{fixed?<p className="selected-r-column">{columnById[values[0]]?.title} <code>{values[0]}</code></p>:role.many?<div className="r-multiselect">{columns.map(c=><label key={c.id}><input type="checkbox" checked={values.includes(c.id)} disabled={!values.includes(c.id)&&picked.includes(c.id)} onChange={e=>change({...s,columns:{...s.columns,[role.key]:e.target.checked?[...values,c.id]:values.filter(v=>v!==c.id)}})}/><span>{c.title}</span></label>)}</div>:<select aria-label={role.label} value={values[0]||''} onChange={e=>change({...s,columns:{...s.columns,[role.key]:[e.target.value]}})}>{columns.map(c=><option key={c.id} value={c.id} disabled={picked.includes(c.id)&&!values.includes(c.id)}>{c.title}</option>)}</select>}
-    {p.reference?.basis==='ranks'?<small>Die R-Rechnung verwendet die mittleren Ränge dieser Originalspalte.</small>:<><small><strong>Kurz gesagt:</strong> {roleExplanation(role).kurz}</small><small>{roleExplanation(role).fach}</small></>}{!fixed&&<details className="r-excluded"><summary>Warum fehlen andere Spalten?</summary><p>{roleExplanation(role).fach}</p>{surveyColumns.filter(c=>!eligible(role,c,p.selection?.likertMetric??true)).map(c=><p key={c.id}>{c.title}: {scaleName(c)}</p>)}</details>}
+    {p.reference?.basis==='ranks'?<small>Die R-Rechnung verwendet die mittleren Ränge dieser Originalspalte.</small>:<><small><strong>Kurz gesagt:</strong> {roleExplanation(role).kurz}</small><small>{roleExplanation(role).fach}</small></>}{!fixed&&<details className="r-excluded"><summary>Warum fehlen andere Spalten?</summary><p>{roleExplanation(role).fach}</p>{surveyColumns.filter(c=>!eligible(role,c,p.selection?.likertMetric??true)).map(c=><p key={c.id}>{columnChoiceLabel(c)}</p>)}</details>}
    </fieldset>;
   })}</div>}
   {p.selection?.likertMetric&&p.reference?.basis!=='ranks'&&roles.some(r=>['quantitative','items','predictor','interaction'].includes(r.kind)&&(s.columns[r.key]||[]).some(id=>columnById[id]?.kind==='likert'))&&<p className="context-note">Likert-Items: Die Rechnung nimmt gleich große Abstände zwischen den Antwortstufen an. Die Antwortskala bleibt ursprünglich ordinal.</p>}

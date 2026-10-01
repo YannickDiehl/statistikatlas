@@ -34,7 +34,7 @@ Beim Überfahren oder Auswählen beziehen sich die Farben auf den in der Legende
 
 Die Suche akzeptiert deutsche Begriffe und R-Funktionsnamen. Jede Funktionskarte erklärt Bedeutung, Voraussetzungen, formale Bausteine und Ausgabe. Innerhalb der Karte lassen sich passende Aufrufvarianten und Datenspalten wählen. Formelpfade berücksichtigen die gewählte Variante; Verlaufseinträge bewahren auch die R-Auswahl.
 
-R-Aufrufe lassen sich kopieren oder zusammen mit dem passenden CSV-Startskript herunterladen. Die aktuellen 200 Befragten und ein maschinenlesbares Codebuch können direkt daneben heruntergeladen werden. Komplexe mariposa-Verfahren laufen in R; der Atlas berechnet dafür keine vorgetäuschten Ergebnisse. Die bestehenden interaktiven Basisrechnungen bleiben unmittelbar nutzbar.
+R-Aufrufe stehen im mariposa-Stil (`library(dplyr)`, `library(mariposa)`, `atlas <- read_spss("Statistikatlas-200-Befragte.sav")`, dann `atlas %>% fn(…)`) und lassen sich kopieren oder als kommentiertes R-Skript herunterladen. Die aktuellen 200 Befragten gibt es als SPSS-Datei (`.sav`, mit Fragetexten und Antwortlabels), daneben als CSV und mit einem maschinenlesbaren Codebuch. Für die Leitaufrufe zeigt der Atlas die R-Ausgabe im Druckformat von mariposa 0.7.4. Komplexe mariposa-Verfahren laufen in R; der Atlas berechnet dafür keine vorgetäuschten Ergebnisse. Die bestehenden interaktiven Basisrechnungen bleiben unmittelbar nutzbar.
 
 Die vollständige Abdeckung und Prüfung ist in [MARIPOSA-ABDECKUNG.md](MARIPOSA-ABDECKUNG.md) dokumentiert. Der R-Generator prüft den Namespace auf neu hinzugekommene oder entfernte Exporte.
 

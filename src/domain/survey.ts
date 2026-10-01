@@ -34,7 +34,9 @@ export const surveyColumns:SurveyColumn[]=[
 ];
 export const columnById:Record<string,SurveyColumn>=Object.fromEntries(surveyColumns.map(c=>[c.id,c]));
 export const defaultSelection:ColumnSelection={x:'lernzeit',y:'wissenstest',likertMetric:true};
-export const scaleName=(c:SurveyColumn)=>c.kind==='likert'?`Likert · ${c.categories!.length} Stufen (ordinal)`:c.kind==='binary'?'Binär · 0/1':c.scale==='metric'?`Metrisch · ${c.kind==='continuous'?'stetig':'diskret'}`:c.scale==='ordinal'?'Ordinal · geordnete Kategorien':'Nominal · Kategorien ohne Rangfolge';
+export const scaleName=(c:SurveyColumn)=>c.kind==='likert'?`Likert, ${c.categories!.length} Stufen (ordinal)`:c.kind==='binary'?'Binär (0/1)':c.scale==='metric'?`Metrisch · ${c.kind==='continuous'?'stetig':'diskret'}`:c.scale==='ordinal'?'Ordinal · geordnete Kategorien':'Nominal · Kategorien ohne Rangfolge';
+/** Spalte mit kurzem Skalenhinweis für Auswahllisten; Likert-Titel nennen ihre Stufen schon selbst. */
+export const columnChoiceLabel=(c:SurveyColumn)=>c.kind==='likert'?c.title:`${c.title} (${c.kind==='binary'?'0/1':c.scale==='metric'?'metrisch':c.scale})`;
 export const formatValue=(c:SurveyColumn|undefined,n:number|null|undefined)=>n==null?'Nicht definiert':c?.categories?.find(k=>k.value===n)?.label||new Intl.NumberFormat('de-DE',{maximumFractionDigits:3}).format(n);
 export const quantitative=(c:SurveyColumn,likertMetric=true)=>c.scale==='metric'||c.kind==='binary'||c.kind==='likert'&&likertMetric;
 export function compatible(id:string,c:SurveyColumn,likertMetric=true){

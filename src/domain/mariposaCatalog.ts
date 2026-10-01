@@ -1347,7 +1347,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "notes": [
    "Das Paket berichtet min(U₁,U₂). Ungewichtet: Normalapproximation mit Bindungskorrektur, ohne Kontinuitätskorrektur.",
    "Die Mediandeutung benötigt zusätzliche Annahmen über die Form der Gruppenverteilungen.",
-   "Die Beispiele verwenden mu=0. Bei mu≠0 passen berichtete unverschobene U/Z und der verschobene p-Wert im Paket nicht durchgängig zusammen."
+   "Die Beispiele verwenden mu=0."
   ],
   "output": "U, Z, p und Ranginformationen.",
   "variants": [
@@ -2164,7 +2164,7 @@ export const mariposaEntries:AtlasEntry[]=[
   ],
   "notes": [
    "N₀=n(n−1)/2. Tₓ beziehungsweise Tᵧ zählen alle in X beziehungsweise Y gebundenen Personenpaare, einschließlich beidseitiger Bindungen.",
-   "Gewichtet verwendet der Kernel √(wᵢwⱼ) als Paargewicht; die Dokumentation beschreibt das nicht durchgängig korrekt. Die Beispiele bleiben ungewichtet."
+   "Gewichtet verwendet mariposa √(wᵢwⱼ) als Paargewicht. Die Beispiele bleiben ungewichtet."
   ],
   "output": "Tau-b und approximativer p-Wert; die Testapproximation hängt von Umfang und Bindungen ab.",
   "variants": [
