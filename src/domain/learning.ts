@@ -13,7 +13,9 @@ const joint = new Set(['pairs','validn','df','crossproduct','crossproduct_sum','
 export const keyOf = (r: Ref): string => `${r.id}:${joint.has(r.id) ? 'xy' : r.variable}:${r.use || ''}${r.basis?':'+r.basis:''}`;
 export const isOperation = (r: Ref) => ['count','add','subtract','multiply','divide','square','sqrt','scaling'].includes(r.id);
 export const titleFor = (r: Ref):string => r.basis==='ranks'&&r.id==='pearson'?'Pearson mit Rängen':r.use==='z'&&r.id==='crossproduct'?'Produkt der z-Werte':r.use==='z'&&r.id==='crossproduct_sum'?'Summe der z-Produkte':({ mean:'Mittelwert', variance:'Varianz', validn:'Anzahl', add:'Addieren', subtract:'Subtrahieren', multiply:'Multiplizieren', divide:'Teilen', square:'Quadrieren', sqrt:'Quadratwurzel', count:'Zählen', centering:'Zentrieren', scaling:'Skalieren', positive_sd:'Die Werte streuen', covariance:'Kovarianz' }[r.id] || conceptById[r.id]?.title || r.id);
-export const variableName = (v: Variable,c?:LessonContext) => c?.columns?`${v.toUpperCase()} · ${c.columns[v].title}`: v === 'x' ? 'X · Lernzeit' : 'Y · Gelöste Aufgaben';
+/** Name der Variable: Spaltentitel des Lehrdatensatzes, sonst die Beispielvariablen der fünf Personen. */
+export const variableTitle = (v: Variable,c?:LessonContext) => c?.columns?c.columns[v].title:v === 'x' ? 'Lernzeit' : 'Gelöste Aufgaben';
+export const variableName = (v: Variable,c?:LessonContext) => `${v.toUpperCase()} · ${variableTitle(v,c)}`;
 export function outputRef(r:Ref):Ref {if(!r.use||r.id==='scaling'||!isOperation(r))return r;return r.use==='zproducts'?ref('crossproduct',r.variable,'z',r.basis):r.use==='zsum'?ref('crossproduct_sum',r.variable,'z',r.basis):ref(r.use,r.variable,undefined,r.basis);}
 export function unitFor(original:Ref,c?:LessonContext):string {
  const r=outputRef(original);if(r.basis==='ranks')c=c?rankContext(c):c;
@@ -114,12 +116,12 @@ export function conditions(r:Ref,c:LessonContext):Condition[]{
 }
 /** Ergebnissatz: nennt die Variable mit Namen und rundet auf höchstens zwei Nachkommastellen. */
 export function interpretation(r:Ref,c:LessonContext):string {
- c=contextFor(r,c);r=outputRef(r);const num=(x:number|null|undefined,digits=2)=>numberText(x,digits),n=valueFor(r,c),i=indexFor(c)+1,t=num(n),v=`„${c.columns?.[r.variable].title??(r.variable==='x'?'Lernzeit':'Gelöste Aufgaben')}“`;
+ c=contextFor(r,c);r=outputRef(r);const num=(x:number|null|undefined,digits=2)=>numberText(x,digits),n=valueFor(r,c),i=indexFor(c)+1,t=num(n),v=`„${variableTitle(r.variable,c)}“`,vx=`„${variableTitle('x',c)}“`,vy=`„${variableTitle('y',c)}“`;
  if(r.id==='median'){const m=middleValues(c.pairs.map(p=>p[r.variable]));return !m?'Keine Werte vorhanden.':c.columns?.[r.variable].categories?`Die mittleren Positionen sind ${formatValue(c.columns[r.variable],m[0])} und ${formatValue(c.columns[r.variable],m[1])}. Bei verschiedenen Kategorien zeigen wir beide; wir mitteln keine Kategoriencodes.`:`Die mittleren Werte sind ${num(m[0])} und ${num(m[1])}; ihr Mittel ergibt ${num(n)} ${unitFor(r,c)}.`;}
  if(r.id==='frequency')return 'Die Tabelle zählt alle verwendeten Befragten. Prozentangaben beziehen sich auf diese gesamte Fallzahl.';
- if(r.id==='crosstab')return 'Eine Zelle enthält Personen mit derselben Kombination aus X- und Y-Kategorie. Zeilenprozente beziehen sich jeweils auf die Größe der betreffenden X-Gruppe.';
+ if(r.id==='crosstab')return `Eine Zelle enthält Personen mit derselben Kombination aus einer Kategorie von ${vx} und einer von ${vy}. Zeilenprozente beziehen sich jeweils auf alle Personen derselben Kategorie von ${vx}.`;
  if(r.id==='ranks')return `Diese Person erhält Rang ${num(n)}. Gleiche Werte teilen sich den Durchschnitt ihrer Rangplätze.`;
- if(r.id==='spearman')return n===null?'Mindestens eine Rangreihe ist konstant oder es gibt weniger als zwei Fälle.':`Spearman-ρ = ${num(n)}: ${n>0?'höhere Ränge gehen eher zusammen':n<0?'höhere X-Ränge gehen eher mit niedrigeren Y-Rängen einher':'kein monotones Muster nach diesem Maß'}. Die Rechnung verwendet Pearson auf mittleren Rängen.`;
+ if(r.id==='spearman')return n===null?'Mindestens eine Rangreihe ist konstant oder es gibt weniger als zwei Fälle.':`Spearman-ρ = ${num(n)}: ${n>0?'höhere Ränge gehen eher zusammen':n<0?`höhere Ränge in ${vx} gehen eher mit niedrigeren Rängen in ${vy} einher`:'kein monotones Muster nach diesem Maß'}. Die Rechnung verwendet Pearson auf mittleren Rängen.`;
  if(r.id==='nominal')return 'Die Zahlencodes dienen als Etiketten. Eine Differenz zwischen zwei Codes ist kein Merkmalsabstand.';
  if(r.id==='ordinal')return 'Die Kategorien besitzen eine Reihenfolge. Deren Abstände werden dadurch nicht festgelegt.';
  if(n===null&&!['metric','pairs','linear','positive_sd'].includes(r.id))return conditions(r,c).filter(x=>x.ok===false).map(x=>x.text).join(' ')||'Diese Rechnung erreicht eine numerische Grenze. Verwende weniger extreme Werte.';
