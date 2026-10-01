@@ -3,7 +3,7 @@ import { ref, titleFor } from '../../domain/learning';
 import { txt, type AnyWorkshop, type Ctx, type Workshop } from '../../explain/types';
 import { close, num } from '../../explain/format';
 import { takeStep, type StepCard as StepCardData } from '../../explain/registry';
-import { AllGlyphs, FormulaView, Genau, KurzGesagt, MutBox, Section, StepNav, useExplainMode, useWorkbenchLayout } from './basics';
+import { AllGlyphs, FormulaView, Genau, MutBox, Section, StepNav, TopKurz, useExplainMode, useTabLink, useWorkbenchLayout } from './basics';
 import { CheckQuestion, ConceptLink, LearnCard, ThinkQuestions, WorkTable } from './pieces';
 import { pictureFor } from './pictures/register';
 
@@ -42,6 +42,10 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept }: {
   // Sprung aus einer Schrittkarte: nach dem Einhängen abholen (kein Seiteneffekt beim Rendern).
   useEffect(() => { const requested = takeStep(variant); if (requested) setStepRaw(Math.min(requested, v.lastStep)); }, [variant, v.lastStep]);
   useEffect(() => { if (focusCard) cardHeading.current?.focus(); }, [focusCard]);
+  // In der Reiterleiste: Schritt melden („Weiter mit 200 Befragten“ setzt dort denselben Schritt) und Sprünge annehmen.
+  const link = useTabLink();
+  useEffect(() => { link.onStep?.(step); }, [step, link.onStep]);
+  useEffect(() => { if (link.goTo) setStepRaw(Math.max(1, Math.min(link.goTo.step, v.lastStep))); }, [link.goTo?.n]);
   const stepData = w.steps[step - 1];
   const active = JSON.stringify(data);
   const layout = useWorkbenchLayout(), wide = layout.wide && !compact;
@@ -70,7 +74,7 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept }: {
   return (
     <div ref={layout.root} className={`xw${compact ? ' xw-compact' : ''}${wide ? ' xw-wide' : ''}`}>
       {!compact && <div className="xw-wofuer"><h2>Wofür?</h2><p>{w.wofuer}</p></div>}
-      <KurzGesagt text={v.kurz} fach={v.fachlich} />
+      <TopKurz text={v.kurz} fach={v.fachlich} />
       {!compact && <MutBox text={w.mut} />}
       <div className="xw-presets" role="group" aria-label="Beispieldaten">
         {w.presets.map(p => <button type="button" key={p.id} aria-pressed={JSON.stringify(p.data) === active} onClick={() => setData(p.data)}>{p.label}</button>)}

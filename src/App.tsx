@@ -19,7 +19,7 @@ import { gravityLayout, type MapLayout } from './domain/mapLayout';
 import { mapConcepts, detailIds } from './domain/visibleNetwork';
 import { NetworkMap, type CameraRequest } from './components/NetworkMap';
 import { ConceptInspector } from './components/ConceptInspector';
-import { explainFor } from './explain/registry';
+import { explainFor, tabsFor } from './explain/registry';
 import { useExplainMode } from './components/explain/basics';
 import { useViewportWidth, useWorkbenchWidth, WorkbenchHandle } from './components/explain/WorkbenchHandle';
 import { fitWidth, standardWidth, workbenchStore } from './explain/workbench';
@@ -81,8 +81,8 @@ function AtlasWorkspace({conceptRequest,visible,toolApi}:{conceptRequest:{id:str
  const hoverConcept=highlight?.split(':')[0]||hovered;
  const highlightRef=useMemo(()=>{const parts=highlight?.split(':');return parts?ref(parts[0],parts[1]==='y'?'y':parts[1]==='x'?'x':view.variable,parts[2]||undefined,parts[3]==='ranks'?'ranks':undefined):undefined;},[highlight,view.variable]);
  const mapActions=useStableActions({onSelect:select,onHover:setHovered,onViewport:(v:Viewport)=>{viewport.current=v;},onViewportReader:(read:()=>Viewport)=>{viewportReader.current=read;},onLayoutReader:(read:()=>MapLayout)=>{layoutReader.current=read;},onLayoutChange:(layout:MapLayout)=>changeView({...view,layout,gravity:false},'none'),onBackground:()=>setSearchOpen(false)});
- const inspectorActions=useStableActions({onRSettings:changeRSettings,onColumns:changeColumns,onData:data,onHighlight:setHighlight,onSelect:select,onHover:setHovered,onClose:()=>setHistory(h=>({...h,present:{...h.present,panelOpen:false}})),onFocusMap:()=>setCamera(c=>({id:c.id+1,kind:'focus'})),onCase:(caseId:string)=>setHistory(h=>({...h,present:{...h.present,caseId}})),onPairs:changePairs,onReset:resetSurvey,onVariable:changeVariable,onRoute:changeRoute,onTrace:()=>changeView({...view,trace:!view.trace},'none'),onExperimentFocused:()=>setExperimentRequest(0),onExperiment:setExperimentOpen});
- const explainWide=!!(selected&&view.panelOpen&&explainMode==='ausfuehrlich'&&explainFor(selected.id));
+ const inspectorActions=useStableActions({onRSettings:changeRSettings,onColumns:changeColumns,onData:data,onHighlight:setHighlight,onSelect:select,onHover:setHovered,onClose:()=>setHistory(h=>({...h,present:{...h.present,panelOpen:false}})),onFocusMap:()=>setCamera(c=>({id:c.id+1,kind:'focus'})),onCase:(caseId:string)=>setHistory(h=>({...h,present:{...h.present,caseId}})),onPairs:changePairs,onRows:(rows:SurveyRow[])=>{if(validSurvey(rows))setSurvey(rows);},onReset:resetSurvey,onVariable:changeVariable,onRoute:changeRoute,onTrace:()=>changeView({...view,trace:!view.trace},'none'),onExperimentFocused:()=>setExperimentRequest(0),onExperiment:setExperimentOpen});
+ const explainWide=!!(selected&&view.panelOpen&&explainMode==='ausfuehrlich'&&(explainFor(selected.id)||tabsFor(selected.id)));
   // Wird der Inspector breiter oder schmaler, bleibt der gewählte Punkt sichtbar.
   useEffect(()=>{if(selected&&view.panelOpen)setCamera(c=>({id:c.id+1,kind:'ensure'}));},[explainWide]);
   // Werkbank: gemerkte oder Standardbreite; während des Ziehens gilt der Entwurf.

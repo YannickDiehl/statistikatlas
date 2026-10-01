@@ -288,3 +288,58 @@
 .xw-count{min-width:34px;font-size:13px}
 .xw-code{min-width:18px}
 }
+
+/* Reiter (Spezifikation Lehrdatensatz und R, Abschnitt 5.1): Verstehen, Mit 200 Befragten, In R, Weiter.
+   Auf schmalen Bildschirmen lässt sich die Leiste seitlich schieben; die Panels bleiben eingehängt (hidden). */
+.xw-top-kurz{margin-top:6px}
+.xw-top-kurz .xw-kurz{margin:4px 0 8px}
+.xw-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin;border-bottom:1px solid var(--line);margin:14px 0 0;padding:0 2px}
+.xw-tabs [role=tab]{flex:none;border:1px solid transparent;border-bottom:0;border-radius:5px 5px 0 0;background:none;padding:8px 12px 7px;font:15px/1.3 var(--sans);color:var(--muted);cursor:pointer;white-space:nowrap;margin-bottom:-1px}
+.xw-tabs [role=tab]:hover{color:var(--green);background:#f1f3ea}
+.xw-tabs [role=tab][aria-selected=true]{background:var(--paper);border-color:var(--line);color:var(--green);font-weight:600}
+.xw-tabs [role=tab]:focus-visible{outline:2px solid var(--green);outline-offset:-2px}
+.xw-tabpanel{outline:none}
+.xw-tabpanel:focus-visible{outline:2px solid var(--green);outline-offset:4px;border-radius:3px}
+.xw-tabpanel>.xw:first-child{margin-top:10px}
+.xw p.xw-onward{margin:22px 0 4px}
+.xw .xw-button{border:1px solid var(--line);border-radius:4px;background:var(--paper);padding:5px 10px}
+.xw-onward .xw-button{border-color:var(--green);color:var(--green);font-weight:600}
+
+/* Mit 200 Befragten */
+.xw-fp.xw-who{outline:1.5px solid var(--green);outline-offset:1px;border-radius:3px}
+.xw-s-dot{fill:#9aa592;stroke:none;opacity:.75}
+.xw-s-dot.pos{fill:var(--green);opacity:.55}
+.xw-s-dot.neg{fill:var(--xw-neg);opacity:.6}
+.xw-s-dot.sel{fill:var(--wash);stroke:var(--green);stroke-width:2.5;opacity:1}
+.xw-sample-plot{cursor:pointer}
+.xw-person{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;margin:12px 0 4px}
+.xw-person label{font:15px/1.4 var(--sans);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.xw-person select{border:1px solid var(--line);border-radius:4px;background:#fffdf8;padding:4px 6px;font:15px var(--sans)}
+.xw-person .xw-note{flex-basis:100%;margin:0}
+.xw-modified{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;background:#f6eedc;color:#6b4b16;border-radius:4px;padding:8px 12px;margin:10px 0}
+.xw .xw-modified{font-size:15.5px}
+.xw-sample .column-picker{margin-top:12px}
+
+/* In R */
+.xw .xw-rcode,.xw .xw-routput{margin:8px 0 10px}
+.xw .xw-routput{white-space:pre;overflow-x:auto;overflow-wrap:normal;font:13.5px/1.45 ui-monospace,SFMono-Regular,Menlo,monospace;scrollbar-width:thin}
+.xw .xw-tok,.xw .xw-num{font:inherit;color:inherit;background:none;border:0;padding:0 1px;border-radius:3px;border-bottom:1px dotted #9fb89a;cursor:pointer}
+.xw .xw-tok:hover,.xw .xw-num:hover{background:#2f5244}
+.xw .xw-tok.on,.xw .xw-num.on{background:#e9efe4;color:#1a4d3e;border-bottom-color:transparent}
+.xw .xw-tok:focus-visible,.xw .xw-num:focus-visible{outline:2px solid #f4f5e9;outline-offset:1px}
+.xw-token code,.xw-map-card code,.xw-options code{font:15px ui-monospace,SFMono-Regular,Menlo,monospace}
+.xw-map-card{border-left:3px solid var(--green)}
+.xw .xw-small{font-size:14px;border:0;background:none;color:var(--green);border-bottom:1px dotted var(--line);padding:2px 0}
+.xw-other,.xw-help{border-top:1px solid var(--line);margin-top:18px;padding-top:12px}
+.xw-other>summary,.xw-help>summary,.xw-more>summary{font:15px/1.5 var(--sans);color:var(--green);cursor:pointer}
+.xw-other .mariposa-panel.embedded{margin:8px 0;padding:8px 0;border:0}
+.xw-other-output h4{margin-top:10px}
+
+/* Weiter */
+.xw-next .relations-heading{margin-top:14px}
+.xw-next-main{background:var(--wash);border-radius:5px;padding:8px 12px 2px;margin:14px 0 6px}
+.xw-next-main .xw-label{color:var(--green);text-transform:uppercase;letter-spacing:.6px}
+.xw .xw-next-link.main strong{font-size:20px}
+.xw .xw-next-link small{font-size:14px}
+.xw-more{margin-top:16px}
+.xw-more .package-conditions h2{font:18px/1.3 Georgia,serif}

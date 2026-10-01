@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import type { ConceptCard } from '../../explain/types';
-import { Genau, KurzGesagt, Section, useExplainMode } from './basics';
+import { Genau, Section, TopKurz, useExplainMode } from './basics';
 import { ChoiceCheck, ConceptLink, NameBox, termFor, ThinkQuestions } from './pieces';
 import { pictureFor } from './pictures/register';
 
@@ -33,7 +33,7 @@ export function Begriffskarte({ card: c, onConcept }: { card: ConceptCard; onCon
   return (
     <div className={`xw xw-begriff${compact ? ' xw-compact' : ''}`}>
       {!compact && <div className="xw-wofuer"><h2>Wofür?</h2><p>{c.wofuer}</p></div>}
-      <KurzGesagt text={c.kurz} />
+      <TopKurz text={c.kurz} />
       <Section title="Stell dir vor …">
         <p>{c.stellDirVor.text}</p>
         {c.stellDirVor.figures && <div className="xw-metrics">{c.stellDirVor.figures.map(f => <div key={f.label}><span>{f.label}</span><strong>{f.value}</strong></div>)}</div>}

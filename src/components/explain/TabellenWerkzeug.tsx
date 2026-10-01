@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { TableTool } from '../../explain/types';
 import { close } from '../../explain/format';
-import { Genau, KurzGesagt, MutBox, Section, useExplainMode } from './basics';
+import { Genau, MutBox, Section, TopKurz, useExplainMode } from './basics';
 import { CheckQuestion, NameBox, ThinkQuestions } from './pieces';
 import { pictureFor } from './pictures/register';
 
@@ -42,7 +42,7 @@ export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onCo
   return (
     <div className={`xw xw-tabelle${compact ? ' xw-compact' : ''}`}>
       {!compact && <div className="xw-wofuer"><h2>Wofür?</h2><p>{t.wofuer}</p></div>}
-      <KurzGesagt text={t.kurz} />
+      <TopKurz text={t.kurz} />
       {!compact && t.mut && <MutBox text={t.mut} />}
       <div className="xw-presets" role="group" aria-label="Deine Wahl">
         <span className="xw-note">Deine Wahl:</span>

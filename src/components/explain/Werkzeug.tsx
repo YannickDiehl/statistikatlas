@@ -3,7 +3,7 @@ import { MEAN_BEFORE } from '../../explain/content/rekodieren';
 import type { RecodeTemplate } from '../../explain/types';
 import { parseRules, recode, RuleError, type Program } from '../../explain/rules';
 import { count, fixed, num } from '../../explain/format';
-import { Genau, KurzGesagt, MutBox, Section, useExplainMode } from './basics';
+import { Genau, KurzGesagt, MutBox, Section, TopKurz, useExplainMode } from './basics';
 import { CheckQuestion, ConceptLink, termFor, ThinkQuestions } from './pieces';
 
 const ROW = 34;
@@ -37,7 +37,7 @@ export function Werkzeug({ template: t, onConcept }: { template: RecodeTemplate;
   return (
     <div className={`xw${compact ? ' xw-compact' : ''}`}>
       {!compact && <div className="xw-wofuer"><h2>Wofür?</h2><p>{t.wofuer}</p></div>}
-      <KurzGesagt text={t.kurz} fach={t.fachlich} />
+      <TopKurz text={t.kurz} fach={t.fachlich} />
       {!compact && <MutBox text={t.mut} />}
       {!compact && <Section title="Die Fachbegriffe">
         <div className="xw-legend static">{t.terms.map(x => (

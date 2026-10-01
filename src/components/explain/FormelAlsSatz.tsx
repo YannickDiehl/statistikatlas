@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { AnySentence } from '../../explain/types';
 import { close } from '../../explain/format';
-import { AllGlyphs, FormulaView, Genau, KurzGesagt, Section, useExplainMode } from './basics';
+import { AllGlyphs, FormulaView, Genau, Section, TopKurz, useExplainMode } from './basics';
 import { CheckQuestion, ConceptLink, termFor, ThinkQuestions } from './pieces';
 import { pictureFor } from './pictures/register';
 
@@ -20,7 +20,7 @@ export function FormelAlsSatz({ template: t, onConcept }: { template: AnySentenc
   return (
     <div className={`xw${compact ? ' xw-compact' : ''}`}>
       {!compact && <div className="xw-wofuer"><h2>Wofür?</h2><p>{t.wofuer}</p></div>}
-      <KurzGesagt text={t.kurz} fach={t.fachlich} />
+      <TopKurz text={t.kurz} fach={t.fachlich} />
       <div className="xw-metrics">{t.metrics.map(m => <div key={m.label}><span>{m.label}</span><strong>{m.value(s)}</strong></div>)}</div>
       <FormulaView className="xw-symbolic" nodes={t.symbolic} active={mark} onMark={m => setMark(m as string)} label={t.aria} />
       <FormulaView className="xw-numeric" nodes={t.numeric(s)} active={mark} onMark={m => setMark(m as string)} />

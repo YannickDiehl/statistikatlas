@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
+import { createContext, Fragment, useContext, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { modeStore, type Mode } from '../../explain/mode';
 import { stickFor } from '../../explain/workbench';
@@ -76,6 +76,20 @@ export function KurzGesagt({ text, fach }: { text: string; fach?: string }) {
   );
 }
 
+/**
+ * Verbindung einer Erklärung zur Reiterleiste (src/components/explain/ExplainTabs.tsx): `kurzAbove` heißt, „Kurz gesagt“
+ * steht schon über den Reitern; `onStep` meldet den Schritt der Werkstatt, `goTo` setzt ihn (aus „In R“ oder „Weiter“).
+ * Ohne Reiter (Standardwert) bleibt alles wie bisher.
+ */
+export type TabLink = { kurzAbove: boolean; onStep?: (step: number) => void; goTo?: { step: number; n: number } };
+export const TabLinkContext = createContext<TabLink>({ kurzAbove: false });
+export const useTabLink = () => useContext(TabLinkContext);
+
+/** „Kurz gesagt“ oben in einer Vorlage; entfällt, wenn die Reiterleiste ihn schon über den Reitern zeigt. */
+export function TopKurz(props: { text: string; fach?: string }) {
+  return useTabLink().kurzAbove ? null : <KurzGesagt {...props} />;
+}
+
 /** Mut-Satz zu Beginn einer Werkstatt (Regel 6): die Formel in kleine, bekannte Handlungen zerlegt. */
 export function MutBox({ text }: { text: string }) {
   return <p className="xw-mut">{tight(text)}</p>;
@@ -110,7 +124,8 @@ export function FormulaView({ nodes, active, onMark, label, className = '' }: {
     if ('big' in n) return <span key={i} className={`xw-fp xw-big${state(n.m, active)}`} onClick={click}>{n.big}</span>;
     if ('frac' in n) return <span key={i} className={`xw-frac${state(n.m, active)}`}><span className="xw-num">{render(n.frac)}</span><span className="xw-den">{render(n.den)}</span></span>;
     if ('root' in n) return <span key={i} className={`xw-rad${state(n.m, active)}`}>{render(n.root)}</span>;
-    return <span key={i} className={`xw-fp${state(n.m, active)}`} onClick={click}>{render(n.part)}</span>;
+    // `m: 'who'` umrahmt den Summanden der gewählten Person (Formel mit 200, src/explain/sample.ts sumNodes).
+    return <span key={i} className={`xw-fp${state(n.m, active)}${n.m === 'who' ? ' xw-who' : ''}`} onClick={click}>{render(n.part)}</span>;
   });
   return label
     ? <div className={`xw-formula ${className}`} role="img" aria-label={label}><span aria-hidden="true">{render(nodes)}</span></div>
