@@ -4,7 +4,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { describeOutput, pearsonOutput, covOutput, frequencyOutput, cFixed, CATALOG_OUTPUT } from './rOutput';
+import { describeOutput, pearsonOutput, covOutput, frequencyOutput, cFixed, rMean, rCov } from './rOutput';
+import { CATALOG_OUTPUT } from './catalogOutput';
 import { createSurvey, columnById, type SurveyRow } from '../domain/survey';
 import { savVariableLabel } from '../domain/savWriter';
 import { analysisCode, exampleVariants } from '../domain/mariposa';
@@ -20,10 +21,6 @@ const states: Record<string, SurveyRow[]> = {
 const column = (rows: SurveyRow[], id: string) => rows.map(r => r.values[id]);
 const labelsOf = (id: string) => Object.fromEntries((columnById[id].categories || []).map(k => [k.value, k.label]));
 const frequency = (rows: SurveyRow[], id: string) => frequencyOutput(column(rows, id), labelsOf(id), id, savVariableLabel(columnById[id]));
-function cov(x: number[], y: number[]) {
-  const mx = x.reduce((a, b) => a + b, 0) / x.length, my = y.reduce((a, b) => a + b, 0) / y.length;
-  return x.reduce((a, xi, i) => a + (xi - mx) * (y[i] - my), 0) / (x.length - 1);
-}
 
 for (const [state, rows] of Object.entries(states)) {
   test(`lead calls print like mariposa 0.7.4: ${state}`, () => {
@@ -33,7 +30,7 @@ for (const [state, rows] of Object.entries(states)) {
     assert.equal(describeOutput(lernzeit, ['lernzeit'], ['mean', 'sd', 'var']), fixture(`${state}--describe-mean-sd-var`));
     assert.equal(describeOutput(lernzeit, ['lernzeit'], ['mean', 'sd', 'se']), fixture(`${state}--describe-mean-sd-se`));
     assert.equal(pearsonOutput(column(rows, 'lernzeit'), column(rows, 'wissenstest'), 'lernzeit', 'wissenstest'), fixture(`${state}--pearson`));
-    assert.equal(covOutput('kovarianz', cov(column(rows, 'lernzeit'), column(rows, 'wissenstest'))), fixture(`${state}--kovarianz`));
+    assert.equal(covOutput('kovarianz', rCov(column(rows, 'lernzeit'), column(rows, 'wissenstest'))), fixture(`${state}--kovarianz`));
     assert.equal(frequency(rows, 'lernplanung5'), fixture(`${state}--frequency`));
   });
 }
@@ -53,6 +50,32 @@ test('extra cases: two variables, split wide tables, p-value stars, wrapped labe
   assert.equal(frequency(rows, 'schulabschluss'), fixture('zusatz--frequency-schulabschluss'));
   assert.equal(frequency(rows, 'geschlecht'), fixture('zusatz--frequency-geschlecht'));
   assert.equal(frequency(rows, 'wissenstest'), fixture('zusatz--frequency-wissenstest'));
+});
+
+const withLernplanung = (rows: SurveyRow[], change: (id: string, v: number) => number | null) =>
+  rows.map(r => ({ ...r, values: { ...r.values, lernplanung5: change(r.id, r.values.lernplanung5) as number } }));
+
+test('the mean is computed like R in two passes: odd sums land on the same side of x.xx5', () => {
+  // P002: 3 → 4 ergibt die Summe 653; R druckt mean=3.26 (3.2649999999999997), die einfache Summe / n ergäbe 3.27.
+  const odd = withLernplanung(base, (id, v) => id === 'P002' ? 4 : v);
+  assert.equal(rMean(column(odd, 'lernplanung5')), 3.2649999999999997);
+  assert.equal(frequency(odd, 'lernplanung5'), fixture('zusatz--frequency-ungerade-summe'));
+  assert.equal(describeOutput({ lernplanung5: column(odd, 'lernplanung5') }, ['lernplanung5'], ['mean', 'sd', 'var', 'se']), fixture('zusatz--describe-ungerade-summe'));
+});
+
+test('every single ±1 edit of lernplanung5 prints the same frequency() summary line as R', () => {
+  const captured = JSON.parse(readFileSync(new URL('./fixtures/r-output/frequency-edits.json', import.meta.url), 'utf8')) as { platform: string; edits: { id: string; delta: number; line: string }[] };
+  assert.equal(captured.edits.length, 348);
+  for (const { id, delta, line } of captured.edits) {
+    const edited = withLernplanung(base, (rid, v) => rid === id ? v + delta : v);
+    const printed = frequency(edited, 'lernplanung5').split('\n').find(l => l.startsWith('# total'));
+    assert.equal(printed, line, `${id} ${delta > 0 ? '+' : ''}${delta}`);
+  }
+});
+
+test('missing values add the rows Total valid, System and Total like mariposa', () => {
+  const missing = withLernplanung(base, (id, v) => id === 'P001' || id === 'P002' ? null : v);
+  assert.equal(frequency(missing, 'lernplanung5'), fixture('zusatz--frequency-fehlend'));
 });
 
 test('a 1 × 1 tibble prints its number like pillar with three significant digits', () => {

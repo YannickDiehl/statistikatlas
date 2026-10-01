@@ -1,0 +1,1745 @@
+{
+  "platform": "aarch64-apple-darwin20 long.double: FALSE",
+  "edits": [
+    {
+      "id": "P001",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P001",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P002",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P002",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P003",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P003",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P004",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P004",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P005",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P006",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P006",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P007",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P007",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P008",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P008",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P009",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P009",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P010",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P011",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P011",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P012",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P013",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P013",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P014",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P014",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P015",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P015",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P016",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P017",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P018",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P018",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P019",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P019",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P020",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P020",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P021",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P021",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P022",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P023",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P023",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P024",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P024",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P025",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P025",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P026",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P026",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P027",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P027",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P028",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P029",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P030",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P031",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P031",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P032",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P033",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P033",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P034",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P035",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P035",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P036",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P036",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P037",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P037",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P038",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P038",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P039",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P040",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P041",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P041",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P042",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P043",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P044",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P044",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P045",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P045",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P046",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P046",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P047",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P047",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P048",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P048",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P049",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P049",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P050",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P051",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P052",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P052",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P053",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P053",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P054",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P054",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P055",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P055",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P056",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P056",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P057",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.25 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P057",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P058",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P058",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P059",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P059",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P060",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P061",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P062",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P062",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P063",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P064",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P064",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P065",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P065",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P066",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P066",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P067",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P068",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P068",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P069",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P069",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P070",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P070",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P071",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P071",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P072",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P073",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P073",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P074",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P074",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P075",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P075",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P076",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P076",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P077",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P078",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P078",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P079",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P079",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P080",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P081",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P082",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P083",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P084",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P084",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P085",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P085",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P086",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P087",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P088",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P089",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P089",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P090",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P090",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P091",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P091",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P092",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P092",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P093",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P093",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P094",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P094",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P095",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P095",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P096",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P096",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P097",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P098",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P099",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P099",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P100",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P100",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P101",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P101",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P102",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P102",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P103",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P104",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P104",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P105",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P105",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P106",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P106",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P107",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P107",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P108",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P108",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P109",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P109",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P110",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P110",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P111",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P111",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P112",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P112",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P113",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P114",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P114",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P115",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P115",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P116",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P117",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P117",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P118",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P118",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P119",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P119",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P120",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P120",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P121",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P121",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P122",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P122",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P123",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P123",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P124",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P124",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P125",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P125",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P126",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P127",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P127",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P128",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P128",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P129",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P129",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P130",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P130",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P131",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P131",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P132",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P132",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P133",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P134",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P135",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P135",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P136",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P136",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P137",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P137",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P138",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P139",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P139",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P140",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P140",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P141",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P142",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P142",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P143",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P143",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P144",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P144",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P145",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P145",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P146",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P147",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P148",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P148",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P149",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P149",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P150",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P150",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P151",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P152",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P152",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P153",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P153",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P154",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P154",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P155",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P156",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P156",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P157",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P158",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P159",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P159",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P160",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P160",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P161",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P162",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P162",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P163",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P163",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P164",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P164",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P165",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P165",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P166",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P166",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P167",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P168",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P168",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P169",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P170",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P170",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P171",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P171",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P172",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P172",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P173",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P173",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P174",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P174",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P175",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P175",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P176",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P177",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P177",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P178",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P178",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P179",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P179",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P180",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P180",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P181",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P181",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P182",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P182",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P183",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P183",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P184",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P184",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P185",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P185",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P186",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P186",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P187",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P187",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P188",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P188",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P189",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P189",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P190",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P190",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P191",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P191",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P192",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P192",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P193",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    },
+    {
+      "id": "P193",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P194",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P194",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P195",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P196",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P196",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P197",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P198",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P198",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P199",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.21"
+    },
+    {
+      "id": "P199",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.20"
+    },
+    {
+      "id": "P200",
+      "delta": -1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.19 skewness=-0.18"
+    },
+    {
+      "id": "P200",
+      "delta": 1,
+      "line": "# total N=200 valid N=200 mean=3.26 sd=1.20 skewness=-0.19"
+    }
+  ]
+}

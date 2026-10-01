@@ -6,14 +6,10 @@
  * Zeichengenau geprüft gegen die mit R erfassten Ausgaben in fixtures/r-output (rOutput.test.ts).
  */
 import { pt } from '../tasks/kit/dist';
-import catalog from './fixtures/r-output/catalog.json';
 
 const WIDTH = 80;
 const EPS = 2.220446049250313e-16;
 const SQRT_EPS = Math.sqrt(EPS);
-
-/** Ausgabe aller 110 Katalogbeispiele auf den Ausgangsdaten, erfasst mit scripts/capture-r-output.R. Schlüssel `${entryId}:${variant}`. */
-export const CATALOG_OUTPUT: Record<string, { code: string; output: string }> = catalog;
 
 // ---------- Zahlen wie in R ----------
 
@@ -63,7 +59,11 @@ function signif(x: number, digits: number): number {
   return sgn * (roundHalfEven(ax / pow10) * pow10);
 }
 
-/** R: as.character() für Zahlen (15 signifikante Stellen). */
+/**
+ * R: as.character() für Zahlen (15 signifikante Stellen). Grenze: R schreibt runde große oder sehr kleine Zahlen
+ * wissenschaftlich (100000 → "1e+05", 0.00001 → "1e-05"), JavaScript nicht. In den Leitaufrufen kommen nur
+ * Antwortcodes und Werte mit höchstens zwei Nachkommastellen vor; für Spalten wie einkommen wäre das nachzubauen.
+ */
 function rCharacter(x: number): string {
   return String(Number(x.toPrecision(15)));
 }
@@ -81,7 +81,31 @@ function fmtNum(x: number, d: number): string {
 }
 
 const sum = (x: number[]) => x.reduce((a, b) => a + b, 0);
-const mean = (x: number[]) => x.length ? sum(x) / x.length : NaN;
+/**
+ * Mittelwert wie mean() in R (summary.c, real_mean): Summe / n, dann ein zweiter Durchgang mit der Korrektur
+ * Σ(x − Mittel) / n. Bei ungerader Summe von 200 ganzen Zahlen liegt der Mittelwert genau auf x.xx5; erst der
+ * zweite Durchgang entscheidet, auf welcher Seite er landet (mean=3.26 statt 3.27). Die Referenz ist R ohne
+ * long double (Apple Silicon, aarch64). Auf x86_64 summiert R in 80 Bit und kann an solchen Grenzen anders runden.
+ */
+export function rMean(x: number[]): number {
+  const n = x.length;
+  if (!n) return NaN;
+  let s = sum(x) / n;
+  if (Number.isFinite(s)) {
+    let t = 0;
+    for (const v of x) t += v - s;
+    s += t / n;
+  }
+  return s;
+}
+const mean = rMean;
+/** Stichprobenkovarianz wie cov(x, y) in R (Mittelwerte in zwei Durchgängen, n − 1 im Nenner), für covOutput(). */
+export function rCov(x: number[], y: number[]): number {
+  if (x.length < 2) return NaN;
+  const mx = rMean(x), my = rMean(y);
+  return sum(x.map((v, i) => (v - mx) * (y[i] - my))) / (x.length - 1);
+}
+/** var() wie in R: Mittelwert in zwei Durchgängen (cov.c, MEAN), dann Σ(x − Mittel)² / (n − 1). */
 function variance(x: number[]) {
   if (x.length < 2) return NaN;
   const m = mean(x);

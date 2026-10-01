@@ -103,7 +103,9 @@ SAV, DTA, XPT und XLSX werden in den Importbeispielen geschrieben und wieder ein
 
 Cramér-V und Gamma rufen intern auch den χ²-Test auf. In den synthetischen Beispieltabellen entstehen erwartete Warnungen wegen kleiner erwarteter Zellhäufigkeiten. Diese betreffen die asymptotische Testnäherung, nicht die deskriptive Berechnung der Zusammenhangsmaße.
 
-Die Ausgaben aller 110 Aufrufe auf den Ausgangsdaten erfasst `scripts/capture-r-output.R` in `src/explain/fixtures/r-output/catalog.json`; für die Leitaufrufe (`describe()`, `pearson_cor()`, `summarise(cov())`, `frequency()`) erzeugt `src/explain/rOutput.ts` die Ausgabe im Browser aus den aktuellen Daten, zeichengenau gegen die Referenzausgaben geprüft.
+Die Ausgaben aller 110 Aufrufe auf den Ausgangsdaten erfasst `scripts/capture-r-output.R` in `src/explain/fixtures/r-output/catalog.json` (geladen über `src/explain/catalogOutput.ts`); für die Leitaufrufe (`describe()`, `pearson_cor()`, `summarise(cov())`, `frequency()`) erzeugt `src/explain/rOutput.ts` die Ausgabe im Browser aus den aktuellen Daten, zeichengenau gegen die Referenzausgaben geprüft: drei Datenstände, Zusatzfälle (ungerade Summe, fehlende Werte, breite Tabellen, p-Sterne) und die Kennwertzeile von `frequency(lernplanung5)` für alle 348 Einzeländerungen um ±1.
+
+**Plattform der Referenzausgaben.** `mean()` rechnet in R in zwei Durchgängen (Summe / n, dann Korrektur um Σ(x − Mittel) / n), in `long double`, wo es das gibt. Bei 200 ganzzahligen Antworten mit ungerader Summe liegt der Mittelwert genau auf x.xx5, und die zweite Nachkommastelle in `frequency()` hängt von dieser Rechnung ab (Beispiel: Summe 653, R druckt `mean=3.26`, die einfache Summe / n ergäbe 3.27). Die Referenz ist R 4.5.3 auf Apple Silicon (aarch64, ohne `long double`); `rOutput.ts` rechnet genauso. Auf x86_64 summiert R in 80 Bit und kann an solchen Grenzen auf der anderen Seite landen; Studierende mit Intel- oder Windows-Rechnern sehen dann vereinzelt eine um 0,01 abweichende Kennwertzeile.
 
 ## Codestil der Aufrufe
 

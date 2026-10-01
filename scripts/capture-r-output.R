@@ -1,6 +1,7 @@
 # Erfasst die Druckausgaben von mariposa 0.7.4 für den Atlas (Spezifikation Lehrdatensatz und R, Abschnitt 6):
 #   (a) Referenzausgaben der Leitaufrufe für die Ausgangsdaten, „alle + 1“ und „P002 = 40“ (lernzeit),
-#       dazu Zusatzfälle für Tabellenbreiten, p-Werte und den Tibble-Druck; src/explain/rOutput.test.ts
+#       dazu Zusatzfälle für Tabellenbreiten, p-Werte, ungerade Summen, fehlende Werte, jede Änderung von
+#       lernplanung5 um ±1 und den Tibble-Druck; src/explain/rOutput.test.ts
 #       vergleicht sie zeichengenau mit src/explain/rOutput.ts.
 #   (b) catalog.json mit Code und Ausgabe aller 110 Katalogbeispiele auf den Ausgangsdaten.
 # Aufruf (nach generate-mariposa-check.ts):
@@ -56,6 +57,26 @@ extra <- list(
 )
 for (name in names(extra)) save_text(paste0("zusatz--", name), printed(extra[[name]]))
 
+# Mittelwert wie R: mean() rechnet in zwei Durchgängen (Summe / n, dann Korrektur um Σ(x − Mittel) / n).
+# Bei ungerader Summe liegt mean = x.xx5 genau auf der Rundungsgrenze; die Kennwertzeile von frequency()
+# hängt dann vom zweiten Durchgang ab. Erfasst auf diesem Rechner (Plattform siehe unten).
+odd <- atlas %>% mutate(lernplanung5 = replace(lernplanung5, id == "P002", 4)) # P002: 3 → 4, Summe 653
+save_text("zusatz--frequency-ungerade-summe", printed(odd %>% frequency(lernplanung5)))
+save_text("zusatz--describe-ungerade-summe", printed(odd %>% describe(lernplanung5, show = c("mean", "sd", "var", "se"))))
+# Fehlende Werte: „Total valid“, „System“, „Total“ (im Atlas können Zellen nicht leer werden; der Pfad ist trotzdem geprüft)
+save_text("zusatz--frequency-fehlend", printed(atlas %>% mutate(lernplanung5 = replace(lernplanung5, id %in% c("P001", "P002"), NA)) %>% frequency(lernplanung5)))
+# Jede einzelne Änderung von lernplanung5 um ±1 innerhalb 1 bis 5: die Kennwertzeile von frequency()
+x <- as.numeric(atlas$lernplanung5)
+edits <- list()
+for (i in seq_along(x)) for (delta in c(-1, 1)) {
+  if (x[i] + delta < 1 || x[i] + delta > 5) next
+  d <- atlas %>% mutate(lernplanung5 = replace(lernplanung5, seq_along(lernplanung5) == i, x[i] + delta))
+  line <- grep("^# total", capture.output(print(d %>% frequency(lernplanung5))), value = TRUE)
+  edits[[length(edits) + 1]] <- list(id = atlas$id[i], delta = delta, line = line)
+}
+jsonlite::write_json(list(platform = paste(R.version$platform, "long.double:", capabilities("long.double")), edits = edits),
+                     file.path(out_dir, "frequency-edits.json"), auto_unbox = TRUE, pretty = TRUE)
+
 # Tibble-Druck (pillar) für einzelne Kennwerte: echte Kovarianzen und Grenzfälle der Stellenzahl
 values <- c(
   cov(atlas$einkommen, atlas$lernzeit), cov(atlas$alter, atlas$arbeitsstunden), cov(atlas$lernzeit, atlas$schlafdauer),
@@ -91,5 +112,5 @@ for (ex in examples) {
 setwd(old)
 stopifnot(length(catalog) == 110L)
 jsonlite::write_json(catalog, file.path(out_dir, "catalog.json"), auto_unbox = TRUE, pretty = TRUE)
-cat(sprintf("%d Referenzausgaben, %d Zusatzfälle, %d Tibble-Fälle, %d Katalogausgaben in %s\n",
-            length(data) * length(lead), length(extra), length(tibbles), length(catalog), out_dir))
+cat(sprintf("%d Referenzausgaben, %d Zusatzfälle, %d Einzeländerungen, %d Tibble-Fälle, %d Katalogausgaben in %s\n",
+            length(data) * length(lead), length(extra) + 3L, length(edits), length(tibbles), length(catalog), out_dir))
