@@ -8,7 +8,8 @@ import { restingPlaces } from './mapLayout';
 import { placeLabels } from './organicLayout';
 import { coreLabelOrder,overviewTitles } from './organicStructure';
 
-// Captured from the implementation before its cache/spatial-index optimization.
+// Captured from the implementation before its cache/spatial-index optimization;
+// the label hashes were re-captured when map labels grew from 14 to 16 px (placement rules unchanged).
 const baseline=JSON.parse(readFileSync(new URL('./fixtures/map-performance-regression.json',import.meta.url),'utf8')) as {
  labels:{zoom:number;detail:boolean;hash:string}[];
  graphs:{selected:Ref;anchor:Ref;route:Route;hash:string}[];

@@ -40,7 +40,8 @@ export function organicLayout(ids:string[],allEdges:NetworkEdge[]):Positions{
 }
 
 export type LabelPlacement={x:number;y:number;width:number;height:number};
-function labelSize(title:string){const font=14,max=160,words=title.split(/\s+/),lines=[''];for(const word of words){const line=lines[lines.length-1];if(line&&(line+' '+word).length*font*.57>max)lines.push(word);else lines[lines.length-1]=(line+' '+word).trim();}return {width:Math.min(230,Math.max(...lines.map(line=>line.length*font*.61))+8),height:lines.length*18+6};}
+// Matches .organic-label in styles.css (16px/20px).
+function labelSize(title:string){const font=16,max=182,words=title.split(/\s+/),lines=[''];for(const word of words){const line=lines[lines.length-1];if(line&&(line+' '+word).length*font*.57>max)lines.push(word);else lines[lines.length-1]=(line+' '+word).trim();}return {width:Math.min(262,Math.max(...lines.map(line=>line.length*font*.61))+8),height:lines.length*20+6};}
 const candidateCache=new Map<string,LabelPlacement[]>();
 function labelCandidates(title:string){
  const cached=candidateCache.get(title);if(cached)return cached;

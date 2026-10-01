@@ -84,7 +84,7 @@ function NetworkMapImpl({selected,context,hovered,visited,onSelect,onHover,onVie
  });return edgeCache.current=retainGraphItems(edgeCache.current,next);},[relations,activeId,pathEdges,edgeHover,emphasis,lanes,detail]);
  const hoveredEdge=relations.find(e=>e.id===edgeHover);
  // Breite des Inspectors plus Rand; „Ausführlich“ verbreitert ihn (src/explain.css).
- function inspectorOffset(){const panel=container.current?.closest('.network-workspace')?.querySelector('.network-inspector');return panel?panel.getBoundingClientRect().width+26:434;}
+ function inspectorOffset(){const panel=container.current?.closest('.network-workspace')?.querySelector('.network-inspector');return panel?panel.getBoundingClientRect().width+26:466;}
  function bounds(){const width=container.current?.clientWidth||800,height=container.current?.clientHeight||600,mobile=width<=760;return {width:width-(inspectorOpen&&!mobile?inspectorOffset():0),height:height-(inspectorOpen&&mobile?height*.51:0),mobile};}
  function fit(ids:string[],duration:number){const b=bounds(),points=ids.map(id=>destinations[id]).filter(Boolean);if(!points.length)return overviewZoom;const left=Math.min(...points.map(p=>p.x)),right=Math.max(...points.map(p=>p.x)),top=Math.min(...points.map(p=>p.y)),bottom=Math.max(...points.map(p=>p.y)),z=Math.max(.1,Math.min(1.2,(b.width-200)/Math.max(1,right-left),(b.height-150)/Math.max(1,bottom-top)));void flow.setViewport({x:b.width/2-(left+right)/2*z,y:b.height/2-(top+bottom)/2*z,zoom:z},{duration});return z;}
  function ensure(duration:number){

@@ -3,62 +3,62 @@
     {
       "zoom": 0.2,
       "detail": false,
-      "hash": "aaf0507b335716bc7535e211603928efe777d36df452560ce07ba1d8ab39dc19"
+      "hash": "229a424459f63ed7df189bb736c776a62fc89f5219479be72a90dac327d11209"
     },
     {
       "zoom": 0.2,
       "detail": true,
-      "hash": "4503f59347f54242b832bc608bf396662a58cca79aac6646e9acd0e230a094e3"
+      "hash": "6ede08c1a6c80ef0f546022bf0db37793983f56c88e9d5bcb928249cf57def19"
     },
     {
       "zoom": 0.35,
       "detail": false,
-      "hash": "ebe1733b90ded9d2fd0cf16416e3fa8f7add843946da0cdaaef42b61af13ccbc"
+      "hash": "6b16b92d7a9623b866a8b37110859cfb2d3bc51ee7ec9d57364f25d171e987f4"
     },
     {
       "zoom": 0.35,
       "detail": true,
-      "hash": "29f88194818b5679c376d690637a31bac8586e511b486114a5eae121307383f0"
+      "hash": "a91b419a3b6bc258faa991ef39dc820a9c69e7635dc0e92586c7a15aa187932c"
     },
     {
       "zoom": 0.6,
       "detail": false,
-      "hash": "2af8b3ab10fe0443303058a87b28f8eef3f213672c15034819b522ade582d7de"
+      "hash": "78f5f54cd1eb4b68d2c65d8df08c0033ba15b778a89fd7e97ae6691f86c70241"
     },
     {
       "zoom": 0.6,
       "detail": true,
-      "hash": "faf4ba06da827d5793d57d72713824966734209d6539267a9dabaede97ecb356"
+      "hash": "725a792b94009cb43e105c0cd45f170b67b3cae04eaaf87fc23b04c8266e1e35"
     },
     {
       "zoom": 0.9,
       "detail": false,
-      "hash": "0d776bded0723c327de5efbe44e3d3937cfce41bd7ce31408f9a18096c71e9a3"
+      "hash": "93051d2e6555f972ec3f8ec6779d6049a39b39dbc6e105dc54bd48cb38e22289"
     },
     {
       "zoom": 0.9,
       "detail": true,
-      "hash": "d28d78d856db95d8dfaa7feb896f94bf2c7bea6a902fcac10e15e426af176480"
+      "hash": "3da4e1abf0488a7594b27437969685e4b95de0e9c0b45134f553e57299acbd96"
     },
     {
       "zoom": 1.2,
       "detail": false,
-      "hash": "7b599ff0a795dc179e671ada3542609094e7656fbfa666dfdef114b6f3715087"
+      "hash": "368cac0993a7e98d3c80febcdf6559039ca0be91d2060eab2fd149848283ec22"
     },
     {
       "zoom": 1.2,
       "detail": true,
-      "hash": "a8a04bc1096902596c8ad83068a60b167deb55ace22ae3340b438e712683c291"
+      "hash": "c058664d5177dd1040c0681e5eb12908593b8f94770da4b7731448a1efb3d4ac"
     },
     {
       "zoom": 1.8,
       "detail": false,
-      "hash": "7b599ff0a795dc179e671ada3542609094e7656fbfa666dfdef114b6f3715087"
+      "hash": "368cac0993a7e98d3c80febcdf6559039ca0be91d2060eab2fd149848283ec22"
     },
     {
       "zoom": 1.8,
       "detail": true,
-      "hash": "e360ea985d502e1973bad76dc388393d185ec696926a89ecd24950876807de81"
+      "hash": "82307837c8407f6a8b9bef159da0040f06a5bb71359b38b792823b7ee6851357"
     }
   ],
   "graphs": [

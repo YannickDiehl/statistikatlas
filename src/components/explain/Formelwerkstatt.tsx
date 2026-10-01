@@ -4,7 +4,7 @@ import { txt, type Ctx, type Workshop } from '../../explain/types';
 import { close, num } from '../../explain/format';
 import { takeStep, type AnyWorkshop, type StepCard as StepCardData } from '../../explain/registry';
 import type { Series, PairStats, Pairs } from '../../explain/math';
-import { FormulaView, GlyphLegend, Genau, KurzGesagt, Section, StepArrows, StepNav, useExplainMode } from './basics';
+import { FormulaView, GlyphLegend, Genau, KurzGesagt, Section, StepArrows, StepNav, useExplainMode, useWorkbenchLayout } from './basics';
 import { CheckQuestion, ConceptLink, LearnCard, ThinkQuestions, WorkTable } from './pieces';
 import { NumberLine, Rectangles, Squares } from './pictures';
 
@@ -47,9 +47,31 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept, picture }: {
   useEffect(() => { if (focusCard) cardHeading.current?.focus(); }, [focusCard]);
   const stepData = w.steps[step - 1];
   const active = JSON.stringify(data);
+  const layout = useWorkbenchLayout(), wide = layout.wide && !compact;
+
+  const formula = <>
+    <FormulaView className="xw-symbolic" nodes={v.symbolic} active={step} onMark={m => setStep(m as number)} label={v.aria} />
+    <FormulaView className="xw-numeric" nodes={w.numeric(ctx, v.lastStep)} active={step} onMark={m => setStep(m as number)} />
+    <StepNav buttons={w.steps.slice(0, v.lastStep).map(st => st.button)} active={step} onStep={setStep} />
+  </>;
+  const learnCard = <LearnCard step={stepData} ctx={ctx} compact={compact} onConcept={onConcept} onWho={pickWho} current={variant} headingRef={cardHeading}
+    header={<div className="xw-card-top"><span className="xw-label">Schritt {step} von {v.lastStep}. Wir lesen die Formel von innen nach außen.</span><StepArrows step={step} last={v.lastStep} onStep={setStep} /></div>} />;
+  const table = !compact && <Section title="Die Rechentabelle" note="So rechnest du es auch auf Papier. Mit jedem Schritt kommt eine Spalte dazu.">
+    <WorkTable workshop={w} ctx={ctx} step={step} lastStep={v.lastStep} onWho={pickWho} />
+  </Section>;
+  const image = <Section title="Das Bild dazu" note={w.captions[step]}>{picture({ data, s, step, who, setData, pickWho })}</Section>;
+  const check = !compact && <CheckQuestion key={`${variant}-${checkKey}`} title={`Kurz prüfen: Schritt ${step}`} question={txt(stepData.check.question, ctx)}
+    evaluate={value => {
+      const answer = stepData.check.answer(ctx);
+      const ok = answer === 'NA' ? value === 'NA' : value !== 'NA' && value.some(x => close(x, answer));
+      if (ok) return { ok, message: answer === 'NA' ? 'r ist nicht definiert.' : `${num(answer)}.` };
+      const hint = value === 'NA' ? null : value.map(x => stepData.check.diagnose(ctx, x)).find(Boolean);
+      return { ok, message: hint ?? 'Schau in die Rechentabelle und in die Lernkarte oben. Die markierte Stelle der Formel zeigt, was hier gerechnet wird.' };
+    }}
+    next={step < v.lastStep ? { label: `Weiter zu Schritt ${step + 1}`, go: () => { setStep(step + 1); setFocusCard(n => n + 1); } } : undefined} />;
 
   return (
-    <div className={`xw${compact ? ' xw-compact' : ''}`}>
+    <div ref={layout.root} className={`xw${compact ? ' xw-compact' : ''}${wide ? ' xw-wide' : ''}`}>
       {!compact && <div className="xw-wofuer"><h2>Wofür?</h2><p>{w.wofuer}</p></div>}
       <div className="xw-presets" role="group" aria-label="Beispieldaten">
         {w.presets.map(p => <button type="button" key={p.id} aria-pressed={JSON.stringify(p.data) === active} onClick={() => setData(p.data)}>{p.label}</button>)}
@@ -60,24 +82,15 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept, picture }: {
       {!compact && <Section title="Die Zeichen, bevor es losgeht" note="Jedes Zeichen hat einen Fachbegriff und eine Aufgabe. Antippen zeigt, wo es in der Rechnung vorkommt.">
         <GlyphLegend items={w.glyphs.filter(g => g.step <= v.lastStep).map(g => ({ ...g, target: g.step }))} active={step} onPick={t => setStep(t as number)} />
       </Section>}
-      <FormulaView className="xw-symbolic" nodes={v.symbolic} active={step} onMark={m => setStep(m as number)} label={v.aria} />
-      <FormulaView className="xw-numeric" nodes={w.numeric(ctx, v.lastStep)} active={step} onMark={m => setStep(m as number)} />
-      <StepNav buttons={w.steps.slice(0, v.lastStep).map(st => st.button)} active={step} onStep={setStep} />
-      <LearnCard step={stepData} ctx={ctx} compact={compact} onConcept={onConcept} onWho={pickWho} current={variant} headingRef={cardHeading}
-        header={<div className="xw-card-top"><span className="xw-label">Schritt {step} von {v.lastStep}. Wir lesen die Formel von innen nach außen.</span><StepArrows step={step} last={v.lastStep} onStep={setStep} /></div>} />
-      {!compact && <Section title="Die Rechentabelle" note="So rechnest du es auch auf Papier. Mit jedem Schritt kommt eine Spalte dazu.">
-        <WorkTable workshop={w} ctx={ctx} step={step} lastStep={v.lastStep} onWho={pickWho} />
-      </Section>}
-      <Section title="Das Bild dazu" note={w.captions[step]}>{picture({ data, s, step, who, setData, pickWho })}</Section>
-      {!compact && <CheckQuestion key={`${variant}-${checkKey}`} title={`Kurz prüfen: Schritt ${step}`} question={txt(stepData.check.question, ctx)}
-        evaluate={value => {
-          const answer = stepData.check.answer(ctx);
-          const ok = answer === 'NA' ? value === 'NA' : value !== 'NA' && value.some(x => close(x, answer));
-          if (ok) return { ok, message: answer === 'NA' ? 'r ist nicht definiert.' : `${num(answer)}.` };
-          const hint = value === 'NA' ? null : value.map(x => stepData.check.diagnose(ctx, x)).find(Boolean);
-          return { ok, message: hint ?? 'Schau in die Rechentabelle und in die Lernkarte oben. Die markierte Stelle der Formel zeigt, was hier gerechnet wird.' };
-        }}
-        next={step < v.lastStep ? { label: `Weiter zu Schritt ${step + 1}`, go: () => { setStep(step + 1); setFocusCard(n => n + 1); } } : undefined} />}
+      {wide
+        ? <div className="xw-work">
+          <div className={`xw-stage${layout.stick === 'all' ? ' stick' : ''}`}>
+            <div ref={layout.formula} className={`xw-stage-formula${layout.stick === 'formula' ? ' stick' : ''}`}>{formula}</div>
+            <div ref={layout.image}>{image}</div>
+          </div>
+          <div className="xw-study">{learnCard}{table}{check}</div>
+        </div>
+        : <>{formula}{learnCard}{table}{image}{check}</>}
       {!compact && (() => {
         const i = v.interpret(ctx);
         return <Section title="Was heißt das Ergebnis?"><KurzGesagt text={i.kurz} /><p>Fachlich: {i.fachlich}</p>

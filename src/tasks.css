@@ -1,125 +1,125 @@
 /* Lernpfad-Aufgaben: gemeinsame Hilfsbausteine. Aufgabenspezifisches steht darunter je Sitzung. */
 .task-brief{background:#fff;border:1px solid var(--line);border-left:4px solid var(--green);border-radius:0 10px 10px 0;padding:16px 20px;margin:0 0 14px}
-.task-brief h3{font:22px/1.3 Georgia,serif;margin:6px 0 10px}
+.task-brief h3{font:24px/1.3 Georgia,serif;margin:6px 0 10px}
 .task-brief-text p{margin:0 0 10px}
 .task-brief-text ol{margin:0 0 10px;padding-left:22px}
 .task-step{margin:22px 0 0}
-.task-step>h3{font:600 16px/1.4 var(--sans);margin:0 0 8px}
+.task-step>h3{font:600 18px/1.4 var(--sans);margin:0 0 8px}
 .task-hints{margin:10px 0 4px}
-.task-hint-steps{margin:0 0 10px;padding-left:22px;font-size:15px}
+.task-hint-steps{margin:0 0 10px;padding-left:22px;font-size:17px}
 .task-hint-steps li{margin:0 0 8px}
 .task-rblock{margin:8px 0}
 .task-feedback{list-style:none;padding:0;margin:10px 0}
-.task-feedback li{font-size:14px;padding:8px 12px;border-radius:6px;margin:0 0 6px;border:1px solid var(--line);background:#fff}
+.task-feedback li{font-size:16px;padding:8px 12px;border-radius:6px;margin:0 0 6px;border:1px solid var(--line);background:#fff}
 .task-feedback .tone-ok{border-color:#9fbf9a;background:#eef5ec}
 .task-feedback .tone-hint{border-color:#c9c3a2;background:#faf7ea}
 .task-feedback .tone-warn{border-color:#e3c08a;background:#fff5e6}
 .task-plenum{background:var(--soft);border-radius:10px;padding:16px 20px;margin:18px 0}
-.task-plenum h4{font:600 16px/1.4 var(--sans);margin:4px 0 10px}
-.task-plenum dl{display:grid;grid-template-columns:minmax(140px,max-content) 1fr;gap:6px 16px;margin:0 0 12px;font-size:15px}
+.task-plenum h4{font:600 18px/1.4 var(--sans);margin:4px 0 10px}
+.task-plenum dl{display:grid;grid-template-columns:minmax(140px,max-content) 1fr;gap:6px 16px;margin:0 0 12px;font-size:17px}
 .task-plenum dl>div{display:contents}
 .task-plenum dt{color:var(--muted)}
 .task-plenum dd{margin:0;font-weight:600}
 .task-partner{margin:0 0 14px}
 .task-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin:8px 0}
-.task-grid label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
-.sandbox .task-grid input,.sandbox .task-grid select{font:15px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink)}
+.task-grid label{display:flex;flex-direction:column;gap:4px;font-size:16px;color:var(--muted)}
+.sandbox .task-grid input,.sandbox .task-grid select{font:17px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:7px 9px;background:#fff;color:var(--ink)}
 .task-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 20px;margin:0 0 14px}
-.task-card>h4{font:600 16px/1.4 var(--sans);margin:0 0 8px}
+.task-card>h4{font:600 18px/1.4 var(--sans);margin:0 0 8px}
 .sandbox-error .sandbox-link{border:0;background:none;color:var(--green);text-decoration:underline;text-underline-offset:3px;padding:0;font:inherit;cursor:pointer}
 @media(max-width:560px){.task-plenum dl{grid-template-columns:1fr}.task-plenum dd{margin-bottom:6px}}
 
 /* Sitzung 1 · Schon gefragt? */
 .s01-tester{margin:0 0 6px}
 .s01-stamp{border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
-.s01-decoder,.s01-emergency{margin:12px 0;font-size:15px}
+.s01-decoder,.s01-emergency{margin:12px 0;font-size:17px}
 .s01-decoder summary,.s01-emergency summary{cursor:pointer;color:var(--green)}
 .s01-decoder textarea{margin-top:8px}
 .s01-emergency input{margin:8px 0}
-.s01-emergency code{font-size:13px}
+.s01-emergency code{font-size:15px}
 
 /* Sitzung 2 · Erster Tag in der Datenerfassung */
 .s02-sheets{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:0 0 16px}
-.s02-paper{margin:0;background:#fffef8;border:1px solid #d9d4bf;box-shadow:2px 3px 0 #ebe6d2;padding:14px 16px;font:14px/1.45 Georgia,serif}
-.s02-paper figcaption{font:600 13px/1.4 var(--sans);color:var(--muted);border-bottom:1px solid #d9d4bf;padding-bottom:6px;margin-bottom:8px}
+.s02-paper{margin:0;background:#fffef8;border:1px solid #d9d4bf;box-shadow:2px 3px 0 #ebe6d2;padding:14px 16px;font:16px/1.45 Georgia,serif}
+.s02-paper figcaption{font:600 15px/1.4 var(--sans);color:var(--muted);border-bottom:1px solid #d9d4bf;padding-bottom:6px;margin-bottom:8px}
 .s02-paper ol{margin:0;padding-left:18px}
 .s02-paper li{margin:0 0 10px}
 .s02-paper p{margin:0 0 4px}
 .s02-options{display:flex;flex-wrap:wrap;gap:4px 10px}
-.s02-option{position:relative;display:inline-flex;align-items:center;gap:4px;font-size:13px}
-.s02-box{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:1px solid #6b6750;font:700 13px/1 var(--sans);color:#1f3f8f}
-.s02-between{position:absolute;right:-11px;top:-2px;font:700 14px/1 var(--sans);color:#1f3f8f}
-.s02-note{display:block;margin-top:4px;font:italic 14px/1.3 'Bradley Hand','Segoe Script',cursive;color:#1f3f8f;transform:rotate(-2deg)}
-.s02-grid input{width:100%;text-align:right;border:1px solid var(--line);border-radius:5px;padding:5px 7px;font:15px/1.3 var(--sans)}
+.s02-option{position:relative;display:inline-flex;align-items:center;gap:4px;font-size:15px}
+.s02-box{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:1px solid #6b6750;font:700 15px/1 var(--sans);color:#1f3f8f}
+.s02-between{position:absolute;right:-11px;top:-2px;font:700 16px/1 var(--sans);color:#1f3f8f}
+.s02-note{display:block;margin-top:4px;font:italic 16px/1.3 'Bradley Hand','Segoe Script',cursive;color:#1f3f8f;transform:rotate(-2deg)}
+.s02-grid input{width:100%;text-align:right;border:1px solid var(--line);border-radius:5px;padding:5px 7px;font:17px/1.3 var(--sans)}
 .s02-grid input.grade-match{border-color:#7fae78;background:#f1f8ef}
 .s02-grid input.grade-mismatch,.s02-grid input.grade-invalid,.s02-grid input.grade-empty{border-color:var(--red);background:#fbefec}
 .s02-grid input.grade-open{border-color:#c9a64a;background:#fdf8e8}
 .s02-rules,.s02-diffs{margin:12px 0}
 .s02-diffs{list-style:none;padding:0}
-.s02-diffs li{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;border-bottom:1px solid var(--line);padding:6px 0;font-size:14px}
+.s02-diffs li{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;border-bottom:1px solid var(--line);padding:6px 0;font-size:16px}
 .s02-diffs small{flex-basis:100%;color:var(--muted)}
-.s02-reveal{background:var(--soft);border-radius:8px;padding:10px 14px;font-size:14px}
+.s02-reveal{background:var(--soft);border-radius:8px;padding:10px 14px;font-size:16px}
 .s02-solution{margin:12px 0}
 
 /* Sitzung 3 · Deutschland in 100 Stühlen */
 .s03-hall{margin:14px 0;display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:16px;align-items:start}
 .s03-hall svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
-.s03-hall figcaption{display:flex;flex-direction:column;gap:4px;font-size:14px}
+.s03-hall figcaption{display:flex;flex-direction:column;gap:4px;font-size:16px}
 .s03-hall figcaption i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
 .s03-row-scroll{overflow-x:auto;margin:12px 0}
 .s03-row{width:100%;min-width:480px;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
-.s03-row text{font:13px var(--sans);fill:var(--muted)}
+.s03-row text{font:15px var(--sans);fill:var(--muted)}
 .s03-row text.mean{fill:var(--red)}
 .sandbox .task-grid select{width:100%}
 @media(max-width:560px){.s03-hall{grid-template-columns:1fr}}
 
 /* Sitzung 4 · Nenner-Check */
-.s04 .sandbox-quote blockquote{font-size:19px}
+.s04 .sandbox-quote blockquote{font-size:21px}
 .s04-bars,.s04-strip{margin:12px 0}
 .s04-bars svg,.s04-strip svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
-.s04-bars text,.s04-strip text{font:13px var(--sans);fill:var(--muted)}
+.s04-bars text,.s04-strip text{font:15px var(--sans);fill:var(--muted)}
 .s04-bars text .value{fill:var(--ink);font-weight:600}
 .s04-strip text.own,.s04-strip text.flag{fill:var(--ink);font-weight:600}
-.s04-bars figcaption,.s04-strip figcaption{font-size:14px;color:var(--muted);margin-top:6px}
+.s04-bars figcaption,.s04-strip figcaption{font-size:16px;color:var(--muted);margin-top:6px}
 .s04-scroll{overflow-x:auto}
 .s04-bars .s04-scroll svg{min-width:700px}
 .s04-strip .s04-scroll svg{min-width:520px}
-.s04-check{display:flex;align-items:center;gap:8px;font-size:14px;margin:8px 0}
-.s04-causes{margin:8px 0;font-size:14px}
+.s04-check{display:flex;align-items:center;gap:8px;font-size:16px;margin:8px 0}
+.s04-causes{margin:8px 0;font-size:16px}
 .s04-causes ul{margin:6px 0 0;padding-left:20px}
-.s04-questions{margin:12px 0;padding-left:20px;font-size:15px}
+.s04-questions{margin:12px 0;padding-left:20px;font-size:17px}
 .s04-questions li{margin:0 0 8px}
-.s04-extra summary{font:600 16px/1.4 var(--sans);cursor:pointer}
+.s04-extra summary{font:600 18px/1.4 var(--sans);cursor:pointer}
 .s04 .sandbox-chips .sandbox-note{margin:0 6px 0 0;align-self:center}
 
 /* Sitzung 5 · Treiber-Rangliste */
-.s05-pick{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
-.s05-pick select{font:15px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
+.s05-pick{display:flex;align-items:center;gap:8px;font-size:16px;color:var(--muted)}
+.s05-pick select{font:17px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
 .s05-card{margin-top:12px}
-.s05-card h4 code{font-size:14px;color:var(--muted);margin-left:6px}
-.s05-joker{font:600 12px/1 var(--sans);text-transform:uppercase;letter-spacing:.06em;color:#7d6b5d;margin-left:6px}
-.s05-rule{margin:8px 0;font-size:14px}
+.s05-card h4 code{font-size:16px;color:var(--muted);margin-left:6px}
+.s05-joker{font:600 14px/1 var(--sans);text-transform:uppercase;letter-spacing:.06em;color:#7d6b5d;margin-left:6px}
+.s05-rule{margin:8px 0;font-size:16px}
 .s05-rank{margin:12px 0}
 .s05-rank svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
-.s05-rank svg text{font:12px var(--sans);fill:var(--muted)}
+.s05-rank svg text{font:14px var(--sans);fill:var(--muted)}
 .s05-rank svg text.head{font-weight:600;fill:var(--ink)}
 .s05-rank svg .own text{fill:var(--ink);font-weight:600}
-.s05-rank-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:10px}
+.s05-rank-table{width:100%;border-collapse:collapse;font-size:16px;margin-top:10px}
 .s05-rank-table caption{text-align:left;color:var(--muted);margin-bottom:4px}
 .s05-rank-table th,.s05-rank-table td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:right}
 .s05-rank-table th[scope=row],.s05-rank-table thead th:first-child{text-align:left}
 .s05-rank-table tr.own{background:var(--soft);font-weight:600}
-.s05-notes{margin:10px 0;padding-left:20px;font-size:15px}
+.s05-notes{margin:10px 0;padding-left:20px;font-size:17px}
 .s05-notes li{margin:0 0 6px}
-@media(max-width:560px){.s05-rank-table{font-size:12px}.s05-rank-table th,.s05-rank-table td{padding:3px 4px}}
+@media(max-width:560px){.s05-rank-table{font-size:14px}.s05-rank-table th,.s05-rank-table td{padding:3px 4px}}
 .s05-pick{flex-wrap:wrap}
 .s05-scroll{overflow-x:auto}
 .s05-rank .s05-scroll svg{min-width:560px}
 .s05-rank-table td{white-space:nowrap}
 
 /* Sitzung 6 · Die letzte Frage */
-.s06-role{font:600 12px/1 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 8px;margin-left:6px;vertical-align:2px;white-space:nowrap}
-.s06-table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+.s06-role{font:600 14px/1 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 8px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+.s06-table{width:100%;border-collapse:collapse;font-size:16px;margin:8px 0}
 .s06-table caption{text-align:left;color:var(--muted);margin-bottom:4px}
 .s06-table th,.s06-table td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:right;font-weight:400;vertical-align:top}
 .s06-table th[scope=row],.s06-table thead th:first-child{text-align:left}
@@ -128,13 +128,13 @@
 .s06-versions td{text-align:left}
 .s06-versions{min-width:520px}
 .s06-fields{border:1px solid var(--line);border-radius:8px;padding:8px 14px 4px;margin:12px 0;background:#fff}
-.s06-fields legend{font:600 14px/1.4 var(--sans);padding:0 6px}
-.s06-own{font-size:14px;font-weight:600;margin:0 0 8px}
-.s06-voice{border-left:4px solid var(--line);padding:6px 12px;font:italic 15px/1.5 Georgia,serif;margin:12px 0}
-.s06-details{margin:10px 0;font-size:15px}
+.s06-fields legend{font:600 16px/1.4 var(--sans);padding:0 6px}
+.s06-own{font-size:16px;font-weight:600;margin:0 0 8px}
+.s06-voice{border-left:4px solid var(--line);padding:6px 12px;font:italic 17px/1.5 Georgia,serif;margin:12px 0}
+.s06-details{margin:10px 0;font-size:17px}
 .s06-details summary{cursor:pointer;color:var(--green)}
-.s06-matrix{border-collapse:separate;border-spacing:4px;font-size:13px;margin:8px 0}
-.s06-matrix caption{text-align:left;color:var(--muted);font-size:14px;margin-bottom:4px}
+.s06-matrix{border-collapse:separate;border-spacing:4px;font-size:15px;margin:8px 0}
+.s06-matrix caption{text-align:left;color:var(--muted);font-size:16px;margin-bottom:4px}
 .s06-matrix th{font-weight:600;padding:2px 6px;text-align:center}
 .s06-matrix th[scope=row]{text-align:right}
 .s06-matrix td{min-width:86px;height:44px;text-align:center;padding:0;border-radius:6px}
@@ -144,19 +144,19 @@
 .s06-matrix-values td.marked{border-color:var(--ink)}
 .s06-matrix-values td.broken span{font-weight:700}
 .s06-matrix-values td span{display:block}
-.s06-matrix-values td small{display:block;font-size:11px;line-height:1.2}
+.s06-matrix-values td small{display:block;font-size:13px;line-height:1.2}
 .s06-reveal{background:var(--soft);border-radius:10px;padding:12px 16px;margin:12px 0}
-.s06-reveal h4{font:600 15px/1.4 var(--sans);margin:0 0 8px}
-.s06-notes{margin:10px 0;padding-left:20px;font-size:15px}
+.s06-reveal h4{font:600 17px/1.4 var(--sans);margin:0 0 8px}
+.s06-notes{margin:10px 0;padding-left:20px;font-size:17px}
 .s06-notes li{margin:0 0 6px}
 .s06-trap{margin:8px 0}
 .s06-bars{display:flex;gap:28px;align-items:flex-end;padding:8px 4px}
-.s06-bar{display:flex;flex-direction:column;align-items:center;gap:4px;width:110px;font-size:14px;text-align:center}
+.s06-bar{display:flex;flex-direction:column;align-items:center;gap:4px;width:110px;font-size:16px;text-align:center}
 .s06-bar-track{position:relative;width:64px;height:180px;background:#fff;border:1px solid var(--line);border-radius:6px 6px 0 0;overflow:hidden}
 .s06-bar-fill{position:absolute;left:0;right:0;bottom:0;background:#465260;transition:height .9s ease}
 .s06-bar-value{font-weight:600;font-variant-numeric:tabular-nums}
 .s06-bar-label small{color:var(--muted)}
-.s06-trap figcaption{font-size:15px;margin-top:6px}
+.s06-trap figcaption{font-size:17px;margin-top:6px}
 .s06-sign{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
 .s06-state{font-weight:600;margin:12px 0;padding:8px 12px;border-radius:6px;border:1px solid var(--line);background:#fff}
 .s06-state-freigegeben{border-color:#9fbf9a;background:#eef5ec}
@@ -165,22 +165,22 @@
 /* Sitzung 7 · Drei Fragen müssen reichen */
 .s07-items{list-style:none;padding:0;margin:8px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 .s07-items .task-card{margin:0;padding:12px 16px}
-.s07-items h4{font:600 15px/1.4 var(--sans);margin:0 0 6px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
-.s07-items h4 code{font-size:13px;color:var(--muted)}
-.s07-items p{margin:0;font:15px/1.45 Georgia,serif}
-.s07-agree{margin-left:auto;font:600 12px/1.4 var(--sans);color:var(--green);white-space:nowrap}
+.s07-items h4{font:600 17px/1.4 var(--sans);margin:0 0 6px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
+.s07-items h4 code{font-size:15px;color:var(--muted)}
+.s07-items p{margin:0;font:17px/1.45 Georgia,serif}
+.s07-agree{margin-left:auto;font:600 14px/1.4 var(--sans);color:var(--green);white-space:nowrap}
 .s07-picker{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
 .s07 .s07-picker button{text-align:left}
-.s07 .s07-picker button code{font-size:12px;color:var(--muted);margin-right:2px}
+.s07 .s07-picker button code{font-size:14px;color:var(--muted);margin-right:2px}
 .s07 .s07-picker button[aria-pressed=true]{text-decoration:line-through;color:var(--muted);background:var(--soft);border-color:var(--line);font-weight:400}
-.s07-facets{margin:8px 0;font-size:15px}
+.s07-facets{margin:8px 0;font-size:17px}
 .s07-facets p{margin:0 0 6px}
 .s07-facet-list{margin:6px 0;padding-left:20px}
 .s07-facet-list li{margin:0 0 4px}
 .s07-land{margin:12px 0}
 .s07-scroll{overflow-x:auto}
 .s07-land svg{width:100%;min-width:480px;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
-.s07-land svg text{font:12px var(--sans);fill:var(--muted)}
+.s07-land svg text{font:14px var(--sans);fill:var(--muted)}
 .s07-land svg text.axis{font-weight:600;fill:var(--ink)}
 .s07-land svg text.champ{font-style:italic}
 .s07-land svg .grid{stroke:#e6e8df}
@@ -189,20 +189,20 @@
 .s07-land svg .dot.faded{fill:#fff;stroke:#6f8a6a;stroke-width:1.5}
 .s07-land svg .own circle{fill:none;stroke:#242822;stroke-width:2}
 .s07-land svg .own text{fill:var(--ink);font-weight:600}
-.s07-land figcaption{font-size:14px;color:var(--muted);margin-top:6px}
-.s07-table-wrap{margin:8px 0;font-size:14px}
+.s07-land figcaption{font-size:16px;color:var(--muted);margin-top:6px}
+.s07-table-wrap{margin:8px 0;font-size:16px}
 .s07-table-wrap summary{cursor:pointer;color:var(--green)}
-.s07-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+.s07-table{width:100%;border-collapse:collapse;font-size:16px;margin-top:8px}
 .s07-table caption{text-align:left;color:var(--muted);margin-bottom:4px}
 .s07-table th,.s07-table td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:right;white-space:nowrap}
 .s07-table th[scope=row],.s07-table thead th:first-child{text-align:left}
 .s07-table tr.own{background:var(--soft);font-weight:600}
 .s07-table tr.duty th{text-decoration:underline}
-.s07-notes{margin:10px 0;padding-left:20px;font-size:15px}
+.s07-notes{margin:10px 0;padding-left:20px;font-size:17px}
 .s07-notes li{margin:0 0 6px}
-.s07-kuer>summary{font:600 16px/1.4 var(--sans);cursor:pointer}
-.s07-duty-draw{background:#fff;border:1px solid var(--line);border-left:4px solid #7d6b5d;border-radius:0 8px 8px 0;padding:10px 14px;font-size:15px}
-@media(max-width:560px){.s07-table{font-size:12px}.s07-table th,.s07-table td{padding:3px 4px}.s07-agree{margin-left:0}}
+.s07-kuer>summary{font:600 18px/1.4 var(--sans);cursor:pointer}
+.s07-duty-draw{background:#fff;border:1px solid var(--line);border-left:4px solid #7d6b5d;border-radius:0 8px 8px 0;padding:10px 14px;font-size:17px}
+@media(max-width:560px){.s07-table{font-size:14px}.s07-table th,.s07-table td{padding:3px 4px}.s07-agree{margin-left:0}}
 /* Sitzung 10 · Dolmetschen für den Bürgerrat */
 .s10-questions{margin:0 0 10px;padding-left:22px}
 .s10-questions li{margin:0 0 4px}
@@ -211,63 +211,63 @@
 .s10-council p{margin:0;font-style:italic}
 .s10-langs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
 .s10-langs .task-card{margin:0}
-.s10-sub{font:600 15px/1.4 var(--sans);margin:18px 0 6px}
-.s10-reveal{background:var(--soft);border-radius:8px;padding:10px 14px;font-size:15px}
+.s10-sub{font:600 17px/1.4 var(--sans);margin:18px 0 6px}
+.s10-reveal{background:var(--soft);border-radius:8px;padding:10px 14px;font-size:17px}
 .s10-reveal-block{margin:12px 0 0}
 .s10-scroll{overflow-x:auto}
 .s10-tafel,.s10-curve{margin:12px 0}
-.s10-tafel table{width:100%;min-width:520px;border-collapse:collapse;font-size:14px;background:#fff}
+.s10-tafel table{width:100%;min-width:520px;border-collapse:collapse;font-size:16px;background:#fff}
 .s10-tafel caption{text-align:left;color:var(--muted);margin-bottom:4px}
 .s10-tafel th,.s10-tafel td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;white-space:nowrap}
-.s10-tafel figcaption,.s10-curve figcaption{font-size:14px;color:var(--muted);margin-top:6px}
+.s10-tafel figcaption,.s10-curve figcaption{font-size:16px;color:var(--muted);margin-top:6px}
 .s10-curve svg{width:100%;min-width:520px;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
-.s10-curve svg text{font:12px var(--sans);fill:var(--muted)}
+.s10-curve svg text{font:14px var(--sans);fill:var(--muted)}
 .s10-curve svg text.step,.s10-curve svg text.name{fill:var(--ink);font-weight:600}
 .s10-curve svg .grid{stroke:#e6e3da}
-.s10-extra summary,.s10-afterword summary{font:600 16px/1.4 var(--sans);cursor:pointer}
-.s10-afterword{margin:12px 0;font-size:15px}
+.s10-extra summary,.s10-afterword summary{font:600 18px/1.4 var(--sans);cursor:pointer}
+.s10-afterword{margin:12px 0;font-size:17px}
 .s10-afterword ol{padding-left:22px}
 .s10-afterword li{margin:0 0 6px}
-.s10-notes{margin:10px 0;padding-left:20px;font-size:15px}
+.s10-notes{margin:10px 0;padding-left:20px;font-size:17px}
 .s10-notes li{margin:0 0 6px}
 /* Sitzung 8 · Der Demokratie-Automat */
 .s08-card{margin-top:12px}
-.s08-card h4 code{font-size:14px;color:var(--muted);margin-left:6px}
-.s08-ask{font:18px/1.4 Georgia,serif;margin:0 0 6px}
-.s08-sub{font:600 15px/1.4 var(--sans);margin:18px 0 6px}
-.s08-code{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted)}
+.s08-card h4 code{font-size:16px;color:var(--muted);margin-left:6px}
+.s08-ask{font:20px/1.4 Georgia,serif;margin:0 0 6px}
+.s08-sub{font:600 17px/1.4 var(--sans);margin:18px 0 6px}
+.s08-code{display:flex;align-items:center;gap:8px;font-size:16px;color:var(--muted)}
 .sandbox .s08-code input[type=text]{width:6em}
 .s08-display{display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:0 8px 8px 0;padding:12px 16px;margin:10px 0}
-.s08-display label{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:15px}
-.s08-display input{width:6em;font:15px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
-.s08-display output{font:17px/1.4 Georgia,serif}
+.s08-display label{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:17px}
+.s08-display input{width:6em;font:17px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.s08-display output{font:19px/1.4 Georgia,serif}
 .s08-scroll{overflow-x:auto}
 .s08-probe,.s08-spread{margin:12px 0}
 .s08-probe svg,.s08-spread svg{width:100%;min-width:560px;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
-.s08-probe svg text,.s08-spread svg text{font:12px var(--sans);fill:var(--muted)}
+.s08-probe svg text,.s08-spread svg text{font:14px var(--sans);fill:var(--muted)}
 .s08-probe svg text.axis,.s08-spread svg text.axis{fill:var(--ink);font-weight:600}
-.s08-probe figcaption{font-size:14px;color:var(--muted);margin-top:6px}
-.s08-table-toggle{margin:8px 0;font-size:14px}
-.s08-table{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+.s08-probe figcaption{font-size:16px;color:var(--muted);margin-top:6px}
+.s08-table-toggle{margin:8px 0;font-size:16px}
+.s08-table{width:100%;border-collapse:collapse;font-size:16px;margin-top:8px}
 .s08-table caption{text-align:left;color:var(--muted);margin-bottom:4px}
 .s08-table th,.s08-table td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:right;white-space:nowrap}
 .s08-table th[scope=row],.s08-table thead th:first-child{text-align:left}
 .s08-table tr.own{background:var(--soft);font-weight:600}
-.s08-reveal{background:var(--soft);border-radius:8px;padding:10px 14px;font-size:15px;margin:10px 0}
+.s08-reveal{background:var(--soft);border-radius:8px;padding:10px 14px;font-size:17px;margin:10px 0}
 .s08-reveal p{margin:0 0 8px}
-.s08-extra{margin:12px 0;font-size:15px}
+.s08-extra{margin:12px 0;font-size:17px}
 .s08-extra summary{cursor:pointer;color:var(--green);font-weight:600}
 .s08-knobs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:10px 0}
-.s08-knobs label{display:flex;flex-direction:column;gap:4px;font-size:14px}
+.s08-knobs label{display:flex;flex-direction:column;gap:4px;font-size:16px}
 .s08-knobs input[type=range]{width:100%;accent-color:var(--green)}
 .s08-signatures{display:flex;flex-wrap:wrap;gap:4px 18px}
-.s08-notes{margin:10px 0;padding-left:20px;font-size:15px}
+.s08-notes{margin:10px 0;padding-left:20px;font-size:17px}
 .s08-notes li{margin:0 0 6px}
-@media(max-width:560px){.s08-table{font-size:12px}.s08-table th,.s08-table td{padding:3px 4px}}
+@media(max-width:560px){.s08-table{font-size:14px}.s08-table th,.s08-table td{padding:3px 4px}}
 
 /* Sitzung 9 · Mitgenommen */
 .s09-scroll{overflow-x:auto}
-.s09-table{width:100%;border-collapse:collapse;font-size:14px;margin:8px 0}
+.s09-table{width:100%;border-collapse:collapse;font-size:16px;margin:8px 0}
 .s09-table caption{text-align:left;color:var(--muted);margin-bottom:4px}
 .s09-table th,.s09-table td{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
 .s09-table th small{font-weight:400;color:var(--muted)}
@@ -277,20 +277,20 @@
 .s09-board .own{background:var(--soft);font-weight:600}
 .s09-template{margin:12px 0}
 .s09-template svg{width:100%;min-width:520px;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
-.s09-template svg text{font:12px var(--sans);fill:var(--muted)}
+.s09-template svg text{font:14px var(--sans);fill:var(--muted)}
 .s09-template svg text.head{fill:var(--ink);font-weight:600}
-.s09-template svg text.ghost{font-size:11px;font-style:italic}
-.s09-template figcaption{font-size:14px;color:var(--muted);margin-top:6px}
-.s09-sub{font:600 15px/1.4 var(--sans);margin:18px 0 6px}
+.s09-template svg text.ghost{font-size:13px;font-style:italic}
+.s09-template figcaption{font-size:16px;color:var(--muted);margin-top:6px}
+.s09-sub{font:600 17px/1.4 var(--sans);margin:18px 0 6px}
 .s09-cards{list-style:none;padding:0;margin:8px 0}
 .s09-cards>li{border-bottom:1px solid var(--line);padding:8px 0}
-.s09-card-title{display:block;font-weight:600;font-size:15px;margin-bottom:4px}
+.s09-card-title{display:block;font-weight:600;font-size:17px;margin-bottom:4px}
 .s09-cards .sandbox-chips{margin:0}
 .s09-cards .task-feedback{margin:6px 0 0}
 .s09-controls{border:1px solid var(--line);border-radius:8px;padding:8px 14px;margin:12px 0}
-.s09-controls legend{font-size:14px;color:var(--muted);padding:0 4px}
-.s09-extra{margin:4px 0;font-size:15px}
-.s09-extra summary{cursor:pointer;font:600 16px/1.4 var(--sans)}
-.s09-wobble{margin:8px 0 12px;padding-left:20px;font-size:15px}
+.s09-controls legend{font-size:16px;color:var(--muted);padding:0 4px}
+.s09-extra{margin:4px 0;font-size:17px}
+.s09-extra summary{cursor:pointer;font:600 18px/1.4 var(--sans)}
+.s09-wobble{margin:8px 0 12px;padding-left:20px;font-size:17px}
 .s09-wobble li{margin:0 0 6px}
-@media(max-width:560px){.s09-table{font-size:12px}.s09-table th,.s09-table td{padding:3px 4px}}
+@media(max-width:560px){.s09-table{font-size:14px}.s09-table th,.s09-table td{padding:3px 4px}}

@@ -1,4 +1,4 @@
-import { Fragment, useSyncExternalStore, type ReactNode } from 'react';
+import { Fragment, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { modeStore, type Mode } from '../../explain/mode';
 import type { FNode } from '../../explain/types';
@@ -16,6 +16,37 @@ export function ModeToggle() {
       <button type="button" aria-pressed={mode === 'ausfuehrlich'} onClick={() => setMode('ausfuehrlich')}>Ausführlich</button>
     </div>
   );
+}
+
+/** Ab dieser Inhaltsbreite (Werkbank) stehen Formel und Bild links, Lernkarte und Tabelle rechts. */
+export const WIDE_FROM = 800;
+
+/**
+ * Zweispaltige Werkbank: `wide`, sobald `root` breit genug ist. Links stehen Formel und Bild; was davon
+ * ganz in den sichtbaren Teil des Inspectors passt, bleibt beim Scrollen stehen: beides (`'all'`),
+ * sonst nur die Formel mit den Schrittknöpfen (`'formula'`), sonst nichts.
+ */
+export function useWorkbenchLayout(): {
+  root: RefObject<HTMLDivElement | null>; formula: RefObject<HTMLDivElement | null>; image: RefObject<HTMLDivElement | null>;
+  wide: boolean; stick: 'all' | 'formula' | null;
+} {
+  const root = useRef<HTMLDivElement>(null), formula = useRef<HTMLDivElement>(null), image = useRef<HTMLDivElement>(null);
+  const [wide, setWide] = useState(false), [stick, setStick] = useState<'all' | 'formula' | null>(null);
+  useLayoutEffect(() => {
+    const el = root.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const scroller = el.closest('.network-inspector');
+    const read = () => {
+      setWide(el.clientWidth >= WIDE_FROM);
+      const room = (scroller?.clientHeight ?? 0) - 24, f = formula.current?.offsetHeight ?? 0, i = image.current?.offsetHeight ?? 0;
+      setStick(!f ? null : f + i + 20 <= room ? 'all' : f <= room ? 'formula' : null);
+    };
+    read();
+    const observer = new ResizeObserver(read);
+    for (const box of [el, scroller, formula.current, image.current]) if (box) observer.observe(box);
+    return () => observer.disconnect();
+  }, [wide]);
+  return { root, formula, image, wide, stick };
 }
 
 export function KurzGesagt({ text, fach }: { text: string; fach?: string }) {
