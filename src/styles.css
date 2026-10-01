@@ -139,7 +139,7 @@
 /* Größere Schrift (1. Oktober 2026): Ist ein Begriff offen, steht die Bezugslegende über dem (auch zweizeiligen) Kartenhinweis,
    und beide bleiben links vom Inspector (Hinweis ab left:115px, Legende rechts der Zoomknöpfe). */
 @media(min-width:761px){.has-inspector .network-map-note{max-width:calc(100% - 597px)}.has-inspector .organic-edge-caption{bottom:186px}}
-@media(min-width:761px) and (max-width:1100px){.has-inspector .network-map-note{max-width:calc(100% - 561px)}.has-inspector .map-direction-key{right:430px;max-width:calc(100% - 498px)}}
+@media(min-width:761px) and (max-width:1100px){.has-inspector .organic-zoom-note{display:none}.has-inspector .network-map-note{max-width:calc(100% - 561px)}.has-inspector .map-direction-key{right:430px;max-width:calc(100% - 498px)}}
 
 /* Größere Schrift (1. Oktober 2026): <small> ohne eigene Größe fällt nicht unter 13 px. */
 small{font-size:max(13px,.85em)}

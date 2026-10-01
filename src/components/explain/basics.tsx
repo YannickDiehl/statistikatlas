@@ -46,7 +46,8 @@ export function useWorkbenchLayout(): {
     };
     const reveal = (e: FocusEvent) => {
       const target = e.target as Element, top = formula.current;
-      if (stuck !== 'formula' || !scroller || !top || !image.current?.contains(target)) return;
+      // Nur Tastaturfokus: Ein Klick auf einen Punkt soll das Bild nicht unter dem Zeiger verschieben.
+      if (stuck !== 'formula' || !scroller || !top || !image.current?.contains(target) || !target.matches(':focus-visible')) return;
       const hidden = top.getBoundingClientRect().bottom + 12 - target.getBoundingClientRect().top;
       if (hidden > 0) scroller.scrollTop -= hidden;
     };
