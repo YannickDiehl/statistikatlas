@@ -1,19 +1,21 @@
 /**
- * Inhaltsmodell der Erklärungen in der freien Karte (Spezifikation
- * docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt-pilot-design.md, Abschnitt 8.2).
+ * Inhaltsmodell der Erklärungen in der freien Karte. Grundlage: Spezifikation
+ * docs/superpowers/specs/2026-10-01-freie-karte-ausbau-alle-knoten-design.md (führend, Abschnitte 2–4) und
+ * docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt-pilot-design.md (Abschnitt 8.2).
  * Inhalte sind reines TypeScript ohne React, damit sie in Node getestet werden können.
+ * Wie man damit schreibt, steht in src/explain/AUTHORING.md.
  */
+import type { Pairs, PairStats, Series } from './math';
 
 /** Kontext zum Füllen der Texte: Kennwerte der Beispieldaten und gewählte Person/Zelle. */
-import type { Pairs } from './math';
-
 export type Ctx<S> = { s: S; who: number; names: readonly string[] };
+/** Fester Text oder Text aus den aktuellen Beispieldaten. */
 export type Text<S> = string | ((c: Ctx<S>) => string);
 export const txt = <S,>(t: Text<S>, c: Ctx<S>): string => typeof t === 'function' ? t(c) : t;
 
 /**
- * Formelknoten. `m` koppelt einen Teil an einen Schritt (Zahl, Stufe 1) oder an ein
- * Zeichen (Text, Stufe 2); gekoppelte Teile werden hervorgehoben und sind anklickbar.
+ * Formelknoten. `m` koppelt einen Teil an einen Schritt (Zahl, Werkstatt) oder an ein
+ * Zeichen (Text, Formel als Satz); gekoppelte Teile werden hervorgehoben und sind anklickbar.
  */
 export type FNode =
   | string
@@ -24,36 +26,37 @@ export type FNode =
   | { sub: string }
   | { br: true };
 
+/** Eintrag in „Alle Zeichen auf einen Blick“; `step` ist der Schritt, in dem das Zeichen gebraucht wird. */
 export interface Glyph { sym: string; say?: string; term: string; plain: string; step: number }
 
+/** Zahlfrage „Probier es selbst“. Die richtige Antwort bekommt keine Diagnose; Diagnosen beginnen mit „Fast!“. */
 export interface Check<S> {
+  /** Frage in Alltagssprache („Wo liegt die Mitte dieser Gruppe?“). */
   question: Text<S>;
   answer: (c: Ctx<S>) => number | 'NA';
-  /** Rückmeldung für eine erkennbare Fehlantwort, sonst null. */
+  /** Rückmeldung für eine erkennbare Fehlantwort („Fast! …“), sonst null (dann folgt der allgemeine Hinweis). */
   diagnose: (c: Ctx<S>, v: number | 'NA') => string | null;
 }
 
+/** Ein Schritt der Werkstatt, angezeigt als Lernkarte (Spezifikation Ausbau, Abschnitt 3). */
 export interface Step<S> {
-  /** Zeichen auf dem Schrittknopf, zum Beispiel „xᵢ − x̄“. */
-  button: string;
-  /** Zeichen in der Lernkarte. */
-  sym: string;
-  /** Verlinkter Begriff; sein Titel in concepts.ts ist der Fachbegriff. */
-  concept: string;
-  also?: string;
-  /** Weitere Begriffe dieses Schritts, zum Beispiel die Freiheitsgrade. */
+  button: string;            // Zeichen auf dem Schrittknopf („xᵢ − x̄“)
+  title: string;             // Handlung („Abstände messen“), Regel 1
+  sym: string;               // Zeichen in „Das nennt man …“; '' wenn keins
+  say?: string;              // Aussprache, Pflicht wenn sym nicht leer („x i minus x quer“)
+  concept: string;           // verlinkter Begriff; sein Kartentitel ist der Fachbegriff
   links?: { id: string; label: string }[];
-  kurz: Text<S>;
-  fachlich: Text<S>;
-  /** Überschrift über „Vorgerechnet“; Personenwahl nur, wenn `perPerson`. */
   perPerson: boolean;
-  vorgerechnet: Text<S>;
-  alltag: string;
-  warum: string;
-  fehler: Text<S>;
-  check: Check<S>;
+  was: Text<S>;              // „Was passiert?“, ein bis zwei Sätze
+  rechnung: Text<S>;         // Rechnung für die gewählte Person
+  fach: Text<S>;             // „In der Fachsprache: …“
+  warum: Text<S>;
+  acht: Text<S>;             // „Aufgepasst“
+  alltag?: string;           // optional
+  check: Check<S>;           // Frage in Alltagssprache; Diagnosen beginnen mit „Fast!“
 }
 
+/** Spalte der Rechentabelle: erscheint ab Schritt `from`, ist in den Schritten `active` hervorgehoben. */
 export interface Column<S> {
   head: string;
   from: number;
@@ -66,8 +69,10 @@ export interface Column<S> {
   /** Farbe einer Zelle nach Vorzeichen, zum Beispiel für negative Produkte. */
   tone?: (c: Ctx<S>, row: number) => 'pos' | 'neg' | undefined;
 }
+/** Rechenzeile unter der Tabelle, ab Schritt `from`, hervorgehoben in Schritt `step`. */
 export interface Line<S> { from: number; step: number; text: (c: Ctx<S>) => string }
 
+/** Denkfrage „Mit der Formel denken“; `tryIt` setzt passende Beispieldaten. */
 export interface Think<D, S> {
   question: string;
   /** Abweichende Frage für einzelne Begriffe (zum Beispiel s² statt s). */
@@ -84,6 +89,7 @@ export interface Think<D, S> {
 
 export interface Metric<S> { label: string; value: (c: Ctx<S>) => string }
 
+/** Ein Begriff, den eine Werkstatt erklärt (zum Beispiel `variance` endet nach Schritt 5, `sd` nach Schritt 6). */
 export interface Variant<S> {
   lastStep: number;
   kurz: string;
@@ -91,20 +97,30 @@ export interface Variant<S> {
   symbolic: FNode[];
   aria: string;
   metrics: Metric<S>[];
+  /** „Was heißt das Ergebnis?“: `kurz` ist eine Aussage über Menschen (Regel 9), `fachlich` die genaue Fassung. */
   interpret: (c: Ctx<S>) => { kurz: string; fachlich: string };
   /** Verweis unter der Deutung, zum Beispiel von der Varianz zur Standardabweichung. */
   next?: { id: string; label: string };
   genau: { kurz: string; paragraphs: (c: Ctx<S>) => string[] };
 }
 
+/**
+ * Werkstatt (Vorlage 1): Formel als Navigator, Lernkarte je Schritt, Rechentabelle, Bild, Ausprobieren.
+ * `D` sind die Beispieldaten (zum Beispiel fünf Werte), `S` die daraus berechneten Kennwerte.
+ */
 export interface Workshop<D, S> {
-  /** Wertepaare gehören zur Werkstatt Zusammenhang; daran unterscheidet die Oberfläche die Bilder. */
-  id: D extends Pairs ? 'zusammenhang' : 'mittel' | 'streuung';
+  /** Beliebige, eindeutige Kennung („streuung“); Schrittkarten verweisen darauf. */
+  id: string;
   wofuer: string;
+  /** Mut-Satz zu Beginn (Regel 6): Formel in kleine bekannte Handlungen zerlegen, R rechnet später. */
+  mut: string;
+  /** Schlüssel im Bild-Register `PICTURES` (src/components/explain/Formelwerkstatt.tsx). */
+  picture: string;
   names: readonly string[];
   bounds: { min: number; max: number };
   presets: { id: string; label: string; data: D }[];
   compute: (d: D) => S;
+  /** Für „Alle Zeichen auf einen Blick“ am Ende der Werkstatt. */
   glyphs: Glyph[];
   steps: Step<S>[];
   numeric: (c: Ctx<S>, lastStep: number) => FNode[];
@@ -114,7 +130,7 @@ export interface Workshop<D, S> {
   variants: Record<string, Variant<S>>;
 }
 
-// Stufe 2: Formel als Satz ------------------------------------------------------------
+// Formel als Satz (Vorlage 2) ---------------------------------------------------------
 
 export interface SentenceGlyph { key: string; sym: string; say: string; term: string; plain: string; concept: string }
 export interface Slider { key: string; label: string; min: number; max: number; step: number; log?: boolean; format: (v: number) => string }
@@ -132,13 +148,98 @@ export interface SentenceTemplate<V extends Record<string, number>, S> {
   aria: string;
   numeric: (s: S) => FNode[];
   sentence: (string | { m: string; t: string })[];
+  /** „Vorgerechnet“ in Mini-Schritten; `title` ist eine Handlung. */
   worked: (s: S) => { title: string; text: string }[];
+  /** „Aufgepasst“: der typische Fehler, ermutigend formuliert. */
   fehler: string;
   sliders: Slider[];
   quick: { label: string; mark: string; apply: (v: V) => V }[];
   compare: (s: S) => string;
+  /** `right` beginnt mit „Genau“, `diagnose` mit „Fast!“ (erkennbarer Fehler) oder „Noch nicht ganz.“. */
   check: { question: string; answer: number; tolerance: number; right: string; diagnose: (v: number) => string };
   interpret: (s: S) => { kurz: string; fachlich: string };
   think: { question: string; options: string[]; correct: number; mark: string; explain: string; kurz: string; hint: string };
   genau: { kurz: string; paragraphs: string[] };
+}
+
+// Begriffskarte und Tabellen-Werkzeug (Vorlagen 3 und 4) ------------------------------
+
+/** Denkfrage mit Vorhersage: erst tippen, dann nachsehen. */
+export interface ThinkItem {
+  question: string; options: string[]; correct: number;
+  explain: string; kurz: string;
+  step?: number;               // Formelschritt, auf den die Rückmeldung verweist
+}
+
+/** Begriffskarte für Begriffe ohne Rechenkern (Spezifikation Ausbau, Abschnitt 4). */
+export interface ConceptCard {
+  concept: string;
+  wofuer: string;
+  kurz: string;
+  stellDirVor: { text: string; figures?: { label: string; value: string }[] };
+  heisst: { sym?: string; say?: string; fach: string };
+  bausteine: { title: string; was: string; rechnung?: string; warum: string; acht: string; concept?: string }[];
+  ausprobieren: ThinkItem[];
+  regler?: { label: string; min: number; max: number; step: number; initial: number; format: (v: number) => string; describe: (v: number) => string };
+  check: { question: string; options: string[]; correct: number; right: string; diagnose: Partial<Record<number, string>> };
+  fuerDich: string;
+  genau: { kurz: string; paragraphs: string[] };
+}
+
+/** Tabellen-Werkzeug: fünf Personen vorher, die Operation in Schritten, nachher, der mariposa-Aufruf. */
+export interface TableTool {
+  concept: string;
+  wofuer: string; kurz: string; mut?: string;
+  columns: { key: string; label: string }[];
+  rows: Record<string, number | string | null>[];          // fünf Personen
+  options: { id: string; label: string }[];                // Wahl, die die Operation verändert
+  steps: { title: string; was: string; warum: string; acht: string; sym?: string; say?: string; fach: string; concept?: string }[];
+  apply: (rows: TableTool['rows'], option: string) => { columns: TableTool['columns']; rows: TableTool['rows'] };
+  rCode: (option: string) => string;
+  check: { question: string; answer: (option: string) => number | 'NA'; right: string; diagnose: (option: string, v: number | 'NA') => string | null };
+  think: ThinkItem[];
+  genau: { kurz: string; paragraphs: string[] };
+}
+
+// Reiter (Oberfläche in F3, Typen schon hier) ------------------------------------------
+
+export type SampleTab =
+  | { kind: 'bridge'; workshop: string; variant: string; variable: string; think: ThinkSample[] }
+  | { kind: 'analysis'; kurz: string; result: (c: SampleCtx) => { kurz: string; fachlich: string; zusatz?: string }; voraussetzung?: string; think: ThinkSample[] };
+export interface SampleCtx { rows: import('../domain/survey').SurveyRow[]; columns: Record<string, string[]> }
+export interface ThinkSample extends ThinkItem { tryIt: { label: string; op: 'shift' | 'double' | 'outlier' | 'constant'; column: 'x' | 'y'; value?: number } }
+/** Lernkarte zu einem Zeichen im R-Code (Codelegende); F2 deklariert dieselbe Form in src/domain/rTokens.ts. */
+export interface TokenNote { sym: string; term: string; say?: string; kurz: string; fehler: string }
+export interface RTab {
+  entry: string;                         // Katalog-ID in mariposaCatalog
+  variant: number;                       // Leitaufruf
+  tokens?: Record<string, TokenNote>;    // Ergänzungen zur allgemeinen Codelegende (Funktion, Argumente)
+  outputMap: { match: string; atlas: string; step?: number; explain: string }[]; // „SD“ ↔ „s, Schritt 6“
+  check: { question: string; correct: string; wrong: Record<string, string> };   // Schlüssel = match
+}
+export interface NextTab { next: { id: string; why: string }; before: { id: string; why: string }[]; after: { id: string; why: string }[]; more?: { id: string; why: string }[] }
+export interface ConceptTabs { sample?: SampleTab; r?: RTab; next: NextTab }
+
+// Zuordnung -----------------------------------------------------------------------------
+
+export type AnyWorkshop = Workshop<number[], Series> | Workshop<Pairs, PairStats> | Workshop<any, any>; // Pilot-Typen bleiben, neue Werkstätten bringen eigene D und S
+export type AnySentence = SentenceTemplate<any, any>;
+export type RecodeTemplate = typeof import('./content/rekodieren').rekodieren;
+
+/** Welche Vorlage ein Begriff bekommt. Bei `werkstatt` ist `variant` der Begriff, zum Beispiel „sd“. */
+export type Explain =
+  | { kind: 'werkstatt'; workshop: AnyWorkshop; variant: string }
+  | { kind: 'satz'; template: AnySentence }
+  | { kind: 'werkzeug'; template: RecodeTemplate }
+  | { kind: 'tabelle'; tool: TableTool }
+  | { kind: 'begriff'; card: ConceptCard };
+
+/**
+ * Inhalt eines Bereichs (src/explain/content/<bereich>/index.ts). Schlüssel sind Begriffs-IDs der Karte;
+ * `stepCards` macht einen Rechenbegriff zur Schrittkarte einer Werkstatt (Werkstatt-ID, Begriff, Schritt).
+ */
+export interface AreaIndex {
+  explanations: Record<string, Explain>;
+  tabs: Record<string, ConceptTabs>;
+  stepCards?: Record<string, { workshop: string; variant: string; step: number }>;
 }
