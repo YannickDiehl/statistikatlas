@@ -322,7 +322,9 @@ export interface ThinkSample extends ThinkItem {
 /**
  * Behauptung einer Vorhersage über die Ergebniszahl: bleibt gleich, mal `factor` (2 = verdoppelt), plus `amount`,
  * wechselt das Vorzeichen, steigt oder sinkt (um mindestens `atLeast`, höchstens `atMost`), wird im Betrag schwächer
- * oder stärker, ist danach genau `value`.
+ * oder stärker (Änderung des Betrags mindestens `atLeast`, höchstens `atMost`), ist danach genau `value`.
+ * Die Worte der markierten Antwort müssen dazu passen: „deutlich“ verlangt `atLeast`, „kaum“ oder „ein wenig“
+ * verlangt `atMost` (Tabelle in AUTHORING §8.2, Prüfung `answerFits` in tabs.test.ts).
  */
 export type Expect =
   | { change: 'same' }
@@ -330,7 +332,7 @@ export type Expect =
   | { change: 'plus'; amount: number }
   | { change: 'sign' }
   | { change: 'up' | 'down'; atLeast?: number; atMost?: number }
-  | { change: 'weaker' | 'stronger' }
+  | { change: 'weaker' | 'stronger'; atLeast?: number; atMost?: number }
   | { change: 'equals'; value: number };
 /** Lernkarte zu einem Zeichen im R-Code (Codelegende); eine Quelle für Katalog und Erklärungen (src/domain/rTokens.ts). */
 export type { TokenNote };

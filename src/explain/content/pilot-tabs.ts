@@ -190,7 +190,7 @@ export const bridgeZusammenhang: Bridge<PairStats> = {
     },
     {
       all: c => c.s.r === null ? 'Eine der beiden Spalten streut nicht. Dann ist r nicht definiert.'
-        : `${num(c.s.cov)} / (${num(c.s.x.sd)} · ${num(c.s.y.sd)}) ≈ ${num(c.s.r)}. Größer als sₓ · sᵧ ≈ ${num(c.s.sxy)} (mit allen Nachkommastellen) kann die Kovarianz hier nicht werden.`,
+        : `${num(c.s.cov)} / (${num(c.s.x.sd)} · ${num(c.s.y.sd)}) ≈ ${num(c.s.r)}. Im Betrag größer als sₓ · sᵧ ≈ ${num(c.s.sxy)} (mit allen Nachkommastellen) kann die Kovarianz hier nicht werden.`,
       person: c => {
         const p = c.s.prod[c.who], r = c.s.r ?? 0;
         return Math.abs(p) < 0.005 || Math.abs(r) < 0.005 ? `${P(c)} trägt kaum etwas zu r bei.`
@@ -347,8 +347,8 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           expect: { change: 'factor', factor: 4 },
         },
         {
-          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s²?', options: ['bleibt genau gleich', 'steigt', 'sinkt'], correct: 1, step: 4,
-          explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Meist steigt die Quadratsumme deutlich (Schritt 4); nur wenn die Person schon weit weg war, steigt sie wenig.',
+          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s²?', options: ['bleibt fast gleich', 'steigt', 'sinkt'], correct: 1, step: 4,
+          explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Deshalb steigt die Quadratsumme (Schritt 4) und mit ihr s² (Schritt 5). In den Ausgangsdaten, wo 40 Stunden weit draußen liegen, wächst s² um fast die Hälfte; der Mittelwert steigt dort nur ein wenig.',
           kurz: 'Wer weit weg ist, zählt im Quadrat viel mehr.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
           expect: { change: 'up' },
@@ -402,8 +402,8 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           expect: { change: 'factor', factor: 2 },
         },
         {
-          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s?', options: ['bleibt genau gleich', 'steigt', 'sinkt'], correct: 1, step: 4,
-          explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Meist steigt s deutlich (Schritt 4); nur wenn die Person schon weit weg war, steigt s wenig.',
+          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s?', options: ['bleibt fast gleich', 'steigt', 'sinkt'], correct: 1, step: 6,
+          explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Deshalb steigt die Quadratsumme (Schritt 4) und mit ihr s (Schritt 6). Liegen 40 Stunden weit draußen wie in den Ausgangsdaten, steigt s viel stärker als der Mittelwert, der nur ein wenig steigt.',
           kurz: 'Wer weit weg ist, zählt im Quadrat viel mehr.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
           expect: { change: 'up' },
@@ -516,7 +516,7 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
         },
         {
           question: 'Die gewählte Person lernt plötzlich 40 Stunden, ihr Wissenstest bleibt. Was passiert mit dem Zusammenhang?', options: ['er wird stärker', 'er wird schwächer, je nach ihrem Wissenstest kaum oder deutlich', 'er bleibt genau gleich'], correct: 1, step: 6,
-          explain: 'Ein Wert weit weg von der Mitte erzeugt ein großes Produkt (Schritt 3) und vergrößert zugleich sₓ (Schritt 6). Liegt ihr Punkt nahe der Geraden, ändert sich r kaum, sonst wird r deutlich schwächer.',
+          explain: 'Ein Wert weit weg von der Mitte erzeugt ein großes Produkt (Schritt 3) und vergrößert zugleich sₓ (Schritt 6). Passt ihr Wissenstest zur Richtung des Zusammenhangs (in den Ausgangsdaten: viele gelöste Aufgaben), ändert sich r kaum. Sonst wird r deutlich schwächer.',
           kurz: 'Ein Ausreißer, der nicht zum Muster passt, kann r stark verschieben.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
           expect: { change: 'weaker' },
@@ -633,7 +633,7 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
       tokens: {
         frequency: { sym: 'frequency()', term: T('frequency'), kurz: 'Zählt, wie oft jeder Code vorkommt, mit Prozenten. Mit ihr prüfst du, ob das Umkodieren geklappt hat.', fehler: 'Bei einer Spalte mit vielen verschiedenen Werten, etwa lernzeit, wird die Tabelle sehr lang. frequency() passt zu Antwortcodes.' },
         lernplanung5_umgepolt: { sym: 'lernplanung5_umgepolt', term: 'Neue Variable', kurz: 'Der Name der neuen Spalte. _umgepolt sagt, was mit ihr passiert ist; die alte Spalte bleibt erhalten.', fehler: 'Gibst du der neuen Spalte den alten Namen, überschreibt mutate() die ursprünglichen Antworten.' },
-        '"rev"': { sym: '"rev"', term: T('recode'), kurz: 'Dreht die Skala um: Aus der kleinsten Antwort wird die größte und umgekehrt. Die Wertelabels wandern mit.', fehler: 'Ohne Anführungszeichen meldet mariposa: `rules` must be a single character string. Schreib die Regel als Text: rules = "rev".' },
+        '"rev"': { sym: '"rev"', term: T('recode'), kurz: 'Dreht die Skala um: Aus der kleinsten Antwort wird die größte und umgekehrt. Die Wertelabels wandern mit, anders als bei ausdrücklichen Regeln wie "1=5; 2=4; …".', fehler: 'Ohne Anführungszeichen meldet mariposa: `rules` must be a single character string. Schreib die Regel als Text: rules = "rev".' },
       },
       outputMap: [
         { match: 'mean', atlas: 'Mittelwert der umgepolten Antworten', explain: 'Umpolen spiegelt die Skala an ihrer Mitte, also auch den Mittelwert: Bei 1 bis 5 wird aus x̄ der Wert 6 − x̄.' },

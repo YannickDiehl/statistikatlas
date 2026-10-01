@@ -11,7 +11,7 @@ import { functionToConcept } from '../domain/mariposaCatalog';
 import { RTOKENS } from '../domain/rTokens';
 import { ref, titleFor } from '../domain/learning';
 import { covOutput, describeOutput, frequencyOutput, pearsonOutput, rCov } from './rOutput';
-import { sampleColumn } from './sample';
+import { sampleColumn, textTitle } from './sample';
 import type { LiveCall, TokenNote } from './types';
 
 // ---------- Leitaufrufe mit Ausgabe aus den aktuellen Daten ----------
@@ -114,7 +114,7 @@ const TOKEN = /"[^"\n]*"|%>%|<-|==|[A-Za-z_.][A-Za-z0-9_.]*|\s+|./g;
 export function autoNote(key: string, next = ''): TokenNote | null {
   const c = columnById[key];
   if (c) return {
-    sym: key, term: `Variable „${c.title}“`,
+    sym: key, term: `Variable „${textTitle(c.title)}“`,
     kurz: `Der Name der Spalte im Lehrdatensatz. Gefragt war: ${c.question}`,
     fehler: 'Schreib den Namen genau wie im Datensatz, klein und ohne Leerzeichen. Mit einem Tippfehler findet R die Spalte nicht und bricht mit einer Fehlermeldung ab.',
   };

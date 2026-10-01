@@ -39,12 +39,12 @@ export const RTOKENS: Record<string, TokenNote> = {
   mariposa: {
     sym: 'mariposa', term: 'Paket mariposa',
     kurz: 'Das Statistikpaket des Kurses: describe(), frequency(), t_test() und viele mehr, mit Ausgaben im Stil von SPSS.',
-    fehler: 'Ältere Versionen kennen nicht alle Regeln und Argumente. Der Atlas rechnet mit mariposa 0.7.4.',
+    fehler: 'Ist mariposa nicht installiert, meldet R: es gibt kein Paket namens ‘mariposa’. Ältere Versionen kennen nicht alle Regeln und Argumente; der Atlas rechnet mit mariposa 0.7.4.',
   },
   '"Statistikatlas-200-Befragte.sav"': {
     sym: '"Statistikatlas-200-Befragte.sav"', term: 'Dateiname',
     kurz: 'Der Name der heruntergeladenen Datei, in Anführungszeichen. R sucht sie im Arbeitsverzeichnis.',
-    fehler: 'Hat der Browser die Datei umbenannt, etwa mit einer (1) am Ende, findet R sie nicht. Benenne die Datei um oder passe den Namen an.',
+    fehler: 'Hat der Browser die Datei umbenannt, etwa mit einer (1) am Ende, meldet mariposa: File \'Statistikatlas-200-Befragte.sav\' does not exist. Benenne die Datei um oder passe den Namen an.',
   },
   library: {
     sym: 'library()', term: 'Paket laden',

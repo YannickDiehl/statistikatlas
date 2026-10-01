@@ -15,7 +15,7 @@ import { applyOp, bridgeContext, fitsColumn } from './sample';
 import { liveCode, liveOutput, locate, noteFor, tokenize } from './rRead';
 import { mergeRelations, nextLists, relationText } from './relations';
 import { styleProblems } from './style';
-import type { BridgePicture, ConceptTabs, Expect, SampleCtx, ThinkSample } from './types';
+import type { BridgePicture, ConceptTabs, Expect, SampleCtx, SampleTab, ThinkSample } from './types';
 import { stepTargets } from '../components/explain/ExplainTabs';
 
 /**
@@ -67,6 +67,8 @@ test('Weiter: every target exists, every sentence follows the tone guide, no tar
       const shown = [lists.next, ...lists.before, ...lists.after, ...lists.more];
       assert.equal(new Set(shown.map(x => x.id)).size, shown.length, `${id}: Weiter zeigt ein Ziel doppelt`);
       for (const x of [lists.next, ...lists.before, ...lists.after]) clean(`${id} weiter ${x.id}`, x.why, KURZ);
+      const ctx = { rows: d, columns: { x: ['lernzeit'], y: ['wissenstest'] } };
+      for (const x of n.more ?? []) clean(`${id} weiter (mehr) ${x.id}`, typeof x.why === 'string' ? x.why : x.why(ctx), KURZ);
     }
   }
   // Der Satz zum Standardfehler rechnet mit den aktuellen Daten (R: sd(x) / sqrt(200) = 0.2289269; verdoppelt 0.4578538).
@@ -285,7 +287,7 @@ test('Mit 200 Befragten: the numbers of the pilot bridges as in R', () => {
   const z = bridgeContext(workshopFor('zusammenhang')!.compute, 'pairs', rows, 'lernzeit', 'wissenstest', 1), bz = bridgeFor('zusammenhang')!;
   assert.equal(bz.lines[3].all(z), 'Plus und Minus verrechnet ergeben die 200 Produkte 1.082,31. 119 Produkte sind positiv, 81 negativ.');
   assert.equal(bz.lines[3].person(z), 'P002 steuert −0,62 zur Summe bei.');
-  assert.equal(bz.lines[5].all(z), '5,44 / (3,24 · 3,12) ≈ 0,54. Größer als sₓ · sᵧ ≈ 10,09 (mit allen Nachkommastellen) kann die Kovarianz hier nicht werden.');
+  assert.equal(bz.lines[5].all(z), '5,44 / (3,24 · 3,12) ≈ 0,54. Im Betrag größer als sₓ · sᵧ ≈ 10,09 (mit allen Nachkommastellen) kann die Kovarianz hier nicht werden.');
   assert.equal(bz.interpret(z, 'pearson').zusatz, '119 von 200 Befragten liegen in beiden Fragen auf derselben Seite der Mitte.');
   const s = bridgeContext(workshopFor('streuung')!.compute, 'series', rows, 'lernzeit', '', 1), bs = bridgeFor('streuung')!;
   assert.equal(bs.interpret(s, 'variance').zusatz, 'Den größten Einzelbeitrag liefert P175: 5,44 % der Quadratsumme.');
@@ -299,61 +301,121 @@ test('Mit 200 Befragten: the numbers of the pilot bridges as in R', () => {
 function holds(e: Expect, a: number | null, b: number | null): boolean {
   if (a === null || b === null || !Number.isFinite(a) || !Number.isFinite(b)) return false;
   const tol = 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)), d = b - a;
+  const within = (x: number, e: { atLeast?: number; atMost?: number }) => (e.atLeast === undefined || x >= e.atLeast) && (e.atMost === undefined || x <= e.atMost);
   switch (e.change) {
     case 'same': return Math.abs(d) <= tol;
     case 'factor': return Math.abs(b - e.factor * a) <= tol * Math.max(1, e.factor);
     case 'plus': return Math.abs(d - e.amount) <= tol;
     case 'sign': return Math.abs(a) > tol && Math.abs(a + b) <= tol;
-    case 'up': return d > tol && (e.atLeast === undefined || d >= e.atLeast) && (e.atMost === undefined || d <= e.atMost);
-    case 'down': return -d > tol && (e.atLeast === undefined || -d >= e.atLeast) && (e.atMost === undefined || -d <= e.atMost);
-    case 'weaker': return Math.abs(b) < Math.abs(a) - tol;
-    case 'stronger': return Math.abs(b) > Math.abs(a) + tol;
+    case 'up': return d > tol && within(d, e);
+    case 'down': return -d > tol && within(-d, e);
+    case 'weaker': return Math.abs(a) - Math.abs(b) > tol && within(Math.abs(a) - Math.abs(b), e);
+    case 'stronger': return Math.abs(b) - Math.abs(a) > tol && within(Math.abs(b) - Math.abs(a), e);
     case 'equals': return Math.abs(b - e.value) <= tol;
   }
 }
 
+const deNumber = (t: string) => Number(t.replace(/\./g, '').replace(',', '.'));
+/**
+ * Ob die Worte der markierten Antwort zu `expect` passen; sonst der Grund. So prüft der Test die Antwort selbst und
+ * nicht nur, was die Autorin in `expect` eingetragen hat. Unbekannte Worte fallen durch: dann die Tabelle ergänzen
+ * (und AUTHORING §8.2).
+ */
+export function answerFits(answer: string, e: Expect): string | null {
+  const a = answer.toLowerCase(), has = (re: RegExp) => re.test(a), is = (...c: Expect['change'][]) => c.includes(e.change);
+  const bounds = e as { atLeast?: number; atMost?: number };
+  let known = false;
+  const need = (ok: boolean, what: string) => { known = true; return ok ? null : `„${answer}“ verlangt ${what}, expect ist ${JSON.stringify(e)}`; };
+  const checks: (string | null)[] = [];
+  if (has(/verdoppelt/)) checks.push(need(e.change === 'factor' && e.factor === 2, 'factor 2'));
+  if (has(/vervierfacht/)) checks.push(need(e.change === 'factor' && e.factor === 4, 'factor 4'));
+  if (has(/halbiert/)) checks.push(need(e.change === 'factor' && e.factor === 0.5, 'factor 0.5'));
+  if (has(/vorzeichen/)) checks.push(need(is('sign'), 'sign'));
+  if (has(/(bleibt|ist) (genau )?gleich|gar nicht|ändert sich nicht/) && !has(/fast gleich/)) checks.push(need(is('same'), 'same'));
+  const plus = a.match(/(?:steigt|sinkt) um ([\d.,]+)/);
+  if (plus) checks.push(need(e.change === 'plus' && Math.abs(e.amount) === deNumber(plus[1]), `plus ${plus[1]}`));
+  else if (has(/steigt|wird größer|nimmt zu/)) checks.push(need(is('up', 'plus') || (e.change === 'factor' && e.factor > 1), 'up'));
+  else if (has(/sinkt|wird kleiner|nimmt ab/)) checks.push(need(is('down') || (e.change === 'factor' && e.factor < 1), 'down'));
+  if (has(/schwächer/)) checks.push(need(is('weaker'), 'weaker'));
+  if (has(/stärker/)) checks.push(need(is('stronger'), 'stronger'));
+  const count = a.match(/^(\d+|keine)$/);
+  if (count) checks.push(need(e.change === 'equals' && e.value === (count[1] === 'keine' ? 0 : deNumber(count[1])), `equals ${count[1]}`));
+  if (has(/^lauter /)) checks.push(need(is('equals'), 'equals'));
+  // Größe: „deutlich“ braucht eine Untergrenze, „kaum“ oder „ein wenig“ eine Obergrenze. „kaum oder deutlich“ sagt nur die Richtung.
+  const big = has(/deutlich|spürbar|stark(?!er)/), small = has(/kaum|ein wenig|etwas|fast gleich/);
+  if (big && !small) checks.push(need(bounds.atLeast !== undefined, 'atLeast („deutlich“)'));
+  if (small && !big) checks.push(need(bounds.atMost !== undefined, 'atMost („kaum“, „ein wenig“)'));
+  if (big && small) known = true;
+  if (!known) return `„${answer}“: keine bekannte Behauptung (Tabelle answerFits in tabs.test.ts und AUTHORING §8.2 ergänzen)`;
+  return checks.find(c => c !== null) ?? null;
+}
+
+/**
+ * Erster Fall, in dem die markierte Antwort einer Vorhersage nicht stimmt, sonst null; zählt die geprüften Fälle.
+ * Datenstände: die Ausgangsdaten und die Daten nach jeder anderen Vorhersage des Reiters (bei outlier mit P002);
+ * bei der eigenen Vorhersage mit outlier jede der 200 Personen.
+ */
+function predictionFails(id: string, tabs: ConceptTabs, s: SampleTab, t: ThinkSample, own: number, count: () => void): string | null {
+  const words = answerFits(t.options[t.correct], t.expect);
+  if (words) return `${id}: ${words}`;
+  const cols = columnsOf(tabs);
+  const columnOf = (axis: 'x' | 'y') => s.kind === 'analysis' && s.columns?.[axis] ? s.columns[axis] : cols[axis];
+  let measure: (d: SurveyRow[]) => number | null;
+  if (s.kind === 'bridge') {
+    const w = workshopFor(s.workshop)!, b = bridgeFor(s.workshop)!;
+    measure = d => b.value(bridgeContext(w.compute, b.data, d, cols.x, cols.y, 0), s.variant);
+  } else {
+    const columns = s.columns ? Object.fromEntries(Object.entries(s.columns).map(([k, v]) => [k, [v]])) : { x: [cols.x], y: [cols.y] };
+    const m = t.expect.measure ?? s.value;
+    if (!m) return `${id}: Auswertung ohne value und Vorhersage ohne expect.measure`;
+    measure = d => m({ rows: d, columns });
+  }
+  const column = columnOf(t.tryIt.column);
+  const after = s.think.map((o, i) => i === own ? null : applyOp(rows, columnOf(o.tryIt.column), o.tryIt.op, o.tryIt.value, 1));
+  const states = [rows, ...after.filter((d, i): d is SurveyRow[] => !!d && fitsColumn(d, columnOf(s.think[i].tryIt.column)))];
+  for (const [k, state] of states.entries()) {
+    const people = t.tryIt.op === 'outlier' ? state.map((_, i) => i) : [1];
+    for (const who of people) {
+      const next = applyOp(state, column, t.tryIt.op, t.tryIt.value, who);
+      if (!fitsColumn(next, column)) continue;           // die Oberfläche lehnt das Ausprobieren dann ab
+      const a = measure(state), b = measure(next);
+      count();
+      if (!holds(t.expect, a, b)) return `${id}: „${t.question}“ (${t.options[t.correct]}) stimmt nicht nach Datenstand ${k}, Person ${state[who].id}: vorher ${a}, nachher ${b}`;
+    }
+  }
+  return null;
+}
+
 /*
  * R (mariposa 0.7.4) für einzelne Fälle der Prüfung unten, x = lernzeit, w = wissenstest:
- *   sapply(1:200, function(k) { xx <- x; xx[k] <- 40; cor(xx, w) - cor(x, w) })   # −0.255 bis −0.004: r wird immer schwächer
+ *   sapply(1:200, function(k) { xx <- x; xx[k] <- 40; cor(xx, w) - cor(x, w) })   # −0.255 (0 Aufgaben) bis −0.004 (17 Aufgaben): r wird immer schwächer
+ *   cor(replace(x, 3, 40), w)                                                      # 0.494 statt 0.539 (P003): „deutlich“ (mindestens 0,05) stimmt nicht für alle
  *   sapply(1:200, function(k) { xx <- x; xx[k] <- 40; mean(xx) - mean(x) })        # +0.108 bis +0.200: „ein wenig“
- *   sapply(1:200, function(k) { xx <- x; xx[k] <- 40; sd(xx) - sd(x) })            # s steigt für jede Person
+ *   sapply(1:200, function(k) { xx <- x; xx[k] <- 40; sd(xx) - sd(x) })            # +0.652 bis +0.722, nach dem Verdoppeln +0.057 bis +0.228: „steigt“, nicht „deutlich“
  */
 test('Mit 200 Befragten: every prediction keeps its marked answer, for every person and after every other prediction', () => {
   assert.ok(holds({ change: 'factor', factor: 2 }, 3, 6) && !holds({ change: 'same' }, 3, 3.1) && holds({ change: 'sign' }, 0.5, -0.5) && !holds({ change: 'up', atMost: 0.25 }, 1, 1.3), 'Prüfregeln');
+  assert.ok(holds({ change: 'weaker', atLeast: 0.05 }, -0.54, -0.45) && !holds({ change: 'weaker', atLeast: 0.05 }, 0.539, 0.494) && !holds({ change: 'stronger' }, 0.5, 0.4), 'Prüfregeln im Betrag');
+  assert.equal(answerFits('verdoppelt sich', { change: 'factor', factor: 2 }), null, 'Wortprüfung: verdoppelt');
+  assert.ok(answerFits('bleibt gleich', { change: 'factor', factor: 2 }), 'Wortprüfung: falsches expect fällt auf');
+  assert.ok(answerFits('ja, deutlich', { change: 'weaker' }), 'Wortprüfung: deutlich ohne atLeast fällt auf');
+  assert.ok(answerFits('irgendwie anders', { change: 'up' }), 'Wortprüfung: unbekannte Worte fallen auf');
   let checked = 0;
+  const count = () => { checked++; };
   for (const [id, tabs] of ALL()) {
     const s = tabs.sample;
     if (!s) continue;
-    const cols = columnsOf(tabs);
-    const columnOf = (axis: 'x' | 'y') => s.kind === 'analysis' && s.columns?.[axis] ? s.columns[axis] : cols[axis];
-    const measureFor = (t: ThinkSample): ((d: SurveyRow[]) => number | null) => {
-      if (s.kind === 'bridge') {
-        const w = workshopFor(s.workshop)!, b = bridgeFor(s.workshop)!;
-        return d => b.value(bridgeContext(w.compute, b.data, d, cols.x, cols.y, 0), s.variant);
-      }
-      const columns = s.columns ? Object.fromEntries(Object.entries(s.columns).map(([k, v]) => [k, [v]])) : { x: [cols.x], y: [cols.y] };
-      const m = t.expect.measure ?? s.value;
-      assert.ok(m, `${id}: Auswertung ohne value und Vorhersage ohne expect.measure`);
-      return d => m!({ rows: d, columns });
-    };
-    // Datenstände: die Ausgangsdaten und die Daten nach jeder anderen Vorhersage des Reiters (bei outlier mit P002).
-    const after = s.think.map(t => applyOp(rows, columnOf(t.tryIt.column), t.tryIt.op, t.tryIt.value, 1));
     for (const [own, t] of s.think.entries()) {
-      const measure = measureFor(t), column = columnOf(t.tryIt.column);
-      const states = [rows, ...after.filter((d, i) => i !== own && fitsColumn(d, columnOf(s.think[i].tryIt.column)))];
-      states.forEach((state, k) => {
-        const people = t.tryIt.op === 'outlier' ? state.map((_, i) => i) : [1];
-        for (const who of people) {
-          const next = applyOp(state, column, t.tryIt.op, t.tryIt.value, who);
-          if (!fitsColumn(next, column)) continue;           // die Oberfläche lehnt das Ausprobieren dann ab
-          const a = measure(state), b = measure(next);
-          assert.ok(holds(t.expect, a, b), `${id}: „${t.question}“ (${t.options[t.correct]}) stimmt nicht nach Datenstand ${k}, Person ${state[who].id}: vorher ${a}, nachher ${b}`);
-          checked++;
-        }
-      });
+      const fail = predictionFails(id, tabs, s, t, own, count);
+      assert.equal(fail, null, fail ?? '');
     }
   }
   assert.ok(checked > 2000, `nur ${checked} Fälle geprüft`);
+  // Gegenprobe: die alte Vorhersage zum Ausreißer bei r („ja, deutlich“) fällt durch, egal wie expect lautet.
+  const pearson = tabsFor('pearson')!, ps = pearson.sample!;
+  const old = (expect: Expect): ThinkSample => ({ ...ps.think[2], question: 'Kann ein einziger Wert r bei 200 Befragten spürbar verändern?', options: ['nein, kaum', 'ja, deutlich'], correct: 1, expect });
+  assert.ok(predictionFails('pearson', pearson, ps, old({ change: 'weaker' }), 2, () => {})?.includes('atLeast'), 'alte C2-Antwort ohne Untergrenze');
+  assert.match(predictionFails('pearson', pearson, ps, old({ change: 'weaker', atLeast: 0.05 }), 2, () => {}) ?? '', /Person P003/, 'alte C2-Antwort mit Untergrenze');
 });
 
 test('bridges read right for every column they can use: no middle dot from column titles, direction from the sign', () => {

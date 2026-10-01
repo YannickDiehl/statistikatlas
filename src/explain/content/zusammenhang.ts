@@ -255,7 +255,7 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
       genau: {
         kurz: 'r beschreibt nur gerade Muster und sagt nichts darüber, was was verursacht.',
         paragraphs: () => [
-          'Es gibt einen zweiten Rechenweg mit demselben Ergebnis: beide Variablen z-standardisieren und r = Σzₓzᵧ / (n − 1) rechnen. Du findest ihn im Reiter „Mit 200 Befragten“ unter „Die Rechnung als Baukasten entfalten“, Rechnung zeigen: „Über z-Werte“.',
+          'Es gibt einen zweiten Rechenweg mit demselben Ergebnis: beide Variablen z-standardisieren und r = Σzₓzᵧ / (n − 1) rechnen. Du findest ihn im Teil mit den 200 Befragten unter „Die Rechnung als Baukasten entfalten“, Rechnung zeigen: „Über z-Werte“.',
           'Dass r zwischen −1 und +1 liegt, folgt aus |sₓᵧ| ≤ sₓ · sᵧ (Cauchy-Schwarz-Ungleichung). Gleichheit gilt nur, wenn alle Punkte exakt auf einer Geraden liegen.',
           'Einzelne auffällige Punkte können r stark verändern. Bei Ausreißern ist die Spearman-Korrelation robuster, bei nur geordneten Kategorien angemessener.',
           'Die Vertrauensskalen hier wie metrische Skalen zu behandeln, ist eine Annahme: Gleiche Zahlenabstände sollen gleiche inhaltliche Abstände bedeuten.',

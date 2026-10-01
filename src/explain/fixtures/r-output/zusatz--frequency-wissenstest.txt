@@ -2,7 +2,7 @@
 Frequency Analysis Results
 --------------------------
 
-wissenstest (Wie viele Aufgaben haben Sie in diesem fiktiven Test richtig gelöst?)
+wissenstest (Wie viele Aufgaben haben Sie in diesem Test richtig gelöst?)
 # total N=200 valid N=200 mean=10.12 sd=3.12 skewness=-0.13
 
 +-------+-----+--------+---------+--------+
