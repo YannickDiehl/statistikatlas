@@ -1,64 +1,8 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode, type RefObject } from 'react';
-import type { Series, PairStats, Pairs } from '../../explain/math';
-import { num, signed } from '../../explain/format';
-
-type Bounds = { min: number; max: number };
-const clamp = (v: number, b: Bounds) => Math.min(b.max, Math.max(b.min, Math.round(v)));
-
-/**
- * Misst die verfügbare Breite, damit die Zeichnungen in Bildschirmpixeln gezeichnet werden:
- * Schrift und Punkte bleiben so auch im schmalen Inspector und auf dem Telefon lesbar.
- */
-function useWidth(fallback = 640): [RefObject<HTMLDivElement | null>, number] {
-  const ref = useRef<HTMLDivElement>(null), [width, setWidth] = useState(fallback);
-  useLayoutEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const read = () => setWidth(Math.max(300, Math.min(640, Math.round(el.clientWidth || fallback))));
-    read();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(read);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [fallback]);
-  return [ref, width];
-}
-
-/** Ziehen per Zeiger: Erfassung beim Drücken, Ende bei Loslassen, Abbruch oder Verlust der Erfassung. */
-function useDrag(onMove: (i: number, p: { x: number; y: number }) => void) {
-  const svg = useRef<SVGSVGElement>(null), drag = useRef<number | null>(null);
-  const point = (e: PointerEvent) => {
-    const s = svg.current!, pt = s.createSVGPoint();
-    pt.x = e.clientX; pt.y = e.clientY;
-    const m = s.getScreenCTM();
-    return m ? pt.matrixTransform(m.inverse()) : pt;
-  };
-  const end = () => { drag.current = null; };
-  return {
-    svg,
-    start: (i: number, e: PointerEvent) => { drag.current = i; svg.current?.setPointerCapture(e.pointerId); },
-    handlers: {
-      onPointerMove: (e: PointerEvent<SVGSVGElement>) => { if (drag.current !== null && svg.current) onMove(drag.current, point(e)); },
-      onPointerUp: end, onPointerCancel: end, onLostPointerCapture: end,
-    },
-  };
-}
-
-function Dot({ x, y, label, selected, children, bounds, valueNow, valueText, describedBy, roleDescription, onPointerDown, onKeyDown }: {
-  x: number; y: number; label: string; selected: boolean; children: ReactNode; bounds: Bounds; valueNow: number;
-  valueText?: string; describedBy?: string; roleDescription?: string;
-  onPointerDown: (e: PointerEvent) => void; onKeyDown: (e: KeyboardEvent) => void;
-}) {
-  return (
-    <g className={`xw-dot${selected ? ' sel' : ''}`} tabIndex={0} role="slider" aria-label={label}
-      aria-valuemin={bounds.min} aria-valuemax={bounds.max} aria-valuenow={valueNow} aria-valuetext={valueText}
-      aria-describedby={describedBy} aria-roledescription={roleDescription} onPointerDown={onPointerDown} onKeyDown={onKeyDown}>
-      <circle className="xw-hit" cx={x} cy={y} r={20} />
-      <circle cx={x} cy={y} r={selected ? 13 : 11} />
-      <text x={x} y={y + 4} textAnchor="middle">{children}</text>
-    </g>
-  );
-}
+// Bilder der Pilot-Werkstätten Mittel, Streuung und Zusammenhang, gebaut aus dem Baukasten (./kit.tsx).
+import type { KeyboardEvent } from 'react';
+import type { Series, PairStats, Pairs } from '../../../explain/math';
+import { num, signed } from '../../../explain/format';
+import { Axis, clamp, DragPoint, keyStep, linear, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Zahlenstrahl mit einer Zeile je Person (Werkstätten Mittel und Streuung). */
 export function NumberLine({ values, s, step, kind, who, names, bounds, onChange, onWho }: {
@@ -66,9 +10,9 @@ export function NumberLine({ values, s, step, kind, who, names, bounds, onChange
   onChange: (v: number[]) => void; onWho: (i: number) => void;
 }) {
   const [box, W] = useWidth();
-  const left = 44, right = W - 26, X = (v: number) => left + (v - bounds.min) / (bounds.max - bounds.min) * (right - left), Y = (i: number) => 32 + i * 28, AXIS = 178;
+  const left = 44, right = W - 26, X = linear([bounds.min, bounds.max], [left, right]), Y = (i: number) => 32 + i * 28, AXIS = 178;
   const set = (i: number, v: number) => { if (v !== values[i]) onChange(values.map((x, k) => k === i ? v : x)); };
-  const { svg, start, handlers } = useDrag((i, p) => set(i, clamp((p.x - left) / (right - left) * (bounds.max - bounds.min) + bounds.min, bounds)));
+  const { svg, start, handlers } = useDrag((i, p) => set(i, clamp(X.invert(p.x), bounds)));
   const m = s.mean, band = kind === 'streuung' && step >= 6 && s.sd > 0;
   const lo = Math.max(left - 8, X(m - s.sd)), hi = Math.min(right + 8, X(m + s.sd));
   return (
@@ -86,19 +30,15 @@ export function NumberLine({ values, s, step, kind, who, names, bounds, onChange
           <line className={d > 0 ? 'xw-pos' : 'xw-neg'} strokeWidth={i === who ? 4.5 : 3} x1={X(m)} x2={X(values[i])} y1={Y(i)} y2={Y(i)} />
           <text className="xw-t" x={(X(m) + X(values[i])) / 2} y={Y(i) - 6} textAnchor="middle">{signed(d)}</text>
         </g>)}
-        <line className="xw-axis" x1={left} x2={right} y1={AXIS} y2={AXIS} />
-        {Array.from({ length: bounds.max - bounds.min + 1 }, (_, k) => bounds.min + k).map(v => <g key={`tick${v}`}>
-          <line className="xw-axis" x1={X(v)} x2={X(v)} y1={AXIS - 4} y2={AXIS + 4} /><text className="xw-t" x={X(v)} y={208} textAnchor="middle">{v}</text>
-        </g>)}
+        <Axis scale={X} ticks={Array.from({ length: bounds.max - bounds.min + 1 }, (_, k) => bounds.min + k)} at={AXIS} from={left} to={right} labelGap={30} />
         {kind === 'mittel' && step >= 2 && <polygon className="xw-fulcrum" points={`${X(m)},${AXIS + 2} ${X(m) - 9},${AXIS + 16} ${X(m) + 9},${AXIS + 16}`} />}
         {values.map((v, i) => (
-          <Dot key={`dot${i}`} x={X(v)} y={Y(i)} label={`Person ${names[i]}`} selected={i === who} valueNow={v} bounds={bounds}
+          <DragPoint key={`dot${i}`} x={X(v)} y={Y(i)} label={`Person ${names[i]}`} selected={i === who} valueNow={v} bounds={bounds}
             onPointerDown={e => { onWho(i); start(i, e); }}
             onKeyDown={e => {
-              const next = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? clamp(v + 1, bounds) : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? clamp(v - 1, bounds)
-                : e.key === 'Home' ? bounds.min : e.key === 'End' ? bounds.max : null;
+              const next = keyStep(e, v, bounds);
               if (next !== null) { e.preventDefault(); onWho(i); set(i, next); }
-            }}>{v}</Dot>
+            }}>{v}</DragPoint>
         ))}
       </svg>
     </div>
@@ -215,9 +155,9 @@ export function Rectangles({ data, s, step, who, names, bounds, onChange, onWho 
           return <text key={`a${i}`} className="xw-t xw-strong" x={(X(x) + X(mx)) / 2} y={(Y(data.y[i]) + Y(my)) / 2 + 4} textAnchor="middle">{big ? signed(s.prod[i]) : s.prod[i] > 0 ? '+' : '−'}</text>;
         })}
         {data.x.map((x, i) => (
-          <Dot key={`p${i}`} x={X(x)} y={Y(data.y[i])} label={`Person ${names[i]}`} selected={i === who} valueNow={x} bounds={bounds}
+          <DragPoint key={`p${i}`} x={X(x)} y={Y(data.y[i])} label={`Person ${names[i]}`} selected={i === who} valueNow={x} bounds={bounds}
             valueText={`Bundestag ${x}, Bundesregierung ${data.y[i]}`} describedBy="xw-rect-help" roleDescription="verschiebbarer Punkt"
-            onPointerDown={e => { onWho(i); start(i, e); }} onKeyDown={e => key(e, i)}>{names[i]}</Dot>
+            onPointerDown={e => { onWho(i); start(i, e); }} onKeyDown={e => key(e, i)}>{names[i]}</DragPoint>
         ))}
         {step >= 4 && <g>
           <text className="xw-t xw-strong" x={px} y={py + 6}>Plus- und Minusflächen</text>
@@ -235,3 +175,13 @@ export function Rectangles({ data, s, step, who, names, bounds, onChange, onWho 
     </div>
   );
 }
+
+/** Bilder der Pilot-Werkstätten für das Register `PICTURES` (Schlüssel = `Workshop.picture`). */
+export const pilotPictures: Record<string, Picture> = {
+  mittel: p => <NumberLine values={p.data} s={p.s} step={p.step} kind="mittel" who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />,
+  streuung: p => <>
+    <NumberLine values={p.data} s={p.s} step={p.step} kind="streuung" who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />
+    {p.step >= 3 && <Squares s={p.s} step={p.step} who={p.who} names={p.workshop.names} />}
+  </>,
+  zusammenhang: p => <Rectangles data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />,
+};

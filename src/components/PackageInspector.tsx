@@ -1,7 +1,6 @@
 import { CalculationSteps } from './CalculationSteps';
 import { explainFor } from '../explain/registry';
-import { FormelAlsSatz } from './explain/FormelAlsSatz';
-import { Werkzeug } from './explain/Werkzeug';
+import { Explanation, EXPLAIN_LABEL } from './explain/Explanation';
 import { ModeToggle } from './explain/basics';
 import { visibleNeighbors } from '../domain/visibleNetwork';
 import { FoundationLab } from './foundations/FoundationLab';
@@ -25,12 +24,11 @@ export function PackageInspector(p:RPanelProps&{selected:Ref;onClose:()=>void;on
  const e=p.entry,v=e.variants[p.settings?.variant??Number(p.selected.use?.slice(1)||0)],scroll=useRef<HTMLElement>(null);
  useEffect(()=>{scroll.current?.scrollTo({top:0,behavior:'instant'});},[e.id]);
  const links=visibleNeighbors(p.selected,p.route||'covariance',p.contextAnchor),before=links.before.filter(x=>!x.alternative&&x.kind!=='meaning'),after=links.after.filter(x=>!x.alternative&&x.kind!=='meaning');
- // Vorlagen „Formel als Satz“ (Stufe 2) und „Werkzeug“ (Stufe 3), siehe src/explain/registry.ts
- const explain=explainFor(e.id),template=explain&&explain.kind!=='werkstatt'?explain:null,open=(id:string)=>p.onSelect(ref(id));
+ // Erklärung nach Vorlage (Formel als Satz, Werkzeug, Begriffskarte …), siehe src/explain/registry.ts
+ const template=explainFor(e.id),open=(id:string)=>p.onSelect(ref(id));
  function link(id:string,label:string){return <button className="relation-link" key={`${id}-${label}`} onClick={()=>p.onSelect(referenceInMap(id,p.selected,p.route||'covariance',p.contextAnchor))} onPointerEnter={()=>p.onHover(id)} onPointerLeave={()=>p.onHover(null)} onFocus={()=>p.onHover(id)} onBlur={()=>p.onHover(null)}><span><strong>{titleFor(ref(id))}</strong><small>{label}</small></span><ArrowUpRight size={15}/></button>;}
- return <aside id="atlas-inspector" className="network-inspector package-inspector" ref={scroll} aria-labelledby="inspector-title"><div className="inspector-top"><span className="eyebrow">{template?.kind==='satz'?'Formel als Satz':template?.kind==='werkzeug'?'Werkzeug':e.variants.length?'Verfahren & Werkzeuge':'Gemeinsamer Baustein'}</span>{template&&<ModeToggle/>}<button className="inspector-close" onClick={p.onClose} aria-label="Erklärung einklappen"><X size={18}/></button></div><h1 id="inspector-title" tabIndex={-1}>{e.title}</h1>{!template&&<p className="concept-intro">{e.intro}</p>}<button className="map-focus-link" onClick={p.onFocusMap}><Focus size={15}/>Bezüge in der Karte zeigen</button>
- {template?.kind==='satz'&&<FormelAlsSatz key={`satz-${e.id}`} template={template.template} onConcept={open}/>}
- {template?.kind==='werkzeug'&&<Werkzeug key={`werkzeug-${e.id}`} template={template.template} onConcept={open}/>}
+ return <aside id="atlas-inspector" className="network-inspector package-inspector" ref={scroll} aria-labelledby="inspector-title"><div className="inspector-top"><span className="eyebrow">{template?EXPLAIN_LABEL[template.kind]:e.variants.length?'Verfahren & Werkzeuge':'Gemeinsamer Baustein'}</span>{template&&<ModeToggle/>}<button className="inspector-close" onClick={p.onClose} aria-label="Erklärung einklappen"><X size={18}/></button></div><h1 id="inspector-title" tabIndex={-1}>{e.title}</h1>{!template&&<p className="concept-intro">{e.intro}</p>}<button className="map-focus-link" onClick={p.onFocusMap}><Focus size={15}/>Bezüge in der Karte zeigen</button>
+ {template&&<Explanation id={e.id} explain={template} onConcept={open}/>}
  {!template&&<><LinkedFormula key={`${e.id}-${p.settings?.variant||0}`} contextAnchor={p.contextAnchor} route={p.route} formula={v?.formula||e.formula} reference={p.selected} onSelect={p.onSelect} onHover={p.onHover}/>
  <CalculationSteps reference={p.selected} route={p.route||'covariance'} formula={v?.formula||e.formula} onSelect={p.onSelect} onHover={p.onHover}/></>}
  <FoundationLab key={`foundation-${e.id}`} id={e.id} rows={p.rows} selection={p.selection}/>

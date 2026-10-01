@@ -1,0 +1,5 @@
+// Bilder des Bereichs B13 „Regression“ für Werkstätten. Schlüssel = `Workshop.picture`, Bausteine aus ./kit.tsx.
+// Eigene Stile in src/explain/areas/b13-regression.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
+import type { Picture } from './kit';
+
+export const pictures: Record<string, Picture> = {};

@@ -65,8 +65,24 @@ export function KurzGesagt({ text, fach }: { text: string; fach?: string }) {
     <div className="xw-kurz">
       <strong>Kurz gesagt</strong>
       <p>{text}</p>
-      {fach && <p className="xw-fach">Fachlich: {fach}</p>}
+      {fach && <p className="xw-fach">In der Fachsprache: {fach}</p>}
     </div>
+  );
+}
+
+/** Mut-Satz zu Beginn einer Werkstatt (Regel 6): die Formel in kleine, bekannte Handlungen zerlegt. */
+export function MutBox({ text }: { text: string }) {
+  return <p className="xw-mut">{text}</p>;
+}
+
+/** „Schritt k von n“ mit Fortschritt („noch m kleine Schritte“) und einer Leiste aus n Stücken. */
+export function Progress({ step, last }: { step: number; last: number }) {
+  const left = last - step;
+  return (
+    <span className="xw-progress">
+      <span className="xw-label">Schritt {step} von {last}, {left === 0 ? 'der letzte Schritt' : left === 1 ? 'noch 1 kleiner Schritt' : `noch ${left} kleine Schritte`}</span>
+      <span className="xw-progress-bar" aria-hidden="true">{Array.from({ length: last }, (_, i) => <span key={i} className={i + 1 < step ? 'done' : i + 1 === step ? 'on' : ''} />)}</span>
+    </span>
   );
 }
 
@@ -95,13 +111,14 @@ export function FormulaView({ nodes, active, onMark, label, className = '' }: {
     : <div className={`xw-formula ${className}`}>{render(nodes)}</div>;
 }
 
+/** Eintrag der Zeichenübersicht; `say` ist die Aussprache ohne Anführungszeichen („x quer“). */
 export type LegendItem = { sym: string; say?: string; term: string; plain: string; target: number | string };
 export function GlyphLegend({ items, active, onPick }: { items: LegendItem[]; active: number | string | null; onPick: (t: number | string) => void }) {
   return (
     <div className="xw-legend">
       {items.map(g => (
         <button type="button" key={g.sym} className={g.target === active ? 'on' : ''} onClick={() => onPick(g.target)}>
-          <span className="xw-legend-head"><span className="xw-sym">{g.sym}</span>{g.say && <small>sprich {g.say}</small>}</span>
+          <span className="xw-legend-head"><span className="xw-sym">{g.sym}</span>{g.say && <small>sprich „{g.say}“</small>}</span>
           <strong>{g.term}</strong>
           <span>{g.plain}</span>
         </button>
@@ -110,12 +127,24 @@ export function GlyphLegend({ items, active, onPick }: { items: LegendItem[]; ac
   );
 }
 
-export function StepNav({ buttons, active, onStep }: { buttons: string[]; active: number; onStep: (s: number) => void }) {
+/** „Alle Zeichen auf einen Blick“: zugeklappt am Ende (Regel 7); ein Zeichen antippen springt zu seinem Schritt. */
+export function AllGlyphs(props: { items: LegendItem[]; active: number | string | null; onPick: (t: number | string) => void }) {
+  return (
+    <details className="xw-glyphs">
+      <summary>Alle Zeichen auf einen Blick</summary>
+      <p className="xw-note">Jedes Zeichen hat einen Fachbegriff und eine Aufgabe. Antippen zeigt, wo es in der Rechnung vorkommt.</p>
+      <GlyphLegend {...props} />
+    </details>
+  );
+}
+
+/** Schrittknöpfe: „Schritt k“, die Handlung als Titel und das Zeichen. */
+export function StepNav({ steps, active, onStep }: { steps: { button: string; title: string }[]; active: number; onStep: (s: number) => void }) {
   return (
     <div className="xw-steps" role="group" aria-label="Schritte der Formel">
-      {buttons.map((b, i) => (
-        <button type="button" key={i} aria-pressed={active === i + 1} aria-label={`Schritt ${i + 1}: ${b}`} onClick={() => onStep(i + 1)}>
-          <small>Schritt {i + 1}</small><span>{b}</span>
+      {steps.map((b, i) => (
+        <button type="button" key={i} aria-pressed={active === i + 1} aria-label={`Schritt ${i + 1}: ${b.title}, Zeichen ${b.button}`} onClick={() => onStep(i + 1)}>
+          <small>Schritt {i + 1}</small><span className="xw-step-name">{b.title}</span><span className="xw-step-sym">{b.button}</span>
         </button>
       ))}
     </div>

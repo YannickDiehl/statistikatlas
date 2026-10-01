@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
-import { MEAN_BEFORE, type RecodeTemplate } from '../../explain/content/rekodieren';
+import { MEAN_BEFORE } from '../../explain/content/rekodieren';
+import type { RecodeTemplate } from '../../explain/types';
 import { parseRules, recode, RuleError, type Program } from '../../explain/rules';
 import { count, fixed, num } from '../../explain/format';
-import { Genau, KurzGesagt, Section, useExplainMode } from './basics';
+import { Genau, KurzGesagt, MutBox, Section, useExplainMode } from './basics';
 import { CheckQuestion, ConceptLink, ThinkQuestions } from './pieces';
 
 const ROW = 34;
 
-/** Stufe 3: Werkzeug (Spezifikation 5.3), hier für mariposa::rec(). */
+/** Werkzeug (Vorlage 3, Spezifikation Werkstatt 5.3), hier für mariposa::rec(). */
 export function Werkzeug({ template: t, onConcept }: { template: RecodeTemplate; onConcept: (id: string) => void }) {
   const [mode] = useExplainMode(), compact = mode === 'kompakt';
   const [rule, setRule] = useState(t.presets[0].rule);
@@ -37,6 +38,7 @@ export function Werkzeug({ template: t, onConcept }: { template: RecodeTemplate;
     <div className={`xw${compact ? ' xw-compact' : ''}`}>
       {!compact && <div className="xw-wofuer"><h2>Wofür?</h2><p>{t.wofuer}</p></div>}
       <KurzGesagt text={t.kurz} fach={t.fachlich} />
+      {!compact && <MutBox text={t.mut} />}
       {!compact && <Section title="Die Fachbegriffe">
         <div className="xw-legend static">{t.terms.map(x => (
           <div key={x.term} className="xw-legend-item"><strong>{x.term}</strong><span>{x.plain}</span>{x.concept && <ConceptLink id={x.concept} onConcept={onConcept} />}</div>
@@ -84,17 +86,18 @@ export function Werkzeug({ template: t, onConcept }: { template: RecodeTemplate;
       <div className="xw-metrics wide"><div><span>Mittelwert vorher</span><strong>{fixed(MEAN_BEFORE)}</strong></div><div><span>nachher (n = {count(map.nValid)})</span><strong>{Number.isFinite(map.mean) ? fixed(map.mean) : 'nicht berechenbar'}</strong></div></div>
       <p className="xw-note">{t.meanNote(program, map.mean, map.binary)}</p>
       <pre className="xw-code-block"><code>{t.rCode(rule)}</code></pre>
-      {!compact && <><h3 className="xw-warn-head">Typische Fehler</h3><p>{t.fehler}</p></>}
+      {!compact && <><h3 className="xw-warn-head">Aufgepasst</h3><p>{t.fehler}</p></>}
       {!compact && (() => {
         const c = t.check.codeFor(who);
-        return <CheckQuestion key={`${rule}-${who}`} title="Kurz prüfen" question={t.check.question(c)} invalid="Tippe eine Zahl oder NA."
+        return <CheckQuestion key={`${rule}-${who}`} question={t.check.question(c)} empty="Tippe zuerst eine Zahl oder NA ein." invalid="Das kann ich nicht lesen. Tippe eine Zahl oder NA."
           evaluate={v => {
             const answer = t.check.answer(program, c);
             const ok = answer === 'NA' ? v === 'NA' : v !== 'NA' && v.some(x => Math.abs(x - answer) < 1e-9);
-            return ok ? { ok, message: t.walk(program, c).kurz } : { ok, message: t.check.diagnose(program, c, v === 'NA' ? 'NA' : v[0]) };
+            const kurz = t.walk(program, c).kurz;
+            return ok ? { ok, message: `Genau, ${kurz.charAt(0).toLowerCase()}${kurz.slice(1)}` } : { ok, message: t.check.diagnose(program, c, v === 'NA' ? 'NA' : v[0]) };
           }} />;
       })()}
-      {!compact && <ThinkQuestions title="Mitdenken" note="Erst tippen, dann nachsehen." hint="Oben siehst du es an den Linien und im Durchlauf."
+      {!compact && <ThinkQuestions title="Mitdenken" note="Erst vermuten, dann nachsehen." hint="Oben siehst du es an den Linien und im Durchlauf."
         items={t.think.map(q => ({ question: q.question, options: q.options, correct: q.correct, kurz: q.kurz, explain: () => q.explain,
           note: `Oben siehst du es an den Linien und im Durchlauf. Die Regel steht dafür jetzt auf „${q.rule}“.`,
           onAnswer: () => { use(q.rule); if (q.who !== null) setWho(q.who); } }))} />}

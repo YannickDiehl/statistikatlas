@@ -1,6 +1,7 @@
 import { CalculationSteps } from './CalculationSteps';
 import { explainFor, stepCardFor, requestStep } from '../explain/registry';
-import { Formelwerkstatt, StepCard } from './explain/Formelwerkstatt';
+import { StepCard } from './explain/Formelwerkstatt';
+import { Explanation, EXPLAIN_LABEL } from './explain/Explanation';
 import { ModeToggle } from './explain/basics';
 import { mapIds, visibleNeighbors } from '../domain/visibleNetwork';
 import { MeaningLinks } from './MeaningLinks';
@@ -32,20 +33,20 @@ export function ConceptInspector(p:Props){
  useEffect(()=>{if(!p.experimentRequest||!p.experimentOpen)return;const timer=setTimeout(()=>{if(scroller.current&&experiment.current)scroller.current.scrollTo({top:experiment.current.offsetTop-24,behavior:'instant'});p.onExperimentFocused();},0);return ()=>clearTimeout(timer);},[p.experimentRequest]);
  const entry=entryById[r.id];
  if(entry&&!entry.existing)return <PackageInspector contextAnchor={p.contextAnchor} route={p.context.route} entry={entry} reference={r} selected={r} settings={p.rSettings} onSettings={p.onRSettings} rows={p.rows} selection={p.selection} onData={p.onData} onSelect={p.onSelect} onHover={p.onHover} onClose={p.onClose} onFocusMap={p.onFocusMap} trace={p.trace} onTrace={p.onTrace}/>;
- // Formelwerkstatt (Stufe 1) oder Schrittkarte eines Rechenbegriffs, siehe src/explain/registry.ts
- const explain=explainFor(r.id),workshop=explain?.kind==='werkstatt'?explain:null,card=explain?null:stepCardFor(r.id,p.contextAnchor?.id),open=(id:string)=>p.onSelect(ref(id));
+ // Erklärung nach Vorlage (Werkstatt, Begriffskarte …) oder Schrittkarte eines Rechenbegriffs, siehe src/explain/registry.ts
+ const explain=explainFor(r.id),card=explain?null:stepCardFor(r.id,p.contextAnchor?.id),open=(id:string)=>p.onSelect(ref(id));
  function relation(id:string,label:string,direction:'before'|'after',kind:string){const target=referenceInMap(id,r,p.context.route);return <button className={`relation-link ${direction} relation-${kind}`} key={`${id}-${label}`} onClick={()=>p.onSelect(target)} onPointerEnter={()=>p.onHover(id)} onPointerLeave={()=>p.onHover(null)} onFocus={()=>p.onHover(id)} onBlur={()=>p.onHover(null)}><span><strong>{titleFor(target)}</strong><small>{label}</small></span><ArrowUpRight size={15}/></button>;}
- return <aside id="atlas-inspector" className="network-inspector" ref={scroller} aria-labelledby="inspector-title"><div className="inspector-top"><span className="eyebrow">{workshop?'Formelwerkstatt':subtitle(r,p.context)}</span>{workshop&&<ModeToggle/>}<button className="inspector-close" onClick={p.onClose} aria-label="Erklärung einklappen"><X size={18}/></button></div><h1 id="inspector-title" tabIndex={-1}>{titleFor(r)}</h1>{!workshop&&<p className="concept-intro">{introduction(r,p.context)}</p>}<button className="map-focus-link" onClick={p.onFocusMap}><Focus size={15}/>Bezüge in der Karte zeigen</button>
-  {workshop&&<Formelwerkstatt key={`werkstatt-${r.id}`} workshop={workshop.workshop} variant={workshop.variant} onConcept={open}/>}
+ return <aside id="atlas-inspector" className="network-inspector" ref={scroller} aria-labelledby="inspector-title"><div className="inspector-top"><span className="eyebrow">{explain?EXPLAIN_LABEL[explain.kind]:subtitle(r,p.context)}</span>{explain&&<ModeToggle/>}<button className="inspector-close" onClick={p.onClose} aria-label="Erklärung einklappen"><X size={18}/></button></div><h1 id="inspector-title" tabIndex={-1}>{titleFor(r)}</h1>{!explain&&<p className="concept-intro">{introduction(r,p.context)}</p>}<button className="map-focus-link" onClick={p.onFocusMap}><Focus size={15}/>Bezüge in der Karte zeigen</button>
+  {explain&&<Explanation id={r.id} explain={explain} onConcept={open}/>}
   {card&&<StepCard key={`${r.id}-${card.workshop.id}`} card={card} current={r.id} onConcept={open} onOpen={(id,step)=>{requestStep(id,step);open(id);}}/>}
-  {workshop&&<h2 className="xw-dataset-heading">Mit dem Lehrdatensatz (200 Befragte)</h2>}
+  {explain&&<h2 className="xw-dataset-heading">Mit dem Lehrdatensatz (200 Befragte)</h2>}
   {!both&&!p.selection&&<div className="inspector-context"><span>Beispiel für</span><div className="variable-control" role="group" aria-label="Variable betrachten">{(['x','y'] as Variable[]).map(v=><button key={v} aria-pressed={r.variable===v} onClick={()=>p.onVariable(v)}>{v.toUpperCase()} · {v==='x'?'Lernzeit':'Aufgaben'}</button>)}</div></div>}
   {p.selection&&p.onColumns&&<ColumnPicker reference={r} selection={p.selection} onChange={p.onColumns} notice={p.columnNotice}/>}
   {isOperation(r)&&(r.use||r.id==='scaling')&&<p className="context-note">{r.id==='scaling'?`Hier: uᵢ = ${r.use==='z'?'zentrierter':'ursprünglicher'} Wert von ${r.variable.toUpperCase()}, a = Standardabweichung.`:`Hier verwendet für: ${titleFor(out)}.`}</p>}
   {out.id==='pearson'&&<div className="inspector-route"><label>Rechnung zeigen<select aria-label="Rechenweg zu Pearson" value={p.context.route} onChange={e=>p.onRoute(e.target.value as Route)}><option value="covariance">Über die Kovarianz</option><option value="z">Über z-Werte</option></select></label><span>Gleiche Daten, gleiches r.</span></div>}
-  {!workshop&&<><Formula key={`${selection}-formal`} reference={r} context={p.context} onSelect={p.onSelect} onHighlight={p.onHighlight} highlight={p.highlight}/>
+  {!explain&&<><Formula key={`${selection}-formal`} reference={r} context={p.context} onSelect={p.onSelect} onHighlight={p.onHighlight} highlight={p.highlight}/>
   <CalculationSteps reference={r} route={p.context.route} onSelect={p.onSelect} onHover={p.onHover}/></>}
-  {!workshop&&<div className="calculation-heading"><span className="eyebrow">Mit deinen Daten</span></div>}
+  {!explain&&<div className="calculation-heading"><span className="eyebrow">Mit deinen Daten</span></div>}
   {p.selection?<CasePicker ids={p.context.pairs.map(row=>row.id)} value={p.context.caseId} onChange={p.onCase}/>:<label>Person i = <select aria-label="Person für die Formel auswählen" value={p.context.caseId} onChange={e=>p.onCase(e.target.value)}>{p.context.pairs.map((row,i)=><option value={row.id} key={row.id}>{i+1}</option>)}</select></label>}
 
   <Formula key={`${selection}-numeric`} reference={r} context={p.context} onSelect={p.onSelect} onHighlight={p.onHighlight} highlight={p.highlight} numeric/>
@@ -64,6 +65,6 @@ export function ConceptInspector(p:Props){
   </section>
   {inputs(r,p.context.route).length>0&&<details className="inspector-disclosure" key={`recipe-${selection}`}><summary>Die Rechnung als Baukasten entfalten</summary><Recipe key={`${selection}-${p.context.route}`} reference={r} context={p.context} onSelect={p.onSelect} onHover={p.onHover}/></details>}
   <details ref={experiment} className="inspector-disclosure experiment-disclosure" open={p.experimentOpen} onToggle={e=>p.onExperiment(e.currentTarget.open)}><summary>Mit den Daten experimentieren</summary>{p.context.columns&&p.onData?<SurveyExperiment key={p.resetRevision} reference={r} context={p.context} onPairs={p.onPairs} onCase={p.onCase} onData={p.onData} onReset={p.onReset}/>:<Experiment key={p.resetRevision} reference={r} context={p.context} showBoth={both} onCase={p.onCase} onPairs={p.onPairs} onReset={p.onReset}/>}</details>
-  {!workshop&&<details key={`deep-${selection}`} className="inspector-disclosure"><summary>{deepQuestions[out.id]||'Genauer verstehen'}</summary><p>{deepCopy[out.id]||conceptById[out.id]?.explanation}</p>{isOperation(r)&&!r.use&&<p>a ist der Wert der ausgewählten Person, b der nächsten Person. Nach der letzten folgt wieder die erste.</p>}<p className="small-copy">Bei Σ werden alle Personen durchlaufen. Angezeigte Zahlen sind gerundet (≈); intern rechnen wir ungerundet.</p></details>}
+  {!explain&&<details key={`deep-${selection}`} className="inspector-disclosure"><summary>{deepQuestions[out.id]||'Genauer verstehen'}</summary><p>{deepCopy[out.id]||conceptById[out.id]?.explanation}</p>{isOperation(r)&&!r.use&&<p>a ist der Wert der ausgewählten Person, b der nächsten Person. Nach der letzten folgt wieder die erste.</p>}<p className="small-copy">Bei Σ werden alle Personen durchlaufen. Angezeigte Zahlen sind gerundet (≈); intern rechnen wir ungerundet.</p></details>}
  </aside>;
 }
