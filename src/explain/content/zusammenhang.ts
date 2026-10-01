@@ -68,7 +68,8 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
       was: 'Für jede Person messen wir bei beiden Fragen: Wie weit liegt sie von der Mitte weg, und auf welcher Seite?',
       rechnung: c => {
         const dx = c.s.x.dev[c.who], dy = c.s.y.dev[c.who];
-        return `Person ${P(c)}: ${c.s.xs[c.who]} − ${num(c.s.x.mean)} = ${signed(dx)} und ${c.s.ys[c.who]} − ${num(c.s.y.mean)} = ${signed(dy)}. Beim Bundestag liegt ${P(c)} ${side(dx)} dem Durchschnitt, bei der Bundesregierung ${side(dy)} dem Durchschnitt.`;
+        const where = side(dx) === side(dy) ? `Bei beiden Fragen liegt ${P(c)} ${side(dx)} dem Durchschnitt.` : `Beim Bundestag liegt ${P(c)} ${side(dx)} dem Durchschnitt, bei der Bundesregierung ${side(dy)}.`;
+        return `Person ${P(c)}: Bundestag ${c.s.xs[c.who]} − ${num(c.s.x.mean)} = ${signed(dx)}, Bundesregierung ${c.s.ys[c.who]} − ${num(c.s.y.mean)} = ${signed(dy)}. ${where}`;
       },
       fach: 'Je Person gibt es zwei Abweichungen vom Mittelwert, xᵢ − x̄ und yᵢ − ȳ, jeweils mit Vorzeichen. Beide gehören zu derselben Person.',
       warum: 'Die beiden Vorzeichen zeigen, in welchem der vier Felder eine Person liegt.',
@@ -156,7 +157,7 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
         ? `sₓ ≈ ${num(c.s.x.sd)} und sᵧ ≈ ${num(c.s.y.sd)}. Eine Standardabweichung ist 0. Durch 0 kann man nicht teilen, r ist hier nicht definiert.`
         : `${num(c.s.cov)} / (${num(c.s.x.sd)} · ${num(c.s.y.sd)}) = ${num(c.s.cov)} / ${num(c.s.sxy)} ≈ ${num(c.s.r)}`,
       fach: 'Pearson-r ist die Kovarianz geteilt durch das Produkt der beiden Standardabweichungen. Das Ergebnis hat keine Einheit und liegt zwischen −1 und +1.',
-      warum: 'Die Kovarianz kann höchstens so groß werden wie sₓ · sᵧ. Teilen wir dadurch, verschwinden die Einheiten, und ganz verschiedene Fragen werden vergleichbar.',
+      warum: 'Die Kovarianz liegt immer zwischen −sₓ · sᵧ und +sₓ · sᵧ. Teilen wir dadurch, verschwinden die Einheiten, und ganz verschiedene Fragen werden vergleichbar.',
       acht: 'r ist kein Anteil von Personen. r = 0,5 heißt nicht, dass die Hälfte übereinstimmt. Es sagt, wie eng die Punkte an einer Geraden liegen.',
       alltag: 'Wie eine Prozentangabe: nicht wie viele Punkte, sondern welcher Anteil vom Höchstmöglichen.',
       check: {
