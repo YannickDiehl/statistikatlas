@@ -2,6 +2,7 @@
 import type { Ctx, Workshop } from '../types';
 import { series, type Series } from '../math';
 import { num, signed, close } from '../format';
+import { bridgeMittel } from './pilot-tabs';
 
 type C = Ctx<Series>;
 const NAMES = ['A', 'B', 'C', 'D', 'E'] as const;
@@ -9,6 +10,7 @@ const werte = (c: C) => c.s.xs.join(' + ');
 
 export const mittel: Workshop<number[], Series> = {
   id: 'mittel',
+  bridge: bridgeMittel,
   wofuer: 'Fünf Personen sagen, wo sie sich politisch einordnen: von 1 (ganz links) bis 10 (ganz rechts). Wo steht die Gruppe im Durchschnitt? Der Mittelwert beantwortet das mit einer einzigen Zahl.',
   mut: 'Die Formel hat nur zwei Schritte, und du kennst beide: zusammenzählen und teilen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'mittel',

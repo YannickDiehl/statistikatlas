@@ -4,6 +4,7 @@
 import type { Ctx, FNode, Workshop } from '../types';
 import { series, type Series } from '../math';
 import { num, signed, paren, close, unit } from '../format';
+import { bridgeStreuung } from './pilot-tabs';
 
 type C = Ctx<Series>;
 const NAMES = ['A', 'B', 'C', 'D', 'E'] as const;
@@ -30,6 +31,7 @@ const SKALA = 'Die Links-rechts-Skala hier wie eine metrische Skala zu behandeln
 
 export const streuung: Workshop<number[], Series> = {
   id: 'streuung',
+  bridge: bridgeStreuung,
   wofuer: 'Zwei Gruppen mit je fünf Personen sagen, wo sie sich politisch einordnen: von 1 (ganz links) bis 10 (ganz rechts). Beide Gruppen landen im Durchschnitt bei 5. Und doch sind sie ganz verschieden: In Gruppe A sind sich fast alle einig, in Gruppe B gehen die Meinungen weit auseinander. Die Standardabweichung macht diesen Unterschied sichtbar, mit einer einzigen Zahl.',
   mut: 'Die Formel sieht nach viel aus. Sie besteht aber nur aus sechs kleinen Schritten, die du alle schon kannst: zusammenzählen, abziehen, malnehmen, teilen und am Ende die Wurzel ziehen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'streuung',

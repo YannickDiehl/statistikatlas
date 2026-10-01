@@ -2,6 +2,7 @@
 import type { Ctx, FNode, Workshop } from '../types';
 import { pairStats, type PairStats, type Pairs } from '../math';
 import { num, signed, paren, close } from '../format';
+import { bridgeZusammenhang } from './pilot-tabs';
 
 type C = Ctx<PairStats>;
 const NAMES = ['A', 'B', 'C', 'D', 'E'] as const;
@@ -24,6 +25,7 @@ const strength = (r: number) => {
 
 export const zusammenhang: Workshop<Pairs, PairStats> = {
   id: 'zusammenhang',
+  bridge: bridgeZusammenhang,
   wofuer: 'Vertraut, wer dem Bundestag vertraut, auch eher der Bundesregierung? Fünf Personen beantworten beide Fragen, jeweils von 1 (gar kein Vertrauen) bis 7 (großes Vertrauen). Die Formel prüft, ob die beiden Antworten einer Person meist auf derselben Seite des Durchschnitts liegen.',
   mut: 'Die Formel sieht nach viel aus. Sie besteht aber aus sechs kleinen Schritten, die du schon kennst: Mitte finden, Abstände messen, malnehmen, zusammenzählen und teilen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'zusammenhang',

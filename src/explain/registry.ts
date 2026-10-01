@@ -3,13 +3,14 @@
  * Standardfehler, Rekodieren), dann alle Bereiche aus src/explain/content/index.ts (`AREAS`).
  * Bereiche tragen sich nicht hier ein, sondern nur in ihrem eigenen `content/<bereich>/index.ts`.
  */
-import type { AnyWorkshop, AreaIndex, ConceptTabs, Explain } from './types';
+import type { AnyWorkshop, AreaIndex, Bridge, ConceptTabs, Explain } from './types';
 import { mittel } from './content/mittel';
 import { streuung } from './content/streuung';
 import { zusammenhang } from './content/zusammenhang';
 import { standardfehler } from './content/standardfehler';
 import { rekodieren } from './content/rekodieren';
 import { AREAS } from './content';
+import { PILOT_TABS } from './content/pilot-tabs';
 
 export type { AnyWorkshop, Explain } from './types';
 
@@ -22,8 +23,6 @@ const PILOT: Record<string, Explain> = {
   [rekodieren.concept]: { kind: 'werkzeug', template: rekodieren },
 };
 
-/** Reiter der Pilotbegriffe; F3 füllt sie (src/explain/content/pilot-tabs.ts). */
-const PILOT_TABS: Record<string, ConceptTabs> = {};
 
 /** Schrittkarten der Pilotbegriffe (Spezifikation Werkstatt 6.4), ohne den Kontext des Ankers. */
 const PILOT_STEP_IDS = ['sum', 'deviation', 'squared_deviation', 'ss', 'df', 'crossproduct', 'crossproduct_sum', 'sd_product'];
@@ -121,6 +120,19 @@ export function explainFor(id: string): Explain | null {
 /** Reiter eines Begriffs (Pilot und Bereiche); null heißt: keine Reiter. */
 export function tabsFor(id: string): ConceptTabs | null {
   return PILOT_TABS[id] ?? merged.tabs[id] ?? null;
+}
+
+/** Alle Begriffe mit Reitern (Pilot und Bereiche), für Tests und das Prüfskript scripts/check-explanations.cjs. */
+export const TAB_IDS: string[] = [...Object.keys(PILOT_TABS), ...Object.keys(merged.tabs)];
+
+/** Werkstatt mit dieser Kennung (Pilot oder Bereich), sonst null. */
+export function workshopFor(id: string): AnyWorkshop | null {
+  return workshopById.get(id) ?? null;
+}
+
+/** Brücke „Mit 200 Befragten“ der Werkstatt mit dieser Kennung (`Workshop.bridge`), sonst null. */
+export function bridgeFor(id: string): Bridge<any> | null {
+  return workshopById.get(id)?.bridge ?? null;
 }
 
 export type StepCard = { workshop: AnyWorkshop; variant: string; step: number };
