@@ -343,3 +343,6 @@
 .xw .xw-next-link small{font-size:14px}
 .xw-more{margin-top:16px}
 .xw-more .package-conditions h2{font:18px/1.3 Georgia,serif}
+.xw-halo{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
+.xw p.xw-plot-caption{margin:10px 0 0}
+.xw-next.inspector-relations{border-top:0;padding-top:0;margin-top:6px}

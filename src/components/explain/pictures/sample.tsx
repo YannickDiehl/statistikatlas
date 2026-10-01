@@ -56,7 +56,7 @@ function DotPlot({ values, names, who, pic, col, onWho }: { values: number[]; na
         </g>}
         {pic.deviation && center !== undefined && Math.abs(d) > 1e-9 && <line className={d > 0 ? 'xw-pos' : 'xw-neg'} strokeWidth={3} x1={X(center)} x2={me.x} y1={me.y} y2={me.y} />}
         <circle className="xw-s-dot sel" cx={me.x} cy={me.y} r={5.5} />
-        <text className="xw-t xw-strong" x={Math.min(right - 20, Math.max(left + 20, me.x))} y={me.y - 10} textAnchor="middle">{names[who]}</text>
+        <text className="xw-t xw-strong xw-halo" x={Math.min(right - 20, Math.max(left + 20, me.x))} y={me.y - 10} textAnchor="middle">{names[who]}</text>
         <Axis scale={X} ticks={niceTicks(lo, hi)} at={base + 4} from={left} to={right} format={v => num(v)} labelGap={18} />
         <text className="xw-t" x={(left + right) / 2} y={base + 40} textAnchor="middle">{unitTitle(col)}</text>
       </svg>
@@ -97,7 +97,7 @@ function Scatter({ values, values2, names, who, pic, col, col2, onWho }: { value
           <text className="xw-t xw-neg-t" x={right - 6} y={bottom - 6} textAnchor="end">−</text>
         </g>}
         <circle className="xw-s-dot sel" cx={me.x} cy={me.y} r={5.5} />
-        <text className="xw-t xw-strong" x={Math.min(right - 20, Math.max(left + 20, me.x))} y={me.y - 10} textAnchor="middle">{names[who]}</text>
+        <text className="xw-t xw-strong xw-halo" x={Math.min(right - 20, Math.max(left + 20, me.x))} y={me.y - 10} textAnchor="middle">{names[who]}</text>
         <Axis scale={X} ticks={niceTicks(x0, x1)} at={bottom} from={left} to={right} format={v => num(v)} labelGap={16} />
         <Axis scale={Y} ticks={niceTicks(y0, y1, 5)} at={left} from={top} to={bottom} orient="left" format={v => num(v)} />
         <text className="xw-t" x={(left + right) / 2} y={bottom + 38} textAnchor="middle">{unitTitle(col)} (x)</text>
@@ -112,20 +112,22 @@ function Contributions({ values, names, who, label, onWho }: { values: number[];
   const [box, W] = useWidth();
   const order = values.map((_, i) => i).sort((a, b) => values[b] - values[a]);
   const left = 16, right = W - 16, bw = (right - left) / values.length, max = Math.max(1e-9, ...values.map(Math.abs));
-  const hasNeg = values.some(v => v < -1e-9), up = hasNeg ? 60 : 100, zero = 30 + up, H = zero + (hasNeg ? 60 : 0) + 34;
+  const hasNeg = values.some(v => v < -1e-9), up = hasNeg ? 60 : 100, zero = 24 + up, H = zero + (hasNeg ? 60 : 0) + 30;
   const h = (v: number) => Math.abs(v) / max * up;
   const points = order.map((i, k) => ({ x: left + (k + 0.5) * bw, y: values[i] >= 0 ? zero - h(values[i]) / 2 : zero + h(values[i]) / 2 }));
   const at = (i: number) => order.indexOf(i), top = order[0];
   const tag = (i: number, strong: boolean) => {
-    const k = at(i), x = Math.min(right - 30, Math.max(left + 30, left + (k + 0.5) * bw)), v = values[i];
-    return <text className={`xw-t${strong ? ' xw-strong' : ''}`} x={x} y={v >= 0 ? zero - h(v) - 6 : zero + h(v) + 16} textAnchor="middle">{names[i]}: {hasNeg ? signed(v) : num(v)}</text>;
+    const k = at(i), x = Math.min(right - 48, Math.max(left + 48, left + (k + 0.5) * bw)), v = values[i];
+    // Über einem hohen Balken steht das Etikett darüber, sonst unter der Nulllinie (dort ist Platz).
+    const y = v >= 0 ? (h(v) > up * 0.5 ? zero - h(v) - 6 : zero + 18) : zero + h(v) + 16;
+    return <text className={`xw-t xw-halo${strong ? ' xw-strong' : ''}`} x={x} y={Math.max(14, y)} textAnchor="middle">{names[i]}: {hasNeg ? signed(v) : num(v)}</text>;
   };
   return (
     <div ref={box}>
+      <p className="xw-note xw-plot-caption">{label}</p>
       <svg className="xw-svg xw-sample-plot" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
         aria-label={`${label}. Größter Beitrag: ${names[top]} mit ${num(values[top])}. ${names[who]}: ${num(values[who])}.`}
         onClick={e => { const k = nearest(e, points); if (k !== null) onWho(order[k]); }}>
-        <text className="xw-t" x={left} y={16}>{label}</text>
         {order.map((i, k) => <rect key={i} className={`${values[i] >= 0 ? 'xw-bar-pos' : 'xw-bar-neg'}${i === who ? ' sel' : ''}`}
           x={left + k * bw} y={values[i] >= 0 ? zero - h(values[i]) : zero} width={Math.max(0.6, bw - 0.4)} height={Math.max(0.5, h(values[i]))} />)}
         <line className="xw-axis" x1={left} x2={right} y1={zero} y2={zero} />
