@@ -123,8 +123,11 @@ test('every workshop text resolves for every preset, variant and person and foll
       t.options.forEach(o => clean(`${w.id} Antwort`, o));
       assert.ok(t.correct >= 0 && t.correct < t.options.length);
       if (t.tryIt) {
-        const d = t.tryIt.apply(w.presets[0].data) as number[] | { x: number[]; y: number[] }, values: number[] = Array.isArray(d) ? d : [...d.x, ...d.y];
-        assert.ok(values.every(x => x >= w.bounds.min && x <= w.bounds.max), `${w.id}: „${t.tryIt.label}“ verlässt die Skala`);
+        clean(`${w.id} Ausprobieren`, t.tryIt.label);
+        for (const preset of w.presets) {
+          const values = numbersIn(t.tryIt.apply(preset.data));
+          assert.ok(values.every(x => x >= w.bounds.min && x <= w.bounds.max), `${w.id}: „${t.tryIt.label}“ verlässt die Skala`);
+        }
       }
     });
   }
@@ -251,7 +254,10 @@ test('every registered explanation follows its template and the tone guide', () 
     if (e.kind === 'begriff') { assert.equal(e.card.concept, id); checkCard(e.card); }
     if (e.kind === 'tabelle') { assert.equal(e.tool.concept, id); checkTool(e.tool); }
     if (e.kind === 'satz') { assert.equal(e.template.concept, id); checkSentence(e.template); }
-    if (e.kind === 'werkstatt') assert.ok(WORKSHOPS.includes(e.workshop) && e.workshop.variants[id], `${id}: Werkstatt nicht registriert`);
+    if (e.kind === 'werkstatt') {
+      assert.ok(WORKSHOPS.includes(e.workshop) && e.workshop.variants[id], `${id}: Werkstatt nicht registriert`);
+      assert.equal(e.variant, id, `${id}: variant muss der Begriff selbst sein`);
+    }
   }
   assert.deepEqual([...kinds].sort(), ['begriff', 'satz', 'tabelle', 'werkstatt', 'werkzeug']);
 });
@@ -351,8 +357,17 @@ test('registry: duplicate concept ids between areas throw while loading', () => 
   assert.throws(() => mergeAreas({ b01: area('validity'), b02: area('validity') }, none), /„validity“.*doppelt.*b01 und b02/);
   assert.throws(() => mergeAreas({ b03: area('sd') }, { ids: ['sd'], workshops: [] }), /„sd“.*pilot und b03/);
   const ws = { ...streuung };
-  assert.throws(() => mergeAreas({ b04: { explanations: { z: { kind: 'werkstatt', workshop: ws, variant: 'sd' } }, tabs: {} } }, { ids: [], workshops: [streuung] }), /Werkstatt „streuung“ ist doppelt/);
+  assert.throws(() => mergeAreas({ b04: { explanations: { sd: { kind: 'werkstatt', workshop: ws, variant: 'sd' } }, tabs: {} } }, { ids: [], workshops: [streuung] }), /Werkstatt „streuung“ ist doppelt/);
+  assert.throws(() => mergeAreas({ b04: { explanations: { z: { kind: 'werkstatt', workshop: ws, variant: 'sd' } }, tabs: {} } }, none), /„z“.*variant: 'z'/);
   assert.throws(() => mergeAreas({ b12: { explanations: {}, tabs: {}, stepCards: { add: { workshop: 'gibtsnicht', variant: 'x', step: 1 } } } }, none), /unbekannte Werkstatt/);
+  // Schrittkarten: Begriff, Schritt und Sprungziel müssen passen.
+  const pilot = { ids: [], workshops: [streuung], explanations: { sd: { kind: 'werkstatt' as const, workshop: streuung, variant: 'sd' }, variance: { kind: 'werkstatt' as const, workshop: streuung, variant: 'variance' } } };
+  const step = (variant: string, n: number) => ({ b12: { explanations: {}, tabs: {}, stepCards: { add: { workshop: 'streuung', variant, step: n } } } });
+  assert.throws(() => mergeAreas(step('sdd', 1), pilot), /erklärt keinen Begriff „sdd“/);
+  assert.throws(() => mergeAreas(step('variance', 6), pilot), /Schritt 6 gibt es nicht.*1 bis 5/);
+  assert.throws(() => mergeAreas(step('sd', 0), pilot), /Schritt 0 gibt es nicht/);
+  assert.throws(() => mergeAreas(step('sd', 2), { ...pilot, explanations: {} }), /nicht als Werkstatt „streuung“ registriert/);
+  assert.equal(mergeAreas(step('variance', 5), pilot).stepCards.add.step, 5);
   const next = { next: { id: 'sd', why: 'weil' }, before: [], after: [] };
   assert.throws(() => mergeAreas({ b01: area('validity'), b02: { explanations: {}, tabs: { validity: { next } } } }, none), /gehören zu b01, nicht zu b02/);
   assert.throws(() => mergeAreas({ b01: { explanations: {}, tabs: { sd: { next } } } }, { ids: ['sd'], tabs: ['sd'], workshops: [] }), /liefert der Pilot/);
@@ -360,7 +375,7 @@ test('registry: duplicate concept ids between areas throw while loading', () => 
   const ok = mergeAreas({ b04: { explanations: {}, tabs: { ss: { next } } } }, { ids: ['ss'], tabs: ['sd'], workshops: [] });
   assert.ok(ok.tabs.ss);
   assert.throws(() => mergeAreas({ b04: { explanations: {}, tabs: { ss: { next } } }, b05: { explanations: {}, tabs: { ss: { next } } } }, { ids: ['ss'], workshops: [] }), /doppelt vergeben: b04 und b05/);
-  const merged = mergeAreas({ b01: area('validity'), b02: { explanations: {}, tabs: {}, stepCards: { add: { workshop: 'streuung', variant: 'sd', step: 1 } } } }, { ids: [], workshops: [streuung] });
+  const merged = mergeAreas({ b01: area('validity'), b02: { explanations: {}, tabs: {}, stepCards: { add: { workshop: 'streuung', variant: 'sd', step: 1 } } } }, { ...pilot });
   assert.deepEqual([Object.keys(merged.explanations), merged.stepCards.add.workshop], [['validity'], 'streuung']);
 });
 

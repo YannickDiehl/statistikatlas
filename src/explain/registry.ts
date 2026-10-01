@@ -41,10 +41,15 @@ export type AreaTables = {
  * unbekannte Werkstatt zeigt oder wenn Reiter für einen fremden Begriff vergeben werden. So fällt eine
  * Doppelung schon beim Laden auf, nicht erst im Browser.
  *
- * `reserved.ids` sind Begriffe mit Erklärung oder Schrittkarte im Pilot; `reserved.tabs` Begriffe, deren
- * Reiter der Pilot selbst liefert. Reiter für eine Pilot-Schrittkarte (etwa `ss`) darf genau ein Bereich vergeben.
+ * Werkstatt-Erklärungen müssen ihren Begriff als `variant` tragen. Schrittkarten müssen auf eine registrierte
+ * Werkstatt, einen ihrer Begriffe und einen Schritt zwischen 1 und dessen letztem Schritt zeigen, und der Begriff
+ * muss als diese Werkstatt erklärt sein (dorthin springt „Werkstatt öffnen“).
+ *
+ * `reserved.ids` sind Begriffe mit Erklärung oder Schrittkarte im Pilot, `reserved.explanations` die Erklärungen
+ * des Pilots; `reserved.tabs` Begriffe, deren Reiter der Pilot selbst liefert. Reiter für eine Pilot-Schrittkarte
+ * (etwa `ss`) darf genau ein Bereich vergeben.
  */
-export function mergeAreas(areas: Record<string, AreaIndex>, reserved: { ids: Iterable<string>; tabs?: Iterable<string>; workshops: AnyWorkshop[] }): AreaTables {
+export function mergeAreas(areas: Record<string, AreaIndex>, reserved: { ids: Iterable<string>; tabs?: Iterable<string>; workshops: AnyWorkshop[]; explanations?: Record<string, Explain> }): AreaTables {
   const owner = new Map<string, string>();
   for (const id of reserved.ids) owner.set(id, 'pilot');
   const claim = (id: string, area: string, what: string) => {
@@ -58,6 +63,8 @@ export function mergeAreas(areas: Record<string, AreaIndex>, reserved: { ids: It
     for (const [id, explain] of Object.entries(index.explanations)) {
       claim(id, area, 'Erklärung');
       out.explanations[id] = explain;
+      if (explain.kind === 'werkstatt' && (explain.variant !== id || !explain.workshop.variants[id]))
+        throw new Error(`Erklärung „${id}“ (${area}): Die Werkstatt „${explain.workshop.id}“ braucht \`variant: '${id}'\` und einen Eintrag variants.${id}.`);
       if (explain.kind === 'werkstatt' && !out.workshops.includes(explain.workshop)) {
         const before = workshopIds.get(explain.workshop.id);
         if (before !== undefined) throw new Error(`Werkstatt „${explain.workshop.id}“ ist doppelt vergeben: ${before} und ${area}.`);
@@ -80,13 +87,24 @@ export function mergeAreas(areas: Record<string, AreaIndex>, reserved: { ids: It
     tabOwner.set(id, area);
     out.tabs[id] = tabs;
   }
-  const known = new Set([...reserved.workshops, ...out.workshops].map(w => w.id));
-  for (const [id, card] of Object.entries(out.stepCards))
-    if (!known.has(card.workshop)) throw new Error(`Schrittkarte „${id}“ zeigt auf die unbekannte Werkstatt „${card.workshop}“.`);
+  const known = new Map([...reserved.workshops, ...out.workshops].map(w => [w.id, w]));
+  const explained = { ...reserved.explanations, ...out.explanations };
+  for (const [id, card] of Object.entries(out.stepCards)) {
+    const workshop = known.get(card.workshop), variant = workshop?.variants[card.variant], target = explained[card.variant];
+    if (!workshop) throw new Error(`Schrittkarte „${id}“ zeigt auf die unbekannte Werkstatt „${card.workshop}“.`);
+    if (!variant) throw new Error(`Schrittkarte „${id}“: Die Werkstatt „${card.workshop}“ erklärt keinen Begriff „${card.variant}“.`);
+    if (!Number.isInteger(card.step) || card.step < 1 || card.step > variant.lastStep)
+      throw new Error(`Schrittkarte „${id}“: Schritt ${card.step} gibt es nicht, „${card.variant}“ hat die Schritte 1 bis ${variant.lastStep}.`);
+    if (target?.kind !== 'werkstatt' || target.workshop !== workshop)
+      throw new Error(`Schrittkarte „${id}“: „Werkstatt öffnen“ springt zu „${card.variant}“, aber dieser Begriff ist nicht als Werkstatt „${card.workshop}“ registriert.`);
+  }
   return out;
 }
 
-const merged = mergeAreas(AREAS, { ids: [...Object.keys(PILOT), ...PILOT_STEP_IDS], tabs: Object.keys(PILOT), workshops: PILOT_WORKSHOPS });
+const merged = mergeAreas(AREAS, { ids: [...Object.keys(PILOT), ...PILOT_STEP_IDS], tabs: Object.keys(PILOT), workshops: PILOT_WORKSHOPS, explanations: PILOT });
+
+/** Alle Begriffe mit Schrittkarte (Pilot und Bereiche), für Tests und Prüfskripte. */
+export const STEP_CARD_IDS: string[] = [...PILOT_STEP_IDS, ...Object.keys(merged.stepCards)];
 
 /** Alle Werkstätten: Pilot und alle Werkstätten aus den Bereichen. */
 export const WORKSHOPS: AnyWorkshop[] = [...PILOT_WORKSHOPS, ...merged.workshops];

@@ -10,7 +10,7 @@ import { Begriffskarte } from '../components/explain/Begriffskarte';
 import { TabellenWerkzeug } from '../components/explain/TabellenWerkzeug';
 import { Explanation, EXPLAIN_LABEL } from '../components/explain/Explanation';
 import { AreaUnder, Axis, Bar, Curve, DragPoint, GridCell, linear, MarkLine } from '../components/explain/pictures/kit';
-import { EXPLANATIONS, explainFor, stepCardFor, WORKSHOPS } from './registry';
+import { EXPLANATIONS, explainFor, STEP_CARD_IDS, stepCardFor, WORKSHOPS } from './registry';
 import { standardfehler } from './content/standardfehler';
 import { rekodieren } from './content/rekodieren';
 import { pWert } from './content/muster/p-wert';
@@ -61,6 +61,21 @@ test('step cards name their term and offer the jump into their workshop', () => 
   finally { modeStore.set('ausfuehrlich'); }
   const ss = text(renderToStaticMarkup(createElement(StepCard, { card: stepCardFor('ss')!, current: 'ss', onConcept: noop, onOpen: noop })));
   assert.ok(ss.includes('Quadratsumme der Abweichungen') && ss.includes('Ist Schritt 4 von 6 der Werkstatt Standardabweichung'));
+});
+
+test('every registered step card renders for every anchor and opens a registered workshop concept', () => {
+  assert.ok(STEP_CARD_IDS.length >= 8);
+  for (const id of STEP_CARD_IDS) for (const anchor of [undefined, 'variance', 'covariance', 'pearson']) {
+    const card = stepCardFor(id, anchor);
+    assert.ok(card, `${id}: keine Schrittkarte`);
+    const v = card.workshop.variants[card.variant];
+    assert.ok(v && card.step >= 1 && card.step <= v.lastStep, `${id}: Schritt ${card.step} passt nicht zu ${card.variant}`);
+    const target = explainFor(card.variant);
+    assert.ok(target?.kind === 'werkstatt' && target.workshop === card.workshop, `${id}: Sprungziel ${card.variant} ist nicht diese Werkstatt`);
+    const html = renderToStaticMarkup(createElement(StepCard, { card, current: id, onConcept: noop, onOpen: noop }));
+    sound(html, `Schrittkarte ${id}`);
+    assert.ok(text(html).includes(card.workshop.steps[card.step - 1].title) && text(html).includes('Werkstatt öffnen'), `${id}: Schrittkarte unvollständig`);
+  }
 });
 
 test('Formel als Satz and Werkzeug render their blocks in the new tone', () => {
