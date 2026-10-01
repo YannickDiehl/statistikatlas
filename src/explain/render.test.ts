@@ -205,7 +205,8 @@ const inspector = (id: string, opts: { rows?: SurveyRow[]; selection?: ColumnSel
 };
 /** Text ohne Tags und ohne zusätzliche Leerzeichen, für Code, in dem jedes Zeichen ein eigener Knopf ist. */
 const plain = (html: string) => html.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&');
-const tabNames = (html: string) => [...html.matchAll(/role="tab"[^>]*>([^<]*)</g)].map(m => m[1]);
+/** Beschriftungen der Reiter (die Klammer steht in einem eigenen span, damit sie beim Umbruch zusammenbleibt). */
+const tabNames = (html: string) => [...html.matchAll(/role="tab"[^>]*>(.*?)<\/button>/g)].map(m => m[1].replace(/<[^>]+>/g, ''));
 const panelOf = (html: string, id: string, tab: string) => {
   const start = html.indexOf(`id="xp-${id}-${tab}"`), next = html.indexOf('role="tabpanel"', html.indexOf('>', start));
   return start < 0 ? '' : html.slice(start, next < 0 ? undefined : next);

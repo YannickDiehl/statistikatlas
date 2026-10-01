@@ -386,7 +386,7 @@ Jeder Begriff bekommt die Reiterleiste (Spezifikation Ausbau, Abschnitt 5; Lehrd
 
 Du trägst die Reiter im Index deines Bereichs ein, im selben Commit wie die Erklärung: `tabs: { validity: { next: … }, … }` (Typ `ConceptTabs`, `src/explain/types.ts`). „Kurz gesagt“ über den Reitern kommt aus deiner Erklärung; die Vorlagen lassen ihren eigenen Kasten dann weg. Die Reiter bleiben eingehängt (Zustand bleibt beim Wechsel erhalten), der gewählte Reiter gilt je Begriff für die Sitzung. Am Ende von „Verstehen“ führt „Weiter mit 200 Befragten“ in den Reiter `sample` und setzt dort denselben Schritt.
 
-**Rangwege:** Ein Rechenweg mit `basis: 'ranks'` (etwa Spearman unter Korrelation) zeigt keine Reiter. Brücke, Vorhersagen und Leitaufruf rechnen mit Rohwerten; Zahlen dazu wären für die Rangfassung falsch. Der Weg zeigt nur seine Erklärung.
+**Rangwege:** Ein Rechenweg mit `basis: 'ranks'` (etwa Spearman unter Korrelation) zeigt keine Reiter. Brücke, Vorhersagen und Leitaufruf rechnen mit Rohwerten; Zahlen dazu wären für die Rangfassung falsch. Der Weg zeigt seine Erklärung ohne Reiter und darunter die bisherige Ansicht „Mit dem Lehrdatensatz (200 Befragte)“ mit rangbasierten Zahlen. Verweise in der Erklärung deshalb nicht auf einen Reiter („im Reiter „Mit 200 Befragten““), sondern auf den Teil („im Teil mit den 200 Befragten“).
 
 Vorbilder: `src/explain/content/pilot-tabs.ts` (sieben Pilotbegriffe, Brücken der Pilot-Werkstätten) und `src/explain/content/muster/index.ts` (`p_value` und `dummy`: Auswertung und Katalog-Leitaufruf).
 
@@ -394,7 +394,7 @@ Vorbilder: `src/explain/content/pilot-tabs.ts` (sieben Pilotbegriffe, Brücken d
 
 ```ts
 next: {
-  next: { id: 'se', why: 'Wie genau kennt man den Mittelwert? Teile s durch die Wurzel aus n: 3,24 / √200 ≈ 0,23 h.' },
+  next: { id: 'se', why: seSentence },   // Funktion (c: SampleCtx) => string, rechnet mit den aktuellen Daten: „… 3,24 / √200 ≈ 0,23 h.“
   before: [{ id: 'variance', why: 'Die Varianz s², deren Wurzel s ist.' }],   // „Das geht voraus“
   after: [{ id: 'z', why: 'Misst Abstände zur Mitte in Standardabweichungen.' }], // „Daraus entsteht“
   more: [{ id: 'describe', why: 'Mittelwert, Standardabweichung und mehr auf einen Blick.' }], // zugeklappt
@@ -408,7 +408,7 @@ next: {
 
 ### 8.2 Mit 200 Befragten (`SampleTab`)
 
-**Der Lehrdatensatz:** 200 synthetische Befragte, Erwachsene von 18 bis 75 Jahren, keine Studierenden. Spalten, Fragetexte, Einheiten und Wertebereiche stehen in `src/domain/survey.ts` (`surveyColumns`). Übernimm die Zeitbezüge wörtlich: Lernzeit „in den letzten sieben Tagen“, Weiterbildung „in den letzten zwölf Monaten“, Wissenstest „0 bis 20 Aufgaben eines fiktiven Tests“. Nenne die Menschen „Befragte“ oder „Personen“. Spaltentitel kommen in Texte nur über `c.col.title` bzw. `sampleColumnInfo(id).title`: Dort ist der Mittelpunkt der Datensatztitel schon durch ein Komma ersetzt („Wissenstest, Zeitpunkt 2“).
+**Der Lehrdatensatz:** 200 synthetische Befragte, Erwachsene von 18 bis 75 Jahren, keine Studierenden. Spalten, Fragetexte, Einheiten und Wertebereiche stehen in `src/domain/survey.ts` (`surveyColumns`). Übernimm die Zeitbezüge wörtlich: Lernzeit „in den letzten sieben Tagen“, Weiterbildung „in den letzten zwölf Monaten“, Wissenstest „Wie viele Aufgaben haben Sie in diesem Test richtig gelöst?“ (0 bis 20). Kein „fiktiv“ im Text; dass die Daten synthetisch sind, sagt der Datensatz-Dialog. Nenne die Menschen „Befragte“ oder „Personen“. Spaltentitel kommen in Texte nur über `c.col.title` bzw. `sampleColumnInfo(id).title`: Dort ist der Mittelpunkt der Datensatztitel schon durch ein Komma ersetzt („Wissenstest, Zeitpunkt 2“).
 
 Zwei Arten:
 
@@ -468,10 +468,24 @@ Ohne `columns` gelten die Spalten der Spaltenwahl (`c.columns.x`, `c.columns.y`)
 | `{ change: 'plus', amount: 1 }` | steigt um genau 1 |
 | `{ change: 'sign' }` | wechselt das Vorzeichen |
 | `{ change: 'up', atLeast?, atMost? }`, `'down'` | steigt bzw. sinkt, wahlweise um mindestens oder höchstens so viel („ein wenig“: `atMost`) |
-| `{ change: 'weaker' }`, `'stronger'` | der Betrag sinkt bzw. steigt (für r: der Zusammenhang wird schwächer) |
+| `{ change: 'weaker', atLeast?, atMost? }`, `'stronger'` | der Betrag sinkt bzw. steigt (für r: der Zusammenhang wird schwächer), wahlweise um mindestens oder höchstens so viel |
 | `{ change: 'equals', value: 200, measure: c => … }` | ist danach genau dieser Wert |
 
-Gilt die Behauptung nicht für jede Person und jeden Datenstand, formuliere die Antwort vorsichtiger (Vorbild Pearson: „er wird schwächer, je nach ihrem Wissenstest kaum oder deutlich“ statt „ja, deutlich“) und halte im Bereichstest fest, was R dazu sagt.
+**Die Worte der markierten Antwort müssen zu `expect` passen** (`answerFits` in `tabs.test.ts`). So prüft der Test die Antwort selbst, nicht nur, was du in `expect` einträgst. Unbekannte Worte fallen durch; dann ergänzt du die Tabelle dort und hier:
+
+| Wort in der Antwort | verlangt |
+|---|---|
+| „bleibt gleich“, „bleibt genau gleich“, „gar nicht“ | `same` |
+| „verdoppelt“, „vervierfacht“, „halbiert“ | `factor` 2, 4, 0,5 |
+| „steigt um 1 …“ | `plus` mit diesem Betrag |
+| „steigt“, „wird größer“ bzw. „sinkt“, „wird kleiner“ | `up` (oder `plus`, `factor` > 1) bzw. `down` (oder `factor` < 1) |
+| „schwächer“ bzw. „stärker“ | `weaker` bzw. `stronger` |
+| „Vorzeichen“ | `sign` |
+| eine Zahl, „keine“, „lauter …“ | `equals` |
+| „deutlich“, „spürbar“, „stark“ | eine Untergrenze `atLeast` |
+| „kaum“, „ein wenig“, „etwas“, „fast gleich“ | eine Obergrenze `atMost` |
+
+„kaum oder deutlich“ zusammen sagt nur die Richtung. Gilt die Behauptung nicht für jede Person und jeden Datenstand, formuliere die Antwort vorsichtiger (Vorbild Pearson: „er wird schwächer, je nach ihrem Wissenstest kaum oder deutlich“ statt „ja, deutlich“; die alte Fassung fällt im Test durch) und halte im Bereichstest fest, was R dazu sagt. Ein Ablenker wie „bleibt fast gleich“ ist willkommen, wenn er einen typischen Denkfehler zeigt (Vorbild: s beim Ausreißer).
 
 ### 8.3 In R (`RTab`)
 
@@ -497,9 +511,9 @@ Download der `.sav`-Datei, Startblock, Kopieren, R-Skript, „Anderer Aufruf“,
 
 ### 8.5 Was `src/explain/tabs.test.ts` prüft
 
-- jede registrierte Erklärung hat `tabs[id].next`; Ziele existieren; kein Ziel doppelt, auch nicht mit den Bezügen der Karte; Ton jedes `why`, auch der rechnenden für veränderte Daten;
+- jede registrierte Erklärung hat `tabs[id].next`; Ziele existieren; kein Ziel doppelt, auch nicht mit den Bezügen der Karte; Ton jedes `why` (auch in `more`), auch der rechnenden für veränderte Daten;
 - Brücke: Werkstatt mit `bridge` und `value`, Schrittzeilen für jeden Schritt, alle Texte für alle 200 Personen und nach jeder Vorhersage ohne `NaN` und im Ton des Sprachleitfadens; dieselben Texte für jede Spalte, die die Spaltenwahl anbietet (kein „·“ aus Spaltentiteln); bei Paaren passt jede Richtungsangabe zum Vorzeichen, auch nach „Umpolen“;
-- Vorhersagen: jede passt zur Spalte, und `expect` stimmt für jede Person und jeden Datenstand (siehe 8.2);
+- Vorhersagen: jede passt zur Spalte, die Worte der markierten Antwort passen zu `expect`, und `expect` stimmt für jede Person und jeden Datenstand (siehe 8.2); Gegenprobe mit der alten Pearson-Antwort „ja, deutlich“;
 - Auswertung: `result` für die Ausgangsdaten und nach jeder Vorhersage, Ton, mindestens eine Vorhersage, kein `step`;
 - In R: Katalogeintrag und erfasste Ausgabe vorhanden, erfasster Code gleich dem Katalogcode; jede `outputMap`-Stelle wird gefunden, jedes `step` gibt es; `check` mit „Fast!“-Rückmeldungen; jedes Zeichen aus `tokens` kommt im Leitaufruf vor; hat der Katalog Aufrufe zum Begriff, gibt es `r`.
 
@@ -523,14 +537,15 @@ BASE=http://127.0.0.1:<port> IDS=validity,nominal OUT=<scratch-ordner> node scri
 
 Es öffnet jeden Begriff über die Suche der Karte (`/?ansicht=karte`, Suchfeld „Begriff im Netzwerk finden“; findet die Suche ihn nicht eindeutig, über das Atlas-Werkzeug `open_atlas_concept` und meldet das als Hinweis) und prüft:
 
-- gleich nach dem Öffnen: Die Reiterleiste ist im sichtbaren Teil des Inspectors (auf dem Telefon im Blatt unter dem Kopf), alle Reiter liegen ganz in der Leiste, nichts ist abgeschnitten;
+- gleich nach dem Öffnen: Die Reiterleiste ist im sichtbaren Teil des Inspectors (auf dem Telefon im Blatt unter dem Kopf), alle Reiter liegen ganz in der Leiste, nichts ist abgeschnitten, kein Wort einer Beschriftung bricht mitten im Wort um, und die Leiste überdeckt mit Rahmen und Schatten nichts, was über ihr steht („Kurz gesagt“);
 - Tastatur: Pfeil rechts durch alle Reiter, Pfeil links, Ende, Pos1; jedes Panel hat Inhalt, die anderen sind verborgen;
-- in jedem Reiter, alle Abschnitte aufgeklappt: Konsolenfehler und -warnungen (Meldungen beim Laden zählen zum ersten Begriff), Schrift unter 13 px, seitliches Überlaufen von Seite und Inspector, Steuerelemente ohne zugänglichen Namen;
+- in jedem Reiter, alle Abschnitte aufgeklappt: Konsolenfehler und -warnungen (Meldungen beim Laden zählen zum ersten Begriff), Schrift unter 13 px, seitliches Überlaufen von Seite und Inspector, Steuerelemente ohne zugänglichen Namen, übersprungene Überschriftenebenen (h2 → h4);
+- Tabulatortaste durch jeden Reiter (bis zu 30 Stopps): Kein Fokus liegt mit Ober- oder Unterkante unter einem klebenden Element (Reiterleiste, stehende Formel, Kopf des Blatts);
 - Zustand: Ein gewählter Schritt bleibt nach einem Reiterwechsel erhalten;
 - „Weiter“: kein Ziel doppelt;
-- Fokus: „Schritt k ansehen“ in „In R“ zeigt Schritt k mit dem Fokus dort; nach „Ausprobieren“ und „Ausgangsdaten wiederherstellen“ und nach dem Link „Als Nächstes“ liegt der Fokus nicht auf der Seite.
+- Fokus: „Schritt k ansehen“ in „In R“ zeigt Schritt k mit dem Fokus dort, nicht unter der Leiste; nach „Zu … wechseln“, nach „Ausprobieren“ und „Ausgangsdaten wiederherstellen“ (im Reiter und mit „Zurücksetzen“ in der Kopfzeile) und nach dem Link „Als Nächstes“ liegt der Fokus nicht auf der Seite.
 
-Weitere Variablen: `SIZES=1920,1440,1280,1024,390` (Standard `1440,390`), `MODE=kompakt` für die Ansicht Kompakt, `SHOTS=1` für Bildschirmfotos je Reiter nach `<OUT>/shots`. Prüfe vor dem Bericht beide Ansichten bei allen fünf Breiten. Je Begriff schreibt es `<OUT>/<id>.json` (alle Messungen), dazu `<OUT>/summary.json` (nur Befunde) und eine JSON-Zeile je Begriff und Breite auf die Konsole; bei einem Befund endet es mit Code 1. Danach den Server beenden.
+Weitere Variablen: `SIZES=1920,1440,1280,1024,390` (Standard `1440,390`), `MODE=kompakt` für die Ansicht Kompakt, `SHOTS=1` für Bildschirmfotos je Reiter nach `<OUT>/shots`. Prüfe vor dem Bericht beide Ansichten bei allen fünf Breiten, nacheinander: Zwei Läufe gleichzeitig führen zu Zeitüberschreitungen. Je Begriff schreibt es `<OUT>/<id>.json` (alle Messungen), dazu `<OUT>/summary.json` (nur Befunde) und eine JSON-Zeile je Begriff und Breite auf die Konsole; bei einem Befund endet es mit Code 1. Danach den Server beenden.
 
 **Tests schreiben:** Gib jeder Zusicherung eine Meldung mit (`assert.ok(x, 'was fehlt')`). Ohne Meldung liest node:test bei einem Fehlschlag die Quelle nach, und mit tsx kann der Testlauf dann hängen bleiben, statt den Fehler zu melden.
 

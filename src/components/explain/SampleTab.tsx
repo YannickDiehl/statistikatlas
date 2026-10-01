@@ -171,7 +171,7 @@ function BridgeView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'brid
         {!compact && <>
           <p className="xw-fach-line">In der Fachsprache: {i.fachlich}</p>
           {i.zusatz && <p>{i.zusatz}</p>}
-          <h4>Voraussetzung</h4><p>{bridge.voraussetzung(c, tab.variant)}</p>
+          <h3>Voraussetzung</h3><p>{bridge.voraussetzung(c, tab.variant)}</p>
         </>}
       </Section>
       {!compact && <div ref={thinkBox} tabIndex={-1} className="xw-focus-box">{matches
@@ -206,7 +206,7 @@ function AnalysisView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'an
         {!compact && <>
           <p className="xw-fach-line">In der Fachsprache: {result.fachlich}</p>
           {result.zusatz && <p>{result.zusatz}</p>}
-          {tab.voraussetzung && <><h4>Voraussetzung</h4><p>{tab.voraussetzung}</p></>}
+          {tab.voraussetzung && <><h3>Voraussetzung</h3><p>{tab.voraussetzung}</p></>}
         </>}
       </Section>
       {p.extras}

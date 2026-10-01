@@ -56,6 +56,12 @@ export function tabList(explain: Explain | null, tabs: ConceptTabs): { id: TabId
   ];
 }
 
+/** Beschriftung eines Reiters: Eine Klammer („(5 Personen)“) bleibt beim Umbruch zusammen. */
+function tabText(label: string): ReactNode {
+  const i = label.indexOf(' (');
+  return i < 0 ? label : <>{label.slice(0, i)} <span className="xw-nowrap">{label.slice(i + 1)}</span></>;
+}
+
 /** „Kurz gesagt“ über den Reitern, je Vorlage. */
 export function kurzOf(explain: Explain | null): { text: string; fach?: string } | null {
   switch (explain?.kind) {
@@ -86,24 +92,52 @@ export function ExplainTabs({ concept, tabs, kurz, steps, render }: {
   const onUnderstandStep = useCallback((n: number) => { understandStep.current = n; }, []);
   const hasKurz = !!kurz;
   const link = useMemo(() => ({ kurzAbove: hasKurz, onStep: onUnderstandStep, goTo: goVerstehen }), [hasKurz, onUnderstandStep, goVerstehen]);
-  /** Reiter zeigen; ohne eigenes Sprungziel (Schritt) bekommt das Panel den Fokus. */
-  const show = (id: TabId, focusPanel = true) => { select(id); if (focusPanel) requestAnimationFrame(() => panels.current[id]?.focus({ preventScroll: false })); };
+  /**
+   * Reiter zeigen; ohne eigenes Sprungziel (Schritt) bekommt das Panel den Fokus. Liegt sein Anfang dann über dem
+   * sichtbaren Teil (oder unter der klebenden Leiste), rückt er nach oben in den Blick (scroll-padding hält die Leiste frei).
+   */
+  const show = (id: TabId, focusPanel = true) => {
+    select(id);
+    if (!focusPanel) return;
+    requestAnimationFrame(() => {
+      const panel = panels.current[id], box = panel?.closest<HTMLElement>('.network-inspector');
+      if (!panel) return;
+      panel.focus({ preventScroll: true });
+      const top = panel.getBoundingClientRect().top;
+      const from = box ? box.getBoundingClientRect().top + (parseFloat(getComputedStyle(box).scrollPaddingTop) || 0) : 0;
+      const to = box ? Math.min(box.getBoundingClientRect().bottom, innerHeight) : innerHeight;
+      if (top < from - 1 || top > to - 40) panel.scrollIntoView({ block: 'start' });
+    });
+  };
   const stepLink = steps && ids.includes(steps) ? (step: number) => {
     // Das Ziel (Lernkarte bzw. Baustein) nimmt den Fokus selbst.
     if (steps === 'sample') { setGoSample(g => ({ step, n: (g?.n ?? 0) + 1 })); show('sample', false); }
     else { setGoVerstehen(g => ({ step, n: (g?.n ?? 0) + 1 })); show('verstehen', false); }
   } : undefined;
   const links: TabLinks = { goSample, stepLink };
-  // Höhe der Reiterleiste als CSS-Variable: Darunter bleibt die Formel der Werkbank stehen (die Leiste klebt oben).
+  // Maße der Reiterleiste als CSS-Variablen am Inspector: --xw-tabs-h (Höhe; darunter bleibt die Formel der Werkbank
+  // stehen), --xw-pad (Innenabstand oben, dort klebt die Leiste) und --xw-tabs-bottom (beides zusammen; daraus
+  // scroll-padding, damit Sprungziele und Fokus nicht unter der Leiste landen). Klebt die Leiste, bekommt sie xw-stuck.
   useLayoutEffect(() => {
     const el = bar.current, box = root.current?.closest<HTMLElement>('.network-inspector') ?? root.current;
     if (!el || !box || typeof ResizeObserver === 'undefined') return;
-    // Am Inspector gesetzt: Die klebende Formel rückt darunter, und scroll-padding hält fokussierte Elemente unter der Leiste frei.
-    const write = () => box.style.setProperty('--xw-tabs-h', `${el.offsetHeight}px`);
-    write();
-    const observer = new ResizeObserver(write);
-    observer.observe(el);
-    return () => observer.disconnect();
+    let pad = 0;
+    const write = () => {
+      pad = parseFloat(getComputedStyle(box).paddingTop) || 0;
+      box.style.setProperty('--xw-tabs-h', `${el.offsetHeight}px`);
+      box.style.setProperty('--xw-pad', `${pad}px`);
+      box.style.setProperty('--xw-tabs-bottom', `${pad + el.offsetHeight}px`);
+    };
+    const stuck = () => {
+      const sticky = getComputedStyle(el).position === 'sticky';
+      const offset = el.getBoundingClientRect().top - box.getBoundingClientRect().top - box.clientTop;
+      el.classList.toggle('xw-stuck', sticky && box.scrollTop > 0 && offset <= pad + 0.5);
+    };
+    write(); stuck();
+    const observer = new ResizeObserver(() => { write(); stuck(); });
+    observer.observe(el); observer.observe(box);
+    box.addEventListener('scroll', stuck, { passive: true });
+    return () => { observer.disconnect(); box.removeEventListener('scroll', stuck); };
   }, []);
   function key(e: KeyboardEvent) {
     const i = ids.indexOf(active), next = e.key === 'ArrowRight' ? ids[(i + 1) % ids.length] : e.key === 'ArrowLeft' ? ids[(i - 1 + ids.length) % ids.length]
@@ -120,7 +154,8 @@ export function ExplainTabs({ concept, tabs, kurz, steps, render }: {
       <div className="xw-tabs" role="tablist" aria-label="Teile der Erklärung" onKeyDown={key} ref={bar}>
         {tabs.map(t => (
           <button type="button" key={t.id} id={tabId(t.id)} role="tab" aria-selected={active === t.id} aria-controls={panelId(t.id)} tabIndex={active === t.id ? 0 : -1}
-            ref={el => { buttons.current[t.id] = el; }} onClick={() => select(t.id)}>{t.label}</button>
+            className={t.label.length <= 6 ? 'xw-tab-short' : undefined}
+            ref={el => { buttons.current[t.id] = el; }} onClick={() => select(t.id)}>{tabText(t.label)}</button>
         ))}
       </div>
       {tabs.map(t => (

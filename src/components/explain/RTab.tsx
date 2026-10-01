@@ -96,7 +96,7 @@ function TokenCard({ note, concept, onConcept }: { note: TokenNote; concept?: st
     <div className="xw-card xw-token">
       <p className="xw-name-term"><code>{note.sym}</code><strong>{note.term}</strong>{note.say && <small>sprich „{note.say}“</small>}</p>
       <KurzGesagt text={note.kurz} />
-      <h4 className="xw-warn-head">Aufgepasst</h4>
+      <h3 className="xw-warn-head">Aufgepasst</h3>
       <p>{tight(note.fehler)}</p>
       {concept && <p><ConceptLink id={concept} onConcept={onConcept}>Begriff öffnen</ConceptLink></p>}
     </div>
@@ -248,7 +248,7 @@ function OtherOutput({ entry, p, catalog }: { entry: AtlasEntry; p: RProps; cata
   const same = captured.code === analysisCode(entry, s, p.reference?.basis === 'ranks');
   return (
     <div className="xw-other-output">
-      <h4>So antwortet R</h4>
+      <h3>So antwortet R</h3>
       <p className="xw-note">Ausgabe für die Ausgangsdaten{same ? '' : ' und die Ausgangsspalten'}, in R erfasst.{p.modified ? ' Deine Daten sind verändert; R würde andere Zahlen zeigen.' : ''}</p>
       <pre className="r-code xw-routput"><code>{captured.output}</code></pre>
     </div>
