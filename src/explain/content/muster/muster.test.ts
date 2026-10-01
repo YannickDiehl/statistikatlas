@@ -8,8 +8,9 @@ import { LERNZEIT_NACH_WEITERBILDUNG as L, pFor, pWert } from './p-wert';
 import { ABSCHLUESSE, dummy } from './dummy';
 
 /*
- * Referenzwerte der Muster, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz
- * createSurvey() als CSV beziehungsweise als .sav mit Wertelabels:
+ * Referenzwerte der Muster, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz.
+ * atlas.csv ist createSurvey() als CSV (Spalte id und alle surveyColumns, ein Wert je Zelle); dieselben Werte liefert
+ * read_spss("Statistikatlas-200-Befragte.sav") auf der .sav aus dem Atlas (mit Wertelabels, siehe letzte Zeile):
  *
  *   pkgload::load_all("~/Documents/SoftwareProjekte/RPakete/mariposa", export_all = FALSE, quiet = TRUE)
  *   library(dplyr)

@@ -27,7 +27,7 @@ Rechenbegriffe, die ein Schritt einer Werkstatt sind (zum Beispiel `add` oder `s
 
 ## 2. Sprachleitfaden
 
-Regeln mit [Test] prüft `src/explain/style.ts` automatisch (über die Inhaltstests, Abschnitt 7). Die übrigen prüft die Begutachtung. Alle Beispiele stammen aus der Streuung, „so nicht“ ist der frühere Pilotwortlaut.
+Regeln mit [Test] prüft `src/explain/style.ts` automatisch (über die Inhaltstests, Abschnitt 7). Die übrigen prüft die Begutachtung. Alle Beispiele stammen aus der Streuung. „So nicht“ ist der frühere Pilotwortlaut, außer bei Regel 3: Dort ist es der gebilligte Wortlaut, den die Regel auf zwei Sätze kürzt.
 
 ### Regel 1: Erst die Handlung, dann der Name [Test]
 
@@ -48,8 +48,10 @@ Der Fachbegriff ist der Titel des verlinkten Begriffs in `src/domain/concepts.ts
 
 In Alltagswörtern, ohne Fachwort, das nicht daneben erklärt ist.
 
-- So nicht (drei Sätze): „Die Standardabweichung sagt dir, wie weit die Antworten typischerweise von der Mitte entfernt sind. Kleine Zahl: alle nah beieinander. Große Zahl: weit verstreut.“
-- So: „Die Standardabweichung sagt dir, wie weit die Antworten typischerweise von der Mitte entfernt sind. Kleine Zahl: alle nah beieinander; große Zahl: weit verstreut.“
+- So nicht (gebilligter Wortlaut, aber drei Sätze): „Die Standardabweichung sagt dir, wie weit die Antworten typischerweise von der Mitte entfernt sind. Kleine Zahl: alle nah beieinander. Große Zahl: weit verstreut.“
+- So (dieselben Wörter, zwei Sätze): „Die Standardabweichung sagt dir, wie weit die Antworten typischerweise von der Mitte entfernt sind. Kleine Zahl: alle nah beieinander; große Zahl: weit verstreut.“
+
+Datumsangaben und Ordnungszahlen vor Monaten und Ähnlichem („am 3. Oktober“, „der 20. Bundestag“, „im 3. Semester“) zählt der Test nicht als Satzende.
 
 ### Regel 4: Kurze Sätze, du-Form, aktive Verben, ein Gedanke pro Satz [Test: höchstens 25 Wörter]
 
@@ -60,7 +62,7 @@ Richtwert 20 Wörter je Satz in „Was passiert?“, „Kurz gesagt“ und „Wa
 
 ### Regel 5: Keine Abwertung des Schwierigen [Test]
 
-Nicht „einfach“, „offensichtlich“, „trivial“, „natürlich“, „bekanntlich“, „leicht zu sehen“. Fachbegriffe wie „einfache Zufallsstichprobe“ sind erlaubt (geprüft wird das ganze Wort).
+Nicht „einfach“, „offensichtlich“, „trivial“, „natürlich“, „bekanntlich“, „leicht zu sehen“, auch nicht gebeugt oder abgeleitet („einfacher“, „offensichtlicher“, „trivialerweise“, „Natürliche …“). Erlaubt sind nur die Fachbegriffe in `ALLOWED_TERMS` (`src/explain/style.ts`): „einfache Zufallsstichprobe“, „einfache Zufallsauswahl“, „einfache lineare Regression“, „natürlicher Logarithmus“, „natürliche Zahl“, „natürliches Experiment“. Fehlt ein Fachbegriff, nenne ihn im Bericht.
 
 - So nicht: „Warum nicht einfach die Abweichungen addieren, ohne Quadrat?“
 - So: „Warum zählen wir nicht die Abstände selbst zusammen, ohne Quadrat?“
@@ -106,7 +108,9 @@ Feinheiten (Erwartungstreue, Annahmen, Grenzfälle, Rechenwege) stehen unter „
 
 ### Regel 11: Kein Mittelpunkt als Trenner, echtes Minus [Test]
 
-„·“ steht nur für „mal“ („3 · 4“, „sₓ · sᵧ“), nie zwischen Wörtern („Mittelwert · Varianz“, „Lernplanung · 5 Stufen“, „Schritt 2 · …“). Vor Zahlen steht das echte Minus „−“, nie der Bindestrich („−4“, nicht „-4“). `num()`, `signed()` und `paren()` setzen das richtige Minus von selbst.
+„·“ steht nur für „mal“: zwischen Zahlen und Zeichen („3 · 4“, „sₓ · sᵧ“) und zwischen einer Zahl und einem Wort („2 · Abstand“, „Summe · 2“). Nie als Trenner („Mittelwert · Varianz“, „Lernplanung · 5 Stufen“, „Schritt 2 · …“). Zwischen zwei Wörtern schreibst du „mal“ („Breite mal Höhe“), weil der Test „Wort · Wort“ als Trenner meldet.
+
+Minus ist immer das echte „−“, nie der Bindestrich: „−4“ statt „-4“, „n − 1“ statt „n - 1“ oder „n-1“, „1 − α“ statt „1 - α“. Als Gedankenstrich dient „–“. Wörter mit Bindestrich („t-Test“, „z-Wert“, „Links-rechts-Skala“) bleiben erlaubt. `num()`, `signed()` und `paren()` setzen das richtige Minus von selbst.
 
 ### Regel 12: Beispiele aus der Lebenswelt
 
@@ -115,6 +119,7 @@ Wahlabsicht, Vertrauen in den Bundestag, Lernzeit, Miete. Keine Würfel- oder Ur
 ### Schreibweise
 
 - Deutsche Zahlen mit `num(v)` (höchstens zwei Nachkommastellen, echtes Minus), `signed(v)` für „+4“/„−4“, `paren(v)` für „(−4)“ in Produkten, `count(v)` für „5.225“, `fixed(v)` für feste Stellen, `pct(v)` für Prozent (alle in `src/explain/format.ts`). R-Ausgaben behalten ihr Format („p = 0.876“) und werden so gekennzeichnet („R meldet …“).
+- Zahl mit Einheit über `unit(v, 'Punkt', 'Punkte')`: Bei genau 1 steht die Einzahl („1 Punkt“, „1 Stunde“), sonst die Mehrzahl („0,71 Punkte“).
 - „≈“, wo gerundet wird. Rechnungen im Text gehen mit den sichtbaren Zahlen auf; wenn nicht, sag es („Mit allen Nachkommastellen kommt R auf 0,16.“).
 - Anrede „du“. Fünf Beispielpersonen heißen „Fünf Beispielpersonen“ oder „fünf Personen“, ohne „(fiktiv)“.
 - Aussprache (`say`) ohne Anführungszeichen schreiben: `say: 'x quer'`. Die Oberfläche setzt „sprich „x quer““.
@@ -134,7 +139,8 @@ Aufbau auf dem Bildschirm (Spezifikation Ausbau, Abschnitt 3): Wofür, Kurz gesa
 | `id` | eindeutige Kennung, zum Beispiel `'zstand'`; Schrittkarten verweisen darauf |
 | `wofuer` | Situation und Frage, konkret (Regel 8) |
 | `mut` | Mut-Satz (Regel 6) |
-| `picture` | Schlüssel deines Bildes im Register (Abschnitt 5) |
+| `picture` | Schlüssel deines Bildes im Register (Abschnitt 5), gebaut mit `forWorkshop` |
+| `dataNote` | optional: Hinweis neben den Voreinstellungen; ohne ihn steht „Fünf Beispielpersonen. Die Punkte im Bild lassen sich ziehen.“ (die Zahl aus `names`). Setze ihn, wenn die Daten keine Personen sind oder sich nicht ziehen lassen |
 | `names`, `bounds`, `presets` | Personen A bis E, Wertebereich für Ziehen und Pfeiltasten, Voreinstellungen (die erste ist der Start) |
 | `compute(d)` | rechnet die Kennwerte `S` aus den Daten `D`; lege dort alle Zahlen ab, die Texte und Diagnosen brauchen |
 | `glyphs` | Zeichenübersicht am Ende: `sym`, `say`, `term`, `plain`, `step` |
@@ -167,15 +173,23 @@ Kontrollfragen: Richtig ist eine Antwort mit höchstens 0,011 Abstand (`TOLERANC
 
 ### 3.2 Formel als Satz (`SentenceTemplate<V, S>`)
 
-Vorbild `content/standardfehler.ts`. `worked` sind Mini-Schritte mit einer Handlung als Titel; `fehler` erscheint als „Aufgepasst“; `check.right` beginnt mit „Genau“, `check.diagnose(v)` liefert immer einen Text, der mit „Fast!“ (erkennbarer Fehler) oder „Noch nicht ganz.“ beginnt. Je Zeichen ein Regler (`sliders`, `log: true` für Fallzahlen), `quick` für Kurzbefehle wie „n mal 4“.
+Vorbild `content/standardfehler.ts`. `worked` sind Mini-Schritte mit einer Handlung als Titel; `fehler` erscheint als „Aufgepasst“; `check.right` beginnt mit „Genau“, `check.diagnose(v)` liefert immer einen Text, der mit „Fast!“ (erkennbarer Fehler) oder „Noch nicht ganz.“ beginnt. Je Zeichen ein Regler (`sliders`, `log: true` für Fallzahlen), `quick` für Kurzbefehle wie „n mal 4“. Optional `picture` (mit `forSentence`): Es steht über den Reglern und bekommt die Reglerwerte.
+
+Die Zeichen (`glyphs`) erscheinen in der Karte „Das nennt man …“. Mit `concept` ist `term` der Titel dieses Begriffs in `concepts.ts` (Regel 2, der Test vergleicht beides), und die Karte verlinkt ihn. Gibt es keinen passenden Begriff in der Karte, lass `concept` weg; dann steht `term` ohne Link da (Beispiel: „Fallzahl“ n beim Standardfehler).
+
+Der Test rechnet jede Formel als Satz bei den Startwerten, nach jedem Kurzbefehl (einmal und zweimal) und mit jedem Regler an beiden Enden durch; keine Zahl darf dort `NaN` werden.
 
 ### 3.3 Tabellen-Werkzeug (`TableTool`)
 
-Vorbild `content/muster/dummy.ts`. Fünf Personen (`rows`, am besten echte Befragte aus dem Lehrdatensatz), eine Wahl (`options`), die die Operation verändert, die Operation in zwei bis vier `steps`, `apply(rows, option)` für die Tabelle nachher (neue Spalten hebt die Oberfläche hervor), `rCode(option)` mit dem mariposa-Aufruf (Abschnitt 6), eine Zahlfrage (`check`) und Denkfragen (`think`). Kompakt zeigt Kurz gesagt, die Wahl, die Schritte mit Was passiert? und Das nennt man, beide Tabellen und den R-Code.
+Vorbild `content/muster/dummy.ts`. Fünf Personen (`rows`, am besten echte Befragte aus dem Lehrdatensatz), eine Wahl (`options`), die die Operation verändert, die Operation in zwei bis vier `steps`, `apply(rows, option)` für die Tabelle nachher (neue Spalten hebt die Oberfläche hervor und nennt sie in einer vorgelesenen Zeile), `rCode(option)` mit dem mariposa-Aufruf (Abschnitt 6), eine Zahlfrage (`check`) und Denkfragen (`think`). Optional `picture` (mit `forTable`): Es steht nach der Tabelle „Nachher“. Kompakt zeigt Kurz gesagt, die Wahl, die Schritte mit Was passiert? und Das nennt man, beide Tabellen, das Bild und den R-Code.
+
+Ein Schritt ohne `concept` und ohne `sym` zeigt nur „In der Fachsprache: …“, ohne „Das nennt man“; mit `concept` steht der Fachbegriff aus der Karte da.
 
 ### 3.4 Begriffskarte (`ConceptCard`)
 
 Vorbild `content/muster/p-wert.ts`. Reihenfolge: `wofuer`, `kurz`, `stellDirVor` (ein konkretes Beispiel mit Zahlen aus dem Lehrdatensatz oder aus ALLBUS-Aggregaten, optional `figures` als Kennzahlen), `heisst` (Zeichen, Aussprache, „In der Fachsprache“), zwei bis vier `bausteine` (Was passiert?, optional Rechnung, Warum?, Aufgepasst, `concept` als Link), `ausprobieren` (Denkfragen mit Vorhersage; `step` verweist auf einen Baustein), optional `regler` (`describe(v)` erklärt den Wert in einem Satz über Menschen), `check` (Auswahlfrage: genau eine richtige Antwort, `right` beginnt mit „Genau“, für **jede** falsche Antwort eine Rückmeldung in `diagnose`, die mit „Fast!“ oder „Noch nicht ganz.“ beginnt), `fuerDich` (Was heißt das für dich?), `genau`.
+
+Optional `picture` (mit `forCard`): Das Bild steht nach „Stell dir vor …“ (Regel 8: erst Zahlen, dann Bild, dann Fachbegriff) und bekommt den aktuellen Wert des Reglers; der Regler steht dann direkt unter dem Bild statt unter „Ausprobieren“. Kompakt zeigt das Bild mit Regler. Vorbild: die t-Verteilung des p-Werts in `src/components/explain/pictures/muster.tsx`.
 
 ---
 
@@ -188,7 +202,7 @@ src/explain/content/<bereich>/
   <begriff>.ts            je Begriff eine Datei (zum Beispiel validity.ts), exportiert die Erklärung
   index.ts                AreaIndex des Bereichs; wird automatisch eingelesen
   <bereich>.test.ts       R-Nachrechnung mit festen Referenzwerten (Abschnitt 6)
-src/components/explain/pictures/<bereich>.tsx   Bilder deiner Werkstätten (Abschnitt 5)
+src/components/explain/pictures/<bereich>.tsx   Bilder deines Bereichs, für alle Vorlagen (Abschnitt 5)
 src/explain/areas/<bereich>.css                 eigene Stile, falls nötig
 ```
 
@@ -212,35 +226,53 @@ export const b01Messen: AreaIndex = {
 };
 ```
 
-Eine Werkstatt, die mehrere Begriffe erklärt, steht einmal je Begriff im Index (mit derselben `workshop`-Konstante und dem jeweiligen `variant`). Ein Begriff darf nur in **einem** Bereich vorkommen; doppelte IDs, doppelte Werkstatt-Kennungen und Schrittkarten auf unbekannte Werkstätten lassen das Laden mit einer Fehlermeldung scheitern. Die IDs der Pilotbegriffe (`mean`, `variance`, `sd`, `covariance`, `pearson`, `se`, `recode`, die Muster `p_value` und `dummy`) und ihre Schrittkarten (`sum`, `deviation`, `squared_deviation`, `ss`, `df`, `crossproduct`, `crossproduct_sum`, `sd_product`) sind vergeben. Reiter für `ss` darf B4 trotzdem eintragen (`tabs.ss`).
+Eine Werkstatt, die mehrere Begriffe erklärt, steht einmal je Begriff im Index (mit derselben `workshop`-Konstante); `variant` ist immer der Begriff selbst, und `workshop.variants` hat einen Eintrag dafür. Ein Begriff darf nur in **einem** Bereich vorkommen.
+
+Eine Schrittkarte (`stepCards[<id>] = { workshop, variant, step }`) zeigt auf eine registrierte Werkstatt, auf einen ihrer Begriffe und auf einen Schritt zwischen 1 und dessen `lastStep`. Der Begriff muss als diese Werkstatt erklärt sein, denn „Werkstatt öffnen“ springt dorthin. Die Rendertests zeigen jede Schrittkarte einmal an.
+
+Beim Laden scheitert die Zuordnung mit einer Fehlermeldung, die Begriff und Bereich nennt: bei doppelten IDs, doppelten Werkstatt-Kennungen, einem falschen `variant`, einer Schrittkarte auf eine unbekannte Werkstatt, einen unbekannten Begriff oder einen Schritt außerhalb, einem Sprungziel ohne diese Werkstatt und bei Reitern für einen fremden Begriff. Die IDs der Pilotbegriffe (`mean`, `variance`, `sd`, `covariance`, `pearson`, `se`, `recode`, die Muster `p_value` und `dummy`) und ihre Schrittkarten (`sum`, `deviation`, `squared_deviation`, `ss`, `df`, `crossproduct`, `crossproduct_sum`, `sd_product`) sind vergeben. Reiter für `ss` darf B4 trotzdem eintragen (`tabs.ss`).
 
 ---
 
 ## 5. Bilder
 
-Nur Werkstätten haben ein Bild. Trag es in deiner Bilddatei ein; der Schlüssel ist `Workshop.picture` und muss über alle Bereiche eindeutig sein (am besten mit deinem Bereich als Vorsilbe, etwa `b07-normal`):
+Jede Vorlage kann ein Bild zeigen: Werkstätten immer (`Workshop.picture` ist Pflicht), Begriffskarten, Formel als Satz und Tabellen-Werkzeuge optional (`picture?`). Das Feld ist ein Schlüssel im Bild-Register `PICTURES` (`src/components/explain/pictures/register.ts`).
+
+**Eintragen, ohne gemeinsame Dateien zu ändern:** Jeder Bereich hat schon seine Bilddatei `src/components/explain/pictures/<bereich>.tsx` mit einem leeren Objekt `pictures`. Trag dort deine Bilder ein; `pictures/areas.ts` liest die Datei ein, und `register.ts` führt alle Bereiche zum Register zusammen. Ein Schlüssel muss über alle Bereiche eindeutig sein (doppelte Schlüssel lassen das Laden scheitern), am besten mit deinem Bereich als Vorsilbe, etwa `b07-normal`.
+
+Jedes Bild baust du mit der Hilfsfunktion seiner Vorlage. Sie legt fest, welche Werte das Bild bekommt; ein Bild der falschen Art erscheint nicht, und der Rendertest meldet es.
+
+| Vorlage | Hilfsfunktion | Das Bild bekommt | Es steht |
+|---|---|---|---|
+| Werkstatt | `forWorkshop` | `PictureProps`: `workshop`, `data`, `s`, `step`, `who`, `setData`, `pickWho` | im Abschnitt „Das Bild dazu“ (in der breiten Werkbank links unter der Formel) |
+| Begriffskarte | `forCard` | `CardPictureProps`: `card`, `value` (Wert des Reglers, ohne Regler `null`) | nach „Stell dir vor …“, der Regler direkt darunter |
+| Formel als Satz | `forSentence` | `SentencePictureProps`: `template`, `values` (Reglerwerte), `s` (Kennwerte), `mark` (markiertes Zeichen) | über den Reglern |
+| Tabellen-Werkzeug | `forTable` | `TablePictureProps`: `tool`, `option`, `before`, `after` (je `columns` und `rows`) | nach der Tabelle „Nachher“ |
+
+Beispiel einer Begriffskarte mit Normalverteilung, deren Rand der Regler verschiebt:
 
 ```tsx
 // src/components/explain/pictures/b07-verteilungen.tsx
-import { Axis, AreaUnder, Curve, linear, useWidth, type Picture } from './kit';
+import { AreaUnder, Axis, Curve, forCard, forWorkshop, linear, useWidth, type Picture } from './kit';
 
-function Normal({ mu, sigma }: { mu: number; sigma: number }) {
+function Normal({ cut }: { cut: number }) {
   const [box, W] = useWidth();
-  const x = linear([mu - 4 * sigma, mu + 4 * sigma], [40, W - 20]), y = linear([0, 0.45 / sigma], [190, 20]);
-  const f = (v: number) => Math.exp(-0.5 * ((v - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI));
-  return <div ref={box}><svg className="xw-svg" width={W} height={230} viewBox={`0 0 ${W} 230`} role="img" aria-label="Normalverteilung mit markiertem rechten Rand">
-    <AreaUnder f={f} from={mu + 1.96 * sigma} to={mu + 4 * sigma} x={x} y={y} tone="neg" />
-    <Curve f={f} from={mu - 4 * sigma} to={mu + 4 * sigma} x={x} y={y} />
-    <Axis scale={x} ticks={[-2, -1, 0, 1, 2].map(k => mu + k * sigma)} at={190} from={40} to={W - 20} />
+  const x = linear([-4, 4], [40, W - 20]), y = linear([0, 0.42], [190, 20]);
+  const f = (z: number) => Math.exp(-z * z / 2) / Math.sqrt(2 * Math.PI);
+  return <div ref={box}><svg className="xw-svg" width={W} height={230} viewBox={`0 0 ${W} 230`} role="img" aria-label={`Standardnormalverteilung, rechter Rand ab z = ${cut} markiert`}>
+    <AreaUnder f={f} from={cut} to={4} x={x} y={y} tone="neg" />
+    <Curve f={f} from={-4} to={4} x={x} y={y} />
+    <Axis scale={x} ticks={[-3, -2, -1, 0, 1, 2, 3]} at={190} from={40} to={W - 20} title="z" />
   </svg></div>;
 }
 
 export const pictures: Record<string, Picture> = {
-  'b07-normal': p => <Normal mu={p.s.mu} sigma={p.s.sigma} />,
+  'b07-normal': forCard(p => <Normal cut={p.value ?? 1.96} />),          // ConceptCard: picture: 'b07-normal'
+  'b07-binomial': forWorkshop(p => <Binomial s={p.s} step={p.step} />),   // Workshop: picture: 'b07-binomial'
 };
 ```
 
-Ein Bild bekommt `{ workshop, data, s, step, who, setData, pickWho }` (`PictureProps`). Es zeigt mit `step`, was bis zu diesem Schritt passiert ist, und meldet gezogene Werte mit `setData`.
+Vollständige Vorbilder: `pictures/pilot.tsx` (Werkstätten mit ziehbaren Punkten) und `pictures/muster.tsx` (t-Verteilung mit beiden Rändern zur Begriffskarte p-Wert). Ein Werkstattbild zeigt mit `step`, was bis zu diesem Schritt passiert ist, und meldet gezogene Werte mit `setData`.
 
 Bausteine in `src/components/explain/pictures/kit.tsx` (alle in Bildschirmpixeln, Beispiele in `pictures/pilot.tsx`):
 
@@ -265,11 +297,13 @@ Regeln: Schrift nur über die Klasse `xw-t` (14 px), nie über `font-size`-Attri
 
 **Jede Zahl** in Texten, Beispielen und Kontrollfragen ist in R nachgerechnet und als Test festgehalten (`content/<bereich>/<bereich>.test.ts`). Der R-Befehl steht im Kommentar, die Werte als Zusicherung. Vorbild: `content/muster/muster.test.ts`.
 
+Die Daten für R: den Lehrdatensatz als `Statistikatlas-200-Befragte.sav` aus dem Atlas (Datensatz-Dialog, Knopf „SPSS-Datei (.sav)“) oder per Skript aus `createSurvey()` mit `writeSav()` aus `src/domain/savWriter.ts` (Aufgabe F2). Gelesen wird wie im R-Code der Studierenden mit `read_spss()`. Eine CSV aus `createSurvey()` liefert dieselben Werte, aber keine Wertelabels.
+
 ```ts
 /*
  *   pkgload::load_all("~/Documents/SoftwareProjekte/RPakete/mariposa", export_all = FALSE, quiet = TRUE)
  *   library(dplyr)
- *   atlas <- read.csv("atlas.csv")            # createSurvey() als CSV, oder read_spss() auf der .sav aus dem Atlas
+ *   atlas <- read_spss("Statistikatlas-200-Befragte.sav")
  *   atlas %>% t_test(lernzeit, group = weiterbildung)   # t(175.8) = 0.156, p = 0.876
  */
 test('B9: p-Wert der Lernzeit nach Weiterbildung wie in R', () => {
@@ -303,13 +337,15 @@ Pipe `%>%`, Spalten mit `mutate()`, Umkodieren mit `rec()` in `mutate()`. Nicht:
 `src/explain/content.test.ts` und `src/explain/render.test.ts` laufen über **alle** registrierten Erklärungen, auch deine:
 
 - alle Texte für alle Voreinstellungen, Begriffe und Personen ohne `NaN`, `undefined`, `Infinity`;
-- `styleProblems` leer für jeden Text (Regeln 5 und 11); „Was passiert?“ und „Warum?“ mit höchstens 25 Wörtern je Satz; „Kurz gesagt“ (Variante, Genau genommen, Denkfragen) mit höchstens zwei Sätzen; die Deutung mit höchstens drei;
-- jede Erklärung gehört zu einem Begriff in `concepts.ts`, jeder `concept`- und `links`-Verweis existiert;
+- `styleProblems` leer für jeden sichtbaren Text, auch Antwortoptionen, Rückmeldungen, Beschriftungen von Kennzahlen, Reglern und Kurzbefehlen (Regeln 5 und 11); „Was passiert?“ und „Warum?“ mit höchstens 25 Wörtern je Satz; „Kurz gesagt“ (Variante, Genau genommen, Denkfragen) mit höchstens zwei Sätzen; die Deutung mit höchstens drei;
+- jede Erklärung gehört zu einem Begriff in `concepts.ts`, jeder `concept`- und `links`-Verweis existiert; bei Werkstätten ist `variant` der Begriff selbst;
+- Formel als Satz: Zeichen mit `concept` tragen dessen Titel als `term` (Regel 2); alle Texte bleiben bei jedem Kurzbefehl und an beiden Enden jedes Reglers lesbar;
 - `say` vorhanden, wenn `sym` nicht leer ist;
 - Zahlfragen: die richtige Antwort bekommt keine Diagnose, jede Diagnose beginnt mit „Fast!“, und mindestens eine typische Fehlantwort löst eine aus. Der Test probiert dafür Zahlen aus deinen Kennwerten `S` und ihre Abwandlungen (Vorzeichen, mal und durch 2, ±1, mal 4/5 und 5/4, durch 4 und 5, Quadrat, Wurzel). Lege deshalb in `compute` die Zwischenergebnisse ab, die deine Diagnosen prüfen;
 - Begriffskarten: zwei bis vier Bausteine, genau eine richtige Antwort, für jede falsche eine Rückmeldung mit „Fast!“ oder „Noch nicht ganz.“, mindestens eine mit „Fast!“;
 - Tabellen-Werkzeuge: fünf Personen, jede Wahl liefert eine vollständige Tabelle, R-Code im Lernpfad-Stil;
-- jede Werkstatt hat ein Bild im Register; jede Erklärung rendert in Ausführlich und Kompakt.
+- jede Werkstatt hat ein Bild im Register, und jeder `picture`-Schlüssel gehört zu einem Bild der passenden Art (`forWorkshop`, `forCard`, `forSentence`, `forTable`);
+- jede Erklärung rendert in Ausführlich und Kompakt (Kompakt kürzer); jede Schrittkarte rendert und springt zu einer registrierten Werkstatt.
 
 Selbst prüfen kannst du einzelne Texte mit `styleProblems(text, { maxWords: 25, maxSentences: 2 })` aus `src/explain/style.ts`.
 
