@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSurvey } from '../domain/survey';
-import { abbreviated, applyOp, countWithin, modifiedFrom, sampleColumn, samplePairs, sampleSeries } from './sample';
+import { abbreviated, applyOp, bridgeContext, countWithin, fitsColumn, modifiedFrom, sampleColumn, samplePairs, sampleSeries, sumNodes, unitText } from './sample';
+import { series, pairStats } from './math';
 import { num } from './format';
 
 /**
@@ -86,4 +87,39 @@ test('abbreviated: first, chosen and last term with an ellipsis', () => {
   assert.equal(abbreviated([6, 7, 8, 9, 10], 1, term), '(6 − 7,75)² + (7 − 7,75)² + … + (10 − 7,75)²');
   assert.equal(abbreviated([6, 7, 8], 1, term), '(6 − 7,75)² + (7 − 7,75)² + (8 − 7,75)²');
   assert.equal(abbreviated([6, 7], 1, term, ' · '), '(6 − 7,75)² · (7 − 7,75)²');
+});
+
+test('reverse flips the sign of r, fitsColumn guards the data, the shift of Y keeps r', () => {
+  const r = samplePairs(rows, 'lernzeit', 'wissenstest').r!;
+  // R: atlas %>% mutate(wissenstest = 20 - wissenstest) %>% pearson_cor(lernzeit, wissenstest)  # r = -0.539
+  near(samplePairs(applyOp(rows, 'wissenstest', 'reverse'), 'lernzeit', 'wissenstest').r!, -r, 1e-9, 'umgepolt');
+  // R: atlas %>% mutate(wissenstest = wissenstest + 2) %>% pearson_cor(lernzeit, wissenstest)  # r = 0.539
+  near(samplePairs(applyOp(rows, 'wissenstest', 'shift', 2), 'lernzeit', 'wissenstest').r!, r, 1e-9, 'verschoben');
+  // R: atlas %>% mutate(lernzeit = replace(lernzeit, id == "P002", 40)) %>% pearson_cor(lernzeit, wissenstest)  # r = 0.426
+  near(samplePairs(applyOp(rows, 'lernzeit', 'outlier', 40, 1), 'lernzeit', 'wissenstest').r!, 0.426, 0.0005, 'Ausreißer');
+  assert.equal(fitsColumn(rows, 'wissenstest'), true);
+  assert.equal(fitsColumn(applyOp(rows, 'wissenstest', 'shift', 2), 'wissenstest'), true, 'höchstens 18 + 2 = 20');
+  assert.equal(fitsColumn(applyOp(rows, 'wissenstest', 'double'), 'wissenstest'), false, 'über 20 Aufgaben gibt es nicht');
+  assert.equal(fitsColumn(applyOp(rows, 'schulabschluss', 'constant', 4), 'schulabschluss'), true);
+  assert.equal(fitsColumn(applyOp(rows, 'schulabschluss', 'constant'), 'schulabschluss'), false, 'der Mittelwert ist kein Antwortcode');
+  assert.equal(fitsColumn(applyOp(rows, 'lernzeit', 'outlier', 40, 1), 'lernzeit'), true);
+});
+
+test('bridge context: workshop math on all 200, units of the column, abbreviated formula nodes', () => {
+  const c = bridgeContext(series, 'series', rows, 'lernzeit', '', 1);
+  assert.equal(c.names[c.who], 'P002');
+  assert.equal(c.s.xs.length, 200);
+  near(c.s.sd, 3.237515, 1e-6, 's');
+  assert.equal(c.u(c.s.sd), '3,24 h');
+  assert.equal(c.u(c.s.variance, { squared: true }), '10,48 h²');
+  assert.equal(unitText({ id: 'einkommen', title: 'Einkommen', unit: '€/Monat', question: '' }, 4, { squared: true }), '4 (€/Monat)²');
+  assert.equal(unitText({ id: 'lernplanung5', title: 'Lernplanung', unit: '', question: '' }, 3.256), '3,26');
+  const p = bridgeContext(pairStats, 'pairs', rows, 'lernzeit', 'wissenstest', 0);
+  near(p.s.r!, 0.539, 0.0005, 'r');
+  assert.equal(p.col2?.title, 'Wissenstest');
+  const flat = (nodes: unknown[]): string => nodes.map(n => typeof n === 'string' ? n : flat((n as { part: unknown[] }).part)).join('');
+  const nodes = sumNodes(200, 1, i => [`x${i + 1}`], [' + ']);
+  assert.equal(flat(nodes), 'x1 + x2 + … + x200');
+  assert.deepEqual(nodes.filter(n => typeof n !== 'string'), [{ part: ['x2'], m: 'who' }], 'nur der Summand der gewählten Person ist markiert');
+  assert.equal(flat(sumNodes(200, 99, i => [`x${i + 1}`])), 'x1 + … + x100 + … + x200');
 });

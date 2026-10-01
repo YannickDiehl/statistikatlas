@@ -70,17 +70,20 @@ function comment(text:string){const lines:string[]=[];let line='#';for(const wor
 /** R-Skript zum Herunterladen: Startblock, gewählter Aufruf und kurze Kommentare in Klartext. */
 export function scriptFor(entry:AtlasEntry,s:RSettings,ranked=false){
  const v=entry.variants[s.variant];if(!v)return '';const call=analysisCode(entry,s,ranked).slice(startBlock().length).trim();
+ return scriptText(entry.title,`${v.label}: ${v.fn}() aus mariposa.`,call,[...(ranked?['Zuerst werden beide Spalten in mittlere Ränge umgewandelt. atlas selbst behält die Originalwerte.']:[]),...(v.note?[v.note]:[])]);
+}
+/** R-Skript für einen beliebigen Aufruf im Pipe-Stil (ohne Startblock), etwa einen Leitaufruf im Reiter „In R“. */
+export function scriptText(title:string,label:string,call:string,notes:string[]=[]){
  return [
-  comment(`Statistikatlas: ${entry.title}`),
+  comment(`Statistikatlas: ${title}`),
   comment(`Lege dieses Skript und die Datei ${SAV_NAME} in denselben Ordner. Öffne das Skript in RStudio und wähle Session > Set Working Directory > To Source File Location. Dann führst du die Zeilen nacheinander mit Strg + Enter aus (Mac: Cmd + Enter).`),
   comment('Einmalig vorher installieren: install.packages(c("dplyr", "mariposa"))'),
   '',
   comment('Pakete laden und den Lehrdatensatz mit seinen Labels einlesen:'),
   startBlock(),
   '',
-  comment(`${v.label}: ${v.fn}() aus mariposa.`),
-  ...(ranked?[comment('Zuerst werden beide Spalten in mittlere Ränge umgewandelt. atlas selbst behält die Originalwerte.')]:[]),
-  ...(v.note?[comment(v.note)]:[]),
+  comment(label),
+  ...notes.map(comment),
   call,
   '',
  ].join('\n');

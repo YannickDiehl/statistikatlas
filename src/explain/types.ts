@@ -131,6 +131,68 @@ export interface Workshop<D, S> {
   captions: Partial<Record<number, string>>;
   think: Think<D, S>[];
   variants: Record<string, Variant<S>>;
+  /**
+   * Brücke „Mit 200 Befragten“ (Reiter, Spezifikation Lehrdatensatz 5.3): dieselbe Formel mit allen 200 Befragten.
+   * Nur für Werkstätten, deren Daten eine Spalte (`number[]`) oder ein Spaltenpaar (`Pairs`) sind; `compute`
+   * rechnet dann auch die 200. Ohne Brücke bekommt der Begriff im Reiter eine Auswertung (`analysis`).
+   */
+  bridge?: Bridge<S>;
+}
+
+// Brücke „Mit 200 Befragten“ ------------------------------------------------------------
+
+/** Spalte des Lehrdatensatzes, wie die Brücke sie nennt (Titel, Einheit, Fragetext aus src/domain/survey.ts). */
+export interface SampleColumn { id: string; title: string; unit: string; question: string }
+
+/** Kontext der Brücke: Kennwerte der Werkstatt auf allen 200 Befragten, die gewählte Person und die Spalten. */
+export interface BridgeCtx<S> {
+  /** `workshop.compute` mit den Werten aller 200 (Reihe) bzw. `{ x, y }` (Paare). */
+  s: S;
+  /** Index der gewählten Person (0 bis 199). */
+  who: number;
+  /** Kennungen der Befragten, P001 bis P200. */
+  names: readonly string[];
+  /** Werte der Spalte x aller 200; bei Paaren `values2` für y. */
+  values: number[];
+  values2?: number[];
+  col: SampleColumn;
+  col2?: SampleColumn;
+  /** Zahl mit der Einheit der Spalte x und höchstens zwei Nachkommastellen („3,24 h“); `squared` für Varianzen („10,48 h²“). */
+  u: (v: number, opts?: { squared?: boolean; digits?: number }) => string;
+}
+
+/** Was das Bild der 200 in einem Schritt zeigt; die Oberfläche zeichnet Punkt- bzw. Streudiagramm selbst. */
+export interface BridgePicture {
+  /** Mittelwertlinie (Reihe) oder Achsenkreuz aus x̄ und ȳ (Paare), gestrichelt. */
+  center?: number | [number, number];
+  /** Abstand der gewählten Person zur Mitte als Strecke (Reihe) bzw. Rechteck (Paare). */
+  deviation?: boolean;
+  /** Band, zum Beispiel x̄ ± s. */
+  band?: [number, number];
+  /** Rechenbeiträge aller 200 (zum Beispiel die Quadrate in Schritt 4), absteigend als schmale Balken. */
+  contributions?: { label: string; values: number[] };
+  /** Paare: Plus- und Minusflächen färben (Punkte nach dem Vorzeichen ihres Produkts). */
+  quadrants?: boolean;
+}
+
+/**
+ * Brücke einer Werkstatt zu den 200 Befragten. Texte sind Funktionen des Kontexts, damit sie nach
+ * „Ausprobieren“ und nach eigenen Datenänderungen stimmen. Vorbild: src/explain/content/pilot-tabs.ts.
+ */
+export interface Bridge<S> {
+  /** Eine Spalte (Punktdiagramm) oder zwei (Streudiagramm). */
+  data: 'series' | 'pairs';
+  /** Eingesetzte Formel mit 200, gekürzt auf ersten, gewählten und letzten Summanden (Helfer `sumNodes`). */
+  numeric: (c: BridgeCtx<S>, lastStep: number) => FNode[];
+  /** Je Schritt der Werkstatt zwei Zeilen: „Schritt k für alle 200“ und „Vorgerechnet für P002“. */
+  lines: { all: (c: BridgeCtx<S>) => string; person: (c: BridgeCtx<S>) => string }[];
+  /** Kennzahlen über der Formel (n, Mittelwert, Ergebnis) mit Einheit und zwei Nachkommastellen; die letzte ist das Ergebnis. */
+  metrics: (c: BridgeCtx<S>, variant: string) => { label: string; value: string }[];
+  /** „Was heißt das Ergebnis?“: Aussage über Menschen, Fachsprache und eine datenwahre Zusatzaussage. */
+  interpret: (c: BridgeCtx<S>, variant: string) => { kurz: string; fachlich: string; zusatz?: string };
+  /** Voraussetzung, unter der das Ergebnis gilt. */
+  voraussetzung: (c: BridgeCtx<S>, variant: string) => string;
+  picture: (c: BridgeCtx<S>, step: number) => BridgePicture;
 }
 
 // Formel als Satz (Vorlage 2) ---------------------------------------------------------
@@ -216,21 +278,60 @@ export interface TableTool {
 
 // Reiter (Oberfläche in F3, Typen schon hier) ------------------------------------------
 
+/**
+ * Reiter „Mit 200 Befragten“. `bridge` für Werkstätten mit `Workshop.bridge` (Formel mit 200, Schritte, Person, Bild);
+ * `variable` ist die Spalte, für die die Vorhersagefragen geschrieben sind (bei Paaren die Spalte x).
+ * `analysis` für alle übrigen Begriffe: Kurz gesagt, Ergebnis mit Deutung aus den aktuellen Daten, Voraussetzung,
+ * mindestens eine Vorhersagefrage. Ohne `columns` gelten die Spalten der Spaltenwahl (x, y) und der R-Einstellungen
+ * (Rollen wie `group`), und oben steht die Spaltenwahl; mit `columns` (Rolle → Spalten-ID) rechnet der Reiter fest damit.
+ */
 export type SampleTab =
   | { kind: 'bridge'; workshop: string; variant: string; variable: string; think: ThinkSample[] }
-  | { kind: 'analysis'; kurz: string; result: (c: SampleCtx) => { kurz: string; fachlich: string; zusatz?: string }; voraussetzung?: string; think: ThinkSample[] };
+  | { kind: 'analysis'; kurz: string; result: (c: SampleCtx) => { kurz: string; fachlich: string; zusatz?: string }; voraussetzung?: string; think: ThinkSample[]; columns?: Record<string, string> };
+/** Daten der Auswertung: die aktuellen 200 Befragten und die Spalten je Rolle (`x`, `y`, `group`, …). */
 export interface SampleCtx { rows: import('../domain/survey').SurveyRow[]; columns: Record<string, string[]> }
-export interface ThinkSample extends ThinkItem { tryIt: { label: string; op: 'shift' | 'double' | 'outlier' | 'constant'; column: 'x' | 'y'; value?: number } }
-/** Lernkarte zu einem Zeichen im R-Code (Codelegende); F2 deklariert dieselbe Form in src/domain/rTokens.ts. */
-/** Karte der Codelegende; eine Quelle für Katalog und Erklärungen (src/domain/rTokens.ts). */
+/**
+ * Vorhersagefrage mit „Ausprobieren“: `op` ändert die Spalte `column` (Rolle x oder y) im gemeinsamen Lehrdatensatz.
+ * `shift` um `value` (sonst 1), `double` mal `value` (sonst 2), `outlier`: die gewählte Person bekommt `value`,
+ * `constant`: alle bekommen `value` (sonst den Mittelwert), `reverse`: umpolen (Minimum + Maximum − Wert).
+ * `step` verweist auf den Formelschritt. Rechnung: src/explain/sample.ts (`applyOp`).
+ */
+export interface ThinkSample extends ThinkItem { tryIt: { label: string; op: 'shift' | 'double' | 'outlier' | 'constant' | 'reverse'; column: 'x' | 'y'; value?: number } }
+/** Lernkarte zu einem Zeichen im R-Code (Codelegende); eine Quelle für Katalog und Erklärungen (src/domain/rTokens.ts). */
 export type { TokenNote };
+/**
+ * Leitaufruf, dessen Ausgabe der Atlas selbst aus den aktuellen Daten druckt (src/explain/rOutput.ts), also auch
+ * nach „Ausprobieren“: `describe(x, show = …)` (show aus mean, sd, se, var, min, max, range), `pearson_cor(x, y)`,
+ * `summarise(kovarianz = cov(x, y))`, `frequency(x)` und `frequency()` nach `rec()` mit umgepolten Codes.
+ */
+export type LiveCall =
+  | { fn: 'describe'; show: string[] }
+  | { fn: 'pearson_cor' }
+  | { fn: 'cov' }
+  | { fn: 'frequency' }
+  | { fn: 'rec_frequency' };
+/**
+ * Reiter „In R“. Leitaufruf ist die Katalogvariante `entry`/`variant` mit der in R erfassten Ausgabe für die
+ * Ausgangsdaten (CATALOG_OUTPUT), oder `live`, dann druckt der Atlas die Ausgabe selbst; `entry` nennt dann nur die
+ * Katalogvarianten unter „Anderer Aufruf“ ('' für keine).
+ * `outputMap`: `match` findet eine Zahl in der Ausgabe, zuerst als „match = Zahl“ („r = 0.539“, „mean=3.26“), sonst
+ * als Spaltenkopf mit der Zahl darunter („SD“ über 3.238), sonst den Text selbst. `atlas` ist der Begriff im Atlas
+ * („s“), `step` der Formelschritt, `explain` ein Satz zur Verbindung.
+ * `check` („Kurz prüfen“): `correct` und die Schlüssel von `wrong` sind `match`-Werte; `wrong` beginnt mit „Fast!“.
+ */
 export interface RTab {
   entry: string;                         // Katalog-ID in mariposaCatalog
   variant: number;                       // Leitaufruf
+  live?: LiveCall;
   tokens?: Record<string, TokenNote>;    // Ergänzungen zur allgemeinen Codelegende (Funktion, Argumente)
   outputMap: { match: string; atlas: string; step?: number; explain: string }[]; // „SD“ ↔ „s, Schritt 6“
   check: { question: string; correct: string; wrong: Record<string, string> };   // Schlüssel = match
 }
+/**
+ * Reiter „Weiter“: `next` steht hervorgehoben oben („Als Nächstes“), dann „Das geht voraus“ (`before`) und
+ * „Daraus entsteht“ (`after`), je Ziel ein Satz. Leere Listen füllt die Oberfläche aus den Bezügen der Karte,
+ * doppelte Ziele zusammengeführt; `more` und die übrigen Bezüge stehen zugeklappt darunter.
+ */
 export interface NextTab { next: { id: string; why: string }; before: { id: string; why: string }[]; after: { id: string; why: string }[]; more?: { id: string; why: string }[] }
 export interface ConceptTabs { sample?: SampleTab; r?: RTab; next: NextTab }
 
