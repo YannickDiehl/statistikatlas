@@ -68,7 +68,7 @@ function rCharacter(x: number): string {
   return String(Number(x.toPrecision(15)));
 }
 
-/** Anzeigebreite (alle Zeichen hier einfach breit). */
+/** Anzeigebreite (alle Zeichen hier gleich breit). */
 const width = (s: string) => [...s].length;
 const pad = (s: string, w: number, right = false) => right ? ' '.repeat(Math.max(0, w - width(s))) + s : s + ' '.repeat(Math.max(0, w - width(s)));
 

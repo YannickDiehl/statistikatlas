@@ -94,6 +94,7 @@ test('variable labels carry the question text, value labels the answer categorie
   assert.equal(byName.get('lernplanung5')!.label, 'Ich plane feste Zeiten zum Lernen ein.');
   assert.equal(byName.get('kurs_vor')!.label, savVariableLabel(columnById.kurs_vor));
   assert.notEqual(savVariableLabel(columnById.kurs_vor), savVariableLabel(columnById.kurs_nach), 'gleiche Frage, verschiedene Labels');
+  assert.equal(byName.get('quelle_buch')!.label, 'Lernquelle Buch', 'Mehrfachauswahl: kurzes Label je Option');
   for (const c of surveyColumns) {
     const v = byName.get(c.id)!, set = sav.valueLabels.find(s => s.indexes.includes(v.index));
     if (!c.categories) { assert.equal(set, undefined, c.id); continue; }

@@ -11,11 +11,13 @@ const encoder = new TextEncoder();
 /** Fehlender Wert in SPSS (SYSMIS): die kleinste darstellbare Zahl. */
 const SYSMIS = -Number.MAX_VALUE;
 
-/** Variablenlabel: der Fragetext ohne äußere Anführungszeichen; teilen sich Spalten eine Frage, steht der Titel davor. */
+/**
+ * Variablenlabel: der Fragetext ohne äußere Anführungszeichen. Teilen sich Spalten eine Frage (Mehrfachauswahl,
+ * vorher und nachher), steht wie in SPSS-Sets der kurze Titel da; multiple_response() zeigt ihn als Option.
+ */
 export function savVariableLabel(c: SurveyColumn): string {
-  const question = c.question.replace(/^„(.*)“$/, '$1');
   const shared = surveyColumns.some(o => o.id !== c.id && o.question === c.question);
-  return shared ? `${c.title.replace(/ · /g, ' ')}: ${question}` : question;
+  return shared ? c.title.replace(/ · /g, ' ') : c.question.replace(/^„(.*)“$/, '$1');
 }
 
 /** Messniveau in SPSS: 1 nominal, 2 ordinal, 3 metrisch (scale). */
