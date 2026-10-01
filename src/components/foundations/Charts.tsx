@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
-export const fmt=(value:number,digits=3)=>Number.isFinite(value)?value.toLocaleString('de-DE',{maximumFractionDigits:digits}):'nicht definiert';
-export function Slider({label,value,onChange,min,max,step=1}:{label:string;value:number;onChange:(v:number)=>void;min:number;max:number;step?:number}){return <label className="foundation-slider"><span>{label}<output>{fmt(value)}</output></span><input type="range" min={min} max={max} step={step} value={value} onChange={e=>onChange(+e.target.value)}/></label>;}
+export const fmt=(value:number,digits=3)=>Number.isFinite(value)?value.toLocaleString('de-DE',{maximumFractionDigits:digits}).replace('-','−'):'nicht definiert';
+// Ein Label ohne for beschriftet sein erstes beschriftbares Kind, hier das <output>; deshalb trägt der Regler seinen Namen selbst.
+export function Slider({label,value,onChange,min,max,step=1}:{label:string;value:number;onChange:(v:number)=>void;min:number;max:number;step?:number}){return <label className="foundation-slider"><span>{label}<output>{fmt(value)}</output></span><input type="range" aria-label={label} aria-valuetext={fmt(value)} min={min} max={max} step={step} value={value} onChange={e=>onChange(+e.target.value)}/></label>;}
 export function Plot({points,shade,title,xLabel='Wert',bars=false,markers=[],yLabel}:{points:{x:number;y:number;left?:number;right?:number}[];shade?:(x:number)=>boolean;title:string;xLabel?:string;bars?:boolean;markers?:{x:number;label:string}[];yLabel?:string}){
  const finite=points.filter(p=>Number.isFinite(p.x)&&Number.isFinite(p.y)),low=Math.min(...finite.map(p=>p.left??p.x)),high=Math.max(...finite.map(p=>p.right??p.x)),top=Math.max(.001,...finite.map(p=>p.y))*1.1,sx=(x:number)=>34+(x-low)/Math.max(.001,high-low)*292,sy=(y:number)=>151-y/top*119;
  const line=finite.map(p=>`${sx(p.x)},${sy(p.y)}`).join(' '),dx=finite.length>1?Math.min(24,275/finite.length):24;

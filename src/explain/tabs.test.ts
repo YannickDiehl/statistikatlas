@@ -8,14 +8,15 @@ import { RTOKENS } from '../domain/rTokens';
 import { neighbors } from '../domain/network';
 import { mapIds, visibleNeighbors } from '../domain/visibleNetwork';
 import { ref } from '../domain/learning';
-import { createSurvey, defaultSelection } from '../domain/survey';
+import { compatible, createSurvey, defaultSelection, surveyColumns, type SurveyRow } from '../domain/survey';
 import { EXPLANATIONS, TAB_IDS, bridgeFor, explainFor, tabsFor, workshopFor } from './registry';
 import { CATALOG_OUTPUT } from './catalogOutput';
 import { applyOp, bridgeContext, fitsColumn } from './sample';
 import { liveCode, liveOutput, locate, noteFor, tokenize } from './rRead';
 import { mergeRelations, nextLists, relationText } from './relations';
 import { styleProblems } from './style';
-import type { BridgePicture, ConceptTabs, SampleCtx, ThinkSample } from './types';
+import type { BridgePicture, ConceptTabs, Expect, SampleCtx, ThinkSample } from './types';
+import { stepTargets } from '../components/explain/ExplainTabs';
 
 /**
  * Reiter aller Begriffe (Pilot, Muster und Bereiche): Texte im Ton des Sprachleitfadens, Vorhersagen, die sich auf dem
@@ -49,20 +50,29 @@ test('every registered explanation has tabs with Weiter, and the seven pilot con
   assert.equal(new Set(TAB_IDS).size, TAB_IDS.length);
 });
 
-test('Weiter: every target exists, every sentence follows the tone guide, no target twice', () => {
+test('Weiter: every target exists, every sentence follows the tone guide, no target twice anywhere in the tab', () => {
+  const data = [rows, applyOp(rows, 'lernzeit', 'double')];
   for (const [id, tabs] of ALL()) {
     const n = tabs.next, items = [n.next, ...n.before, ...n.after, ...(n.more ?? [])];
     for (const item of items) {
       assert.ok(conceptById[item.id], `${id}: Ziel „${item.id}“ fehlt in concepts.ts`);
       assert.notEqual(item.id, id, `${id}: verweist auf sich selbst`);
-      clean(`${id} weiter ${item.id}`, item.why, KURZ);
     }
-    const listed = [...n.before, ...n.after, ...(n.more ?? [])].map(x => x.id);
-    assert.equal(new Set(listed).size, listed.length, `${id}: ein Ziel steht zweimal in den Listen`);
-    const lists = nextLists(n, edgesOf(id));
-    const shown = [lists.next, ...lists.before, ...lists.after, ...lists.more].map(x => x.id);
-    assert.equal(new Set(shown.slice(1)).size, shown.length - 1, `${id}: Weiter zeigt ein Ziel doppelt`);
+    // Von Hand: kein Ziel doppelt, auch nicht „Als Nächstes“ in einer der Listen.
+    const hand = items.map(x => x.id);
+    assert.equal(new Set(hand).size, hand.length, `${id}: ein Ziel steht zweimal in den Listen (auch Als Nächstes zählt)`);
+    // Angezeigt (mit den Bezügen der Karte): jedes Ziel genau einmal; Sätze, die rechnen, für die Daten und nach einer Änderung.
+    for (const d of data) {
+      const lists = nextLists(n, edgesOf(id), { rows: d, columns: { x: ['lernzeit'], y: ['wissenstest'] } });
+      const shown = [lists.next, ...lists.before, ...lists.after, ...lists.more];
+      assert.equal(new Set(shown.map(x => x.id)).size, shown.length, `${id}: Weiter zeigt ein Ziel doppelt`);
+      for (const x of [lists.next, ...lists.before, ...lists.after]) clean(`${id} weiter ${x.id}`, x.why, KURZ);
+    }
   }
+  // Der Satz zum Standardfehler rechnet mit den aktuellen Daten (R: sd(x) / sqrt(200) = 0.2289269; verdoppelt 0.4578538).
+  const why = (d: typeof rows) => nextLists(tabsFor('sd')!.next, edgesOf('sd'), { rows: d, columns: { x: ['lernzeit'] } }).next.why;
+  assert.equal(why(rows), 'Wie genau kennt man den Mittelwert? Teile s durch die Wurzel aus n: 3,24 / √200 ≈ 0,23 h.');
+  assert.equal(why(applyOp(rows, 'lernzeit', 'double')), 'Wie genau kennt man den Mittelwert? Teile s durch die Wurzel aus n: 6,48 / √200 ≈ 0,46 h.');
 });
 
 test('relations: duplicate targets merge into one entry without a middle dot', () => {
@@ -74,10 +84,14 @@ test('relations: duplicate targets merge into one entry without a middle dot', (
   assert.match(merged.find(m => m.id === 'z')!.why, /; /);
   assert.equal(relationText('liefert den Bezugspunkt · über Abweichung vom Mittelwert'), 'liefert den Bezugspunkt, über Abweichung vom Mittelwert');
   for (const m of merged) assert.ok(!m.why.includes('·'), m.why);
-  // Leere Listen füllt der Reiter aus der Karte.
+  // Leere Listen füllt der Reiter aus der Karte; „Als Nächstes“ steht dort nicht noch einmal.
   const fallback = nextLists({ next: { id: 'se', why: 'weil' }, before: [], after: [] }, sd);
   assert.ok(fallback.before.some(x => x.id === 'variance') && fallback.after.some(x => x.id === 'z'), 'leere Listen kommen aus der Karte');
   assert.equal(fallback.after.filter(x => x.id === 'z').length, 1);
+  assert.ok(!fallback.after.some(x => x.id === 'se') && !fallback.more.some(x => x.id === 'se'), 'Als Nächstes steht nur einmal da');
+  const variance = nextLists({ next: { id: 'sd', why: 'weil' }, before: [], after: [] }, edgesOf('variance'));
+  const all = [variance.next, ...variance.before, ...variance.after, ...variance.more].map(x => x.id);
+  assert.equal(new Set(all).size, all.length, 'auch die Bezüge der Karte doppeln „Als Nächstes“ nicht');
 });
 
 /** Spalten, für die die Vorhersagen eines Reiters geschrieben sind (Brücke: `variable`, Auswertung: feste Spalten oder die Spaltenwahl). */
@@ -103,6 +117,7 @@ test('Mit 200 Befragten: bridge texts for every step and person, before and afte
     assert.equal(explainFor(id)?.kind === 'werkstatt' || id === s.variant, true);
     assert.ok(b.lines.length >= v.lastStep, `${id}: Schrittzeilen fehlen`);
     assert.ok(s.think.length >= 2, `${id}: mindestens zwei Vorhersagefragen`);
+    assert.ok(b.value, `${id}: Brücke ohne value`);
     const cols = columnsOf(tabs), datasets = [rows, ...s.think.map(t => applyOp(rows, cols[t.tryIt.column], t.tryIt.op, t.tryIt.value, 1))];
     s.think.forEach((t, k) => {
       thinkClean(`${id} Vorhersage ${k + 1}`, t);
@@ -131,14 +146,16 @@ test('Mit 200 Befragten: the approved sd wording and its numbers from the data',
   assert.equal(b.lines[0].all(c), 'Alle 200 Lernzeiten zusammen ergeben 1.550,3 h. Geteilt durch 200: x̄ ≈ 7,75 h.');
   assert.match(b.lines[3].all(c), /Quadratsumme 2\.085,82 h²\. Den größten Beitrag liefert P175 mit 18,4 h: \(18,4 − 7,75\)² ≈ 113,4 h²\./);
   assert.equal(b.lines[4].all(c), '2.085,82 / (200 − 1) = 2.085,82 / 199 ≈ 10,48 h².');
-  assert.equal(b.lines[5].all(c), '√10,48 ≈ 3,24 h. Probe: 3,24 · 3,24 ≈ 10,48.');
+  // Die Probe rechnet mit der sichtbaren 3,24: 3,24² = 10,4976 ≈ 10,5; R: var(lernzeit) = 10.4815.
+  assert.equal(b.lines[5].all(c), '√10,48 ≈ 3,24 h. Probe: 3,24 · 3,24 ≈ 10,5, bis auf Rundung die 10,48.');
   assert.equal(b.lines[1].person(c), 'P002: 8,3 − 7,75 = +0,55, also 0,55 h über der Mitte.');
   const flat = (nodes: unknown[]): string => nodes.map(n => typeof n === 'string' ? n : n && typeof n === 'object' && 'part' in n ? flat((n as { part: unknown[] }).part) : '').join('');
   assert.match(flat(b.numeric(c, 6)), /= √\( 2\.085,82 \/ 199 \) ≈ √10,48 ≈ 3,24 h$/);
   assert.equal(b.metrics(c, 'sd').at(-1)!.value, '3,24 h');
   const doubled = bridgeContext(w.compute, 'series', applyOp(rows, 'lernzeit', 'double'), 'lernzeit', '', 1);
   assert.equal(b.metrics(doubled, 'sd').at(-1)!.value, '6,48 h');
-  assert.equal(tabsFor('sd')!.next.next.why, 'Wie genau kennt man den Mittelwert? Teile s durch die Wurzel aus n: 3,24 / √200 ≈ 0,23 h.');
+  // Gebilligter Satz zum Standardfehler, aus den Daten gerechnet (Test „Weiter“ prüft auch veränderte Daten).
+  assert.equal(nextLists(tabsFor('sd')!.next, edgesOf('sd'), { rows, columns: { x: ['lernzeit'] } }).next.why, 'Wie genau kennt man den Mittelwert? Teile s durch die Wurzel aus n: 3,24 / √200 ≈ 0,23 h.');
 });
 
 test('Mit 200 Befragten: analysis results resolve for the data and after every prediction', () => {
@@ -162,7 +179,9 @@ test('Mit 200 Befragten: analysis results resolve for the data and after every p
   assert.equal(p.kind, 'analysis');
   if (p.kind === 'analysis') {
     const r = p.result({ rows, columns: { x: ['lernzeit'], group: ['weiterbildung'] } });
-    assert.match(r.kurz, /7,71 Stunden, ohne 7,78 Stunden.*p ≈ 0,88/);
+    assert.match(r.kurz, /in den letzten sieben Tagen im Schnitt 7,71 Stunden gelernt, die ohne 7,78 Stunden.*Gäbe es keinen Unterschied.*p ≈ 0,88/);
+    // Richtung wie R (mariposa 0.7.4): ohne minus mit Weiterbildung, t(175.8) = 0.156.
+    assert.match(r.fachlich, /ohne minus mit Weiterbildung 0,07 h, t ≈ 0,16 bei 175,8 Freiheitsgraden, p ≈ 0,88/);
     assert.match(p.result({ rows: applyOp(rows, 'lernzeit', 'double'), columns: { x: ['lernzeit'], group: ['weiterbildung'] } }).kurz, /p ≈ 0,88/, 'verdoppelt: p bleibt');
   }
   const d = tabsFor('dummy')!.sample!;
@@ -216,8 +235,7 @@ test('In R: the live lead calls print exactly what R printed for the starting da
   assert.equal(liveOutput({ fn: 'cov' }, rows, 'lernzeit', 'wissenstest'), fixture('ausgang--kovarianz'));
   assert.equal(liveOutput({ fn: 'frequency' }, rows, 'lernplanung5'), fixture('ausgang--frequency'));
   assert.equal(liveOutput({ fn: 'describe', show: ['mean', 'sd', 'var'] }, applyOp(rows, 'lernzeit', 'outlier', 40, 1), 'lernzeit'), fixture('p002_40--describe-mean-sd-var'));
-  assert.equal(liveOutput({ fn: 'rec_frequency' }, rows, 'lernplanung5'), CATALOG_OUTPUT['recode:0'].output);
-  assert.ok(CATALOG_OUTPUT['recode:0'].code.endsWith(liveCode({ fn: 'rec_frequency' }, 'lernplanung5')));
+  assert.equal(liveOutput({ fn: 'rec_frequency' }, rows, 'lernplanung5'), fixture('zusatz--frequency-rev'));
   assert.equal(liveCode({ fn: 'describe', show: ['mean'] }, 'lernzeit'), 'atlas %>%\n  describe(lernzeit, show = "mean")');
   assert.equal(liveCode({ fn: 'describe', show: ['mean', 'sd', 'var'] }, 'lernzeit'), 'atlas %>%\n  describe(lernzeit, show = c("mean", "sd", "var"))');
   assert.equal(liveCode({ fn: 'cov' }, 'lernzeit', 'wissenstest'), 'atlas %>%\n  summarise(kovarianz = cov(lernzeit, wissenstest))');
@@ -245,7 +263,8 @@ test('tokenize: functions, arguments, columns and atlas are tappable, strings on
   assert.equal(parts.map(p => p.text).join(''), code, 'nichts geht verloren');
   const keys = parts.filter(p => p.key).map(p => p.key);
   for (const k of ['library', 'atlas', '<-', 'read_spss', '%>%', 'describe', 'lernzeit', 'show', '=', 'c', '"sd"']) assert.ok(keys.includes(k), `„${k}“ ist nicht antippbar`);
-  assert.ok(!keys.includes('"mean"') && !keys.includes('"Statistikatlas-200-Befragte.sav"'), 'Zeichenketten ohne eigene Karte sind nicht antippbar');
+  assert.ok(!keys.includes('"mean"'), 'Zeichenketten ohne eigene Karte sind nicht antippbar');
+  for (const k of ['"Statistikatlas-200-Befragte.sav"', 'dplyr', 'mariposa']) assert.ok(keys.includes(k), `„${k}“ hat eine Karte in der Codelegende`);
   assert.match(noteFor('describe')!.term, /Deskriptiver Überblick/);
   assert.match(noteFor('lernzeit')!.term, /Variable „Lernzeit“/);
 });
@@ -266,11 +285,130 @@ test('Mit 200 Befragten: the numbers of the pilot bridges as in R', () => {
   const z = bridgeContext(workshopFor('zusammenhang')!.compute, 'pairs', rows, 'lernzeit', 'wissenstest', 1), bz = bridgeFor('zusammenhang')!;
   assert.equal(bz.lines[3].all(z), 'Plus und Minus verrechnet ergeben die 200 Produkte 1.082,31. 119 Produkte sind positiv, 81 negativ.');
   assert.equal(bz.lines[3].person(z), 'P002 steuert −0,62 zur Summe bei.');
-  assert.equal(bz.lines[5].all(z), '5,44 / (3,24 · 3,12) ≈ 0,54. Größer als 10,09 kann die Kovarianz hier nicht werden.');
+  assert.equal(bz.lines[5].all(z), '5,44 / (3,24 · 3,12) ≈ 0,54. Größer als sₓ · sᵧ ≈ 10,09 (mit allen Nachkommastellen) kann die Kovarianz hier nicht werden.');
   assert.equal(bz.interpret(z, 'pearson').zusatz, '119 von 200 Befragten liegen in beiden Fragen auf derselben Seite der Mitte.');
   const s = bridgeContext(workshopFor('streuung')!.compute, 'series', rows, 'lernzeit', '', 1), bs = bridgeFor('streuung')!;
   assert.equal(bs.interpret(s, 'variance').zusatz, 'Den größten Einzelbeitrag liefert P175: 5,44 % der Quadratsumme.');
   assert.equal(bs.lines[3].person(s), 'P002 steuert 0,3 h² bei, das sind 0,01 % der Quadratsumme.');
   const se = tabsFor('se')!.sample!;
   if (se.kind === 'analysis') assert.match(se.result({ rows, columns: { x: ['lernzeit'] } }).fachlich, /von 7,29 bis 8,21 h/, 'Konfidenzintervall wie in R');
+});
+
+
+/** Ob die Behauptung einer Vorhersage für die Ergebniszahl vorher (a) und nachher (b) stimmt. */
+function holds(e: Expect, a: number | null, b: number | null): boolean {
+  if (a === null || b === null || !Number.isFinite(a) || !Number.isFinite(b)) return false;
+  const tol = 1e-9 * Math.max(1, Math.abs(a), Math.abs(b)), d = b - a;
+  switch (e.change) {
+    case 'same': return Math.abs(d) <= tol;
+    case 'factor': return Math.abs(b - e.factor * a) <= tol * Math.max(1, e.factor);
+    case 'plus': return Math.abs(d - e.amount) <= tol;
+    case 'sign': return Math.abs(a) > tol && Math.abs(a + b) <= tol;
+    case 'up': return d > tol && (e.atLeast === undefined || d >= e.atLeast) && (e.atMost === undefined || d <= e.atMost);
+    case 'down': return -d > tol && (e.atLeast === undefined || -d >= e.atLeast) && (e.atMost === undefined || -d <= e.atMost);
+    case 'weaker': return Math.abs(b) < Math.abs(a) - tol;
+    case 'stronger': return Math.abs(b) > Math.abs(a) + tol;
+    case 'equals': return Math.abs(b - e.value) <= tol;
+  }
+}
+
+/*
+ * R (mariposa 0.7.4) für einzelne Fälle der Prüfung unten, x = lernzeit, w = wissenstest:
+ *   sapply(1:200, function(k) { xx <- x; xx[k] <- 40; cor(xx, w) - cor(x, w) })   # −0.255 bis −0.004: r wird immer schwächer
+ *   sapply(1:200, function(k) { xx <- x; xx[k] <- 40; mean(xx) - mean(x) })        # +0.108 bis +0.200: „ein wenig“
+ *   sapply(1:200, function(k) { xx <- x; xx[k] <- 40; sd(xx) - sd(x) })            # s steigt für jede Person
+ */
+test('Mit 200 Befragten: every prediction keeps its marked answer, for every person and after every other prediction', () => {
+  assert.ok(holds({ change: 'factor', factor: 2 }, 3, 6) && !holds({ change: 'same' }, 3, 3.1) && holds({ change: 'sign' }, 0.5, -0.5) && !holds({ change: 'up', atMost: 0.25 }, 1, 1.3), 'Prüfregeln');
+  let checked = 0;
+  for (const [id, tabs] of ALL()) {
+    const s = tabs.sample;
+    if (!s) continue;
+    const cols = columnsOf(tabs);
+    const columnOf = (axis: 'x' | 'y') => s.kind === 'analysis' && s.columns?.[axis] ? s.columns[axis] : cols[axis];
+    const measureFor = (t: ThinkSample): ((d: SurveyRow[]) => number | null) => {
+      if (s.kind === 'bridge') {
+        const w = workshopFor(s.workshop)!, b = bridgeFor(s.workshop)!;
+        return d => b.value(bridgeContext(w.compute, b.data, d, cols.x, cols.y, 0), s.variant);
+      }
+      const columns = s.columns ? Object.fromEntries(Object.entries(s.columns).map(([k, v]) => [k, [v]])) : { x: [cols.x], y: [cols.y] };
+      const m = t.expect.measure ?? s.value;
+      assert.ok(m, `${id}: Auswertung ohne value und Vorhersage ohne expect.measure`);
+      return d => m!({ rows: d, columns });
+    };
+    // Datenstände: die Ausgangsdaten und die Daten nach jeder anderen Vorhersage des Reiters (bei outlier mit P002).
+    const after = s.think.map(t => applyOp(rows, columnOf(t.tryIt.column), t.tryIt.op, t.tryIt.value, 1));
+    for (const [own, t] of s.think.entries()) {
+      const measure = measureFor(t), column = columnOf(t.tryIt.column);
+      const states = [rows, ...after.filter((d, i) => i !== own && fitsColumn(d, columnOf(s.think[i].tryIt.column)))];
+      states.forEach((state, k) => {
+        const people = t.tryIt.op === 'outlier' ? state.map((_, i) => i) : [1];
+        for (const who of people) {
+          const next = applyOp(state, column, t.tryIt.op, t.tryIt.value, who);
+          if (!fitsColumn(next, column)) continue;           // die Oberfläche lehnt das Ausprobieren dann ab
+          const a = measure(state), b = measure(next);
+          assert.ok(holds(t.expect, a, b), `${id}: „${t.question}“ (${t.options[t.correct]}) stimmt nicht nach Datenstand ${k}, Person ${state[who].id}: vorher ${a}, nachher ${b}`);
+          checked++;
+        }
+      });
+    }
+  }
+  assert.ok(checked > 2000, `nur ${checked} Fälle geprüft`);
+});
+
+test('bridges read right for every column they can use: no middle dot from column titles, direction from the sign', () => {
+  const seen = new Set<string>();
+  for (const [id, tabs] of ALL()) {
+    const s = tabs.sample;
+    if (s?.kind !== 'bridge' || seen.has(`${s.workshop}:${s.variant}`)) continue;
+    seen.add(`${s.workshop}:${s.variant}`);
+    const w = workshopFor(s.workshop)!, b = bridgeFor(s.workshop)!, v = w.variants[s.variant];
+    const usable = surveyColumns.filter(c => compatible(s.variant, c, true)).map(c => c.id);
+    const pairs: [string, string][] = b.data === 'pairs'
+      ? [...usable.filter(x => x !== 'wissenstest').map(x => [x, 'wissenstest'] as [string, string]), ...usable.filter(y => y !== 'lernzeit').map(y => ['lernzeit', y] as [string, string])]
+      : usable.map(x => [x, ''] as [string, string]);
+    for (const [x, y] of pairs) for (const data of b.data === 'pairs' ? [rows, applyOp(rows, y, 'reverse')] : [rows]) {
+      const c = bridgeContext(w.compute, b.data, data, x, y, 1), label = `${id} mit ${x}${y ? ` und ${y}` : ''}`;
+      for (let k = 0; k < v.lastStep; k++) { clean(`${label} Schritt ${k + 1}`, b.lines[k].all(c), SHORT); clean(`${label} Schritt ${k + 1} Person`, b.lines[k].person(c), SHORT); }
+      const i = b.interpret(c, s.variant);
+      clean(`${label} Deutung`, i.kurz, DEUTUNG); clean(`${label} Fachsprache`, i.fachlich); if (i.zusatz) clean(`${label} Zusatz`, i.zusatz, SHORT);
+      clean(`${label} Voraussetzung`, b.voraussetzung(c, s.variant), SHORT);
+      b.metrics(c, s.variant).forEach(m => clean(`${label} Kennzahl`, m.value));
+      // Richtung aus dem Vorzeichen: gleichläufig nur bei positivem, gegenläufig nur bei negativem Ergebnis.
+      const r = b.value(c, s.variant);
+      if (b.data === 'pairs' && r !== null && Math.abs(r) > 0.005) {
+        const text = `${i.kurz} ${b.lines[v.lastStep - 1].person(c)}`;
+        if (r < 0) assert.ok(!/gleichläufig|auch höher|auch darüber|mehr lernt, löst im Wissenstest eher mehr/.test(text), `${label}: Deutung passt nicht zu r < 0: ${text}`);
+        else assert.ok(!/gegenläufig|eher niedriger|eher darunter/.test(text), `${label}: Deutung passt nicht zu r > 0: ${text}`);
+      }
+    }
+  }
+  assert.ok(seen.size >= 5, 'alle Pilotbrücken geprüft');
+});
+
+test('steps: every step that In R or a prediction points to exists in the tab the jump opens', () => {
+  for (const [id, tabs] of ALL()) {
+    const targets = stepTargets(explainFor(id), tabs);
+    for (const m of tabs.r?.outputMap ?? []) if (m.step !== undefined)
+      assert.ok(targets && m.step >= 1 && m.step <= targets.titles.length, `${id}: outputMap „${m.match}“ zeigt auf Schritt ${m.step}, den es nicht gibt`);
+    if (tabs.sample?.kind === 'analysis') for (const t of tabs.sample.think)
+      assert.equal(t.step, undefined, `${id}: In einer Auswertung markiert step nichts; lass es weg („${t.question}“)`);
+  }
+  assert.equal(stepTargets(explainFor('sd'), tabsFor('sd'))?.tab, 'sample');
+  assert.deepEqual(stepTargets(explainFor('p_value'), tabsFor('p_value')), { tab: 'verstehen', titles: ['Annehmen, es gäbe keinen Unterschied', 'Den Unterschied am üblichen Schwanken messen', 'Nachsehen, wie oft der Zufall so etwas liefert'] });
+  assert.equal(stepTargets(explainFor('dummy'), tabsFor('dummy'))?.tab, 'verstehen');
+  assert.equal(stepTargets(explainFor('se'), tabsFor('se')), null, 'Formel als Satz hat keine Schritte zum Anspringen');
+});
+
+test('In R: every concept with mariposa calls in the catalog keeps them in its tabs', () => {
+  for (const [id, tabs] of ALL()) if (entryById[id]?.variants.length)
+    assert.ok(tabs.r, `${id}: Der Katalog hat Aufrufe, aber tabs[${id}].r fehlt; ohne ihn verschwindet das R-Panel`);
+});
+
+test('In R: umpolen with rules = "rev" keeps and mirrors the value labels exactly as R prints them', () => {
+  // R: atlas %>% mutate(x_umgepolt = rec(x, rules = "rev")) %>% frequency(x_umgepolt), siehe fixtures/r-output/zusatz--frequency-rev*.txt
+  assert.equal(liveOutput({ fn: 'rec_frequency' }, rows, 'lernplanung5'), fixture('zusatz--frequency-rev'));
+  for (const v of ['lernzuversicht7', 'statistikinteresse10', 'finanzlage'])
+    assert.equal(liveOutput({ fn: 'rec_frequency' }, rows, v), fixture(`zusatz--frequency-rev-${v}`).replace(/x_umgepolt/g, `${v}_umgepolt`), v);
+  assert.equal(liveCode({ fn: 'rec_frequency' }, 'lernplanung5'), 'atlas %>%\n  mutate(lernplanung5_umgepolt = rec(lernplanung5, rules = "rev")) %>%\n  frequency(lernplanung5_umgepolt)');
 });

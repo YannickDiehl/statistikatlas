@@ -1,4 +1,4 @@
-import { createContext, Fragment, useContext, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
+import { createContext, Fragment, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { modeStore, type Mode } from '../../explain/mode';
 import { stickFor } from '../../explain/workbench';
@@ -41,7 +41,10 @@ export function useWorkbenchLayout(): {
     const read = () => {
       const isWide = el.clientWidth >= WIDE_FROM;
       setWide(isWide);
-      stuck = isWide ? stickFor(formula.current?.offsetHeight ?? 0, image.current?.offsetHeight ?? 0, (scroller?.clientHeight ?? 0) - 24) : null;
+      // Eine klebende Reiterleiste (ExplainTabs) nimmt oben Platz weg.
+      const bar = el.closest('.xw-tabbed')?.querySelector<HTMLElement>('.xw-tabs');
+      const tabs = bar && getComputedStyle(bar).position === 'sticky' ? bar.offsetHeight : 0;
+      stuck = isWide ? stickFor(formula.current?.offsetHeight ?? 0, image.current?.offsetHeight ?? 0, (scroller?.clientHeight ?? 0) - 24 - tabs) : null;
       setStick(stuck);
     };
     const reveal = (e: FocusEvent) => {
@@ -84,6 +87,23 @@ export function KurzGesagt({ text, fach }: { text: string; fach?: string }) {
 export type TabLink = { kurzAbove: boolean; onStep?: (step: number) => void; goTo?: { step: number; n: number } };
 export const TabLinkContext = createContext<TabLink>({ kurzAbove: false });
 export const useTabLink = () => useContext(TabLinkContext);
+
+/**
+ * Sprung aus „In R“ zu Schritt k einer Vorlage ohne Schrittknöpfe (Bausteine der Begriffskarte, Schritte des
+ * Tabellen-Werkzeugs): markiert die Karte, scrollt zu ihrem Titel und setzt dort den Fokus.
+ */
+export function useStepJump(): { titleRef: (i: number) => (el: HTMLHeadingElement | null) => void; marked: number | null } {
+  const link = useTabLink(), titles = useRef<(HTMLHeadingElement | null)[]>([]), [marked, setMarked] = useState<number | null>(null);
+  useEffect(() => {
+    if (!link.goTo) return;
+    const k = link.goTo.step;
+    setMarked(k);
+    const el = titles.current[k - 1];
+    el?.scrollIntoView?.({ block: 'start' });
+    el?.focus({ preventScroll: true });
+  }, [link.goTo?.n]);
+  return { titleRef: i => el => { titles.current[i] = el; }, marked };
+}
 
 /** „Kurz gesagt“ oben in einer Vorlage; entfällt, wenn die Reiterleiste ihn schon über den Reitern zeigt. */
 export function TopKurz(props: { text: string; fach?: string }) {

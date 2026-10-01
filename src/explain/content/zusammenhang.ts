@@ -161,7 +161,6 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
       fach: 'Pearson-r ist die Kovarianz geteilt durch das Produkt der beiden Standardabweichungen. Das Ergebnis hat keine Einheit und liegt zwischen −1 und +1.',
       warum: 'Die Kovarianz liegt immer zwischen −sₓ · sᵧ und +sₓ · sᵧ. Teilen wir dadurch, verschwinden die Einheiten, und ganz verschiedene Fragen werden vergleichbar.',
       acht: 'r ist kein Anteil von Personen. r = 0,5 heißt nicht, dass die Hälfte übereinstimmt. Es sagt, wie eng die Punkte an einer Geraden liegen.',
-      alltag: 'Wie eine Prozentangabe: nicht wie viele Punkte, sondern welcher Anteil vom Höchstmöglichen.',
       check: {
         question: c => c.s.r === null ? 'Wie groß ist r? Eine Standardabweichung ist hier 0. Tippe NA, wenn r nicht definiert ist.' : 'Wie groß ist r? Zwei Nachkommastellen reichen.',
         answer: c => c.s.r === null ? 'NA' : c.s.r,
@@ -256,7 +255,7 @@ export const zusammenhang: Workshop<Pairs, PairStats> = {
       genau: {
         kurz: 'r beschreibt nur gerade Muster und sagt nichts darüber, was was verursacht.',
         paragraphs: () => [
-          'Es gibt einen zweiten Rechenweg mit demselben Ergebnis: beide Variablen z-standardisieren und r = Σzₓzᵧ / (n − 1) rechnen. Er ist über den Routenwähler im Abschnitt „Mit dem Lehrdatensatz“ erreichbar.',
+          'Es gibt einen zweiten Rechenweg mit demselben Ergebnis: beide Variablen z-standardisieren und r = Σzₓzᵧ / (n − 1) rechnen. Du findest ihn im Reiter „Mit 200 Befragten“ unter „Die Rechnung als Baukasten entfalten“, Rechnung zeigen: „Über z-Werte“.',
           'Dass r zwischen −1 und +1 liegt, folgt aus |sₓᵧ| ≤ sₓ · sᵧ (Cauchy-Schwarz-Ungleichung). Gleichheit gilt nur, wenn alle Punkte exakt auf einer Geraden liegen.',
           'Einzelne auffällige Punkte können r stark verändern. Bei Ausreißern ist die Spearman-Korrelation robuster, bei nur geordneten Kategorien angemessener.',
           'Die Vertrauensskalen hier wie metrische Skalen zu behandeln, ist eine Annahme: Gleiche Zahlenabstände sollen gleiche inhaltliche Abstände bedeuten.',

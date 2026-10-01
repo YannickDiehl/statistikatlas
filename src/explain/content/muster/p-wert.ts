@@ -5,7 +5,7 @@ import type { ConceptCard } from '../../types';
 import { num, unit } from '../../format';
 import { pTwoSided } from '../../../tasks/kit/dist';
 
-/** Lernzeit (Stunden in der letzten Woche) nach Weiterbildung im Lehrdatensatz; Welch-t-Test, zweiseitig. */
+/** Lernzeit (Stunden in den letzten sieben Tagen) nach Weiterbildung im Lehrdatensatz; Welch-t-Test, zweiseitig. */
 export const LERNZEIT_NACH_WEITERBILDUNG = {
   nMit: 82, nOhne: 118,
   mit: 7.708537, ohne: 7.781356,
@@ -24,10 +24,10 @@ export const pFor = (v: number) => pTwoSided(v / L.se, L.df);
 export const pWert: ConceptCard = {
   concept: 'p_value',
   picture: 'muster-p-wert',
-  wofuer: 'Lernen Studierende mit Weiterbildung mehr als die anderen? Im Lehrdatensatz unterscheiden sich die beiden Gruppen ein klein wenig. Der p-Wert hilft bei der Frage, ob so ein Unterschied auch durch Zufall entstehen könnte.',
+  wofuer: 'Lernen Befragte mit Weiterbildung anders lange als die ohne? Im Lehrdatensatz unterscheiden sich die beiden Gruppen ein klein wenig. Der p-Wert hilft bei der Frage, ob so ein Unterschied auch durch Zufall entstehen könnte.',
   kurz: 'Der p-Wert sagt dir, wie überraschend dein Ergebnis wäre, wenn es in Wahrheit keinen Unterschied gäbe. Je kleiner er ist, desto überraschender.',
   stellDirVor: {
-    text: `${L.nMit} Befragte haben im letzten Jahr eine Weiterbildung gemacht, ${L.nOhne} nicht. Die mit Weiterbildung haben in der letzten Woche im Schnitt ${num(L.mit)} Stunden gelernt, die ohne ${num(L.ohne)} Stunden. Das sind gut vier Minuten Unterschied. Der t-Test in R meldet dazu p = 0.876, auf zwei Stellen gerundet ${num(L.p)}.`,
+    text: `${L.nMit} Befragte haben in den letzten zwölf Monaten eine Weiterbildung gemacht, ${L.nOhne} nicht. Die mit Weiterbildung haben in den letzten sieben Tagen im Schnitt ${num(L.mit)} Stunden gelernt, die ohne ${num(L.ohne)} Stunden. Das sind gut vier Minuten Unterschied. Der t-Test in R meldet dazu p = 0.876, auf zwei Stellen gerundet ${num(L.p)}.`,
     figures: [
       { label: 'mit Weiterbildung', value: `${num(L.mit)} h` },
       { label: 'ohne Weiterbildung', value: `${num(L.ohne)} h` },
@@ -48,17 +48,17 @@ export const pWert: ConceptCard = {
       concept: 'hypothesis',
     },
     {
-      title: 'Den Unterschied in eine Prüfgröße übersetzen',
+      title: 'Den Unterschied am üblichen Schwanken messen',
       was: 'Der t-Test teilt den Unterschied durch seinen Standardfehler. So sieht man, ob der Unterschied groß ist im Vergleich zum üblichen Schwanken.',
       rechnung: `t = ${num(L.diff)} / ${num(L.se)} ≈ ${num(shown2(L.diff) / shown2(L.se))}. Mit allen Nachkommastellen kommt R auf ${num(L.t)}.`,
       warum: 'Ob ein Unterschied groß ist, hängt davon ab, wie stark die Werte ohnehin schwanken. t misst den Unterschied in Standardfehlern.',
-      acht: 'Ein großes t heißt nicht automatisch ein wichtiger Unterschied. Bei sehr vielen Befragten wird auch ein winziger Unterschied groß.',
+      acht: 'Ein großes t heißt nicht automatisch ein wichtiger Unterschied. Bei sehr vielen Befragten wird t auch bei einem winzigen Unterschied groß.',
       concept: 'test_statistic',
     },
     {
       title: 'Nachsehen, wie oft der Zufall so etwas liefert',
       was: `Wir schauen nach, wie oft ein t von mindestens ${num(L.t)} vorkäme, in die eine oder andere Richtung, wenn es keinen Unterschied gäbe.`,
-      rechnung: `p ≈ ${num(L.p)}: In etwa ${Math.round(L.p * 100)} von 100 Wiederholungen der Befragung wäre der Unterschied mindestens so groß.`,
+      rechnung: `p ≈ ${num(L.p)}: Gäbe es keinen Unterschied, wäre er in etwa ${Math.round(L.p * 100)} von 100 Wiederholungen der Befragung mindestens so groß.`,
       warum: 'Genau dieser Anteil ist der p-Wert. Er zählt beide Richtungen, weil vorher nicht feststand, welche Gruppe mehr lernt.',
       acht: 'p ist keine Wahrscheinlichkeit dafür, dass die Nullhypothese stimmt. Er rechnet unter der Annahme, dass sie stimmt.',
       concept: 'null_distribution',
@@ -72,7 +72,7 @@ export const pWert: ConceptCard = {
       kurz: 'Größerer Unterschied, kleinerer p-Wert.',
     },
     {
-      question: `p ist hier ${num(L.p)}. Heißt das, Weiterbildung hat sicher keinen Einfluss auf die Lernzeit?`,
+      question: `p ist hier ${num(L.p)}. Heißt das, Befragte mit und ohne Weiterbildung lernen sicher gleich lange?`,
       options: ['ja', 'nein'], correct: 1, step: 3,
       explain: 'Ein großer p-Wert heißt nur: Die Daten passen gut zur Annahme ohne Unterschied. Ein kleiner Unterschied kann trotzdem bestehen, und die Stichprobe reicht nicht, um ihn zu erkennen.',
       kurz: 'Nicht überraschend heißt nicht: kein Unterschied.',
@@ -109,7 +109,7 @@ export const pWert: ConceptCard = {
     right: 'Genau. p rechnet unter der Annahme ohne Unterschied und fragt, wie selten das Ergebnis dann wäre.',
     diagnose: {
       0: 'Fast! Das ist der häufigste Fehler. p rechnet unter der Annahme, dass die Nullhypothese stimmt. Wie wahrscheinlich sie selbst ist, sagt p nicht.',
-      2: 'Noch nicht ganz. p sagt nichts über die Größe. Bei sehr vielen Befragten wird auch ein winziger Unterschied überraschend.',
+      2: 'Fast! p sagt nichts über die Größe. Bei sehr vielen Befragten wird auch ein winziger Unterschied überraschend.',
       3: 'Fast! Das ist derselbe Fehler, nur andersherum. p sagt nicht, wie wahrscheinlich ein Unterschied ist.',
     },
   },
@@ -117,9 +117,9 @@ export const pWert: ConceptCard = {
   genau: {
     kurz: 'Der p-Wert gilt nur, wenn die Annahmen des Tests stimmen. Er ist keine Wahrscheinlichkeit für eine Hypothese.',
     paragraphs: [
-      `Genau genommen ist p die Wahrscheinlichkeit, unter der Nullhypothese und den Annahmen des Tests eine Prüfgröße zu erhalten, die mindestens so extrem ist wie die beobachtete. Hier ist das ein Welch-t-Test, zweiseitig, mit t ≈ ${num(L.t)} und etwa ${Math.round(L.df)} Freiheitsgraden.`,
+      `Hier ist das ein Welch-t-Test, zweiseitig, mit t ≈ ${num(L.t)} und etwa ${Math.round(L.df)} Freiheitsgraden. „Mindestens so extrem“ heißt: ein Betrag von t ab ${num(L.t)}, in beide Richtungen.`,
       'Die Schwelle α, oft 5 %, wird vor der Auswertung festgelegt. Wer viele Tests rechnet, findet auch ohne echte Unterschiede einzelne kleine p-Werte (Begriff „Mehrere Vergleiche“).',
-      'Ein p-Wert über α ist kein Beleg für die Nullhypothese. Wie groß der Unterschied sein könnte, zeigt das Konfidenzintervall: Hier reicht es von knapp einer Stunde in die eine bis knapp einer Stunde in die andere Richtung.',
+      'Ein p-Wert über α ist kein Beleg für die Nullhypothese. Wie groß der Unterschied sein könnte, zeigt das Konfidenzintervall: Hier reicht es von etwa 0,85 Stunden weniger bis etwa 0,99 Stunden mehr Lernzeit ohne Weiterbildung.',
     ],
   },
 };

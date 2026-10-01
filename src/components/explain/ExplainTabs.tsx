@@ -2,19 +2,37 @@
 // „Verstehen“, „Mit 200 Befragten“, „In R“, „Weiter“ nach dem ARIA-Muster „Tabs“. Alle Reiter bleiben eingehängt
 // und werden nur verborgen, damit Eingaben, Schritt, Person und Vorhersagen beim Wechsel erhalten bleiben.
 // Der gewählte Reiter gilt je Begriff für die laufende Sitzung.
-import { useCallback, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import type { ConceptTabs, Explain } from '../../explain/types';
+import { workshopFor } from '../../explain/registry';
 import { KurzGesagt, TabLinkContext } from './basics';
 
 export type TabId = 'verstehen' | 'sample' | 'r' | 'weiter';
 export type TabLinks = {
   /** Sprung in den Reiter „Mit 200 Befragten“ zu einem Schritt (aus „Verstehen“ oder „In R“). */
   goSample?: { step: number; n: number };
-  /** Der Reiter „Mit 200 Befragten“ meldet seinen Schritt. */
-  onSampleStep: (step: number) => void;
-  /** Zahl in „So antwortet R“ → Schritt: in der Brücke, sonst in „Verstehen“. */
-  stepLink: (step: number) => void;
+  /** Zahl in „So antwortet R“ → Schritt, im Reiter, der diese Schritte zeigt (`stepTargets`); ohne Schritte nicht gesetzt. */
+  stepLink?: (step: number) => void;
 };
+
+/**
+ * Wo die Schritte eines Begriffs stehen, auf die „In R“ verweist (`outputMap.step`): in der Brücke („Mit 200
+ * Befragten“), sonst in „Verstehen“ (Werkstatt, Bausteine der Begriffskarte, Schritte des Tabellen-Werkzeugs).
+ * `titles[k − 1]` ist der Titel von Schritt k. null heißt: Der Begriff hat keine Schritte.
+ */
+export function stepTargets(explain: Explain | null, tabs: ConceptTabs | null): { tab: 'sample' | 'verstehen'; titles: string[] } | null {
+  const s = tabs?.sample;
+  if (s?.kind === 'bridge') {
+    const w = workshopFor(s.workshop), v = w?.variants[s.variant];
+    if (w && v) return { tab: 'sample', titles: w.steps.slice(0, v.lastStep).map(x => x.title) };
+  }
+  switch (explain?.kind) {
+    case 'werkstatt': return { tab: 'verstehen', titles: explain.workshop.steps.slice(0, explain.workshop.variants[explain.variant].lastStep).map(x => x.title) };
+    case 'begriff': return { tab: 'verstehen', titles: explain.card.bausteine.map(b => b.title) };
+    case 'tabelle': return { tab: 'verstehen', titles: explain.tool.steps.map(x => x.title) };
+    default: return null;
+  }
+}
 
 /** Reiter je Begriff für die laufende Sitzung (nicht gespeichert). */
 const remembered = new Map<string, TabId>();
@@ -50,27 +68,42 @@ export function kurzOf(explain: Explain | null): { text: string; fach?: string }
   }
 }
 
-export function ExplainTabs({ concept, tabs, kurz, render }: {
+export function ExplainTabs({ concept, tabs, kurz, steps, render }: {
   concept: string;
   tabs: { id: TabId; label: string }[];
   kurz?: { text: string; fach?: string } | null;
+  /** Reiter mit den Schritten, auf die „In R“ verweist (`stepTargets`). */
+  steps?: 'sample' | 'verstehen' | null;
   render: (id: TabId, links: TabLinks) => ReactNode;
 }) {
   const ids = tabs.map(t => t.id);
   const [active, setActiveRaw] = useState<TabId>(() => { const r = remembered.get(concept); return r && ids.includes(r) ? r : 'verstehen'; });
   const [goVerstehen, setGoVerstehen] = useState<{ step: number; n: number } | undefined>();
   const [goSample, setGoSample] = useState<{ step: number; n: number } | undefined>();
-  const understandStep = useRef(1), buttons = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({}), panels = useRef<Partial<Record<TabId, HTMLDivElement | null>>>({});
+  const understandStep = useRef(1), root = useRef<HTMLDivElement>(null), bar = useRef<HTMLDivElement>(null);
+  const buttons = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({}), panels = useRef<Partial<Record<TabId, HTMLDivElement | null>>>({});
   const select = (id: TabId) => { remembered.set(concept, id); setActiveRaw(id); };
   const onUnderstandStep = useCallback((n: number) => { understandStep.current = n; }, []);
-  const onSampleStep = useCallback(() => {}, []);
-  const link = useMemo(() => ({ kurzAbove: !!kurz, onStep: onUnderstandStep, goTo: goVerstehen }), [kurz, onUnderstandStep, goVerstehen]);
-  const show = (id: TabId) => { select(id); requestAnimationFrame(() => panels.current[id]?.focus({ preventScroll: false })); };
-  const stepLink = (step: number) => {
-    if (ids.includes('sample')) { setGoSample(g => ({ step, n: (g?.n ?? 0) + 1 })); show('sample'); }
-    else { setGoVerstehen(g => ({ step, n: (g?.n ?? 0) + 1 })); show('verstehen'); }
-  };
-  const links: TabLinks = { goSample, onSampleStep, stepLink };
+  const hasKurz = !!kurz;
+  const link = useMemo(() => ({ kurzAbove: hasKurz, onStep: onUnderstandStep, goTo: goVerstehen }), [hasKurz, onUnderstandStep, goVerstehen]);
+  /** Reiter zeigen; ohne eigenes Sprungziel (Schritt) bekommt das Panel den Fokus. */
+  const show = (id: TabId, focusPanel = true) => { select(id); if (focusPanel) requestAnimationFrame(() => panels.current[id]?.focus({ preventScroll: false })); };
+  const stepLink = steps && ids.includes(steps) ? (step: number) => {
+    // Das Ziel (Lernkarte bzw. Baustein) nimmt den Fokus selbst.
+    if (steps === 'sample') { setGoSample(g => ({ step, n: (g?.n ?? 0) + 1 })); show('sample', false); }
+    else { setGoVerstehen(g => ({ step, n: (g?.n ?? 0) + 1 })); show('verstehen', false); }
+  } : undefined;
+  const links: TabLinks = { goSample, stepLink };
+  // Höhe der Reiterleiste als CSS-Variable: Darunter bleibt die Formel der Werkbank stehen (die Leiste klebt oben).
+  useLayoutEffect(() => {
+    const el = bar.current, box = root.current;
+    if (!el || !box || typeof ResizeObserver === 'undefined') return;
+    const write = () => box.style.setProperty('--xw-tabs-h', `${el.offsetHeight}px`);
+    write();
+    const observer = new ResizeObserver(write);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   function key(e: KeyboardEvent) {
     const i = ids.indexOf(active), next = e.key === 'ArrowRight' ? ids[(i + 1) % ids.length] : e.key === 'ArrowLeft' ? ids[(i - 1 + ids.length) % ids.length]
       : e.key === 'Home' ? ids[0] : e.key === 'End' ? ids[ids.length - 1] : null;
@@ -81,9 +114,9 @@ export function ExplainTabs({ concept, tabs, kurz, render }: {
   }
   const tabId = (id: TabId) => `xt-${concept}-${id}`, panelId = (id: TabId) => `xp-${concept}-${id}`;
   return (
-    <div className="xw-tabbed">
+    <div className="xw-tabbed" ref={root}>
       {kurz && <div className="xw xw-top-kurz"><KurzGesagt text={kurz.text} fach={kurz.fach} /></div>}
-      <div className="xw-tabs" role="tablist" aria-label="Teile der Erklärung" onKeyDown={key}>
+      <div className="xw-tabs" role="tablist" aria-label="Teile der Erklärung" onKeyDown={key} ref={bar}>
         {tabs.map(t => (
           <button type="button" key={t.id} id={tabId(t.id)} role="tab" aria-selected={active === t.id} aria-controls={panelId(t.id)} tabIndex={active === t.id ? 0 : -1}
             ref={el => { buttons.current[t.id] = el; }} onClick={() => select(t.id)}>{t.label}</button>

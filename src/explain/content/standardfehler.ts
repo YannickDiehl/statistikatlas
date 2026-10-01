@@ -11,7 +11,7 @@ export type SeStats = SeValues & { root: number; se: number; moe: number; lo: nu
 
 export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
   concept: 'se',
-  wofuer: 'Umfragen melden Mittelwerte oft mit einem ±. Im ALLBUS 2023 liegt das politische Interesse im Mittel bei 3,30, auf einer Skala von 1 (überhaupt nicht) bis 5 (sehr stark). 5.225 Menschen haben gültig geantwortet. Wie genau ist diese Zahl?',
+  wofuer: 'Umfragen melden Mittelwerte oft mit einem ±. Im ALLBUS 2023 liegt das politische Interesse im Mittel bei 3,30, auf einer umgepolten Skala von 1 (überhaupt nicht) bis 5 (sehr stark). 5.225 Menschen haben gültig geantwortet. Wie genau ist diese Zahl?',
   kurz: 'Der Standardfehler sagt dir, wie genau ein Mittelwert aus einer Stichprobe ist. Je kleiner er ist, desto genauer.',
   fachlich: 'Die geschätzte Standardabweichung der Stichprobenverteilung des Mittelwerts.',
   initial: { s: INTEREST.sd, n: INTEREST.n },
@@ -60,7 +60,7 @@ export const standardfehler: SentenceTemplate<SeValues, SeStats> = {
       : 'Noch nicht ganz. Rechne erst √100 aus und teile dann s durch dieses Ergebnis.',
   },
   interpret: s => ({
-    kurz: `In etwa 95 von 100 Zufallsstichproben mit ${count(s.n)} Befragten läge der Mittelwert höchstens rund ${unit(s.moe, 'Punkt', 'Punkte', 3)} vom wahren Mittelwert aller Erwachsenen entfernt.`,
+    kurz: `In etwa 95 von 100 Zufallsstichproben mit ${count(s.n)} Befragten läge der Mittelwert höchstens rund ${unit(s.moe, 'Punkt', 'Punkte', 3)} vom wahren Mittelwert aller Erwachsenen entfernt.${s.n < 100 ? ' Bei so wenigen Befragten nimmt man genauer die t-Verteilung (Genau genommen).' : ''}`,
     fachlich: `SE ≈ ${num(s.se, 3)}. Das 95-%-Konfidenzintervall reicht von x̄ − 1,96 · SE bis x̄ + 1,96 · SE, hier von ${num(INTEREST.mean, 3)} − ${num(s.moe, 3)} ≈ ${num(s.lo)} bis ${num(INTEREST.mean, 3)} + ${num(s.moe, 3)} ≈ ${num(s.hi)}. Bei wiederholten Zufallsstichproben würden etwa 95 % solcher Intervalle den wahren Mittelwert enthalten.`,
   }),
   think: {

@@ -259,7 +259,11 @@ test('tabs: the pilot contents in each tab of the standard deviation', () => {
   for (const part of ['In R rechnet mariposa dieselbe Zahl.', 'Lehrdatensatz als SPSS-Datei (.sav)', 'auch als CSV', 'describe(lernzeit, show = c("mean", "sd", "var"))', 'Descriptive Statistics',
     'R schreibt Punkt statt Komma', 'Kurz prüfen', 'Welche Zahl in der Ausgabe ist s?', 'Anderer Aufruf', 'w_sd(lernzeit)', 'Aufruf kopieren', 'R-Skript', 'Weitere Funktionen und Hilfe', '?mariposa::describe'])
     assert.ok(plain(panelOf(html, 'sd', 'r')).includes(part), `In R: „${part}“ fehlt`);
-  assert.match(panelOf(html, 'sd', 'r'), /<button type="button" class="xw-num" aria-pressed="false" aria-label="SD 3\.238: im Atlas zeigen">3\.238<\/button>/);
+  assert.match(panelOf(html, 'sd', 'r'), /<button type="button" tabindex="-?\d" class="xw-num" aria-pressed="false" aria-label="SD 3\.238: im Atlas zeigen">3\.238<\/button>/);
+  // Ein Tabstopp je Code und je Ausgabe (rollender tabIndex), die übrigen Zeichen mit den Pfeiltasten.
+  const r = panelOf(html, 'sd', 'r');
+  assert.equal((r.match(/class="xw-tok[^"]*"/g) ?? []).length > 10 && (r.match(/tabindex="0" class="xw-tok/g) ?? []).length, 1, 'genau ein Tabstopp im Code');
+  assert.equal((r.match(/tabindex="0" class="xw-num/g) ?? []).length, 1, 'genau ein Tabstopp in der Ausgabe');
   assert.match(panelOf(html, 'sd', 'r'), /aria-label="%&gt;%: erklären"/, 'der Pipe-Operator ist antippbar');
   for (const part of ['Von hier aus weiter', 'Als Nächstes', 'Standardfehler', 'Das geht voraus', 'Varianz', 'Daraus entsteht', 'z-Standardisierung', 'Weitere Verwendungen und Rechenwege'])
     assert.ok(t('weiter').includes(part), `Weiter: „${part}“ fehlt`);
@@ -292,4 +296,16 @@ test('tabs: package concepts (se, p_value, dummy, recode) show their sample and 
   has(rec, 'recode', 'r', 'lernplanung5_umgepolt (Ich plane feste Zeiten zum Lernen ein. (recoded))');
   has(rec, 'recode', 'r', 'mean=2.74');
   has(inspector('dummy'), 'dummy', 'sample', 'haupt 40, mittel 37, fhr 41, abitur 40');
+});
+
+test('tabs: rank routes (Spearman through Pearson with ranks) keep the old layout with rank-based numbers', () => {
+  const selection = defaultSelection, context = lessonContext(projectPairs(surveyRows, selection), 'P002', 'covariance', { x: columnById.lernzeit, y: columnById.wissenstest }, true);
+  const html = renderToStaticMarkup(createElement(ConceptInspector, {
+    selected: ref('pearson', 'x', undefined, 'ranks'), context, selection, rows: surveyRows, onColumns: noop, onData: noop, onRows: noop, highlight: null, onHighlight: noop, onSelect: noop, onHover: noop, onClose: noop,
+    onFocusMap: noop, onCase: noop, onPairs: noop, onReset: noop, resetRevision: 0, onVariable: noop, onRoute: noop, trace: false, onTrace: noop,
+    experimentOpen: false, experimentRequest: 0, onExperimentFocused: noop, onExperiment: noop,
+  }));
+  assert.ok(!html.includes('role="tablist"'), 'keine Reiter auf dem Rangweg');
+  assert.ok(text(html).includes('Mit dem Lehrdatensatz (200 Befragte)') && html.includes('ties.method'), 'der bisherige Aufbau rechnet mit Rängen');
+  assert.ok(html.includes('role="tablist"') === false && inspector('pearson').includes('role="tablist"'), 'ohne Ränge bleiben die Reiter');
 });

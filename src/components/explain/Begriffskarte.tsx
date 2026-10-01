@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 import type { ConceptCard } from '../../explain/types';
-import { Genau, Section, TopKurz, useExplainMode } from './basics';
+import { Genau, Section, TopKurz, useExplainMode, useStepJump } from './basics';
 import { ChoiceCheck, ConceptLink, NameBox, termFor, ThinkQuestions } from './pieces';
 import { pictureFor } from './pictures/register';
 
@@ -27,6 +27,7 @@ function Regler({ r, value, setValue }: { r: NonNullable<ConceptCard['regler']>;
  */
 export function Begriffskarte({ card: c, onConcept }: { card: ConceptCard; onConcept: (id: string) => void }) {
   const [mode] = useExplainMode(), compact = mode === 'kompakt';
+  const jump = useStepJump();
   const [value, setValue] = useState(c.regler?.initial ?? null);
   const draw = pictureFor(c.picture, 'begriff');
   const regler = c.regler && value !== null && <Regler r={c.regler} value={value} setValue={setValue} />;
@@ -42,9 +43,9 @@ export function Begriffskarte({ card: c, onConcept }: { card: ConceptCard; onCon
       <NameBox concept={c.concept} sym={c.heisst.sym} say={c.heisst.say} fach={c.heisst.fach} onConcept={onConcept} />
       <Section title="Schritt für Schritt">
         {c.bausteine.map((b, i) => (
-          <div className="xw-card" key={i}>
+          <div className={`xw-card${jump.marked === i + 1 ? ' xw-marked' : ''}`} key={i} aria-current={jump.marked === i + 1 ? 'step' : undefined}>
             <span className="xw-label">Schritt {i + 1} von {c.bausteine.length}</span>
-            <h3 className="xw-step-title">{b.title}</h3>
+            <h3 className="xw-step-title" ref={jump.titleRef(i)} tabIndex={-1}>{b.title}</h3>
             <h4>Was passiert?</h4><p>{b.was}</p>
             {b.rechnung && <><h4>Rechnung</h4><p className="xw-rechnung">{b.rechnung}</p></>}
             {!compact && <>

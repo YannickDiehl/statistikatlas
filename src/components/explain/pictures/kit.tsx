@@ -125,7 +125,7 @@ export function DragPoint({ x, y, label, selected, children, bounds, valueNow, v
  * Achse mit Ticks. Waagerecht (`orient="bottom"`): Linie bei y = `at` von `from` bis `to`, Beschriftung `labelGap`
  * Pixel darunter. Senkrecht (`orient="left"`): Linie bei x = `at`, Beschriftung links davon.
  */
-export function Axis({ scale, ticks, at, from, to, orient = 'bottom', format = String, labelGap = 30, title }: {
+export function Axis({ scale, ticks, at, from, to, orient = 'bottom', format = (v: number) => String(v).replace('-', '−'), labelGap = 30, title }: {
   scale: (v: number) => number; ticks: number[]; at: number; from: number; to: number;
   orient?: 'bottom' | 'left'; format?: (v: number) => string; labelGap?: number; title?: string;
 }) {

@@ -2,7 +2,7 @@
 // für Werkstätten die Brücke (dieselbe Formel mit allen 200, Schritt für Schritt, Person, Bild, Deutung), für alle
 // übrigen Begriffe eine Auswertung mit Deutung. Beide mit Vorhersagen („Erst tippen, dann ausprobieren“), die den
 // gemeinsamen Lehrdatensatz ändern, und einem Hinweis mit Rücksetzknopf, solange er verändert ist.
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import type { ColumnSelection, SurveyRow } from '../../domain/survey';
 import type { Ref } from '../../domain/learning';
@@ -31,9 +31,8 @@ export type SampleProps = {
   settingsColumns?: Record<string, string[]>;
   caseId: string;
   onCase: (id: string) => void;
-  /** Sprung zu einem Schritt (aus „Verstehen“ oder „In R“) und Meldung des aktuellen Schritts. */
+  /** Sprung zu einem Schritt (aus „Verstehen“ oder „In R“); die Lernkarte bekommt dann den Fokus. */
   goTo?: { step: number; n: number };
-  onStep?: (step: number) => void;
   /** Bisherige Auswertungen des Atlas (Fallwahl, Verteilung, Streudiagramm …), unter der Deutung. */
   extras?: ReactNode;
   /** „Die Rechnung als Baukasten entfalten“, zugeklappt am Ende. */
@@ -50,9 +49,30 @@ const flat = (nodes: FNode[]): string => nodes.map(n => typeof n === 'string' ? 
   : 'part' in n ? flat(n.part) : 'frac' in n ? `${flat(n.frac)} / ${flat(n.den)}` : 'root' in n ? `Wurzel aus ${flat(n.root)}`
   : 'big' in n ? n.big : 'sub' in n ? n.sub : ' ').join('').replace(/\s+/g, ' ').trim();
 
-/** Hinweis, solange der gemeinsame Lehrdatensatz verändert ist. */
+/**
+ * Hinweis, solange der gemeinsame Lehrdatensatz verändert ist, mit Rücksetzknopf. Nach dem Zurücksetzen verschwindet
+ * der Knopf; der Fokus geht dann auf die Statuszeile („Wieder die Ausgangsdaten.“), nicht verloren.
+ */
 export function ModifiedNote({ modified, onReset, text = 'Deine Daten sind verändert. Formel, Bild und Kennzahlen zeigen die veränderten Werte.' }: { modified: boolean; onReset?: () => void; text?: string }) {
-  return <div role="status">{modified && <p className="xw-modified">{text}{onReset && <button type="button" className="xw-button" onClick={onReset}>Ausgangsdaten wiederherstellen</button>}</p>}</div>;
+  const box = useRef<HTMLDivElement>(null), [reset, setReset] = useState(false);
+  useEffect(() => { if (modified) setReset(false); }, [modified]);
+  useEffect(() => { if (reset && !modified) box.current?.focus(); }, [reset, modified]);
+  return (
+    <div role="status" tabIndex={-1} ref={box} className="xw-status">
+      {modified && <p className="xw-modified">{text}{onReset && <button type="button" className="xw-button" onClick={() => { setReset(true); onReset(); }}>Ausgangsdaten wiederherstellen</button>}</p>}
+      {!modified && reset && <p className="xw-note">Wieder die Ausgangsdaten.</p>}
+    </div>
+  );
+}
+
+/**
+ * Zählt, wie oft die Daten zu den Ausgangsdaten zurückgekehrt sind: Als Schlüssel der Vorhersagen leert er alte
+ * „Vorher … Jetzt …“-Meldungen nach dem Zurücksetzen.
+ */
+function useResetCount(modified: boolean): number {
+  const [count, setCount] = useState(0), before = useRef(modified);
+  useEffect(() => { if (before.current && !modified) setCount(n => n + 1); before.current = modified; }, [modified]);
+  return count;
 }
 
 /** Vorhersagefragen mit Ausprobieren auf dem Lehrdatensatz; `measure` beschreibt das Ergebnis vorher und nachher. */
@@ -99,8 +119,10 @@ function BridgeView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'brid
   const [step, setStepRaw] = useState(1);
   const last = v?.lastStep ?? 1;
   const setStep = (n: number) => setStepRaw(Math.max(1, Math.min(last, n)));
-  useEffect(() => { if (p.goTo) setStep(p.goTo.step); }, [p.goTo?.n]);
-  useEffect(() => { p.onStep?.(step); }, [step, p.onStep]);
+  const cardTitle = useRef<HTMLHeadingElement>(null), thinkBox = useRef<HTMLDivElement>(null), [focusCard, setFocusCard] = useState(0);
+  useEffect(() => { if (p.goTo) { setStep(p.goTo.step); setFocusCard(n => n + 1); } }, [p.goTo?.n]);
+  useEffect(() => { if (focusCard) cardTitle.current?.focus(); }, [focusCard]);
+  const resets = useResetCount(p.modified);
   const layout = useWorkbenchLayout(), wide = layout.wide && !compact;
   const wanted = tab.variable.split(','), pairs = bridge?.data === 'pairs';
   const axis = pairs ? 'x' : p.reference.variable;
@@ -123,7 +145,7 @@ function BridgeView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'brid
   const card = (
     <div className="xw-card">
       <div className="xw-card-top"><Progress step={step} last={last} /><StepArrows step={step} last={last} onStep={setStep} /></div>
-      <h3 className="xw-step-title">{workshop.steps[step - 1].title}</h3>
+      <h3 className="xw-step-title" ref={cardTitle} tabIndex={-1}>{workshop.steps[step - 1].title}</h3>
       <h4>Schritt {step} für alle {n}</h4>
       <p>{line?.all(ctx as never)}</p>
       <h4>Vorgerechnet für {c.names[c.who]}</h4>
@@ -152,10 +174,14 @@ function BridgeView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'brid
           <h4>Voraussetzung</h4><p>{bridge.voraussetzung(c, tab.variant)}</p>
         </>}
       </Section>
-      {!compact && (matches
-        ? <ThinkQuestions items={think} title="Erst tippen, dann ausprobieren" note={`Erst vermuten, dann mit den ${n} Befragten ausprobieren. Ausgangsdaten wiederherstellen setzt alles zurück.`} hint="Oben ist der zuständige Schritt markiert." />
+      {!compact && <div ref={thinkBox} tabIndex={-1} className="xw-focus-box">{matches
+        ? <ThinkQuestions key={resets} items={think} title="Erst tippen, dann ausprobieren" note={`Erst vermuten, dann mit den ${n} Befragten ausprobieren. Ausgangsdaten wiederherstellen setzt alles zurück.`} hint="Oben ist der zuständige Schritt markiert." />
         : <Section title="Erst tippen, dann ausprobieren"><p className="xw-note">Die Vorhersagefragen sind für {wanted.map(id => `„${sampleColumnInfo(id).title}“`).join(' und ')} geschrieben.
-          {p.selection && p.onColumns && <button type="button" className="xw-link" onClick={() => p.onColumns!(pairs ? { ...p.selection!, x: wanted[0], y: wanted[1] } : { ...p.selection!, [axis]: wanted[0] })}>Zu {wanted.map(id => sampleColumnInfo(id).title).join(' und ')} wechseln</button>}</p></Section>)}
+          {p.selection && p.onColumns && <button type="button" className="xw-link" onClick={() => {
+            p.onColumns!(pairs ? { ...p.selection!, x: wanted[0], y: wanted[1] } : { ...p.selection!, [axis]: wanted[0] });
+            // Der Knopf verschwindet mit dem Wechsel; der Fokus geht auf die Vorhersagen.
+            requestAnimationFrame(() => thinkBox.current?.focus());
+          }}>Zu {wanted.map(id => sampleColumnInfo(id).title).join(' und ')} wechseln</button>}</p></Section>}</div>}
       {!compact && p.recipe}
     </div>
   );
@@ -169,6 +195,7 @@ function AnalysisView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'an
   const ctx = (rows: SurveyRow[]): SampleCtx => ({ rows, columns });
   const result = tab.result(ctx(p.rows)), who = Math.max(0, p.rows.findIndex(r => r.id === p.caseId));
   const think = predictions(tab.think, p, a => columns[a]?.[0], who, rows => tab.result(ctx(rows)).kurz);
+  const resets = useResetCount(p.modified);
   return (
     <div className={`xw xw-sample${compact ? ' xw-compact' : ''}`}>
       <KurzGesagt text={tab.kurz} />
@@ -183,7 +210,7 @@ function AnalysisView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'an
         </>}
       </Section>
       {p.extras}
-      {!compact && tab.think.length > 0 && <ThinkQuestions items={think} title="Erst tippen, dann ausprobieren" note={`Erst vermuten, dann mit den ${p.rows.length} Befragten ausprobieren. Ausgangsdaten wiederherstellen setzt alles zurück.`} hint="Das Ergebnis oben zeigt nach dem Ausprobieren die neuen Daten." />}
+      {!compact && tab.think.length > 0 && <ThinkQuestions key={resets} items={think} title="Erst tippen, dann ausprobieren" note={`Erst vermuten, dann mit den ${p.rows.length} Befragten ausprobieren. Ausgangsdaten wiederherstellen setzt alles zurück.`} hint="Das Ergebnis oben zeigt nach dem Ausprobieren die neuen Daten." />}
       {!compact && p.recipe}
     </div>
   );

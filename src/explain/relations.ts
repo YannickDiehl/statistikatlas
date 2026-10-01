@@ -3,7 +3,7 @@
  * Abschnitt 9: „Doppelte Bezugsziele werden zu einem Eintrag zusammengeführt“). Rein, ohne React.
  */
 import type { NetworkEdge } from '../domain/network';
-import type { NextTab } from './types';
+import type { NextItem, NextTab, SampleCtx } from './types';
 
 /** Ein Ziel mit einem Satz („why“), aus einem oder mehreren Bezügen zusammengeführt. */
 export type RelationItem = { id: string; why: string; kind: NetworkEdge['kind']; alternative: boolean };
@@ -35,18 +35,17 @@ export type Edges = { before: readonly NetworkEdge[]; after: readonly NetworkEdg
 /**
  * Inhalt des Reiters „Weiter“: von Hand geschriebene Listen (`tab`), leere Listen aus den Bezügen der Karte
  * („Das geht voraus“: aufbauende Bezüge davor; „Daraus entsteht“: alle direkten Bezüge danach außer der Einordnung),
- * darunter zugeklappt `more` und alle übrigen Bezüge. Jedes Ziel steht höchstens einmal da.
+ * darunter zugeklappt `more` und alle übrigen Bezüge. Jedes Ziel steht höchstens einmal da, auch „Als Nächstes“:
+ * Was schon weiter oben steht, fällt in den späteren Listen weg. `c` liefert die Daten für Sätze, die rechnen.
  */
-export function nextLists(tab: NextTab, edges: Edges): { next: RelationItem; before: RelationItem[]; after: RelationItem[]; more: RelationItem[] } {
-  const hand = (list: { id: string; why: string }[]) => list.map(x => ({ ...x, kind: 'build' as const, alternative: false }));
-  const before = tab.before.length ? hand(tab.before) : mergeRelations(edges.before.filter(e => e.kind === 'build' && !e.alternative), 'before');
-  const after = tab.after.length ? hand(tab.after) : mergeRelations(edges.after.filter(e => !e.alternative && e.kind !== 'meaning'), 'after');
-  const shown = new Set([tab.next.id, ...before.map(x => x.id), ...after.map(x => x.id)]);
-  const more: RelationItem[] = [];
-  for (const item of [...hand(tab.more ?? []), ...mergeRelations(edges.before, 'before'), ...mergeRelations(edges.after, 'after')]) {
-    if (shown.has(item.id)) continue;
-    shown.add(item.id);
-    more.push(item);
-  }
-  return { next: { ...tab.next, kind: 'build', alternative: false }, before, after, more };
+export function nextLists(tab: NextTab, edges: Edges, c?: SampleCtx): { next: RelationItem; before: RelationItem[]; after: RelationItem[]; more: RelationItem[] } {
+  const why = (w: NextItem['why']) => typeof w === 'function' ? (c ? w(c) : '') : w;
+  const hand = (list: NextItem[]) => list.map(x => ({ id: x.id, why: why(x.why), kind: 'build' as const, alternative: false }));
+  const shown = new Set<string>([tab.next.id]);
+  /** Behält nur Ziele, die noch nicht dastehen, und merkt sie sich. */
+  const fresh = (list: RelationItem[]) => list.filter(x => !shown.has(x.id) && !!shown.add(x.id));
+  const before = fresh(tab.before.length ? hand(tab.before) : mergeRelations(edges.before.filter(e => e.kind === 'build' && !e.alternative), 'before'));
+  const after = fresh(tab.after.length ? hand(tab.after) : mergeRelations(edges.after.filter(e => !e.alternative && e.kind !== 'meaning'), 'after'));
+  const more = fresh([...hand(tab.more ?? []), ...mergeRelations(edges.before, 'before'), ...mergeRelations(edges.after, 'after')]);
+  return { next: { id: tab.next.id, why: why(tab.next.why), kind: 'build', alternative: false }, before, after, more };
 }

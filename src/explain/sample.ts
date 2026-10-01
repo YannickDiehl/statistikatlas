@@ -115,10 +115,14 @@ export function fitsColumn(rows: readonly SurveyRow[], column: string): boolean 
   });
 }
 
-/** Spalte mit Titel, Einheit und Fragetext (ohne äußere Anführungszeichen). */
+/** Spaltentitel für Texte: ohne Mittelpunkt als Trenner (Regel 11), „Wissenstest · Zeitpunkt 2“ → „Wissenstest, Zeitpunkt 2“. */
+export const textTitle = (title: string) => title.replace(/\s+·\s+/g, ', ');
+
+/** Spalte mit Titel (für Texte), Einheit, Fragetext und Skalenniveau. */
 export function sampleColumnInfo(id: string): SampleColumn {
   const c = columnById[id];
-  return c ? { id, title: c.title, unit: c.unit, question: c.question } : { id, title: id.toUpperCase(), unit: '', question: '' };
+  return c ? { id, title: textTitle(c.title), unit: c.unit, question: c.question, scale: c.scale, likert: c.kind === 'likert' }
+    : { id, title: id.toUpperCase(), unit: '', question: '', scale: 'metric', likert: false };
 }
 
 /** Zahl mit Einheit der Spalte, höchstens zwei Nachkommastellen: „3,24 h“, quadriert „10,48 h²“, ohne Einheit nur die Zahl. */

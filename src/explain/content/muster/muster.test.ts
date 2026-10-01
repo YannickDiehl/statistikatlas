@@ -8,14 +8,13 @@ import { LERNZEIT_NACH_WEITERBILDUNG as L, pFor, pWert } from './p-wert';
 import { ABSCHLUESSE, dummy } from './dummy';
 
 /*
- * Referenzwerte der Muster, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz.
- * atlas.csv ist createSurvey() als CSV (Spalte id und alle surveyColumns, ein Wert je Zelle); dieselben Werte liefert
- * read_spss("Statistikatlas-200-Befragte.sav") auf der .sav aus dem Atlas (mit Wertelabels, siehe letzte Zeile):
+ * Referenzwerte der Muster, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
+ * gelesen wie im R-Code der Studierenden (die .sav aus dem Atlas, Knopf „SPSS-Datei (.sav)“, oder writeSav(createSurvey())):
  *
  *   pkgload::load_all("~/Documents/SoftwareProjekte/RPakete/mariposa", export_all = FALSE, quiet = TRUE)
  *   library(dplyr)
- *   atlas <- read.csv("atlas.csv")
- *   tt <- t.test(lernzeit ~ weiterbildung, data = atlas)        # Welch, wie mariposa::t_test
+ *   atlas <- read_spss("Statistikatlas-200-Befragte.sav")
+ *   tt <- t.test(as.numeric(lernzeit) ~ as.numeric(weiterbildung), data = atlas)   # Welch, wie mariposa::t_test
  *   # n0 = 118, n1 = 82, mean0 = 7.781356, mean1 = 7.708537
  *   # t = 0.156435, df = 175.841175, p = 0.875870, stderr = 0.465493, conf.int = [-0.845854, 0.991492]
  *   atlas %>% t_test(lernzeit, group = weiterbildung)          # t(175.8) = 0.156, p = 0.876

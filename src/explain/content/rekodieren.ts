@@ -17,6 +17,10 @@ export const MEAN_BEFORE = 2.70;
 const q = (s: string) => `„${s}“`;
 const code = (c: Code) => c.k === 'M' ? 'keine gültige Angabe' : `den Code ${c.k} (${q(c.label)})`;
 const target = (r: Rule['rhs']) => r === 'NA' ? 'NA (fehlend)' : r === 'copy' ? 'unverändert' : num(r);
+/** Aufzählung wie die Meldungen von mariposa (cli): „3“, „1 and 5“, „3, 4, and 5“. */
+const cliList = (ks: (number | 'M')[]) => ks.length <= 2 ? ks.join(' and ') : `${ks.slice(0, -1).join(', ')}, and ${ks[ks.length - 1]}`;
+/** Bei rev(lo, hi) stammen die Grenzen aus der Regel, bei rev aus den Codes. */
+const revRule = (p: Extract<Program, { kind: 'rev' }>) => /^rev$/i.test(p.src.trim()) ? 'kleinster + größter Code' : 'untere + obere Grenze aus rev()';
 const codeList = (ks: (number | 'M')[]) => ks.length === 1 ? `Code ${ks[0]}` : `Codes ${ks.slice(0, -1).join(', ')} und ${ks[ks.length - 1]}`;
 
 export const rekodieren = {
@@ -25,7 +29,7 @@ export const rekodieren = {
   newName: 'interesse',
   codes: PA02A,
   scale: SCALE,
-  wofuer: 'Im ALLBUS steht beim politischen Interesse (pa02a) die 1 für „sehr stark“ und die 5 für „überhaupt nicht“. Wer lieber „höhere Zahl heißt mehr Interesse“ lesen will, muss die Skala umdrehen. Und wer zwei Gruppen vergleichen will, fasst Codes zusammen.',
+  wofuer: 'Im ALLBUS 2023 steht beim politischen Interesse (pa02a) die 1 für „sehr stark“ und die 5 für „überhaupt nicht“. Wer lieber „höhere Zahl heißt mehr Interesse“ lesen will, muss die Skala umdrehen. Und wer zwei Gruppen vergleichen will, fasst Codes zusammen.',
   mut: 'Hier rechnest du nichts aus. Du schreibst Regeln, nach denen Antworten neue Zahlen bekommen, und siehst sofort, was passiert.',
   kurz: 'Rekodieren gibt Antworten neue Zahlen. Was die Befragten geantwortet haben, bleibt dasselbe.',
   fachlich: 'Rekodieren ordnet den Codes einer Variable nach Regeln neue Codes und Wertelabels zu. Umpolen kehrt die Reihenfolge einer Skala um, Dichotomisieren fasst sie zu zwei Gruppen zusammen.',
@@ -53,7 +57,7 @@ export const rekodieren = {
   ],
   /** „So liest rec() deine Regel“: eine Zeile je Regel. */
   describe(p: Program): { label: string; src: string; text: string }[] {
-    if (p.kind === 'rev') return [{ label: 'Regel', src: p.src, text: `Die Skala wird umgepolt. Es gilt: neu = kleinster + größter Code − alt, hier ${num(p.lo + p.hi)} − alt. Die Wertelabels wandern mit.` }];
+    if (p.kind === 'rev') return [{ label: 'Regel', src: p.src, text: `Die Skala wird umgepolt. Es gilt: neu = ${revRule(p)} − alt, hier ${/^rev$/i.test(p.src.trim()) ? num(p.lo + p.hi) : `${num(p.lo)} + ${num(p.hi)}`} − alt. Die Wertelabels wandern mit.` }];
     return p.rules.map((r, i) => ({
       label: `Regel ${i + 1}`, src: r.src,
       text: 'else' in r.lhs
@@ -76,7 +80,7 @@ export const rekodieren = {
     const lines = [`Die Person hat ${code(c)}.`];
     if (p.kind === 'rev') {
       if (c.k === 'M') lines.push('rev dreht nur gültige Codes um. Die Person bleibt fehlend.');
-      else lines.push(`rev rechnet: neu = kleinster + größter Code − alt = ${num(p.lo)} + ${num(p.hi)} − ${c.k} = ${num(p.lo + p.hi - c.k)}.`, `Das Wertelabel ${q(c.label)} wandert mit zum Code ${num(p.lo + p.hi - c.k)}.`);
+      else lines.push(`rev rechnet: neu = ${revRule(p)} − alt = ${num(p.lo)} + ${num(p.hi)} − ${c.k} = ${num(p.lo + p.hi - c.k)}.`, `Das Wertelabel ${q(c.label)} wandert mit zum Code ${num(p.lo + p.hi - c.k)}.`);
     } else {
       for (const s of checked) lines.push(`Regel ${s.rule} (${s.src}) ${s.hit ? 'passt.' : s.missingInRange ? 'passt nicht: Fehlende Werte liegen in keinem Bereich.' : 'passt nicht.'}`);
     }
@@ -90,7 +94,7 @@ export const rekodieren = {
   },
   warnUnmatched: (codes: Code[]) => ({
     text: `Warnung wie in mariposa: ${codes.length === 1 ? 'Der' : 'Die'} ${codeList(codes.map(c => c.k))} ${codes.length === 1 ? 'passt' : 'passen'} zu keiner Regel und ${codes.length === 1 ? 'wird' : 'werden'} NA. Das betrifft ${count(codes.reduce((a, c) => a + c.f, 0))} Befragte. Mit „else=copy“ behältst du die Codes, mit „else=NA“ bestätigst du, dass sie NA werden.`,
-    r: `${codes.length} value${codes.length === 1 ? '' : 's'} of \`pa02a\` matched no rule and became "NA": ${codes.map(c => c.k).join(', ')}.`,
+    r: `${codes.length} value${codes.length === 1 ? '' : 's'} of \`pa02a\` matched no rule and became "NA": ${cliList(codes.map(c => c.k))}.`,
     kurz: 'Diese Antworten gehen verloren, wenn du nichts tust.',
   }),
   warnCaptured: (v: number, label: string | null) => ({
@@ -99,7 +103,7 @@ export const rekodieren = {
   }),
   warnOutside: (p: Extract<Program, { kind: 'rev' }>, codes: Code[]) => ({
     text: `Warnung wie in mariposa: ${codes.length === 1 ? 'Der' : 'Die'} ${codeList(codes.map(c => c.k))} ${codes.length === 1 ? 'liegt' : 'liegen'} außerhalb von ${num(p.lo)} bis ${num(p.hi)} und ${codes.length === 1 ? 'wird' : 'werden'} trotzdem umgedreht (${num(p.lo)} + ${num(p.hi)} − alt). Rekodiere solche Codes vorher, zum Beispiel zu NA.`,
-    r: `\`pa02a\` has value outside the scale range ${num(p.lo)}-${num(p.hi)}: ${codes.map(c => c.k).join(', ')}.`,
+    r: `\`pa02a\` has value${codes.length === 1 ? '' : 's'} outside the scale range ${num(p.lo)}-${num(p.hi)}: ${cliList(codes.map(c => c.k))}.`,
     kurz: 'Die Skala in rev() muss zu den Codes passen.',
   }),
   meanNote(p: Program, mean: number, binary: boolean): string {

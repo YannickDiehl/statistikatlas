@@ -31,6 +31,21 @@ export const RTOKEN_CONCEPTS: Record<string, string> = {
 };
 
 export const RTOKENS: Record<string, TokenNote> = {
+  dplyr: {
+    sym: 'dplyr', term: 'Paket dplyr',
+    kurz: 'Ein Paket zum Umformen von Daten. Es bringt mutate(), summarise() und den Pipe-Operator %>% mit.',
+    fehler: 'Ist dplyr nicht installiert, meldet R: es gibt kein Paket namens ‘dplyr’. Dann hilft einmalig install.packages("dplyr").',
+  },
+  mariposa: {
+    sym: 'mariposa', term: 'Paket mariposa',
+    kurz: 'Das Statistikpaket des Kurses: describe(), frequency(), t_test() und viele mehr, mit Ausgaben im Stil von SPSS.',
+    fehler: 'Ältere Versionen kennen nicht alle Regeln und Argumente. Der Atlas rechnet mit mariposa 0.7.4.',
+  },
+  '"Statistikatlas-200-Befragte.sav"': {
+    sym: '"Statistikatlas-200-Befragte.sav"', term: 'Dateiname',
+    kurz: 'Der Name der heruntergeladenen Datei, in Anführungszeichen. R sucht sie im Arbeitsverzeichnis.',
+    fehler: 'Hat der Browser die Datei umbenannt, etwa mit einer (1) am Ende, findet R sie nicht. Benenne die Datei um oder passe den Namen an.',
+  },
   library: {
     sym: 'library()', term: 'Paket laden',
     kurz: 'Holt ein installiertes Paket in die laufende R-Sitzung. Erst danach kennt R dessen Funktionen.',
@@ -74,7 +89,7 @@ export const RTOKENS: Record<string, TokenNote> = {
   summary: {
     sym: 'summary()', term: 'Ausführliche Ausgabe',
     kurz: 'Zeigt zu einem gespeicherten Ergebnis die ausführliche Tabelle. Der Name allein zeigt die Kurzfassung.',
-    fehler: 'summary() braucht ein gespeichertes Ergebnis. Steht es vor der Zeile mit <-, meldet R: Objekt \'a\' nicht gefunden.',
+    fehler: 'summary() braucht ein gespeichertes Ergebnis. Steht summary(a) im Skript vor der Zeile a <- …, meldet R: Objekt \'a\' nicht gefunden.',
   },
   c: {
     sym: 'c()', term: 'Vektor bilden', say: 'combine',
@@ -109,7 +124,7 @@ export const RTOKENS: Record<string, TokenNote> = {
   'conf.level': {
     sym: 'conf.level =', term: 'Konfidenzintervall',
     kurz: 'Legt das Niveau des Konfidenzintervalls fest. .95 bedeutet 95 Prozent.',
-    fehler: 'Das Niveau ist ein Anteil, keine Prozentzahl. conf.level = 95 ergibt: `conf.level` must be between 0 and 1.',
+    fehler: 'Das Niveau ist ein Anteil, keine Prozentzahl. conf.level = 95 ergibt bei pearson_cor(): `conf.level` must be between 0 and 1.',
   },
   mu: {
     sym: 'mu =', term: 'Null- & Alternativhypothese', say: 'mü',

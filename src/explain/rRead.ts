@@ -17,12 +17,6 @@ import type { LiveCall, TokenNote } from './types';
 // ---------- Leitaufrufe mit Ausgabe aus den aktuellen Daten ----------
 
 const quoted = (s: string) => `"${s}"`;
-/** Umpolregel einer Spalte mit Antwortcodes, wie in analysisCode(): „1=5; 2=4; 3=3; 4=2; 5=1“. */
-export function reverseRules(column: string): string {
-  const c = columnById[column];
-  return c?.categories?.map(k => `${k.value}=${c.min + c.max - k.value}`).join('; ') ?? '';
-}
-
 /** Der Aufruf ohne Startblock, im Pipe-Stil (`atlas %>%` und eingerückt die Funktion). */
 export function liveCode(live: LiveCall, x: string, y = ''): string {
   switch (live.fn) {
@@ -30,7 +24,7 @@ export function liveCode(live: LiveCall, x: string, y = ''): string {
     case 'pearson_cor': return `atlas %>%\n  pearson_cor(${x}, ${y})`;
     case 'cov': return `atlas %>%\n  summarise(kovarianz = cov(${x}, ${y}))`;
     case 'frequency': return `atlas %>%\n  frequency(${x})`;
-    case 'rec_frequency': return `atlas %>%\n  mutate(${x}_umgepolt = rec(${x}, rules = ${quoted(reverseRules(x))})) %>%\n  frequency(${x}_umgepolt)`;
+    case 'rec_frequency': return `atlas %>%\n  mutate(${x}_umgepolt = rec(${x}, rules = "rev")) %>%\n  frequency(${x}_umgepolt)`;
   }
 }
 
@@ -51,8 +45,11 @@ export function liveOutput(live: LiveCall, rows: readonly SurveyRow[], x: string
     case 'pearson_cor': return pearsonOutput(xs, sampleColumn(rows, y), x, y);
     case 'cov': return covOutput('kovarianz', rCov(xs, sampleColumn(rows, y)));
     case 'frequency': return frequencyOutput(xs, labels, x, c ? savVariableLabel(c) : undefined);
-    // rec() übernimmt die Wertelabels nicht und hängt „(recoded)“ an das Variablenlabel.
-    case 'rec_frequency': return frequencyOutput(xs.map(v => c.min + c.max - v), {}, `${x}_umgepolt`, `${savVariableLabel(c)} (recoded)`);
+    // rules = "rev" spiegelt Codes und Wertelabels (wie im Werkzeug) und hängt „(recoded)“ an das Variablenlabel.
+    case 'rec_frequency': {
+      const mirrored = Object.fromEntries((c.categories ?? []).map(k => [c.min + c.max - k.value, k.label]));
+      return frequencyOutput(xs.map(v => c.min + c.max - v), mirrored, `${x}_umgepolt`, `${savVariableLabel(c)} (recoded)`);
+    }
   }
 }
 

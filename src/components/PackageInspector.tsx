@@ -1,6 +1,6 @@
 import { CalculationSteps } from './CalculationSteps';
-import { explainFor, tabsFor, workshopFor } from '../explain/registry';
-import { ExplainTabs, kurzOf, tabList } from './explain/ExplainTabs';
+import { explainFor, tabsFor } from '../explain/registry';
+import { ExplainTabs, kurzOf, stepTargets, tabList } from './explain/ExplainTabs';
 import { SampleTab } from './explain/SampleTab';
 import { RTab } from './explain/RTab';
 import { NextTab } from './explain/NextTab';
@@ -44,18 +44,18 @@ export function PackageInspector(p:RPanelProps&PackageTabProps&{selected:Ref;onC
  // Begriffe mit Reitern (Spezifikation Lehrdatensatz 5.1/5.2): Titel, Kurz gesagt, Reiterleiste; die bisherigen Teile wandern in die Reiter.
  if(tabs){
   const rows=p.rows??baseSurvey(),modified=!!p.rows&&modifiedFrom(p.rows,baseSurvey()),route=p.route||'covariance';
-  const workshop=tabs.sample?.kind==='bridge'?workshopFor(tabs.sample.workshop):template?.kind==='werkstatt'?template.workshop:null;
+  const targets=stepTargets(template,tabs),sel=p.selection,ctx={rows,columns:{...(sel?{x:[sel.x],y:[sel.y]}:{}),...p.settings?.columns}};
   return <aside id="atlas-inspector" className="network-inspector package-inspector has-tabs" ref={scroll} aria-labelledby="inspector-title">{top}<h1 id="inspector-title" tabIndex={-1} key="title">{e.title}</h1>{focusMap}
-   <ExplainTabs key={e.id} concept={e.id} tabs={tabList(template,tabs)} kurz={kurzOf(template)} render={(id,tabLinks)=>{
+   <ExplainTabs key={e.id} concept={e.id} tabs={tabList(template,tabs)} kurz={kurzOf(template)} steps={targets?.tab} render={(id,tabLinks)=>{
     switch(id){
      case 'verstehen':return <>
       {template?<Explanation id={e.id} explain={template} onConcept={open}/>:<><p className="concept-intro">{e.intro}</p><LinkedFormula key={`${e.id}-${p.settings?.variant||0}`} contextAnchor={p.contextAnchor} route={p.route} formula={v?.formula||e.formula} reference={p.selected} onSelect={p.onSelect} onHover={p.onHover}/><CalculationSteps reference={p.selected} route={route} formula={v?.formula||e.formula} onSelect={p.onSelect} onHover={p.onHover}/><section className="package-meaning"><h2>Was sagt das Ergebnis?</h2><p>{e.output}</p></section></>}
       <FoundationLab key={`foundation-${e.id}`} id={e.id} rows={p.rows} selection={p.selection}/>
       {e.lab&&!template&&<PrincipleLab key={`principle-${e.id}`} id={e.lab}/>}
      </>;
-     case 'sample':return <SampleTab tab={tabs.sample!} rows={rows} onRows={p.onRows} onReset={p.onReset} modified={modified} reference={p.selected} selection={p.selection} onColumns={p.onColumns} columnNotice={p.columnNotice} settingsColumns={p.settings?.columns} caseId={p.caseId??rows[1]?.id??''} onCase={p.onCase??(()=>{})} goTo={tabLinks.goSample} onStep={tabLinks.onSampleStep}/>;
-     case 'r':return <RTab {...p} tab={tabs.r!} title={e.title} rows={rows} modified={modified} reference={p.selected} onStepLink={tabLinks.stepLink} stepTitle={n=>workshop?.steps[n-1]?.title} onConcept={open}/>;
-     case 'weiter':return <NextTab tab={tabs.next} edges={links} selected={p.selected} route={route} contextAnchor={p.contextAnchor} onSelect={p.onSelect} onHover={p.onHover} trace={p.trace} onTrace={p.onTrace}
+     case 'sample':return <SampleTab tab={tabs.sample!} rows={rows} onRows={p.onRows} onReset={p.onReset} modified={modified} reference={p.selected} selection={p.selection} onColumns={p.onColumns} columnNotice={p.columnNotice} settingsColumns={p.settings?.columns} caseId={p.caseId??rows[1]?.id??''} onCase={p.onCase??(()=>{})} goTo={tabLinks.goSample}/>;
+     case 'r':return <RTab {...p} tab={tabs.r!} title={e.title} rows={rows} modified={modified} reference={p.selected} onStepLink={tabLinks.stepLink} stepTitle={n=>targets?.titles[n-1]} onConcept={open}/>;
+     case 'weiter':return <NextTab tab={tabs.next} edges={links} ctx={ctx} selected={p.selected} route={route} contextAnchor={p.contextAnchor} onSelect={p.onSelect} onHover={p.onHover} trace={p.trace} onTrace={p.onTrace}
       extra={<details className="xw-more"><summary>Voraussetzungen und Einordnung</summary>{conditions}{sources}</details>}/>;
     }
    }}/>

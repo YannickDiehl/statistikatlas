@@ -26,7 +26,7 @@ const quote = (s: string) => `„${s}“`;
 
 export const dummy: TableTool = {
   concept: 'dummy',
-  wofuer: 'Du willst wissen, ob der Schulabschluss mit der Lernzeit zusammenhängt, zum Beispiel in einer Regression. Die Codes 0 bis 4 sind aber keine Mengen: Abitur (Code 4) ist nicht doppelt so viel wie ein mittlerer Abschluss (Code 2). Deshalb bekommt jeder Abschluss eine eigene Spalte mit 0 oder 1.',
+  wofuer: 'Du willst wissen, ob der Schulabschluss mit der Lernzeit zusammenhängt, zum Beispiel in einer Regression. Die Codes 0 bis 4 sind aber keine Mengen: Abitur (Code 4) ist nicht doppelt so viel wie ein mittlerer Abschluss (Code 2). Deshalb bekommt jeder Abschluss außer einem eine eigene Spalte mit 0 oder 1.',
   kurz: 'Eine Dummyvariable fragt nur: Gehört diese Person zu dieser Gruppe, ja (1) oder nein (0)? Eine Gruppe bekommt keine eigene Spalte, sie ist der Vergleichspunkt.',
   mut: 'Hier rechnest du nichts aus. Du sortierst nur: Für jede Person und jede neue Spalte fragst du „ja oder nein?“.',
   columns: [
@@ -40,7 +40,7 @@ export const dummy: TableTool = {
     {
       title: 'Eine Vergleichsgruppe wählen',
       was: 'Du legst fest, mit welcher Gruppe alle anderen verglichen werden. Diese Gruppe bekommt keine eigene Spalte.',
-      warum: 'Die Vergleichsgruppe steckt in einer Regression schon im Achsenabschnitt. Eine eigene Spalte wäre doppelt.',
+      warum: 'Die Vergleichsgruppe steckt in einer Regression schon im Achsenabschnitt, dem Startwert der Vorhersage. Eine eigene Spalte wäre doppelt.',
       acht: 'Mit Spalten für alle fünf Gruppen kann die Regression nicht rechnen. Diese Falle heißt Dummy-Falle.',
       fach: 'Die ausgelassene Kategorie heißt Referenzkategorie.',
     },
@@ -98,7 +98,7 @@ export const dummy: TableTool = {
     {
       question: `Du wechselst die Vergleichsgruppe von ${quote('Ohne Schulabschluss')} zu ${quote('Abitur')}. Was passiert mit den Vorhersagen einer Regression?`,
       options: ['sie ändern sich', 'sie bleiben gleich'], correct: 1, step: 1,
-      explain: 'Die Vorhersage für jede Gruppe bleibt dieselbe. Es ändert sich nur, womit die Koeffizienten verglichen werden: Jeder misst jetzt den Abstand zur Gruppe mit Abitur.',
+      explain: 'Die Vorhersage für jede Gruppe bleibt dieselbe. Es ändert sich nur, womit die Gewichte der Regression (Koeffizienten) verglichen werden: Jedes misst jetzt den Abstand zur Gruppe mit Abitur.',
       kurz: 'Andere Vergleichsgruppe, andere Koeffizienten, gleiche Vorhersagen.',
     },
     {

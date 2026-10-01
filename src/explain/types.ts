@@ -142,7 +142,16 @@ export interface Workshop<D, S> {
 // Brücke „Mit 200 Befragten“ ------------------------------------------------------------
 
 /** Spalte des Lehrdatensatzes, wie die Brücke sie nennt (Titel, Einheit, Fragetext aus src/domain/survey.ts). */
-export interface SampleColumn { id: string; title: string; unit: string; question: string }
+export interface SampleColumn {
+  id: string;
+  /** Titel ohne Mittelpunkt als Trenner („Wissenstest, Zeitpunkt 2“), für Texte. */
+  title: string;
+  unit: string;
+  question: string;
+  /** Skalenniveau der Spalte; `likert` heißt Zustimmungsfrage mit Stufen (metrisch nur unter der Abstandsannahme). */
+  scale: 'nominal' | 'ordinal' | 'metric';
+  likert: boolean;
+}
 
 /** Kontext der Brücke: Kennwerte der Werkstatt auf allen 200 Befragten, die gewählte Person und die Spalten. */
 export interface BridgeCtx<S> {
@@ -193,6 +202,8 @@ export interface Bridge<S> {
   /** Voraussetzung, unter der das Ergebnis gilt. */
   voraussetzung: (c: BridgeCtx<S>, variant: string) => string;
   picture: (c: BridgeCtx<S>, step: number) => BridgePicture;
+  /** Das Ergebnis als Zahl (zum Beispiel s für `sd`, r für `pearson`); null, wenn es nicht definiert ist. Daran prüft der Test die Vorhersagen (`ThinkSample.expect`). */
+  value: (c: BridgeCtx<S>, variant: string) => number | null;
 }
 
 // Formel als Satz (Vorlage 2) ---------------------------------------------------------
@@ -287,7 +298,9 @@ export interface TableTool {
  */
 export type SampleTab =
   | { kind: 'bridge'; workshop: string; variant: string; variable: string; think: ThinkSample[] }
-  | { kind: 'analysis'; kurz: string; result: (c: SampleCtx) => { kurz: string; fachlich: string; zusatz?: string }; voraussetzung?: string; think: ThinkSample[]; columns?: Record<string, string> };
+  | { kind: 'analysis'; kurz: string; result: (c: SampleCtx) => { kurz: string; fachlich: string; zusatz?: string }; voraussetzung?: string; think: ThinkSample[]; columns?: Record<string, string>;
+      /** Das Ergebnis als Zahl (zum Beispiel p oder SE), für die Prüfung der Vorhersagen; eine Vorhersage kann mit `expect.measure` eine eigene Zahl nennen. */
+      value?: (c: SampleCtx) => number | null };
 /** Daten der Auswertung: die aktuellen 200 Befragten und die Spalten je Rolle (`x`, `y`, `group`, …). */
 export interface SampleCtx { rows: import('../domain/survey').SurveyRow[]; columns: Record<string, string[]> }
 /**
@@ -296,7 +309,29 @@ export interface SampleCtx { rows: import('../domain/survey').SurveyRow[]; colum
  * `constant`: alle bekommen `value` (sonst den Mittelwert), `reverse`: umpolen (Minimum + Maximum − Wert).
  * `step` verweist auf den Formelschritt. Rechnung: src/explain/sample.ts (`applyOp`).
  */
-export interface ThinkSample extends ThinkItem { tryIt: { label: string; op: 'shift' | 'double' | 'outlier' | 'constant' | 'reverse'; column: 'x' | 'y'; value?: number } }
+export interface ThinkSample extends ThinkItem {
+  tryIt: { label: string; op: 'shift' | 'double' | 'outlier' | 'constant' | 'reverse'; column: 'x' | 'y'; value?: number };
+  /**
+   * Was die als richtig markierte Antwort über das Ergebnis behauptet (Zahl vorher → nachher). Der Test wendet
+   * `tryIt` auf die Ausgangsdaten und auf die Daten nach jeder anderen Vorhersage des Reiters an, bei `outlier` für
+   * jede der 200 Personen, und prüft die Behauptung. `measure` ersetzt die Ergebniszahl des Reiters (`Bridge.value`
+   * bzw. `analysis.value`), etwa „Einsen in der Spalte abitur“.
+   */
+  expect: Expect & { measure?: (c: SampleCtx) => number | null };
+}
+/**
+ * Behauptung einer Vorhersage über die Ergebniszahl: bleibt gleich, mal `factor` (2 = verdoppelt), plus `amount`,
+ * wechselt das Vorzeichen, steigt oder sinkt (um mindestens `atLeast`, höchstens `atMost`), wird im Betrag schwächer
+ * oder stärker, ist danach genau `value`.
+ */
+export type Expect =
+  | { change: 'same' }
+  | { change: 'factor'; factor: number }
+  | { change: 'plus'; amount: number }
+  | { change: 'sign' }
+  | { change: 'up' | 'down'; atLeast?: number; atMost?: number }
+  | { change: 'weaker' | 'stronger' }
+  | { change: 'equals'; value: number };
 /** Lernkarte zu einem Zeichen im R-Code (Codelegende); eine Quelle für Katalog und Erklärungen (src/domain/rTokens.ts). */
 export type { TokenNote };
 /**
@@ -332,7 +367,9 @@ export interface RTab {
  * „Daraus entsteht“ (`after`), je Ziel ein Satz. Leere Listen füllt die Oberfläche aus den Bezügen der Karte,
  * doppelte Ziele zusammengeführt; `more` und die übrigen Bezüge stehen zugeklappt darunter.
  */
-export interface NextTab { next: { id: string; why: string }; before: { id: string; why: string }[]; after: { id: string; why: string }[]; more?: { id: string; why: string }[] }
+/** Ziel im Reiter „Weiter“; `why` darf aus den aktuellen Daten rechnen (Spalten der Spaltenwahl in `c.columns.x`, `c.columns.y`). */
+export interface NextItem { id: string; why: string | ((c: SampleCtx) => string) }
+export interface NextTab { next: NextItem; before: NextItem[]; after: NextItem[]; more?: NextItem[] }
 export interface ConceptTabs { sample?: SampleTab; r?: RTab; next: NextTab }
 
 // Zuordnung -----------------------------------------------------------------------------

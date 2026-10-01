@@ -1,9 +1,9 @@
 import { CalculationSteps } from './CalculationSteps';
-import { explainFor, stepCardFor, requestStep, tabsFor, workshopFor } from '../explain/registry';
+import { explainFor, stepCardFor, requestStep, tabsFor } from '../explain/registry';
 import { StepCard } from './explain/Formelwerkstatt';
 import { Explanation, EXPLAIN_LABEL } from './explain/Explanation';
 import { ModeToggle } from './explain/basics';
-import { ExplainTabs, kurzOf, tabList } from './explain/ExplainTabs';
+import { ExplainTabs, kurzOf, stepTargets, tabList } from './explain/ExplainTabs';
 import { SampleTab } from './explain/SampleTab';
 import { RTab } from './explain/RTab';
 import { NextTab } from './explain/NextTab';
@@ -47,7 +47,8 @@ export function ConceptInspector(p:Props){
  const rows=p.rows??baseSurvey(),modified=!!p.rows&&modifiedFrom(p.rows,baseSurvey());
  if(entry&&!entry.existing)return <PackageInspector contextAnchor={p.contextAnchor} route={p.context.route} entry={entry} reference={r} selected={r} settings={p.rSettings} onSettings={p.onRSettings} rows={p.rows} selection={p.selection} onColumns={p.onColumns} columnNotice={p.columnNotice} caseId={p.context.caseId} onCase={p.onCase} onRows={p.onRows} onReset={p.onReset} onData={p.onData} onSelect={p.onSelect} onHover={p.onHover} onClose={p.onClose} onFocusMap={p.onFocusMap} trace={p.trace} onTrace={p.onTrace}/>;
  // Erklärung nach Vorlage (Werkstatt, Begriffskarte …) oder Schrittkarte eines Rechenbegriffs, siehe src/explain/registry.ts
- const explain=explainFor(r.id),card=explain?null:stepCardFor(r.id,p.contextAnchor?.id),open=(id:string)=>p.onSelect(ref(id)),tabs=tabsFor(r.id);
+ // Rangbasierte Wege (Spearman über Pearson mit Rängen) zeigen keine Reiter: Brücke und R-Leitaufruf rechnen mit Rohwerten.
+ const explain=explainFor(r.id),card=explain?null:stepCardFor(r.id,p.contextAnchor?.id),open=(id:string)=>p.onSelect(ref(id)),tabs=r.basis==='ranks'?null:tabsFor(r.id);
  function relation(id:string,label:string,direction:'before'|'after',kind:string){const target=referenceInMap(id,r,p.context.route);return <button className={`relation-link ${direction} relation-${kind}`} key={`${id}-${label}`} onClick={()=>p.onSelect(target)} onPointerEnter={()=>p.onHover(id)} onPointerLeave={()=>p.onHover(null)} onFocus={()=>p.onHover(id)} onBlur={()=>p.onHover(null)}><span><strong>{titleFor(target)}</strong><small>{label}</small></span><ArrowUpRight size={15}/></button>;}
  const header=<><div className="inspector-top"><span className="eyebrow">{explain?EXPLAIN_LABEL[explain.kind]:subtitle(r,p.context)}</span>{(explain||tabs)&&<ModeToggle/>}<button className="inspector-close" onClick={p.onClose} aria-label="Erklärung einklappen"><X size={18}/></button></div><h1 id="inspector-title" tabIndex={-1}>{titleFor(r)}</h1></>;
  const focusMap=<button className="map-focus-link" onClick={p.onFocusMap}><Focus size={15}/>Bezüge in der Karte zeigen</button>;
@@ -60,8 +61,8 @@ export function ConceptInspector(p:Props){
 
  // Begriffe mit Reitern (Spezifikation Lehrdatensatz 5.1/5.2): Titel, Kurz gesagt, Reiterleiste; die bisherigen Teile wandern in die Reiter.
  if(tabs){
-  const workshop=tabs.sample?.kind==='bridge'?workshopFor(tabs.sample.workshop):explain?.kind==='werkstatt'?explain.workshop:null;
-  const stepTitle=(n:number)=>workshop?.steps[n-1]?.title;
+  const targets=stepTargets(explain,tabs),stepTitle=(n:number)=>targets?.titles[n-1];
+  const sel=p.selection,ctx={rows,columns:{...(sel?{x:[sel[r.variable]],y:[sel.y]}:{}),...p.rSettings?.columns}};
   const analysisExtras:ReactNode=<>
    <div className="calculation-heading"><span className="eyebrow">Mit deinen Daten</span></div>
    {casePicker}
@@ -72,7 +73,7 @@ export function ConceptInspector(p:Props){
    {experimentBox(`experiment-${selection}`)}
   </>;
   return <aside id="atlas-inspector" className="network-inspector has-tabs" ref={scroller} aria-labelledby="inspector-title">{header}{focusMap}
-   <ExplainTabs key={r.id} concept={r.id} tabs={tabList(explain,tabs)} kurz={kurzOf(explain)} render={(id,links)=>{
+   <ExplainTabs key={r.id} concept={r.id} tabs={tabList(explain,tabs)} kurz={kurzOf(explain)} steps={targets?.tab} render={(id,links)=>{
     switch(id){
      case 'verstehen':return <>
       {explain&&<Explanation id={r.id} explain={explain} onConcept={open}/>}
@@ -80,9 +81,9 @@ export function ConceptInspector(p:Props){
       {!explain&&!card&&<><p className="concept-intro">{introduction(r,p.context)}</p><Formula key={`${selection}-formal`} reference={r} context={p.context} onSelect={p.onSelect} onHighlight={p.onHighlight} highlight={p.highlight}/><CalculationSteps reference={r} route={p.context.route} onSelect={p.onSelect} onHover={p.onHover}/></>}
       {!explain&&<details key={`deep-${selection}`} className="inspector-disclosure"><summary>{deepQuestions[out.id]||'Genauer verstehen'}</summary><p>{deepCopy[out.id]||conceptById[out.id]?.explanation}</p></details>}
      </>;
-     case 'sample':return <SampleTab tab={tabs.sample!} rows={rows} onRows={p.onRows} onReset={p.onReset} modified={modified} reference={r} selection={p.selection} onColumns={p.onColumns} columnNotice={p.columnNotice} settingsColumns={p.rSettings?.columns} caseId={p.context.caseId} onCase={p.onCase} goTo={links.goSample} onStep={links.onSampleStep} extras={tabs.sample?.kind==='analysis'?analysisExtras:undefined} recipe={recipeBox(true)||undefined} variableControl={variableControl||undefined}/>;
+     case 'sample':return <SampleTab tab={tabs.sample!} rows={rows} onRows={p.onRows} onReset={p.onReset} modified={modified} reference={r} selection={p.selection} onColumns={p.onColumns} columnNotice={p.columnNotice} settingsColumns={p.rSettings?.columns} caseId={p.context.caseId} onCase={p.onCase} goTo={links.goSample} extras={tabs.sample?.kind==='analysis'?analysisExtras:undefined} recipe={recipeBox(true)||undefined} variableControl={variableControl||undefined}/>;
      case 'r':return <RTab tab={tabs.r!} title={titleFor(r)} rows={rows} modified={modified} reference={r} selection={p.selection} settings={p.rSettings} onSettings={p.onRSettings} onData={p.onData} onSelect={p.onSelect} onHover={p.onHover} contextAnchor={p.contextAnchor} route={p.context.route} onStepLink={links.stepLink} stepTitle={stepTitle} onConcept={open}/>;
-     case 'weiter':return <NextTab tab={tabs.next} edges={edges} selected={r} route={p.context.route} contextAnchor={p.contextAnchor} onSelect={p.onSelect} onHover={p.onHover} trace={p.trace} onTrace={p.onTrace}/>;
+     case 'weiter':return <NextTab tab={tabs.next} edges={edges} ctx={ctx} selected={r} route={p.context.route} contextAnchor={p.contextAnchor} onSelect={p.onSelect} onHover={p.onHover} trace={p.trace} onTrace={p.onTrace}/>;
     }
    }}/>
   </aside>;

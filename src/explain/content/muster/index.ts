@@ -6,12 +6,16 @@ import { tTest } from '../../../tasks/kit/means';
 import { pWert } from './p-wert';
 import { dummy, ABSCHLUESSE } from './dummy';
 
-/** Lernzeit nach Weiterbildung (Welch-t-Test wie mariposa::t_test) für die aktuellen Daten. */
+/**
+ * Lernzeit nach Weiterbildung (Welch-t-Test wie mariposa::t_test) für die aktuellen Daten. Die Richtung ist die von
+ * mariposa 0.7.4: Gruppe 0 minus Gruppe 1, also ohne minus mit Weiterbildung (`d`, `t`), wie in „In R“.
+ */
 export function lernzeitNachWeiterbildung(c: SampleCtx) {
   const x = c.columns.x?.[0] ?? 'lernzeit', g = c.columns.group?.[0] ?? 'weiterbildung';
   const y = c.rows.map(r => r.values[x]), groups = c.rows.map(r => r.values[g]);
   const mean = (k: number) => { const v = y.filter((_, i) => groups[i] === k); return { n: v.length, m: v.reduce((a, b) => a + b, 0) / v.length }; };
-  return { mit: mean(1), ohne: mean(0), test: tTest(y, groups) };
+  const mit = mean(1), ohne = mean(0), test = tTest(y, groups), d = ohne.m - mit.m;
+  return { mit, ohne, test, d, t: test ? d / test.welch.se : NaN };
 }
 
 /** Zahl der Befragten je Schulabschluss (Codes 0 bis 4). */
@@ -26,30 +30,33 @@ export const muster: AreaIndex = {
     p_value: {
       sample: {
         kind: 'analysis', columns: { x: 'lernzeit', group: 'weiterbildung' },
-        kurz: 'Dieselbe Frage mit allen 200 Befragten: Lernen Leute mit Weiterbildung anders lange als Leute ohne?',
+        kurz: 'Dieselbe Frage mit allen 200 Befragten: Lernen Befragte mit Weiterbildung anders lange als die ohne?',
+        value: c => lernzeitNachWeiterbildung(c).test?.welch.p ?? null,
         result: c => {
-          const { mit, ohne, test } = lernzeitNachWeiterbildung(c);
+          const { mit, ohne, test, d, t } = lernzeitNachWeiterbildung(c);
           if (!test) return { kurz: 'In einer der beiden Gruppen streut die Lernzeit nicht. Dann lässt sich kein t-Test rechnen.', fachlich: 'Der Welch-t-Test braucht in beiden Gruppen mindestens zwei verschiedene Werte.' };
-          const p = test.welch.p, d = mit.m - ohne.m;
+          const p = test.welch.p, shownP = p < 0.001 ? '< 0,001' : `≈ ${num(p)}`;
           return {
-            kurz: `Mit Weiterbildung lernen die Befragten im Schnitt ${num(mit.m)} Stunden, ohne ${num(ohne.m)} Stunden. ${p >= 0.05 ? `Gäbe es keinen Unterschied, wäre so ein Ergebnis nicht überraschend (p ≈ ${num(p)}).` : `Gäbe es keinen Unterschied, wäre so ein Ergebnis überraschend (p ${p < 0.001 ? '< 0,001' : `≈ ${num(p)}`}).`}`,
-            fachlich: `Welch-t-Test, zweiseitig: Unterschied ${num(d)} h, t ≈ ${num(test.welch.t)} bei ${num(test.welch.df, 1)} Freiheitsgraden, p ${p < 0.001 ? '< 0,001' : `≈ ${num(p)}`}.`,
-            zusatz: `${mit.n} Befragte haben eine Weiterbildung gemacht, ${ohne.n} nicht.`,
+            kurz: `Befragte mit Weiterbildung haben in den letzten sieben Tagen im Schnitt ${num(mit.m)} Stunden gelernt, die ohne ${num(ohne.m)} Stunden. Gäbe es keinen Unterschied, wäre so ein Ergebnis ${p >= 0.05 ? 'nicht überraschend' : 'überraschend'} (p ${shownP}).`,
+            fachlich: `Welch-t-Test, zweiseitig, in der Richtung von R: ohne minus mit Weiterbildung ${num(d)} h, t ≈ ${num(t)} bei ${num(test.welch.df, 1)} Freiheitsgraden, p ${shownP}.`,
+            zusatz: `${mit.n} Befragte haben in den letzten zwölf Monaten eine Weiterbildung gemacht, ${ohne.n} nicht.`,
           };
         },
         voraussetzung: 'Der Test nimmt unabhängige Befragte an. Die Gruppenmittelwerte sollen annähernd normalverteilt sein; bei mehr als 30 Personen je Gruppe ist das meist erfüllt.',
         think: [
           {
-            question: 'Alle lernen doppelt so lange. Was passiert mit p?', options: ['bleibt gleich', 'wird kleiner', 'wird größer'], correct: 0, step: 2,
+            question: 'Alle lernen doppelt so lange. Was passiert mit p?', options: ['bleibt gleich', 'wird kleiner', 'wird größer'], correct: 0,
             explain: 'Unterschied und Standardfehler verdoppeln sich beide. t ist ihr Verhältnis und bleibt gleich, also auch p.',
             kurz: 'p hängt nicht von der Einheit ab.',
             tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+            expect: { change: 'same' },
           },
           {
-            question: 'Alle lernen eine Stunde mehr. Was passiert mit p?', options: ['bleibt gleich', 'wird kleiner', 'wird größer'], correct: 0, step: 2,
+            question: 'Alle lernen eine Stunde mehr. Was passiert mit p?', options: ['bleibt gleich', 'wird kleiner', 'wird größer'], correct: 0,
             explain: 'Beide Gruppen rücken um eine Stunde. Der Unterschied zwischen ihnen bleibt, die Streuung auch.',
             kurz: 'Verschieben ändert nichts am Vergleich.',
             tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
+            expect: { change: 'same' },
           },
         ],
       },
@@ -61,7 +68,7 @@ export const muster: AreaIndex = {
         outputMap: [
           { match: 'p', atlas: 'p-Wert', step: 3, explain: 'Wie überraschend wäre ein so großer Unterschied, wenn es in Wahrheit keinen gäbe? Ein großer p-Wert heißt: gar nicht überraschend.' },
           { match: 't', atlas: 'Prüfgröße t', step: 2, explain: 'Der Unterschied geteilt durch seinen Standardfehler. In Klammern stehen die Freiheitsgrade.' },
-          { match: 'g', atlas: 'Effektgröße', explain: 'g misst den Unterschied in Standardabweichungen. R schreibt dazu, wie groß er ist.' },
+          { match: 'g', atlas: 'Effektgröße', explain: 'g misst den Unterschied in Standardabweichungen. In Klammern schreibt R auf Englisch, wie groß er ist; negligible heißt vernachlässigbar.' },
           { match: 'N', atlas: 'n', explain: 'N zählt alle Befragten in beiden Gruppen.' },
         ],
         check: {
@@ -106,12 +113,14 @@ export const muster: AreaIndex = {
             explain: 'Jede Person gehört jetzt zur Gruppe Abitur. In ihrer Spalte steht überall 1, in den anderen Spalten überall 0.',
             kurz: 'Ohne Unterschiede gibt es nichts mehr zu vergleichen.',
             tryIt: { label: 'alle auf Abitur (Code 4)', op: 'constant', column: 'x', value: 4 },
+            expect: { change: 'equals', value: 200, measure: c => perCode(c)[4] },
           },
           {
             question: 'Angenommen, niemand hätte einen Schulabschluss. Wie viele Einsen gibt es dann?', options: ['keine', '200', '800'], correct: 0,
             explain: 'Alle gehören zur Vergleichsgruppe, und die hat keine eigene Spalte. In allen vier Dummyspalten steht nur 0.',
             kurz: 'Die Vergleichsgruppe erkennst du an lauter Nullen.',
             tryIt: { label: 'alle auf ohne Schulabschluss (Code 0)', op: 'constant', column: 'x', value: 0 },
+            expect: { change: 'equals', value: 0, measure: c => perCode(c).slice(1).reduce((a, b) => a + b, 0) },
           },
         ],
       },
@@ -119,6 +128,7 @@ export const muster: AreaIndex = {
         entry: 'dummy', variant: 0,
         tokens: {
           to_dummy: { sym: 'to_dummy()', term: 'Dummyvariablen', kurz: 'Bildet aus einer Spalte mit Codes eine 0/1-Spalte je Code. ref nennt die Vergleichsgruppe, die keine eigene Spalte bekommt.', fehler: 'Ohne ref bekommt jeder Code eine Spalte. In einer Regression ist dann eine davon überflüssig, weil sie aus den anderen folgt.' },
+          '"schulabschluss_"': { sym: '"schulabschluss_"', term: 'Spalten auswählen', kurz: 'Der Anfang der Spaltennamen: starts_with() wählt alle Spalten, die so beginnen, also die vier Dummyspalten.', fehler: 'Ohne den Unterstrich passt auch die Spalte schulabschluss selbst dazu, und sie steht mit in der Tabelle.' },
           ref: { sym: 'ref =', term: 'Vergleichsgruppe', kurz: 'Der Code, der keine eigene Spalte bekommt. Hier ist es 0, ohne Schulabschluss.', fehler: 'Nennst du einen Code, den es nicht gibt, meldet mariposa: `ref` = 9 is not a category of `schulabschluss`.' },
         },
         outputMap: [
@@ -131,12 +141,12 @@ export const muster: AreaIndex = {
         },
       },
       next: {
-        next: { id: 'linear_regression', why: 'Dort gehen Dummyvariablen als Prädiktoren ein: Jede Spalte vergleicht eine Gruppe mit der Vergleichsgruppe.' },
+        next: { id: 'linear_regression', why: 'Dort gehen Dummyvariablen als erklärende Variablen ein: Jede Spalte vergleicht eine Gruppe mit der Vergleichsgruppe.' },
         before: [
           { id: 'nominal', why: 'Dummys übersetzen Kategorien ohne Rangfolge in Zahlen, mit denen man rechnen kann.' },
           { id: 'recode', why: 'Mit rec() bildest du jede Dummyspalte auch selbst.' },
         ],
-        after: [{ id: 'prediction', why: 'Kategoriale Prädiktoren gehen als Dummys in den linearen Prädiktor ein.' }],
+        after: [{ id: 'prediction', why: 'In der Vorhersage einer Regression bekommt jede Dummyspalte ihr eigenes Gewicht.' }],
         more: [{ id: 'ordinal', why: 'Auch geordnete Kategorien wie der Schulabschluss werden oft als Dummys ausgewertet.' }],
       },
     },

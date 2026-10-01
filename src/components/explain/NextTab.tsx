@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { titleFor, type Ref, type Route } from '../../domain/learning';
 import { referenceInMap } from '../../domain/network';
-import type { NextTab as NextTabData } from '../../explain/types';
+import type { NextTab as NextTabData, SampleCtx } from '../../explain/types';
 import { nextLists, type Edges, type RelationItem } from '../../explain/relations';
 import { tight } from './basics';
 
@@ -21,14 +21,19 @@ export type NextProps = {
   onTrace: () => void;
   /** Weitere Einordnung (Voraussetzungen, Hinweise, Quellen), zugeklappt am Ende. */
   extra?: ReactNode;
+  /** Aktuelle Daten und Spalten für Sätze, die rechnen (`NextItem.why` als Funktion). */
+  ctx?: SampleCtx;
 };
 
+/** Nach dem Wechsel zu einem anderen Begriff: Fokus auf seinen Titel, statt ihn auf der Seite zu verlieren. */
+const focusTitle = () => requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById('inspector-title')?.focus({ preventScroll: true })));
+
 export function NextTab(p: NextProps) {
-  const lists = nextLists(p.tab, p.edges);
+  const lists = nextLists(p.tab, p.edges, p.ctx);
   const link = (item: RelationItem, main = false) => {
     const target = referenceInMap(item.id, p.selected, p.route, p.contextAnchor);
     return (
-      <button type="button" key={item.id} className={`relation-link xw-next-link${main ? ' main' : ''}`} onClick={() => p.onSelect(target)}
+      <button type="button" key={item.id} className={`relation-link xw-next-link${main ? ' main' : ''}`} onClick={() => { p.onSelect(target); focusTitle(); }}
         onPointerEnter={() => p.onHover(item.id)} onPointerLeave={() => p.onHover(null)} onFocus={() => p.onHover(item.id)} onBlur={() => p.onHover(null)}>
         <span><strong>{titleFor(target)}</strong><small>{tight(item.why)}</small></span><ArrowUpRight size={15} aria-hidden="true" />
       </button>

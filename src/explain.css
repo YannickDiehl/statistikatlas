@@ -293,8 +293,9 @@
    Auf schmalen Bildschirmen lässt sich die Leiste seitlich schieben; die Panels bleiben eingehängt (hidden). */
 .xw-top-kurz{margin-top:6px}
 .xw-top-kurz .xw-kurz{margin:4px 0 8px}
-.xw-tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:thin;border-bottom:1px solid var(--line);margin:14px 0 0;padding:0 2px}
-.xw-tabs [role=tab]{flex:none;border:1px solid transparent;border-bottom:0;border-radius:5px 5px 0 0;background:none;padding:8px 12px 7px;font:15px/1.3 var(--sans);color:var(--muted);cursor:pointer;white-space:nowrap;margin-bottom:-1px}
+/* Alle Reiter bleiben sichtbar: Bei wenig Platz schrumpfen sie und die Beschriftung bricht um, statt abgeschnitten zu werden. */
+.xw-tabs{display:flex;align-items:flex-end;gap:4px;border-bottom:1px solid var(--line);margin:14px 0 0;padding:0 2px}
+.xw-tabs [role=tab]{flex:0 1 auto;min-width:0;border:1px solid transparent;border-bottom:0;border-radius:5px 5px 0 0;background:none;padding:8px 12px 7px;font:15px/1.3 var(--sans);color:var(--muted);cursor:pointer;white-space:normal;text-align:center;overflow-wrap:break-word;margin-bottom:-1px}
 .xw-tabs [role=tab]:hover{color:var(--green);background:#f1f3ea}
 .xw-tabs [role=tab][aria-selected=true]{background:var(--paper);border-color:var(--line);color:var(--green);font-weight:600}
 .xw-tabs [role=tab]:focus-visible{outline:2px solid var(--green);outline-offset:-2px}
@@ -346,3 +347,26 @@
 .xw-halo{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
 .xw p.xw-plot-caption{margin:10px 0 0}
 .xw-next.inspector-relations{border-top:0;padding-top:0;margin-top:6px}
+
+/* Reiterleiste auf dem Desktop oben festhalten; die stehende Formel der Werkbank rückt darunter (--xw-tabs-h aus ExplainTabs). */
+@media(min-width:761px){
+.network-inspector .xw-tabs{position:sticky;top:0;z-index:4;background:var(--paper);padding-top:6px}
+.network-inspector.has-tabs{scroll-padding-top:calc(var(--xw-tabs-scroll, 56px))}
+.xw-tabbed .xw-stage.stick,.xw-tabbed .xw-stage-formula.stick{top:var(--xw-tabs-h,0px)}
+}
+/* Telefon: Die Reiter stehen direkt unter dem Titel, damit sie im Blatt sofort zu sehen sind; „Kurz gesagt“ folgt darunter. */
+@media(max-width:760px){
+.xw-tabbed{display:flex;flex-direction:column}
+.xw-tabbed>.xw-tabs{order:-1;margin-top:4px}
+.xw-tabs [role=tab]{padding:7px 8px 6px}
+.network-inspector{scroll-padding-top:76px}
+}
+.xw-status{outline:none}
+.xw-status:focus-visible,.xw-focus-box:focus-visible{outline:2px solid var(--green);outline-offset:3px;border-radius:3px}
+.xw-focus-box{outline:none}
+.xw-card.xw-marked{border-color:var(--green);box-shadow:0 0 0 2px var(--wash)}
+/* Klickflächen mindestens 24 px (WCAG 2.5.8) */
+.xw .xw-table th button{min-width:24px;min-height:24px;padding:2px 6px}
+.network-inspector details>summary{min-height:24px;padding:2px 0}
+.network-inspector input[type=checkbox]{width:18px;height:18px}
+.network-reset-button{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:4px;background:#f6eedc;color:#6b4b16;padding:4px 9px;font:14px var(--sans);white-space:nowrap;margin-left:8px}

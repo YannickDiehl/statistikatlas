@@ -45,7 +45,7 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept }: {
   // In der Reiterleiste: Schritt melden („Weiter mit 200 Befragten“ setzt dort denselben Schritt) und Sprünge annehmen.
   const link = useTabLink();
   useEffect(() => { link.onStep?.(step); }, [step, link.onStep]);
-  useEffect(() => { if (link.goTo) setStepRaw(Math.max(1, Math.min(link.goTo.step, v.lastStep))); }, [link.goTo?.n]);
+  useEffect(() => { if (link.goTo) { setStepRaw(Math.max(1, Math.min(link.goTo.step, v.lastStep))); setFocusCard(n => n + 1); } }, [link.goTo?.n]);
   const stepData = w.steps[step - 1];
   const active = JSON.stringify(data);
   const layout = useWorkbenchLayout(), wide = layout.wide && !compact;
@@ -81,6 +81,8 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept }: {
         <span className="xw-note">{w.dataNote ?? `${people(w.names.length)}. Die Punkte im Bild lassen sich ziehen.`}</span>
       </div>
       <div className="xw-metrics">{v.metrics.map(m => <div key={m.label}><span>{m.label}</span><strong>{m.value(ctx)}</strong></div>)}</div>
+      {/* In Kompakt fehlt „Wofür?“; die Überschrift hält die Gliederung lückenlos (h1, h2, h3). */}
+      {compact && <h2 className="sr-only">Die Formel Schritt für Schritt</h2>}
       {/* Gleicher Baum in beiden Anordnungen, damit Eingaben und Fokus beim Wechsel erhalten bleiben; nur das Bild wandert. */}
       <div className={`xw-work${wide ? ' wide' : ''}`}>
         <div className={`xw-stage${wide && layout.stick === 'all' ? ' stick' : ''}`}>
@@ -110,7 +112,7 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept }: {
       }))} />}
       {!compact && <Genau kurz={v.genau.kurz} paragraphs={v.genau.paragraphs(ctx)} />}
       <AllGlyphs items={w.glyphs.filter(g => g.step <= v.lastStep).map(g => ({ ...g, target: g.step }))} active={step} onPick={t => setStep(t as number)} />
-      <p><button type="button" className="xw-link" onClick={() => { setData(w.presets[0].data); setWho(0); }}>Ausgangsdaten wiederherstellen</button></p>
+      <p><button type="button" className="xw-link" onClick={() => { setData(w.presets[0].data); setWho(0); }}>Beispieldaten zurücksetzen</button></p>
     </div>
   );
 }

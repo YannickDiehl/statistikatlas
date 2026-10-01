@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { TableTool } from '../../explain/types';
 import { close } from '../../explain/format';
-import { Genau, MutBox, Section, TopKurz, useExplainMode } from './basics';
+import { Genau, MutBox, Section, TopKurz, useExplainMode, useStepJump } from './basics';
 import { CheckQuestion, NameBox, ThinkQuestions } from './pieces';
 import { pictureFor } from './pictures/register';
 
@@ -33,6 +33,7 @@ const GENERAL = 'Noch nicht ganz. Schau dir die Tabelle „Nachher“ noch einma
  */
 export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onConcept: (id: string) => void }) {
   const [mode] = useExplainMode(), compact = mode === 'kompakt';
+  const jump = useStepJump();
   const [option, setOption] = useState(t.options[0].id);
   const after = useMemo(() => t.apply(t.rows, option), [t, option]);
   const fresh = useMemo(() => new Set(after.columns.map(c => c.key).filter(k => !t.columns.some(c => c.key === k))), [after, t.columns]);
@@ -51,9 +52,9 @@ export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onCo
       <Section title="Vorher"><DataTable columns={t.columns} rows={t.rows} caption="Die Daten vorher" /></Section>
       <Section title="Schritt für Schritt">
         {t.steps.map((st, i) => (
-          <div className="xw-card" key={i}>
+          <div className={`xw-card${jump.marked === i + 1 ? ' xw-marked' : ''}`} key={i} aria-current={jump.marked === i + 1 ? 'step' : undefined}>
             <span className="xw-label">Schritt {i + 1} von {t.steps.length}</span>
-            <h3 className="xw-step-title">{st.title}</h3>
+            <h3 className="xw-step-title" ref={jump.titleRef(i)} tabIndex={-1}>{st.title}</h3>
             <h4>Was passiert?</h4><p>{st.was}</p>
             <NameBox concept={st.concept} sym={st.sym} say={st.say} fach={st.fach}
               links={st.concept && st.concept !== t.concept ? [{ id: st.concept, label: 'Begriff öffnen' }] : []} onConcept={onConcept} />

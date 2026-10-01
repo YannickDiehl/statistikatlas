@@ -1,7 +1,7 @@
 // Reiter „In R“ (Spezifikation Lehrdatensatz und R, Abschnitt 5.5): Lehrdatensatz holen, den Leitaufruf Zeichen für
 // Zeichen lesen (Codelegende), „So antwortet R“ mit antippbaren Zahlen, die zum Atlas führen, „Kurz prüfen“,
 // „Anderer Aufruf“ mit den Katalogvarianten, Kopieren und R-Skript, Hilfe.
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Copy, Download } from 'lucide-react';
 import type { ColumnSelection, SurveyRow } from '../../domain/survey';
 import { entryById, type AtlasEntry } from '../../domain/mariposaCatalog';
@@ -61,12 +61,31 @@ const LIVE_LABEL: Record<LiveCall['fn'], string> = {
   rec_frequency: 'Umpolen mit rec() aus mariposa, danach frequency().',
 };
 
+/**
+ * Eine Gruppe antippbarer Stellen mit nur einem Tabstopp (rollender tabIndex): Die Pfeiltasten wandern zur nächsten
+ * oder vorigen Stelle, Pos1 und Ende zur ersten und letzten. So kostet ein Aufruf mit 20 Zeichen nur einen Tabstopp.
+ */
+function useRoving(count: number) {
+  const [current, setCurrent] = useState(0), refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const at = Math.min(current, Math.max(0, count - 1));
+  const onKeyDown = (e: KeyboardEvent) => {
+    const next = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? at + 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? at - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? count - 1 : null;
+    if (next === null || next < 0 || next >= count) return;
+    e.preventDefault();
+    setCurrent(next);
+    refs.current[next]?.focus();
+  };
+  return { props: (k: number) => ({ tabIndex: k === at ? 0 : -1, ref: (el: HTMLButtonElement | null) => { refs.current[k] = el; }, onFocus: () => setCurrent(k) }), onKeyDown };
+}
+
 /** Code mit antippbaren Zeichen; ein Tipp markiert alle Vorkommen desselben Zeichens. */
 function CodeView({ code, notes, active, onPick }: { code: string; notes: Record<string, TokenNote>; active: string | null; onPick: (key: string) => void }) {
   const parts = useMemo(() => tokenize(code, notes), [code, notes]);
+  const keyed = parts.filter(x => x.key).length, roving = useRoving(keyed);
+  let k = 0;
   return (
-    <pre className="r-code xw-rcode"><code>{parts.map((part, i) => part.key
-      ? <button type="button" key={i} className={`xw-tok${active === part.key ? ' on' : ''}`} aria-pressed={active === part.key} aria-label={`${part.text}: erklären`} onClick={() => onPick(part.key!)}>{part.text}</button>
+    <pre className="r-code xw-rcode" role="group" aria-label="Der Aufruf: Zeichen mit Pfeiltasten wählen, mit Enter erklären" onKeyDown={roving.onKeyDown}><code>{parts.map((part, i) => part.key
+      ? <button type="button" key={i} {...roving.props(k++)} className={`xw-tok${active === part.key ? ' on' : ''}`} aria-pressed={active === part.key} aria-label={`${part.text}: erklären`} onClick={() => onPick(part.key!)}>{part.text}</button>
       : <span key={i}>{part.text}</span>)}</code></pre>
   );
 }
@@ -96,11 +115,16 @@ function OutputView({ output, mapped, active, onPick }: { output: string; mapped
     at = m.spot.end;
   }
   pieces.push(output.slice(at));
+  const roving = useRoving(pieces.filter(x => typeof x !== 'string').length);
+  let k = 0;
   return (
-    <pre className="r-code xw-routput"><code>{pieces.map((piece, i) => typeof piece === 'string' ? <span key={i}>{piece}</span>
-      : <button type="button" key={i} className={`xw-num${active === piece.match ? ' on' : ''}`} aria-pressed={active === piece.match} aria-label={`${piece.match} ${piece.spot.text}: im Atlas zeigen`} onClick={() => onPick(piece.match)}>{piece.spot.text}</button>)}</code></pre>
+    <pre className="r-code xw-routput" role="group" aria-label="So antwortet R: markierte Zahlen mit Pfeiltasten wählen" onKeyDown={roving.onKeyDown}><code>{pieces.map((piece, i) => typeof piece === 'string' ? <span key={i}>{piece}</span>
+      : <button type="button" key={i} {...roving.props(k++)} className={`xw-num${active === piece.match ? ' on' : ''}`} aria-pressed={active === piece.match} aria-label={`${label(piece)}: im Atlas zeigen`} onClick={() => onPick(piece.match)}>{piece.spot.text}</button>)}</code></pre>
   );
 }
+
+/** „SD 3.238“, aber „200 × 4“ nur einmal, wenn die Stelle der Text selbst ist. */
+const label = (m: Mapped) => m.spot.text === m.match ? m.match : `${m.match} ${m.spot.text}`;
 
 /** Deutsche Lesart einer R-Zahl („3.238“ → „3,24“), sonst null. */
 const asNumber = (text: string) => /^-?\d+(\.\d+)?$/.test(text) ? num(Number(text)) : null;
@@ -108,8 +132,8 @@ const asNumber = (text: string) => /^-?\d+(\.\d+)?$/.test(text) ? num(Number(tex
 function Mapping({ m, stepTitle, onStepLink }: { m: Mapped; stepTitle?: (step: number) => string | undefined; onStepLink?: (step: number) => void }) {
   const de = asNumber(m.spot.text), title = m.step ? stepTitle?.(m.step) : undefined;
   return (
-    <div className="xw-card xw-map-card" aria-live="polite">
-      <p><code>{m.match} {m.spot.text}</code> ↔ <strong>{m.atlas}{de !== null && de !== m.spot.text ? ` ≈ ${de}` : ''}</strong>{m.step ? `, Schritt ${m.step}${title ? `: ${title}` : ''}` : ''}</p>
+    <div className="xw-card xw-map-card">
+      <p><code>{label(m)}</code> ↔ <strong>{m.atlas}{de !== null && de !== m.spot.text ? ` ≈ ${de}` : ''}</strong>{m.step ? `, Schritt ${m.step}${title ? `: ${title}` : ''}` : ''}</p>
       <p>{tight(m.explain)}</p>
       {m.step && onStepLink && <p><button type="button" className="xw-link" onClick={() => onStepLink(m.step!)}>Schritt {m.step} ansehen</button></p>}
     </div>
@@ -124,7 +148,7 @@ function QuickCheck({ check, mapped, output }: { check: RTabData['check']; mappe
     .sort((a, b) => a.spot.start - b.spot.start).filter((o, i, all) => all.findIndex(x => x.spot.start === o.spot.start) === i);
   const right = mapped.find(m => m.match === check.correct);
   const message = pick === null ? null : pick === check.correct
-    ? `Genau, ${check.correct} ${right?.spot.text ?? ''} ist ${right?.atlas ?? check.correct}.`
+    ? `Genau, ${right ? label(right) : check.correct} ist ${right?.atlas ?? check.correct}.`
     : check.wrong[pick] ?? 'Noch nicht ganz. Lies die Beschriftung über oder vor der Zahl: Dort steht, was R berechnet hat.';
   return (
     <div className="xw-check">
@@ -198,7 +222,7 @@ export function RTab(p: RProps) {
         {output ? <OutputView output={output} mapped={mapped} active={spot} onPick={m => setSpot(s => s === m ? null : m)} />
           : !live && catalog === null ? <p className="xw-note">Die Ausgabe wird geladen …</p>
           : !live && catalog !== 'error' ? <p className="xw-note">R zeigt hier keine Ausgabe.</p> : null}
-        {active && <Mapping m={active} stepTitle={p.stepTitle} onStepLink={p.onStepLink} />}
+        <div aria-live="polite">{active && <Mapping m={active} stepTitle={p.stepTitle} onStepLink={p.onStepLink} />}</div>
       </Section>
       {!compact && output && <QuickCheck key={code} check={tab.check} mapped={mapped} output={output} />}
       {others && entry && <details className="xw-other">

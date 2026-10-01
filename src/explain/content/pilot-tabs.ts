@@ -2,10 +2,11 @@
 // Brücken „Mit 200 Befragten“ der Pilot-Werkstätten. Wortlaut nach dem gebilligten Reiterbeispiel der
 // Standardabweichung, im Ton der Streuung. Alle Zahlen kommen aus den aktuellen Daten; die R-Referenzwerte stehen
 // in src/explain/sample.test.ts und src/explain/tabs.test.ts. Vorbild für die Reiter aller Bereiche (AUTHORING.md, Abschnitt 8).
-import type { Bridge, BridgeCtx, ConceptTabs, FNode, TokenNote } from '../types';
+import type { Bridge, BridgeCtx, ConceptTabs, FNode, SampleCtx, TokenNote } from '../types';
 import type { PairStats, Series } from '../math';
 import { num, signed, paren, unit } from '../format';
-import { countWithin, sumNodes, unitText } from '../sample';
+import { countWithin, sampleColumn, sampleColumnInfo, sumNodes, unitText } from '../sample';
+import { qt } from '../../tasks/kit/dist';
 import { ref, titleFor } from '../../domain/learning';
 
 type SC = BridgeCtx<Series>;
@@ -18,13 +19,17 @@ const lernzeit = (c: BridgeCtx<unknown>) => c.col.id === 'lernzeit';
 const eq = (v: number) => Math.abs(Math.round(v * 100) / 100 - v) > 1e-9 ? '≈' : '=';
 /** Menge in Sätzen über Menschen: „3,24 Stunden“ bei der Lernzeit, sonst mit der Einheit der Spalte. */
 const amount = (c: BridgeCtx<unknown>, v: number) => lernzeit(c) ? unit(v, 'Stunde', 'Stunden') : c.u(v);
-const amount2 = (c: PC, v: number) => c.col2!.id === 'lernzeit' ? unit(v, 'Stunde', 'Stunden') : unitText(c.col2!, v);
 const values = (c: BridgeCtx<unknown>) => lernzeit(c) ? 'Lernzeiten' : `Werte von „${c.col.title}“`;
 /** Lage zur Mitte: „1,75 h unter der Mitte“, „genau auf der Mitte“. */
 const toMiddle = (c: BridgeCtx<unknown>, d: number, middle = 'der Mitte') => Math.abs(d) < 0.005 ? `genau auf ${middle}` : `${c.u(Math.abs(d))} ${d > 0 ? 'über' : 'unter'} ${middle}`;
 /** Anteil an einer Summe in Prozent, kleine Anteile als „weniger als 0,01 %“. */
 const share = (part: number, whole: number) => whole <= 0 ? '0 %' : part / whole * 100 < 0.005 ? 'weniger als 0,01 %' : `${num(part / whole * 100)} %`;
-const metric = (c: BridgeCtx<unknown>) => c.col.question ? `Die Rechnung behandelt „${c.col.title}“ als metrisch: Gleiche Zahlenabstände bedeuten gleich viel.` : 'Die Rechnung behandelt die Werte als metrisch: Gleiche Zahlenabstände bedeuten gleich viel.';
+/** Skalenniveau der Spalte in einem Satz (für „Voraussetzung“): metrisch, Likert mit Abstandsannahme oder 0/1. */
+const scaleNote = (c: BridgeCtx<unknown>) => c.col.likert ? `Für „${c.col.title}“ nimmst du gleich große Abstände zwischen den Antwortstufen an.`
+  : c.col.scale === 'metric' ? `„${c.col.title}“ ist metrisch: Gleiche Zahlenabstände bedeuten gleich viel.`
+  : `„${c.col.title}“ hat nur die Werte 0 und 1; der Mittelwert ist dann der Anteil der Einsen.`;
+/** Wie angezeigt gerundet (zwei Nachkommastellen), damit Proben mit den sichtbaren Zahlen aufgehen. */
+const shown = (v: number) => Math.round(v * 100) / 100;
 
 // ---------- Brücke Mittel ----------
 
@@ -58,8 +63,9 @@ export const bridgeMittel: Bridge<Series> = {
       zusatz: `${below} von ${N(c)} Befragten liegen unter dem Mittelwert, ${above} darüber.`,
     };
   },
-  voraussetzung: c => `${metric(c)} Sonst ist der Median die bessere Mitte.`,
+  voraussetzung: c => c.col.scale === 'metric' || c.col.likert ? `${scaleNote(c)} Bei schiefen Verteilungen oder Ausreißern beschreibt der Median, der mittlere Wert der Reihe nach, die Mitte oft besser.` : scaleNote(c),
   picture: (c, step) => ({ center: step >= 2 ? c.s.mean : undefined, deviation: step >= 2 }),
+  value: c => c.s.mean,
 };
 
 // ---------- Brücke Streuung ----------
@@ -102,7 +108,10 @@ export const bridgeStreuung: Bridge<Series> = {
       person: c => `${P(c)} trägt ${share(c.s.sq[c.who], c.s.ss)} der Quadratsumme bei, also auch ${share(c.s.sq[c.who], c.s.ss)} der Varianz.`,
     },
     {
-      all: c => `√${num(c.s.variance)} ≈ ${c.u(c.s.sd)}. Probe: ${num(c.s.sd)} · ${num(c.s.sd)} ≈ ${num(c.s.sd * c.s.sd)}.`,
+      all: c => {
+        const probe = shown(c.s.sd) ** 2;
+        return `√${num(c.s.variance)} ≈ ${c.u(c.s.sd)}. Probe: ${num(c.s.sd)} · ${num(c.s.sd)} ≈ ${num(probe)}${num(probe) === num(c.s.variance) ? '.' : `, bis auf Rundung die ${num(c.s.variance)}.`}`;
+      },
       person: c => {
         const d = c.s.dev[c.who], inside = Math.abs(d) <= c.s.sd + 1e-9;
         return `${P(c)} liegt ${toMiddle(c, d)}, also ${inside ? 'innerhalb' : 'außerhalb'} von x̄ ± s (${num(c.s.mean - c.s.sd)} bis ${c.u(c.s.mean + c.s.sd)}).`;
@@ -119,16 +128,17 @@ export const bridgeStreuung: Bridge<Series> = {
     const big = c.s.sq.indexOf(Math.max(...c.s.sq));
     if (c.s.sd < 0.005) return { kurz: 'Alle haben denselben Wert. Es gibt keine Streuung.', fachlich: `Die Standardabweichung von „${c.col.title}“ ist 0.` };
     return variant === 'variance' ? {
-      kurz: `Ein typisches Abweichungsquadrat ist bei den ${N(c)} Befragten ${c.u(c.s.variance, { squared: true })} groß. Seine Seite s ≈ ${c.u(c.s.sd)} sagt, wie weit die Befragten typischerweise von der Mitte entfernt sind.`,
+      kurz: `Im Durchschnitt (geteilt durch n − 1) ist ein Abweichungsquadrat bei den ${N(c)} Befragten ${c.u(c.s.variance, { squared: true })} groß. Seine Seite s ≈ ${c.u(c.s.sd)} sagt grob, wie weit die Befragten von der Mitte entfernt sind.`,
       fachlich: `Die Varianz von „${c.col.title}“ beträgt s² ${eq(c.s.variance)} ${c.u(c.s.variance, { squared: true })}: die Quadratsumme ${num(c.s.ss)} geteilt durch n − 1 = ${N(c) - 1}.`,
       zusatz: `Den größten Einzelbeitrag liefert ${c.names[big]}: ${share(c.s.sq[big], c.s.ss)} der Quadratsumme.`,
     } : {
-      kurz: `Typischerweise weicht ${lernzeit(c) ? 'die Lernzeit einer Person' : `„${c.col.title}“ bei einer Person`} um etwa ${amount(c, c.s.sd)} vom Durchschnitt (${amount(c, c.s.mean)}) ab.`,
-      fachlich: `Die Standardabweichung von „${c.col.title}“ beträgt s ≈ ${c.u(c.s.sd)} bei n = ${N(c)}. Sie ist die Wurzel der Varianz s² ≈ ${c.u(c.s.variance, { squared: true })}.`,
+      kurz: `Grob gesagt liegt ${lernzeit(c) ? 'die Lernzeit einer Person' : `der Wert einer Person bei „${c.col.title}“`} etwa ${amount(c, c.s.sd)} vom Durchschnitt (${amount(c, c.s.mean)}) entfernt.`,
+      fachlich: `Die Standardabweichung von „${c.col.title}“ beträgt s ≈ ${c.u(c.s.sd)} bei n = ${N(c)}, die Wurzel der Varianz s² ≈ ${c.u(c.s.variance, { squared: true })}. Sie ist kein durchschnittlicher Abstand: Im Mittel liegt eine Person ${c.u(c.s.mad)} vom Durchschnitt entfernt; s ist größer, weil große Abstände im Quadrat stärker zählen.`,
       zusatz: lernzeit(c) ? `${k} von ${N(c)} Befragten lernen zwischen ${num(lo)} und ${num(hi)} Stunden.` : `${k} von ${N(c)} Befragten liegen bei „${c.col.title}“ zwischen ${num(lo)} und ${c.u(hi)}.`,
     };
   },
-  voraussetzung: c => `${metric(c)} Für die Streuung braucht es mindestens zwei Werte.`,
+  voraussetzung: c => `${scaleNote(c)} Für die Streuung braucht es mindestens zwei Werte.`,
+  value: (c, variant) => variant === 'variance' ? c.s.variance : c.s.sd,
   picture: (c, step) => ({
     center: c.s.mean,
     deviation: step >= 2,
@@ -180,7 +190,7 @@ export const bridgeZusammenhang: Bridge<PairStats> = {
     },
     {
       all: c => c.s.r === null ? 'Eine der beiden Spalten streut nicht. Dann ist r nicht definiert.'
-        : `${num(c.s.cov)} / (${num(c.s.x.sd)} · ${num(c.s.y.sd)}) ≈ ${num(c.s.r)}. Größer als ${num(c.s.sxy)} kann die Kovarianz hier nicht werden.`,
+        : `${num(c.s.cov)} / (${num(c.s.x.sd)} · ${num(c.s.y.sd)}) ≈ ${num(c.s.r)}. Größer als sₓ · sᵧ ≈ ${num(c.s.sxy)} (mit allen Nachkommastellen) kann die Kovarianz hier nicht werden.`,
       person: c => {
         const p = c.s.prod[c.who], r = c.s.r ?? 0;
         return Math.abs(p) < 0.005 || Math.abs(r) < 0.005 ? `${P(c)} trägt kaum etwas zu r bei.`
@@ -207,13 +217,15 @@ export const bridgeZusammenhang: Bridge<PairStats> = {
     const r = c.s.r;
     return {
       kurz: Math.abs(r) < 0.1 ? `Zwischen ${t1(c)} und ${t2(c)} gibt es hier kaum einen geraden Zusammenhang.`
-        : lernzeit(c) && c.col2!.id === 'wissenstest' ? `Wer mehr lernt, löst im Wissenstest eher mehr Aufgaben. Das ist ein ${r > 0 ? 'gleichläufiger' : 'gegenläufiger'}, ${strength(r)} Zusammenhang.`
-        : `Wer bei ${t1(c)} höher liegt, liegt bei ${t2(c)} eher ${r > 0 ? 'auch höher' : 'niedriger'}. Das ist ein ${strength(r)} Zusammenhang.`,
+        // Die Richtung kommt aus dem Vorzeichen von r, nie aus den Spalten: Nach „Wissenstest umpolen“ ist r negativ.
+        : lernzeit(c) && c.col2!.id === 'wissenstest' && r > 0 ? `Wer mehr lernt, löst im Wissenstest eher mehr Aufgaben. Das ist ein gleichläufiger, ${strength(r)} Zusammenhang.`
+        : `Wer bei ${t1(c)} höher liegt, liegt bei ${t2(c)} eher ${r > 0 ? 'auch höher' : 'niedriger'}. Das ist ein ${r > 0 ? 'gleichläufiger' : 'gegenläufiger'}, ${strength(r)} Zusammenhang.`,
       fachlich: `Die Pearson-Korrelation von ${t1(c)} und ${t2(c)} beträgt r ≈ ${num(r)} bei n = ${N(c)}. Nach der Faustregel von Cohen ist ein Betrag ab 0,1 schwach, ab 0,3 mittel, ab 0,5 stark.`,
       zusatz,
     };
   },
   voraussetzung: c => `Beide Spalten werden als metrisch behandelt, und r erfasst nur gerade Muster. Ein einzelner Ausreißer kann r deutlich verändern.`,
+  value: (c, variant) => variant === 'covariance' ? c.s.cov : c.s.r,
   picture: (c, step) => ({
     center: [c.s.x.mean, c.s.y.mean],
     deviation: step >= 2,
@@ -247,6 +259,13 @@ const MISSING_MAP = { match: 'Missing', atlas: 'fehlende Werte', explain: 'Missi
 /** Variablen der Vorhersagefragen. */
 const LZ = 'lernzeit', LZ_WT = 'lernzeit,wissenstest';
 
+/** Standardfehler der Spalte x der Spaltenwahl, für den Satz zum Standardfehler in „Weiter“ (rechnet mit den aktuellen Daten). */
+function seSentence(c: SampleCtx): string {
+  const id = c.columns.x?.[0] ?? 'lernzeit', xs = sampleColumn(c.rows, id), n = xs.length;
+  const mean = xs.reduce((a, b) => a + b, 0) / n, s = Math.sqrt(xs.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1));
+  return `Wie genau kennt man den Mittelwert? Teile s durch die Wurzel aus n: ${num(s)} / √${n} ≈ ${unitText(sampleColumnInfo(id), s / Math.sqrt(n))}.`;
+}
+
 export const PILOT_TABS: Record<string, ConceptTabs> = {
   mean: {
     sample: {
@@ -257,18 +276,21 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           explain: 'Die Summe wächst um 200 Stunden. Geteilt durch 200 bleibt für jede Person genau 1 Stunde mehr.',
           kurz: 'Verschieben verschiebt den Mittelwert um genau so viel.',
           tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
+          expect: { change: 'plus', amount: 1 },
         },
         {
           question: 'Eine Person lernt plötzlich 40 Stunden. Wie stark ändert sich der Mittelwert der 200?', options: ['gar nicht', 'ein wenig', 'um mehr als 10 Stunden'], correct: 1, step: 1,
-          explain: 'Der neue Wert geht einmal in die Summe ein, geteilt wird durch 200. Ein einzelner Ausreißer verschiebt den Mittelwert deshalb nur um ein Zweihundertstel seines Unterschieds.',
+          explain: 'Der neue Wert geht einmal in die Summe ein, geteilt wird durch 200. Der Mittelwert ändert sich deshalb nur um ein Zweihundertstel der Änderung: (40 − alter Wert) / 200.',
           kurz: 'Bei 200 Personen fällt ein einzelner Wert wenig ins Gewicht.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
+          expect: { change: 'up', atMost: 0.25 },
         },
         {
           question: 'Alle lernen doppelt so lange. Was passiert mit dem Mittelwert?', options: ['bleibt gleich', 'verdoppelt sich', 'vervierfacht sich'], correct: 1, step: 2,
           explain: 'Jeder Wert verdoppelt sich, also auch die Summe. Durch 200 geteilt ergibt das den doppelten Mittelwert.',
           kurz: 'Malnehmen wirkt auf den Mittelwert genauso.',
           tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 2 },
         },
       ],
     },
@@ -285,7 +307,7 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
       },
     },
     next: {
-      next: { id: 'sd', why: 'Wie weit liegen die Befragten typischerweise vom Mittelwert entfernt? Das misst die Standardabweichung.' },
+      next: { id: 'sd', why: 'Wie weit liegen die Befragten ungefähr vom Mittelwert entfernt? Das misst die Standardabweichung.' },
       before: [
         { id: 'series', why: 'Die Einzelwerte, die zusammengezählt werden.' },
         { id: 'validn', why: 'n, durch das du am Ende teilst.' },
@@ -296,10 +318,10 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
         { id: 'centering', why: 'Von jedem Wert den Mittelwert abziehen: Dann liegt die Mitte bei 0.' },
         { id: 'covariance', why: 'Nutzt die Mittelwerte zweier Spalten als Bezugspunkte.' },
         { id: 't_test', why: 'Vergleicht die Mittelwerte zweier Gruppen.' },
-        { id: 'confidence', why: 'Zeigt, in welchem Bereich der Mittelwert aller Menschen plausibel liegt.' },
+        { id: 'confidence', why: 'Zeigt, welche Werte für den Mittelwert aller Menschen plausibel sind.' },
       ],
       more: [
-        { id: 'median', why: 'Die Mitte nach der Reihenfolge; Ausreißer stören sie kaum.' },
+        { id: 'median', why: 'Der mittlere Wert der Reihe nach; Ausreißer stören ihn kaum.' },
         { id: 'describe', why: 'Mittelwert, Streuung und mehr auf einen Blick.' },
         { id: 'weights', why: 'Mittelwert, bei dem manche Personen stärker zählen.' },
       ],
@@ -315,18 +337,21 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           explain: 'Die Mitte wandert um 1 Stunde mit. Im Abstand hebt sich die Stunde auf: (xᵢ + 1) − (x̄ + 1) = xᵢ − x̄. Die Varianz bleibt gleich.',
           kurz: 'Verschieben ändert die Lage, nicht die Streuung.',
           tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
+          expect: { change: 'same' },
         },
         {
           question: 'Alle lernen doppelt so lange. Was macht s²?', options: ['verdoppelt sich', 'vervierfacht sich', 'bleibt gleich'], correct: 1, step: 3,
           explain: 'Jeder Abstand verdoppelt sich, jedes Quadrat vervierfacht sich (Schritt 3). Damit wird auch die Varianz viermal so groß.',
           kurz: 'Doppelte Werte, vierfache Varianz.',
           tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 4 },
         },
         {
-          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s²?', options: ['bleibt fast gleich', 'steigt deutlich', 'sinkt'], correct: 1, step: 4,
-          explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Ein einziger Beitrag erhöht die Quadratsumme deutlich (Schritt 4).',
+          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s²?', options: ['bleibt genau gleich', 'steigt', 'sinkt'], correct: 1, step: 4,
+          explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Meist steigt die Quadratsumme deutlich (Schritt 4); nur wenn die Person schon weit weg war, steigt sie wenig.',
           kurz: 'Wer weit weg ist, zählt im Quadrat viel mehr.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
+          expect: { change: 'up' },
         },
       ],
     },
@@ -351,7 +376,6 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
         { id: 'validn', why: 'n, aus dem die Freiheitsgrade n − 1 werden.' },
       ],
       after: [
-        { id: 'sd', why: 'Die Wurzel der Varianz.' },
         { id: 'oneway_anova', why: 'Zerlegt die Streuung in Unterschiede zwischen und innerhalb von Gruppen.' },
         { id: 'reliability', why: 'Vergleicht die Varianz einzelner Fragen mit der Varianz des Skalenwerts.' },
       ],
@@ -368,18 +392,21 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           explain: 'Die Mitte wandert um 1 Stunde mit. Im Abstand hebt sich die Stunde auf: (xᵢ + 1) − (x̄ + 1) = xᵢ − x̄. Die Streuung bleibt gleich.',
           kurz: 'Verschieben ändert die Lage, nicht die Streuung.',
           tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
+          expect: { change: 'same' },
         },
         {
           question: 'Alle lernen doppelt so lange. Was macht s?', options: ['bleibt gleich', 'verdoppelt sich', 'vervierfacht sich'], correct: 1, step: 6,
           explain: 'Jeder Abstand verdoppelt sich, jedes Quadrat vervierfacht sich (Schritt 3). Die Varianz wird viermal so groß, die Wurzel daraus doppelt so groß (Schritt 6).',
           kurz: 'Doppelte Werte, doppelte Standardabweichung, vierfache Varianz.',
           tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 2 },
         },
         {
-          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s?', options: ['bleibt fast gleich', 'steigt deutlich', 'sinkt'], correct: 1, step: 4,
-          explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Ein einziger Beitrag erhöht die Quadratsumme deutlich (Schritt 4).',
+          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s?', options: ['bleibt genau gleich', 'steigt', 'sinkt'], correct: 1, step: 4,
+          explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Meist steigt s deutlich (Schritt 4); nur wenn die Person schon weit weg war, steigt s wenig.',
           kurz: 'Wer weit weg ist, zählt im Quadrat viel mehr.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
+          expect: { change: 'up' },
         },
       ],
     },
@@ -388,7 +415,7 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
       tokens: { describe: DESCRIBE, '"mean"': MEAN_VALUE, '"sd"': SD_VALUE, '"var"': VAR_VALUE },
       outputMap: [
         { match: 'Mean', atlas: 'x̄', step: 1, explain: 'Mean ist die Mitte aus Schritt 1, von der aus alle Abstände gemessen werden.' },
-        { match: 'SD', atlas: 's', step: 6, explain: 'SD heißt standard deviation, auf Deutsch Standardabweichung: die Wurzel aus Schritt 6.' },
+        { match: 'SD', atlas: 's', step: 6, explain: 'SD heißt standard deviation, auf Deutsch Standardabweichung: das Ergebnis von Schritt 6, die Wurzel der Varianz.' },
         { match: 'Variance', atlas: 's²', step: 5, explain: 'Variance ist die Varianz, die Zahl vor der Wurzel.' },
         N_MAP, MISSING_MAP,
       ],
@@ -398,7 +425,7 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
       },
     },
     next: {
-      next: { id: 'se', why: 'Wie genau kennt man den Mittelwert? Teile s durch die Wurzel aus n: 3,24 / √200 ≈ 0,23 h.' },
+      next: { id: 'se', why: seSentence },
       before: [
         { id: 'variance', why: 'Die Varianz s², deren Wurzel s ist.' },
         { id: 'mean', why: 'Die Mitte, von der aus alle Abstände gemessen werden.' },
@@ -424,25 +451,28 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           explain: 'Die Mitte ȳ wandert um zwei Aufgaben mit. Die Abstände yᵢ − ȳ bleiben gleich, also auch alle Produkte.',
           kurz: 'Verschieben ändert die Lage, nicht den Zusammenhang.',
           tryIt: { label: 'alle zwei Aufgaben mehr', op: 'shift', column: 'y', value: 2 },
+          expect: { change: 'same' },
         },
         {
           question: 'Der Wissenstest wird umgepolt: Aus vielen gelösten Aufgaben werden wenige. Was macht die Kovarianz?', options: ['bleibt gleich', 'wechselt das Vorzeichen', 'wird 0'], correct: 1, step: 3,
-          explain: 'Jeder Abstand yᵢ − ȳ dreht sein Vorzeichen. Damit dreht auch jedes Produkt sein Vorzeichen (Schritt 3), und die Summe wird negativ.',
+          explain: 'Jeder Abstand yᵢ − ȳ dreht sein Vorzeichen. Damit dreht auch jedes Produkt sein Vorzeichen (Schritt 3), und die Summe wechselt ihr Vorzeichen.',
           kurz: 'Umpolen dreht die Richtung, nicht die Stärke.',
           tryIt: { label: 'Wissenstest umpolen (20 minus Aufgaben)', op: 'reverse', column: 'y' },
+          expect: { change: 'sign' },
         },
         {
           question: 'Alle lernen doppelt so lange. Was macht die Kovarianz?', options: ['bleibt gleich', 'verdoppelt sich', 'vervierfacht sich'], correct: 1, step: 3,
           explain: 'Jeder Abstand der Lernzeit verdoppelt sich, die Abstände im Wissenstest bleiben. Jedes Produkt verdoppelt sich, also auch die Kovarianz.',
           kurz: 'Andere Einheit, andere Kovarianz.',
           tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 2 },
         },
       ],
     },
     r: {
       entry: '', variant: 0, live: { fn: 'cov' },
       tokens: {
-        kovarianz: { sym: 'kovarianz', term: 'Name der Ergebnisspalte', kurz: 'So heißt die Spalte mit dem Ergebnis. Den Namen wählst du selbst, links vom =.', fehler: 'Ohne Namen heißt die Spalte wie die Rechnung, also `cov(lernzeit, wissenstest)`.' },
+        kovarianz: { sym: 'kovarianz', term: 'Name der Ergebnisspalte', kurz: 'So heißt die Spalte mit dem Ergebnis. Den Namen wählst du selbst, links vom =.', fehler: 'Ohne Namen heißt die Spalte wie die Rechnung, etwa `cov(lernzeit, wissenstest)`.' },
       },
       outputMap: [
         { match: 'kovarianz', atlas: 'sₓᵧ', step: 5, explain: 'Die Kovarianz: die Summe der Abweichungsprodukte geteilt durch n − 1. R zeigt hier drei gültige Stellen.' },
@@ -461,8 +491,8 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
         { id: 'pairs', why: 'x und y derselben Person bleiben zusammen.' },
         { id: 'centering', why: 'Zentrierte Werte sind genau die Abstände zur Mitte.' },
       ],
-      after: [{ id: 'pearson', why: 'Die Kovarianz im Zähler, die Standardabweichungen im Nenner.' }],
-      more: [{ id: 'linear_regression', why: 'Die Steigung der Regressionsgeraden ist die Kovarianz geteilt durch die Varianz von x.' }],
+      after: [{ id: 'linear_regression', why: 'Die Steigung der Regressionsgeraden ist die Kovarianz geteilt durch die Varianz von x.' }],
+      more: [{ id: 'correlation_matrix', why: 'Alle Zusammenhänge mehrerer Spalten auf einen Blick, als Korrelationen.' }],
     },
   },
 
@@ -475,18 +505,21 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           explain: 'Die Mitte ȳ wandert mit, die Abstände bleiben. Kovarianz und Standardabweichungen ändern sich nicht, also auch r nicht.',
           kurz: 'Verschieben ändert die Lage, nicht den Zusammenhang.',
           tryIt: { label: 'alle zwei Aufgaben mehr', op: 'shift', column: 'y', value: 2 },
+          expect: { change: 'same' },
         },
         {
           question: 'Der Wissenstest wird umgepolt: Aus vielen gelösten Aufgaben werden wenige. Was macht r?', options: ['bleibt gleich', 'wechselt das Vorzeichen', 'wird 0'], correct: 1, step: 6,
-          explain: 'Jedes Produkt dreht sein Vorzeichen (Schritt 3), die Standardabweichungen bleiben. r behält seinen Betrag und wird negativ (Schritt 6).',
+          explain: 'Jedes Produkt dreht sein Vorzeichen (Schritt 3), die Standardabweichungen bleiben. r behält seinen Betrag und wechselt das Vorzeichen (Schritt 6).',
           kurz: 'Umpolen dreht die Richtung, nicht die Stärke.',
           tryIt: { label: 'Wissenstest umpolen (20 minus Aufgaben)', op: 'reverse', column: 'y' },
+          expect: { change: 'sign' },
         },
         {
-          question: 'Die gewählte Person lernt plötzlich 40 Stunden, ihr Wissenstest bleibt. Kann ein einziger Wert r bei 200 Befragten spürbar verändern?', options: ['nein, kaum', 'ja, deutlich'], correct: 1, step: 6,
-          explain: 'Ein Wert weit weg von der Mitte erzeugt ein großes Produkt (Schritt 3) und erhöht zugleich sₓ (Schritt 6). Je nach ihrem Wissenstest steigt oder sinkt r deutlich.',
-          kurz: 'Ein Ausreißer kann r stark verschieben.',
+          question: 'Die gewählte Person lernt plötzlich 40 Stunden, ihr Wissenstest bleibt. Was passiert mit dem Zusammenhang?', options: ['er wird stärker', 'er wird schwächer, je nach ihrem Wissenstest kaum oder deutlich', 'er bleibt genau gleich'], correct: 1, step: 6,
+          explain: 'Ein Wert weit weg von der Mitte erzeugt ein großes Produkt (Schritt 3) und vergrößert zugleich sₓ (Schritt 6). Liegt ihr Punkt nahe der Geraden, ändert sich r kaum, sonst wird r deutlich schwächer.',
+          kurz: 'Ein Ausreißer, der nicht zum Muster passt, kann r stark verschieben.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
+          expect: { change: 'weaker' },
         },
       ],
     },
@@ -497,7 +530,7 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
       },
       outputMap: [
         { match: 'r', atlas: 'r', step: 6, explain: 'r ist die Pearson-Korrelation aus Schritt 6: die Kovarianz geteilt durch sₓ · sᵧ.' },
-        { match: 'p', atlas: 'p-Wert', explain: 'p < 0.001 heißt: Ohne Zusammenhang unter allen Menschen wäre ein so großes r sehr überraschend. Die Sterne sagen dasselbe kurz.' },
+        { match: 'p', atlas: 'p-Wert', explain: 'Ein kleiner p-Wert heißt: Gäbe es unter allen Menschen keinen Zusammenhang, wäre ein so großes r sehr überraschend. Die Sterne sagen dasselbe kurz.' },
         { match: 'N', atlas: 'n', explain: 'N zählt die Befragten mit gültigen Werten in beiden Spalten.' },
       ],
       check: {
@@ -513,7 +546,7 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
         { id: 'linear', why: 'r beschreibt nur gerade Muster.' },
       ],
       after: [
-        { id: 'partial_cor', why: 'r, bei dem der Einfluss einer dritten Variable herausgerechnet ist.' },
+        { id: 'partial_cor', why: 'r, bei dem eine dritte Variable herausgerechnet ist.' },
         { id: 'correlation_matrix', why: 'Alle Korrelationen mehrerer Spalten auf einen Blick.' },
       ],
       more: [
@@ -527,12 +560,13 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
     sample: {
       kind: 'analysis', columns: { x: 'lernzeit' },
       kurz: 'Dieselbe Formel als Satz, jetzt mit s und n aller 200 Befragten des Lehrdatensatzes.',
+      value: c => { const x = sampleColumn(c.rows, c.columns.x?.[0] ?? 'lernzeit'), n = x.length, m = x.reduce((a, b) => a + b, 0) / n; return Math.sqrt(x.reduce((a, v) => a + (v - m) ** 2, 0) / (n - 1)) / Math.sqrt(n); },
       result: c => {
-        const x = c.rows.map(r => r.values[c.columns.x?.[0] ?? 'lernzeit']), n = x.length;
+        const x = sampleColumn(c.rows, c.columns.x?.[0] ?? 'lernzeit'), n = x.length;
         const mean = x.reduce((a, b) => a + b, 0) / n, s = Math.sqrt(x.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1)), se = s / Math.sqrt(n);
         return {
           kurz: `Mit allen ${n} Befragten: SE = ${num(s)} / √${n} ≈ ${num(se)} h. Der Mittelwert ${num(mean)} h würde von Stichprobe zu Stichprobe typischerweise um etwa ${unit(se, 'Stunde', 'Stunden')} schwanken.`,
-          fachlich: `Standardfehler des Mittelwerts: SE = s / √n ≈ ${num(se)} h. Zwei Standardfehler um den Mittelwert, von ${num(mean - 2 * se)} bis ${num(mean + 2 * se)} h, ergeben ungefähr ein 95-%-Konfidenzintervall.`,
+          fachlich: `Standardfehler des Mittelwerts: SE = s / √n ≈ ${num(se)} h. Etwa zwei Standardfehler (genauer ${num(qt(0.975, n - 1))}) um den Mittelwert, von ${num(mean - 2 * se)} bis ${num(mean + 2 * se)} h, ergeben ungefähr ein 95-%-Konfidenzintervall.`,
           zusatz: `Mit viermal so vielen Befragten wäre der Standardfehler halb so groß, etwa ${num(se / 2)} h.`,
         };
       },
@@ -543,18 +577,21 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           explain: 'SE = s / √n. s verdoppelt sich, n bleibt 200. Also verdoppelt sich auch der Standardfehler.',
           kurz: 'Mehr Streuung, ungenauerer Mittelwert.',
           tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 2 },
         },
         {
           question: 'Alle lernen eine Stunde mehr. Was macht der Standardfehler?', options: ['bleibt gleich', 'wird größer', 'wird kleiner'], correct: 0,
           explain: 'Verschieben ändert s nicht, und n bleibt 200. Der Mittelwert wandert, seine Genauigkeit bleibt.',
           kurz: 'Die Lage ändert nichts an der Genauigkeit.',
           tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
+          expect: { change: 'same' },
         },
         {
-          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht der Standardfehler?', options: ['bleibt gleich', 'steigt', 'sinkt'], correct: 1,
+          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht der Standardfehler?', options: ['bleibt genau gleich', 'steigt', 'sinkt'], correct: 1,
           explain: 'Der Ausreißer vergrößert s, n bleibt gleich. Also steigt auch s / √n.',
           kurz: 'Ein Ausreißer macht den Mittelwert unsicherer.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
+          expect: { change: 'up' },
         },
       ],
     },
@@ -573,14 +610,13 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
       },
     },
     next: {
-      next: { id: 'confidence', why: 'Mit dem Standardfehler baust du einen Bereich um den Mittelwert, der den Wert aller Menschen plausibel enthält.' },
+      next: { id: 'confidence', why: 'Mit dem Standardfehler baust du einen Bereich um den Mittelwert: die Werte, die für den Mittelwert aller Menschen plausibel sind.' },
       before: [
         { id: 'sd', why: 's steht im Zähler.' },
         { id: 'validn', why: '√n steht im Nenner.' },
         { id: 'sampling', why: 'Die Formel gilt für unabhängige Befragte.' },
       ],
       after: [
-        { id: 'confidence', why: 'Mittelwert plus und minus etwa zwei Standardfehler.' },
         { id: 'test_statistic', why: 'Beim t-Test teilt man den Unterschied durch den Standardfehler.' },
         { id: 't_test', why: 'Vergleicht Mittelwerte mit Blick auf ihre Genauigkeit.' },
       ],
@@ -597,12 +633,13 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
       tokens: {
         frequency: { sym: 'frequency()', term: T('frequency'), kurz: 'Zählt, wie oft jeder Code vorkommt, mit Prozenten. Mit ihr prüfst du, ob das Umkodieren geklappt hat.', fehler: 'Bei einer Spalte mit vielen verschiedenen Werten, etwa lernzeit, wird die Tabelle sehr lang. frequency() passt zu Antwortcodes.' },
         lernplanung5_umgepolt: { sym: 'lernplanung5_umgepolt', term: 'Neue Variable', kurz: 'Der Name der neuen Spalte. _umgepolt sagt, was mit ihr passiert ist; die alte Spalte bleibt erhalten.', fehler: 'Gibst du der neuen Spalte den alten Namen, überschreibt mutate() die ursprünglichen Antworten.' },
+        '"rev"': { sym: '"rev"', term: T('recode'), kurz: 'Dreht die Skala um: Aus der kleinsten Antwort wird die größte und umgekehrt. Die Wertelabels wandern mit.', fehler: 'Ohne Anführungszeichen meldet mariposa: `rules` must be a single character string. Schreib die Regel als Text: rules = "rev".' },
       },
       outputMap: [
         { match: 'mean', atlas: 'Mittelwert der umgepolten Antworten', explain: 'Umpolen spiegelt die Skala an ihrer Mitte, also auch den Mittelwert: Bei 1 bis 5 wird aus x̄ der Wert 6 − x̄.' },
         { match: 'sd', atlas: 'Standardabweichung', explain: 'Die Streuung bleibt beim Umpolen gleich, nur die Richtung dreht sich.' },
         { match: 'skewness', atlas: 'Schiefe', explain: 'Die Schiefe wechselt beim Umpolen nur ihr Vorzeichen.' },
-        { match: 'Raw %', atlas: 'Anteil mit Code 1', explain: 'Raw % ist der Anteil an allen Befragten. In der ersten Zeile stehen jetzt die, die vorher Code 5 hatten.' },
+        { match: 'Raw %', atlas: 'Anteil mit Code 1', explain: 'Raw % ist der Anteil an allen Befragten. In der ersten Zeile steht jetzt die Antwort, die vorher den höchsten Code hatte: Die Wertelabels sind mitgewandert.' },
       ],
       check: {
         question: 'Welche Zahl zeigt den Mittelwert der umgepolten Antworten? Tippe sie an.', correct: 'mean',
@@ -616,7 +653,6 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
         { id: 'missing', why: 'Fehlende Angaben bleiben fehlend, wenn keine Regel sie erfasst.' },
       ],
       after: [
-        { id: 'dummy', why: 'Eine 0/1-Spalte je Kategorie.' },
         { id: 'item_score', why: 'Umgepolte Fragen gehen gemeinsam in den Skalenwert ein.' },
         { id: 'pomps', why: 'Rechnet Skalen auf 0 bis 100 um.' },
       ],
