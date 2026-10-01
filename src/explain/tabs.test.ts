@@ -249,3 +249,28 @@ test('tokenize: functions, arguments, columns and atlas are tappable, strings on
   assert.match(noteFor('describe')!.term, /Deskriptiver Überblick/);
   assert.match(noteFor('lernzeit')!.term, /Variable „Lernzeit“/);
 });
+
+/*
+ * R (mariposa 0.7.4, atlas <- read_spss("Statistikatlas-200-Befragte.sav"); x = lernzeit, y = wissenstest):
+ *   sum(x < mean(x)); sum(x > mean(x))                     # 103, 97
+ *   p <- (x - mean(x)) * (y - mean(y)); sum(p)             # 1082.313
+ *   sum(p > 0); sum(p < 0)                                 # 119, 81
+ *   p[atlas$id == "P002"]; p[atlas$id == "P175"]           # -0.6170625, 73.20844
+ *   sd(y)                                                  # 3.115753
+ *   sd(x) / sqrt(200); mean(x) -/+ 2 * sd(x) / sqrt(200)   # 0.2289269; 7.293646, 8.209354
+ *   max((x - mean(x))^2) / sum((x - mean(x))^2) * 100      # 5.436259 (P175)
+ */
+test('Mit 200 Befragten: the numbers of the pilot bridges as in R', () => {
+  const m = bridgeContext(workshopFor('mittel')!.compute, 'series', rows, 'lernzeit', '', 1), bm = bridgeFor('mittel')!;
+  assert.equal(bm.interpret(m, 'mean').zusatz, '103 von 200 Befragten liegen unter dem Mittelwert, 97 darüber.');
+  const z = bridgeContext(workshopFor('zusammenhang')!.compute, 'pairs', rows, 'lernzeit', 'wissenstest', 1), bz = bridgeFor('zusammenhang')!;
+  assert.equal(bz.lines[3].all(z), 'Plus und Minus verrechnet ergeben die 200 Produkte 1.082,31. 119 Produkte sind positiv, 81 negativ.');
+  assert.equal(bz.lines[3].person(z), 'P002 steuert −0,62 zur Summe bei.');
+  assert.equal(bz.lines[5].all(z), '5,44 / (3,24 · 3,12) ≈ 0,54. Größer als 10,09 kann die Kovarianz hier nicht werden.');
+  assert.equal(bz.interpret(z, 'pearson').zusatz, '119 von 200 Befragten liegen in beiden Fragen auf derselben Seite der Mitte.');
+  const s = bridgeContext(workshopFor('streuung')!.compute, 'series', rows, 'lernzeit', '', 1), bs = bridgeFor('streuung')!;
+  assert.equal(bs.interpret(s, 'variance').zusatz, 'Den größten Einzelbeitrag liefert P175: 5,44 % der Quadratsumme.');
+  assert.equal(bs.lines[3].person(s), 'P002 steuert 0,3 h² bei, das sind 0,01 % der Quadratsumme.');
+  const se = tabsFor('se')!.sample!;
+  if (se.kind === 'analysis') assert.match(se.result({ rows, columns: { x: ['lernzeit'] } }).fachlich, /von 7,29 bis 8,21 h/, 'Konfidenzintervall wie in R');
+});
