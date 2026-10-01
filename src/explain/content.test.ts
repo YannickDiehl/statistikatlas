@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { conceptById } from '../domain/concepts';
-import { txt, type Ctx, type FNode, type Workshop } from './types';
-import { WORKSHOPS, explainFor, stepCardFor, requestStep, takeStep } from './registry';
+import { txt, type AnySentence, type ConceptCard, type Ctx, type FNode, type TableTool, type Workshop } from './types';
+import { EXPLANATIONS, WORKSHOPS, explainFor, mergeAreas, stepCardFor, tabsFor, requestStep, takeStep } from './registry';
+import { styleProblems } from './style';
 import { mittel } from './content/mittel';
 import { streuung } from './content/streuung';
 import { zusammenhang } from './content/zusammenhang';
@@ -12,72 +13,114 @@ import { parseRules } from './rules';
 import { createModeStore, MODE_KEY } from './mode';
 import { close, fixed } from './format';
 
-/** Für die Schleifen über alle Werkstätten genügt die lose Sicht; die Einzeltests unten sind typisiert. */
-const LOOSE = WORKSHOPS as unknown as Workshop<unknown, unknown>[];
+/**
+ * Inhaltstests für **alle** registrierten Erklärungen (Pilot und Bereiche, Spezifikation Ausbau Abschnitt 8):
+ * keine kaputten Werte, Sprachregeln mit [Test] (src/explain/style.ts), Fachbegriff = Kartentitel,
+ * Aussprache bei jedem Zeichen, Kontrollfragen mit richtiger Antwort ohne Diagnose und „Fast!“-Diagnosen.
+ */
 
-/** Mittelpunkt als Trenner zwischen Wörtern oder nach „Schritt n“ (Spezifikation 7.5). */
-const SEPARATOR = /[a-zäöüß]{3,} · | · [A-Za-zÄÖÜäöüß][a-zäöüß]{2,}|Schritt \d+ ·/;
 const BROKEN = /NaN|undefined|Infinity|\[object/;
-const sentences = (s: string) => (s.match(/[.!?](\s|$)/g) ?? []).length;
+/** „Was passiert?“ und „Warum?“: Sätze mit höchstens 25 Wörtern. */
+const SHORT = { maxWords: 25 };
+/** „Kurz gesagt“: höchstens zwei Sätze mit je höchstens 25 Wörtern. */
+const KURZ = { maxWords: 25, maxSentences: 2 };
+/** „Was heißt das Ergebnis?“: Aussage über Menschen, kurze Sätze (das gebilligte Beispiel hat drei). */
+const DEUTUNG = { maxWords: 25, maxSentences: 3 };
 
-function clean(label: string, s: string) {
-  assert.ok(s.trim().length > 0, `${label}: leer`);
+function clean(label: string, s: string | undefined, opts?: { maxWords?: number; maxSentences?: number }) {
+  assert.ok(typeof s === 'string' && s.trim().length > 0, `${label}: leer`);
   assert.ok(!BROKEN.test(s), `${label}: ${s}`);
-  assert.ok(!SEPARATOR.test(s), `${label}: Mittelpunkt als Trenner in „${s}“`);
-}
-function kurz(label: string, s: string) {
-  clean(label, s);
-  assert.ok(sentences(s) <= 2, `${label}: „Kurz gesagt“ hat mehr als zwei Sätze: ${s}`);
+  const problems = styleProblems(s, opts);
+  assert.deepEqual(problems, [], `${label}: ${problems.join(' ')}`);
 }
 const flat = (nodes: FNode[]): string => nodes.map(n => typeof n === 'string' ? n
   : 'part' in n ? flat(n.part) : 'frac' in n ? flat(n.frac) + '/' + flat(n.den) : 'root' in n ? flat(n.root)
   : 'big' in n ? n.big : 'sub' in n ? n.sub : '\n').join('');
+const concept = (label: string, id: string) => assert.ok(conceptById[id]?.title, `${label}: Begriff „${id}“ fehlt in concepts.ts`);
+/** Regel 1: Zeichen oder ausdrücklich keins; bei einem Zeichen auch die Aussprache (ohne Anführungszeichen). */
+function symbol(label: string, sym: string | undefined, say: string | undefined) {
+  if (sym) { assert.ok(say?.trim(), `${label}: Zeichen „${sym}“ ohne Aussprache`); assert.ok(!/[„“"]/.test(say!), `${label}: Aussprache ohne Anführungszeichen schreiben`); }
+}
+const FAST = /^Fast! /, LEADS = /^(Fast! |Noch nicht ganz\. )/;
 
-test('every workshop text resolves for every preset, variant and person without broken values', () => {
+/** Alle endlichen Zahlen in den Kennwerten, auch in Listen und verschachtelten Objekten. */
+function numbersIn(value: unknown, out: number[] = []): number[] {
+  if (typeof value === 'number' && Number.isFinite(value)) out.push(value);
+  else if (Array.isArray(value)) value.forEach(v => numbersIn(v, out));
+  else if (value && typeof value === 'object') Object.values(value).forEach(v => numbersIn(v, out));
+  return out;
+}
+/**
+ * Typische Fehlantworten aus den Kennwerten: Vorzeichen, mal oder durch 2, ±1, n statt n − 1 (und umgekehrt),
+ * Quadrat und Wurzel. Mindestens eine davon muss eine „Fast!“-Diagnose auslösen (siehe AUTHORING.md).
+ */
+function probes(s: unknown): number[] {
+  const base = [...new Set(numbersIn(s))];
+  return [...new Set(base.flatMap(b => [b, -b, 2 * b, b / 2, b + 1, b - 1, b * 4 / 5, b * 5 / 4, b / 4, b / 5, b * b, Math.sqrt(Math.abs(b))]))];
+}
+
+const LOOSE = WORKSHOPS as Workshop<any, any>[];
+
+test('every workshop text resolves for every preset, variant and person and follows the tone guide', () => {
   for (const w of LOOSE) {
-    clean(`${w.id} wofür`, w.wofuer);
-    w.glyphs.forEach(g => { clean(`${w.id} Zeichen`, g.term); clean(`${w.id} Zeichen`, g.plain); assert.ok(g.step >= 1 && g.step <= w.steps.length); });
+    clean(`${w.id} wofür`, w.wofuer); clean(`${w.id} Mut`, w.mut, SHORT);
+    assert.ok(w.picture.trim(), `${w.id}: Bild fehlt`);
+    w.glyphs.forEach(g => { clean(`${w.id} Zeichen`, g.term); clean(`${w.id} Zeichen`, g.plain); symbol(`${w.id} Zeichen ${g.sym}`, g.sym, g.say); assert.ok(g.step >= 1 && g.step <= w.steps.length); });
+    const fastByStep = new Map<number, number>();
     for (const [id, v] of Object.entries(w.variants)) {
-      assert.ok(conceptById[id], `${w.id}: Begriff ${id} fehlt`);
+      concept(`${w.id}`, id);
       assert.equal(v.lastStep <= w.steps.length, true);
-      kurz(`${w.id}/${id} kurz`, v.kurz); clean(`${w.id}/${id} fachlich`, v.fachlich); clean(`${w.id}/${id} aria`, v.aria);
-      kurz(`${w.id}/${id} genau`, v.genau.kurz);
+      clean(`${w.id}/${id} kurz`, v.kurz, KURZ); clean(`${w.id}/${id} fachlich`, v.fachlich); clean(`${w.id}/${id} aria`, v.aria);
+      clean(`${w.id}/${id} genau`, v.genau.kurz, KURZ);
       for (const preset of w.presets) {
-        const s = w.compute(preset.data);
+        const s = w.compute(preset.data), tries = probes(s);
         for (let who = 0; who < w.names.length; who++) {
           const c: Ctx<unknown> = { s, who, names: w.names };
           const label = `${w.id}/${id}/${preset.id}/${w.names[who]}`;
           v.metrics.forEach(m => clean(`${label} Kennzahl`, m.value(c)));
-          const i = v.interpret(c); kurz(`${label} Deutung`, i.kurz); clean(`${label} Deutung`, i.fachlich);
+          const i = v.interpret(c); clean(`${label} Deutung`, i.kurz, DEUTUNG); clean(`${label} Deutung`, i.fachlich);
           v.genau.paragraphs(c).forEach(p => clean(`${label} genau`, p));
           clean(`${label} Formel`, flat(w.numeric(c, v.lastStep)));
           w.table.columns.forEach(col => { for (let r = 0; r < w.names.length; r++) clean(`${label} Tabelle`, col.cell(c, r)); if (col.sum) clean(`${label} Summe`, col.sum(c)); });
           w.table.lines.forEach(l => clean(`${label} Zeile`, l.text(c)));
           w.steps.slice(0, v.lastStep).forEach((st, k) => {
             const sl = `${label} Schritt ${k + 1}`;
-            kurz(`${sl} kurz`, txt(st.kurz, c));
-            for (const t of [st.fachlich, st.vorgerechnet, st.fehler, st.check.question]) clean(sl, txt(t, c));
-            clean(sl, st.alltag); clean(sl, st.warum);
+            clean(`${sl} was`, txt(st.was, c), SHORT); clean(`${sl} warum`, txt(st.warum, c), SHORT);
+            clean(`${sl} Rechnung`, txt(st.rechnung, c)); clean(`${sl} Fachsprache`, txt(st.fach, c)); clean(`${sl} Aufgepasst`, txt(st.acht, c));
+            clean(`${sl} Frage`, txt(st.check.question, c));
             const answer = st.check.answer(c);
             assert.ok(answer === 'NA' || Number.isFinite(answer), `${sl}: Antwort ${answer}`);
             assert.equal(st.check.diagnose(c, answer), null, `${sl}: richtige Antwort bekommt eine Diagnose`);
+            for (const v2 of tries) {
+              if (answer !== 'NA' && close(v2, answer)) continue;
+              const d = st.check.diagnose(c, v2);
+              if (d === null) continue;
+              clean(`${sl} Diagnose`, d);
+              assert.match(d, FAST, `${sl}: Diagnose beginnt nicht mit „Fast!“: ${d}`);
+              fastByStep.set(k, (fastByStep.get(k) ?? 0) + 1);
+            }
           });
           w.think.forEach(t => { clean(`${label} Denkfrage`, txt(t.explain, c)); });
         }
       }
     }
     w.steps.forEach((st, k) => {
-      assert.ok(conceptById[st.concept], `${w.id} Schritt ${k + 1}: Begriff ${st.concept} fehlt`);
-      if (st.also) clean(`${w.id} Schritt ${k + 1} auch`, st.also);
-      for (const t of [st.button, st.sym]) assert.ok(!SEPARATOR.test(t), `${w.id} Schritt ${k + 1}: Mittelpunkt als Trenner in „${t}“`);
-      (st.links ?? []).forEach(l => { assert.ok(conceptById[l.id], `${w.id}: Verweis ${l.id} fehlt`); clean(`${w.id} Verweis`, l.label); });
+      const sl = `${w.id} Schritt ${k + 1}`;
+      concept(sl, st.concept);
+      clean(`${sl} Titel`, st.title); clean(`${sl} Knopf`, st.button);
+      symbol(sl, st.sym, st.say);
+      if (st.sym) clean(`${sl} Zeichen`, st.sym);
+      if (st.alltag) clean(`${sl} Alltag`, st.alltag);
+      (st.links ?? []).forEach(l => { concept(`${sl} Verweis`, l.id); clean(`${sl} Verweis`, l.label); });
+      assert.ok((fastByStep.get(k) ?? 0) > 0, `${sl}: keine Fehlantwort löst eine „Fast!“-Diagnose aus`);
     });
-    w.table.columns.forEach(col => assert.ok(!SEPARATOR.test(col.head)));
-    Object.values(w.variants).forEach(v => { if (v.next) { assert.ok(conceptById[v.next.id]); clean(`${w.id} weiter`, v.next.label); } });
+    w.table.columns.forEach(col => clean(`${w.id} Spaltenkopf`, col.head));
+    Object.values(w.variants).forEach(v => { if (v.next) { concept(`${w.id} weiter`, v.next.id); clean(`${w.id} weiter`, v.next.label); } });
     w.presets.forEach(p => clean(`${w.id} Voreinstellung`, p.label));
     Object.values(w.captions).forEach(cap => clean(`${w.id} Bildunterschrift`, cap!));
     w.think.forEach(t => {
-      kurz(`${w.id} Denkfrage kurz`, t.kurz); clean(`${w.id} Denkfrage`, t.question);
+      clean(`${w.id} Denkfrage kurz`, t.kurz, KURZ); clean(`${w.id} Denkfrage`, t.question);
+      t.options.forEach(o => clean(`${w.id} Antwort`, o));
       assert.ok(t.correct >= 0 && t.correct < t.options.length);
       if (t.tryIt) {
         const d = t.tryIt.apply(w.presets[0].data) as number[] | { x: number[]; y: number[] }, values: number[] = Array.isArray(d) ? d : [...d.x, ...d.y];
@@ -85,6 +128,132 @@ test('every workshop text resolves for every preset, variant and person without 
       }
     });
   }
+});
+
+function checkCard(card: ConceptCard) {
+  const l = `Begriffskarte ${card.concept}`;
+  concept(l, card.concept);
+  clean(`${l} wofür`, card.wofuer); clean(`${l} kurz`, card.kurz, KURZ);
+  clean(`${l} Stell dir vor`, card.stellDirVor.text);
+  (card.stellDirVor.figures ?? []).forEach(f => { clean(`${l} Zahl`, f.label); clean(`${l} Zahl`, f.value); });
+  clean(`${l} Fachsprache`, card.heisst.fach); symbol(l, card.heisst.sym, card.heisst.say);
+  assert.ok(card.bausteine.length >= 2 && card.bausteine.length <= 4, `${l}: zwei bis vier Bausteine`);
+  card.bausteine.forEach((b, i) => {
+    const bl = `${l} Baustein ${i + 1}`;
+    clean(`${bl} Titel`, b.title); clean(`${bl} was`, b.was, SHORT); clean(`${bl} warum`, b.warum, SHORT); clean(`${bl} Aufgepasst`, b.acht);
+    if (b.rechnung) clean(`${bl} Rechnung`, b.rechnung);
+    if (b.concept) concept(bl, b.concept);
+  });
+  card.ausprobieren.forEach(q => {
+    clean(`${l} Ausprobieren`, q.question); clean(`${l} Ausprobieren`, q.explain); clean(`${l} Ausprobieren kurz`, q.kurz, KURZ);
+    q.options.forEach(o => clean(`${l} Antwort`, o));
+    assert.ok(q.correct >= 0 && q.correct < q.options.length);
+    if (q.step !== undefined) assert.ok(q.step >= 1 && q.step <= card.bausteine.length, `${l}: Schritt ${q.step} gibt es nicht`);
+  });
+  if (card.regler) {
+    const r = card.regler;
+    clean(`${l} Regler`, r.label);
+    for (let v = r.min; v <= r.max + 1e-9; v += (r.max - r.min) / 40) { clean(`${l} Regler ${v}`, r.format(v)); clean(`${l} Regler ${v}`, r.describe(v)); }
+    clean(`${l} Regler Start`, r.describe(r.initial));
+  }
+  const ch = card.check;
+  clean(`${l} Frage`, ch.question);
+  assert.equal(new Set(ch.options).size, ch.options.length, `${l}: doppelte Antworten`);
+  assert.ok(Number.isInteger(ch.correct) && ch.correct >= 0 && ch.correct < ch.options.length, `${l}: genau eine richtige Antwort`);
+  assert.equal(ch.diagnose[ch.correct], undefined, `${l}: die richtige Antwort bekommt keine Diagnose`);
+  assert.match(ch.right, /^Genau/, `${l}: Rückmeldung zur richtigen Antwort beginnt mit „Genau“`);
+  ch.options.forEach((o, k) => {
+    clean(`${l} Antwort`, o);
+    if (k === ch.correct) return;
+    const d = ch.diagnose[k];
+    clean(`${l} Rückmeldung ${k}`, d);
+    assert.match(d!, LEADS, `${l}: Rückmeldung zu Antwort ${k} beginnt nicht mit „Fast!“ oder „Noch nicht ganz.“`);
+  });
+  assert.ok(Object.values(ch.diagnose).some(d => FAST.test(d!)), `${l}: keine „Fast!“-Rückmeldung`);
+  clean(`${l} für dich`, card.fuerDich);
+  clean(`${l} genau`, card.genau.kurz, KURZ); card.genau.paragraphs.forEach(p => clean(`${l} genau`, p));
+}
+
+/** R-Code im Stil des Lernpfads (Spezifikation Lehrdatensatz, Abschnitt 7). */
+function rStyle(label: string, code: string) {
+  assert.ok(code.startsWith('library(dplyr)\nlibrary(mariposa)\n\natlas <- read_spss("Statistikatlas-200-Befragte.sav")\n'), `${label}: Startblock fehlt`);
+  assert.match(code, /atlas %>%/, `${label}: Pipe fehlt`);
+  for (const bad of ['d$', 'd <- ', 'factor(', 'read.csv2', 'ifelse(', '0.7.2', '0.7.3']) assert.ok(!code.includes(bad), `${label}: „${bad}“ im R-Code`);
+  if (code.includes('rec(')) assert.match(code, /mutate\(/, `${label}: rec() gehört in mutate()`);
+}
+
+function checkTool(t: TableTool) {
+  const l = `Werkzeug ${t.concept}`;
+  concept(l, t.concept);
+  clean(`${l} wofür`, t.wofuer); clean(`${l} kurz`, t.kurz, KURZ); if (t.mut) clean(`${l} Mut`, t.mut, SHORT);
+  assert.equal(t.rows.length, 5, `${l}: fünf Personen`);
+  t.columns.forEach(c => clean(`${l} Spalte`, c.label));
+  t.steps.forEach((st, i) => {
+    const sl = `${l} Schritt ${i + 1}`;
+    clean(`${sl} Titel`, st.title); clean(`${sl} was`, st.was, SHORT); clean(`${sl} warum`, st.warum, SHORT); clean(`${sl} Aufgepasst`, st.acht); clean(`${sl} Fachsprache`, st.fach);
+    symbol(sl, st.sym, st.say);
+    if (st.concept) concept(sl, st.concept);
+  });
+  let fast = 0;
+  for (const o of t.options) {
+    clean(`${l} Wahl`, o.label);
+    const after = t.apply(t.rows, o.id);
+    assert.equal(after.rows.length, t.rows.length, `${l}/${o.id}: Zeilen gehen verloren`);
+    after.columns.forEach(c => clean(`${l}/${o.id} Spalte`, c.label));
+    after.rows.forEach(r => after.columns.forEach(c => {
+      const v = r[c.key];
+      assert.ok(v === null || typeof v === 'string' || Number.isFinite(v), `${l}/${o.id}: Wert ${String(v)} in ${c.key}`);
+    }));
+    rStyle(`${l}/${o.id}`, t.rCode(o.id));
+    const answer = t.check.answer(o.id);
+    assert.ok(answer === 'NA' || Number.isFinite(answer));
+    assert.equal(t.check.diagnose(o.id, answer), null, `${l}: richtige Antwort bekommt eine Diagnose`);
+    for (const v of answer === 'NA' ? [0, 1] : probes(answer)) {
+      if (answer !== 'NA' && close(v, answer)) continue;
+      const d = t.check.diagnose(o.id, v);
+      if (d === null) continue;
+      clean(`${l} Diagnose`, d); assert.match(d, FAST); fast++;
+    }
+  }
+  assert.ok(fast > 0, `${l}: keine Fehlantwort löst eine „Fast!“-Diagnose aus`);
+  clean(`${l} Frage`, t.check.question); assert.match(t.check.right, /^Genau/);
+  t.think.forEach(q => {
+    clean(`${l} Denkfrage`, q.question); clean(`${l} Denkfrage`, q.explain); clean(`${l} Denkfrage kurz`, q.kurz, KURZ);
+    assert.ok(q.correct >= 0 && q.correct < q.options.length);
+    if (q.step !== undefined) assert.ok(q.step >= 1 && q.step <= t.steps.length);
+  });
+  clean(`${l} genau`, t.genau.kurz, KURZ); t.genau.paragraphs.forEach(p => clean(`${l} genau`, p));
+}
+
+function checkSentence(t: AnySentence) {
+  const l = `Formel als Satz ${t.concept}`;
+  concept(l, t.concept);
+  clean(`${l} wofür`, t.wofuer); clean(`${l} kurz`, t.kurz, KURZ); clean(`${l} fachlich`, t.fachlich); clean(`${l} Aufgepasst`, t.fehler);
+  const s = t.compute(t.initial);
+  t.metrics.forEach(m => clean(`${l} Kennzahl`, m.value(s)));
+  t.glyphs.forEach(g => { concept(l, g.concept); clean(`${l} Zeichen`, g.term); clean(`${l} Zeichen`, g.plain); symbol(l, g.sym, g.say); });
+  t.worked(s).forEach(w => { clean(`${l} Vorgerechnet`, w.title); clean(`${l} Vorgerechnet`, w.text); });
+  clean(`${l} Formel`, flat(t.numeric(s))); clean(`${l} Vergleich`, t.compare(s));
+  const i = t.interpret(s); clean(`${l} Deutung`, i.kurz, DEUTUNG); clean(`${l} Deutung`, i.fachlich);
+  assert.match(t.check.right, /^Genau/);
+  const said = probes(t.check.answer).filter(v => !close(v, t.check.answer, t.check.tolerance)).map(v => t.check.diagnose(v));
+  said.forEach(d => { clean(`${l} Diagnose`, d); assert.match(d, LEADS); });
+  assert.ok(said.some(d => FAST.test(d)), `${l}: keine „Fast!“-Diagnose`);
+  clean(`${l} Denkfrage`, t.think.question); clean(`${l} Denkfrage`, t.think.explain); clean(`${l} Denkfrage kurz`, t.think.kurz, KURZ);
+  clean(`${l} genau`, t.genau.kurz, KURZ); t.genau.paragraphs.forEach(p => clean(`${l} genau`, p));
+}
+
+test('every registered explanation follows its template and the tone guide', () => {
+  const kinds = new Set<string>();
+  for (const [id, e] of Object.entries(EXPLANATIONS)) {
+    concept('Erklärung', id);
+    kinds.add(e.kind);
+    if (e.kind === 'begriff') { assert.equal(e.card.concept, id); checkCard(e.card); }
+    if (e.kind === 'tabelle') { assert.equal(e.tool.concept, id); checkTool(e.tool); }
+    if (e.kind === 'satz') { assert.equal(e.template.concept, id); checkSentence(e.template); }
+    if (e.kind === 'werkstatt') assert.ok(WORKSHOPS.includes(e.workshop) && e.workshop.variants[id], `${id}: Werkstatt nicht registriert`);
+  }
+  assert.deepEqual([...kinds].sort(), ['begriff', 'satz', 'tabelle', 'werkstatt', 'werkzeug']);
 });
 
 test('the step card terms are the concept titles of the map', () => {
@@ -95,14 +264,30 @@ test('the step card terms are the concept titles of the map', () => {
 
 const at = <S,>(w: { compute: (d: never) => S; names: readonly string[] }, data: unknown, who: number): Ctx<S> => ({ s: w.compute(data as never), who, names: w.names });
 
+test('Streuung: the approved wording, Gruppe B, Person A', () => {
+  const s = streuung.steps, c = at(streuung, [1, 3, 5, 7, 9], 0);
+  assert.deepEqual(s.map(st => st.title), ['Die Mitte finden', 'Abstände messen', 'Abstände quadrieren', 'Alles zusammenzählen', 'Gerecht teilen', 'Zurück zur Skala']);
+  assert.deepEqual(s.map(st => [st.sym, st.say]), [['x̄', 'x quer'], ['xᵢ − x̄', 'x i minus x quer'], ['( )²', 'hoch zwei'], ['Σ', 'Sigma'], ['s²', 's Quadrat'], ['s', 's']]);
+  assert.deepEqual(s.map(st => txt(st.check.question, c)), ['Wo liegt die Mitte dieser Gruppe?', 'Wie weit ist Person A von der Mitte weg? Mit Vorzeichen.', 'Was kommt heraus, wenn du (−4) mit sich selbst malnimmst?', 'Wie groß ist die Summe der fünf Quadrate?', 'Was kommt heraus, wenn du die Summe durch 4 teilst?', 'Und jetzt die Wurzel daraus? Zwei Nachkommastellen reichen.']);
+  assert.equal(txt(s[4].acht, c), 'Wer durch 5 teilt, bekommt 8 statt 10. Das passiert sehr vielen. Merksatz: Bei der Streuung teilst du durch n − 1.');
+  assert.equal(txt(s[5].warum, c), 'Die 10 aus Schritt 5 ist in „Punkten zum Quadrat“, damit kann niemand etwas anfangen. Nach der Wurzel sind wir wieder in Punkten auf der Skala.');
+  assert.equal(txt(s[5].acht, c), 'Nicht bei der 10 stehen bleiben. Das ist die Varianz. Die Standardabweichung ist ihre Wurzel.');
+  assert.equal(streuung.variants.sd.interpret(c).kurz, 'In Gruppe B liegen die Antworten typischerweise gut 3 Punkte von der Mitte entfernt. In Gruppe A sind es nur 0,71 Punkte: Dort sind sich fast alle einig. Gleicher Durchschnitt, ganz andere Gruppe.');
+  assert.match(streuung.mut, /^Die Formel sieht nach viel aus\. Sie besteht aber nur aus sechs kleinen Schritten/);
+  assert.match(streuung.variants.sd.kurz, /^Die Standardabweichung sagt dir, wie weit die Antworten typischerweise von der Mitte entfernt sind\./);
+});
+
 test('typical wrong answers get their diagnosis (Streuung, Gruppe B)', () => {
   const s = streuung.steps, cA = at(streuung, [1, 3, 5, 7, 9], 0);
-  assert.match(s[0].check.diagnose(cA, 25)!, /Summe/); assert.match(s[0].check.diagnose(cA, 6.25)!, /nicht durch n − 1/);
-  assert.match(s[1].check.diagnose(cA, 4)!, /Vorzeichen/);
-  assert.match(s[2].check.diagnose(cA, -16)!, /Taschenrechner-Falle/); assert.match(s[2].check.diagnose(cA, 8)!, /mal 2/);
-  assert.match(s[3].check.diagnose(cA, 0)!, /Summe der Abweichungen/);
-  assert.match(s[4].check.diagnose(cA, 8)!, /durch n = 5 geteilt/); assert.match(s[4].check.diagnose(cA, 40)!, /Quadratsumme/);
-  assert.match(s[5].check.diagnose(cA, 10)!, /Wurzel/);
+  assert.equal(s[0].check.diagnose(cA, 25), 'Fast! Das ist die Summe. Jetzt noch durch 5 teilen.');
+  assert.match(s[0].check.diagnose(cA, 6.25)!, /nicht durch n − 1/);
+  assert.equal(s[1].check.diagnose(cA, 4), 'Fast! Der Abstand stimmt, nur die Seite nicht. Rechne Antwort minus Mitte.');
+  assert.equal(s[2].check.diagnose(cA, -16), 'Fast! Das Minus ist zu viel: Minus mal Minus ergibt Plus. Ein Quadrat ist nie negativ.');
+  assert.match(s[2].check.diagnose(cA, 8)!, /mal 2/);
+  assert.match(s[3].check.diagnose(cA, 0)!, /Summe der Abstände/);
+  assert.equal(s[4].check.diagnose(cA, 8), 'Fast! Du hast durch 5 geteilt. Bei der Streuung teilst du durch 4, also n − 1.');
+  assert.match(s[4].check.diagnose(cA, 40)!, /noch die Summe/);
+  assert.equal(s[5].check.diagnose(cA, 10), 'Fast! Das ist noch die Zahl vor der Wurzel.');
   assert.ok(close(s[5].check.answer(cA) as number, 3.16));
 });
 
@@ -112,25 +297,24 @@ test('typical wrong answers get their diagnosis (Mittel and Zusammenhang)', () =
   assert.match(mittel.steps[1].check.diagnose(m, 25)!, /Summe/); assert.match(mittel.steps[1].check.diagnose(m, 6.25)!, /nicht durch n − 1/);
   const z = at(zusammenhang, { x: [2, 3, 4, 5, 6], y: [2, 5, 3, 6, 4] }, 1), st = zusammenhang.steps;
   assert.equal(st[2].check.answer(z), -1);
-  assert.match(st[2].check.diagnose(z, 1)!, /Vorzeichenregel/); assert.match(st[2].check.diagnose(z, 0)!, /Summe der Abweichungen/);
+  assert.match(st[2].check.diagnose(z, 1)!, /Vorzeichen/); assert.match(st[2].check.diagnose(z, 0)!, /Summe der beiden Abstände/);
   assert.match(st[3].check.diagnose(z, 7)!, /negativen Produkte positiv/);
-  assert.match(st[4].check.diagnose(z, 1)!, /durch n = 5 geteilt/); assert.match(st[4].check.diagnose(z, 5)!, /Summe/);
+  assert.match(st[4].check.diagnose(z, 1)!, /durch 5 geteilt/); assert.match(st[4].check.diagnose(z, 5)!, /Summe/);
   assert.match(st[5].check.diagnose(z, 1.25 / (2 * Math.sqrt(2.5)))!, /nicht die Summe/);
   assert.match(st[5].check.diagnose(z, 0.2)!, /nicht die Varianzen/); assert.match(st[5].check.diagnose(z, 1.25)!, /noch die Kovarianz/);
   const flat4 = at(zusammenhang, { x: [2, 3, 4, 5, 6], y: [4, 4, 4, 4, 4] }, 0);
   assert.equal(st[5].check.answer(flat4), 'NA');
 });
 
-test('Stufe 2 und 3: Standardfehler and Rekodieren texts and checks', () => {
+test('Formel als Satz and Werkzeug: Standardfehler and Rekodieren texts and checks', () => {
   const s = standardfehler.compute(standardfehler.initial);
   assert.ok(close(s.se, 0.013, 5e-4)); assert.ok(close(s.lo, 3.27)); assert.ok(close(s.hi, 3.32));
-  assert.match(standardfehler.check.diagnose(0.01), /durch n geteilt/); assert.match(standardfehler.check.diagnose(10), /Umgekehrt/); assert.match(standardfehler.check.diagnose(1), /noch s selbst/);
-  kurz('SE kurz', standardfehler.kurz); kurz('SE Deutung', standardfehler.interpret(s).kurz); kurz('SE genau', standardfehler.genau.kurz);
-  standardfehler.worked(s).forEach(w => clean('SE vorgerechnet', w.text));
-  clean('SE Formel', flat(standardfehler.numeric(s)));
+  assert.match(standardfehler.check.diagnose(0.01), /^Fast! Du hast durch n geteilt/); assert.match(standardfehler.check.diagnose(10), /Andersherum/); assert.match(standardfehler.check.diagnose(1), /noch s selbst/);
+  assert.match(standardfehler.check.diagnose(7), /^Noch nicht ganz\./);
   const rev = parseRules('rev', rekodieren.scale), code2 = rekodieren.codes[1];
   assert.equal(rekodieren.check.answer(rev, code2), 4);
-  assert.match(rekodieren.check.diagnose(rev, code2, 2), /alte Code/);
+  assert.match(rekodieren.check.diagnose(rev, code2, 2), /^Fast! Das ist noch der alte Code/);
+  assert.match(rekodieren.check.diagnose(rev, code2, 3), /^Noch nicht ganz\./);
   const walk = rekodieren.walk(parseRules('1:2=1; 3:5=0', rekodieren.scale), rekodieren.codes[3]);
   assert.deepEqual(walk.lines.slice(1), ['Regel 1 (1:2=1) passt nicht.', 'Regel 2 (3:5=0) passt.', 'Neuer Code: 0.']);
   assert.equal(walk.kurz, 'Aus 4 wird 0.');
@@ -138,21 +322,46 @@ test('Stufe 2 und 3: Standardfehler and Rekodieren texts and checks', () => {
   for (const preset of rekodieren.presets) {
     const p = parseRules(preset.rule, rekodieren.scale);
     rekodieren.describe(p).forEach(d => clean('Regel', d.text));
-    rekodieren.codes.forEach(c => { const w = rekodieren.walk(p, c); w.lines.forEach(l => clean('Durchlauf', l)); kurz('Durchlauf kurz', w.kurz); });
+    rekodieren.codes.forEach(c => { const w = rekodieren.walk(p, c); w.lines.forEach(l => clean('Durchlauf', l)); clean('Durchlauf kurz', w.kurz, KURZ); });
   }
-  kurz('rec kurz', rekodieren.kurz); kurz('rec genau', rekodieren.genau.kurz);
+  clean('rec wofür', rekodieren.wofuer); clean('rec kurz', rekodieren.kurz, KURZ); clean('rec Mut', rekodieren.mut, SHORT); clean('rec Aufgepasst', rekodieren.fehler);
+  clean('rec genau', rekodieren.genau.kurz, KURZ); rekodieren.genau.paragraphs.forEach(p => clean('rec genau', p));
+  rekodieren.think.forEach(q => { clean('rec Denkfrage', q.question); clean('rec Denkfrage', q.explain); clean('rec Denkfrage kurz', q.kurz, KURZ); });
   assert.match(rekodieren.rCode('rev'), /mutate\(interesse = rec\(pa02a, rules = "rev"\)\) %>%\n  frequency\(interesse\)/);
 });
 
 test('registry: explanations, step cards with context and the step request', () => {
   for (const id of ['mean', 'variance', 'sd', 'covariance', 'pearson']) assert.equal(explainFor(id)?.kind, 'werkstatt', id);
-  assert.equal(explainFor('se')?.kind, 'satz'); assert.equal(explainFor('recode')?.kind, 'werkzeug'); assert.equal(explainFor('median'), null);
+  assert.equal(explainFor('se')?.kind, 'satz'); assert.equal(explainFor('recode')?.kind, 'werkzeug');
+  assert.equal(explainFor('p_value')?.kind, 'begriff'); assert.equal(explainFor('dummy')?.kind, 'tabelle');
+  assert.equal(explainFor('median'), null); assert.equal(tabsFor('median'), null);
   assert.equal(stepCardFor('deviation')?.workshop.id, 'streuung');
   assert.equal(stepCardFor('deviation', 'pearson')?.workshop.id, 'zusammenhang');
   assert.deepEqual([stepCardFor('ss', 'variance')?.variant, stepCardFor('ss')?.variant, stepCardFor('ss')?.step], ['variance', 'sd', 4]);
   assert.deepEqual([stepCardFor('crossproduct_sum', 'covariance')?.variant, stepCardFor('sd_product')?.step], ['covariance', 6]);
   assert.equal(stepCardFor('sum')?.workshop.id, 'mittel'); assert.equal(stepCardFor('median'), null);
   requestStep('sd', 3); assert.equal(takeStep('variance'), null); assert.equal(takeStep('sd'), 3); assert.equal(takeStep('sd'), null);
+  assert.equal(new Set(WORKSHOPS.map(w => w.id)).size, WORKSHOPS.length, 'Werkstatt-Kennungen sind eindeutig');
+});
+
+test('registry: duplicate concept ids between areas throw while loading', () => {
+  const card = (explainFor('p_value') as { kind: 'begriff'; card: ConceptCard }).card;
+  const area = (id: string) => ({ explanations: { [id]: { kind: 'begriff' as const, card } }, tabs: {} });
+  const none = { ids: [] as string[], workshops: [] };
+  assert.throws(() => mergeAreas({ b01: area('validity'), b02: area('validity') }, none), /„validity“.*doppelt.*b01 und b02/);
+  assert.throws(() => mergeAreas({ b03: area('sd') }, { ids: ['sd'], workshops: [] }), /„sd“.*pilot und b03/);
+  const ws = { ...streuung };
+  assert.throws(() => mergeAreas({ b04: { explanations: { z: { kind: 'werkstatt', workshop: ws, variant: 'sd' } }, tabs: {} } }, { ids: [], workshops: [streuung] }), /Werkstatt „streuung“ ist doppelt/);
+  assert.throws(() => mergeAreas({ b12: { explanations: {}, tabs: {}, stepCards: { add: { workshop: 'gibtsnicht', variant: 'x', step: 1 } } } }, none), /unbekannte Werkstatt/);
+  const next = { next: { id: 'sd', why: 'weil' }, before: [], after: [] };
+  assert.throws(() => mergeAreas({ b01: area('validity'), b02: { explanations: {}, tabs: { validity: { next } } } }, none), /gehören zu b01, nicht zu b02/);
+  assert.throws(() => mergeAreas({ b01: { explanations: {}, tabs: { sd: { next } } } }, { ids: ['sd'], tabs: ['sd'], workshops: [] }), /liefert der Pilot/);
+  // Reiter für eine Pilot-Schrittkarte (ss) darf ein Bereich vergeben, aber nur einer.
+  const ok = mergeAreas({ b04: { explanations: {}, tabs: { ss: { next } } } }, { ids: ['ss'], tabs: ['sd'], workshops: [] });
+  assert.ok(ok.tabs.ss);
+  assert.throws(() => mergeAreas({ b04: { explanations: {}, tabs: { ss: { next } } }, b05: { explanations: {}, tabs: { ss: { next } } } }, { ids: ['ss'], workshops: [] }), /doppelt vergeben: b04 und b05/);
+  const merged = mergeAreas({ b01: area('validity'), b02: { explanations: {}, tabs: {}, stepCards: { add: { workshop: 'streuung', variant: 'sd', step: 1 } } } }, { ids: [], workshops: [streuung] });
+  assert.deepEqual([Object.keys(merged.explanations), merged.stepCards.add.workshop], [['validity'], 'streuung']);
 });
 
 test('mode store: Ausführlich by default, remembers Kompakt, survives a blocked storage', () => {
@@ -180,9 +389,9 @@ test('review fixes: strength rounding, shift keeps s, named person, fixed format
   assert.equal(fixed(2.7), '2,70'); assert.equal(fixed(3.297), '3,30'); assert.equal(fixed(-0.001), '0,00');
 });
 
-test('Stufe 2 und 3: all label texts are clean and linked concepts exist', () => {
-  standardfehler.glyphs.forEach(g => { assert.ok(conceptById[g.concept], g.concept); clean('SE Zeichen', g.term); clean('SE Zeichen', g.plain); });
-  rekodieren.terms.forEach(t => { if (t.concept) assert.ok(conceptById[t.concept], t.concept); clean('rec Begriff', t.plain); });
+test('Formel als Satz and Werkzeug: all label texts are clean and linked concepts exist', () => {
+  standardfehler.glyphs.forEach(g => { concept('SE', g.concept); clean('SE Zeichen', g.term); clean('SE Zeichen', g.plain); });
+  rekodieren.terms.forEach(t => { if (t.concept) concept('rec', t.concept); clean('rec Begriff', t.plain); });
   rekodieren.signs.forEach(x => { clean('rec Zeichen', x.plain); clean('rec Zeichen', x.say); });
   const gap = parseRules('1:2=1; 4:5=0', rekodieren.scale);
   assert.match(rekodieren.warnUnmatched([rekodieren.codes[2]]).text, /Der Code 3 passt zu keiner Regel und wird NA/);
@@ -197,5 +406,4 @@ test('Stufe 2 und 3: all label texts are clean and linked concepts exist', () =>
   assert.match(rekodieren.rCode('rev'), /^library\(dplyr\)\nlibrary\(mariposa\)/);
   const se = standardfehler.compute(standardfehler.initial);
   assert.match(standardfehler.interpret(se).fachlich, /3,297 − 0,025 ≈ 3,27 bis 3,297 \+ 0,025 ≈ 3,32/);
-  kurz('SE Deutung', standardfehler.interpret(se).kurz);
 });
