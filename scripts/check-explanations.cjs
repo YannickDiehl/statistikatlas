@@ -10,6 +10,7 @@
  *   IDS         Begriffs-IDs, durch Komma getrennt (Pflicht)
  *   OUT         Ordner für die Ergebnisse: je Begriff <id>.json, dazu summary.json (Pflicht)
  *   SIZES       Breiten in px, durch Komma getrennt (Standard: 1440,390; Höhe 900, bei 390 px 844)
+ *   MODE        „kompakt“ prüft die Erklärungen in der Ansicht Kompakt (Standard: Ausführlich)
  *   SHOTS=1     zusätzlich je Reiter und Breite ein Bildschirmfoto nach OUT/shots
  *   PLAYWRIGHT  Pfad zum Playwright-Paket (Standard: das npx-Paket dieses Rechners)
  *
@@ -170,10 +171,11 @@ async function checkConcept(page, id, width, errors) {
   try {
     for (const width of SIZES) {
       const context = await browser.newContext({ viewport: { width, height: width <= 480 ? 844 : 900 }, ...(width <= 480 ? { isMobile: true, hasTouch: true, deviceScaleFactor: 2 } : {}) });
-      await context.addInitScript(() => {
+      await context.addInitScript(mode => {
+        try { localStorage.setItem('statistikatlas.erklaerung.v1', mode); } catch { /* ohne Speicher: Ausführlich */ }
         window.__atlasTools = {};
         document.modelContext = { registerTool: tool => { window.__atlasTools[tool.name] = tool; } };
-      });
+      }, process.env.MODE === 'kompakt' ? 'kompakt' : 'ausfuehrlich');
       const page = await context.newPage(), errors = [];
       page.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') errors.push(m.text()); });
       page.on('pageerror', e => errors.push(String(e)));
@@ -184,7 +186,7 @@ async function checkConcept(page, id, width, errors) {
         try { r = await checkConcept(page, id, width, errors); }
         catch (e) { r = { id, width, problems: [`Abbruch: ${String(e).split('\n')[0]}`] }; }
         (all[id] ??= []).push(r);
-        console.log(JSON.stringify({ id, width, title: r.title, via: r.openedVia, tabs: r.tabs, minFont: r.minFont, problems: r.problems }));
+        console.log(JSON.stringify({ id, width, mode: process.env.MODE === 'kompakt' ? 'kompakt' : 'ausführlich', title: r.title, via: r.openedVia, tabs: r.tabs, minFont: r.minFont, problems: r.problems }));
       }
       await context.close();
     }
