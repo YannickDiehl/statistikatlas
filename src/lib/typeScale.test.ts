@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 // Schriftskala: nichts im UI unter 13 px (Stand 1. Oktober 2026, „+2 px, mindestens 13 px“).
 const MIN = 13;
 const dir = new URL('../', import.meta.url);
-const sheets = readdirSync(dir).filter(f => f.endsWith('.css'));
+const sheets = (readdirSync(dir, { recursive: true }) as string[]).filter(f => f.endsWith('.css'));
 
 /** Jede px-Schriftgröße aus font-size und der font-Kurzschreibweise (dort steht die Größe vor der Schriftart). */
 function sizes(css: string) {
@@ -22,7 +22,7 @@ function sizes(css: string) {
 }
 
 test('Die Stylesheets setzen keine Schrift kleiner als 13 px', () => {
-  assert.ok(sheets.length >= 5, sheets.join(', '));
+  assert.ok(sheets.length >= 6, sheets.join(', '));
   for (const file of sheets) {
     const css = readFileSync(new URL(file, dir), 'utf8');
     const small = sizes(css).filter(s => s.size < MIN);
@@ -32,4 +32,5 @@ test('Die Stylesheets setzen keine Schrift kleiner als 13 px', () => {
 
 test('Die Prüfung erkennt kleine Schrift in beiden Schreibweisen', () => {
   assert.deepEqual(sizes('.a{font-size:11px}.b{color:red;font:600 12px/1.4 sans-serif}.c{font:16px/20px serif}').map(s => s.size), [11, 12, 16]);
+  assert.deepEqual(sizes('.d {\n  font-size: 10px;\n  font: italic 9px Georgia;\n}').map(s => s.size), [10, 9]);
 });

@@ -12,8 +12,9 @@ export function useViewportWidth() {
 }
 
 /**
- * Linke Kante der Werkbank. Ziehen mit Zeiger; Pfeil links/rechts um 40 px, Pos1/Ende auf breiteste
- * oder schmalste Breite; Doppelklick oder Eingabetaste stellt die Standardbreite her.
+ * Linke Kante der Werkbank, ein Trenner, dessen Wert die Breite der Werkbank ist. Ziehen mit Zeiger;
+ * Pfeil links/rechts um 40 px breiter/schmaler, Pos1/Ende auf schmalste/breiteste Breite;
+ * Doppelklick oder Eingabetaste stellt die Standardbreite her.
  * `onWidth(w, false)` meldet die Breite während des Ziehens, `onWidth(w, true)` den Endstand.
  */
 export function WorkbenchHandle({ width, viewport, onWidth, onReset }: {
@@ -33,18 +34,19 @@ export function WorkbenchHandle({ width, viewport, onWidth, onReset }: {
   const key = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') { e.preventDefault(); onReset(); return; }
     const next = e.key === 'ArrowLeft' ? width + WORKBENCH.step : e.key === 'ArrowRight' ? width - WORKBENCH.step
-      : e.key === 'Home' ? max : e.key === 'End' ? WORKBENCH.min : null;
+      : e.key === 'Home' ? WORKBENCH.min : e.key === 'End' ? max : null;
     if (next === null) return;
     e.preventDefault();
     onWidth(next, true);
   };
   return (
-    <div className="workbench-handle" role="separator" aria-orientation="vertical" tabIndex={0}
+    <div className="workbench-handle" role="separator" aria-orientation="vertical" tabIndex={0} aria-controls="atlas-inspector"
       aria-label="Breite der Formelwerkstatt" aria-valuemin={WORKBENCH.min} aria-valuemax={max} aria-valuenow={width} aria-valuetext={`${width} Pixel breit`}
       title="Ziehen ändert die Breite. Doppelklick stellt die Standardbreite wieder her."
       onPointerDown={e => {
         if (e.button !== 0) return;
         e.preventDefault();
+        e.currentTarget.focus({ preventScroll: true });
         e.currentTarget.setPointerCapture(e.pointerId);
         drag.current = { x: e.clientX, width, moved: false };
         dragging(true);

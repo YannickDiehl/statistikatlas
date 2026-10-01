@@ -82,15 +82,14 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept, picture }: {
       {!compact && <Section title="Die Zeichen, bevor es losgeht" note="Jedes Zeichen hat einen Fachbegriff und eine Aufgabe. Antippen zeigt, wo es in der Rechnung vorkommt.">
         <GlyphLegend items={w.glyphs.filter(g => g.step <= v.lastStep).map(g => ({ ...g, target: g.step }))} active={step} onPick={t => setStep(t as number)} />
       </Section>}
-      {wide
-        ? <div className="xw-work">
-          <div className={`xw-stage${layout.stick === 'all' ? ' stick' : ''}`}>
-            <div ref={layout.formula} className={`xw-stage-formula${layout.stick === 'formula' ? ' stick' : ''}`}>{formula}</div>
-            <div ref={layout.image}>{image}</div>
-          </div>
-          <div className="xw-study">{learnCard}{table}{check}</div>
+      {/* Gleicher Baum in beiden Anordnungen, damit Eingaben und Fokus beim Wechsel erhalten bleiben; nur das Bild wandert. */}
+      <div className={`xw-work${wide ? ' wide' : ''}`}>
+        <div className={`xw-stage${wide && layout.stick === 'all' ? ' stick' : ''}`}>
+          <div ref={layout.formula} className={`xw-stage-formula${wide && layout.stick === 'formula' ? ' stick' : ''}`}>{formula}</div>
+          {wide && <div ref={layout.image}>{image}</div>}
         </div>
-        : <>{formula}{learnCard}{table}{image}{check}</>}
+        <div className="xw-study">{learnCard}{table}{!wide && image}{check}</div>
+      </div>
       {!compact && (() => {
         const i = v.interpret(ctx);
         return <Section title="Was heißt das Ergebnis?"><KurzGesagt text={i.kurz} /><p>Fachlich: {i.fachlich}</p>

@@ -1,6 +1,7 @@
 import { Fragment, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode, type RefObject } from 'react';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { modeStore, type Mode } from '../../explain/mode';
+import { stickFor } from '../../explain/workbench';
 import type { FNode } from '../../explain/types';
 
 export function useExplainMode(): [Mode, (m: Mode) => void] {
@@ -23,8 +24,8 @@ export const WIDE_FROM = 800;
 
 /**
  * Zweispaltige Werkbank: `wide`, sobald `root` breit genug ist. Links stehen Formel und Bild; was davon
- * ganz in den sichtbaren Teil des Inspectors passt, bleibt beim Scrollen stehen: beides (`'all'`),
- * sonst nur die Formel mit den Schrittknöpfen (`'formula'`), sonst nichts.
+ * beim Scrollen stehen bleibt, entscheidet `stickFor`. Bleibt nur die Formel stehen, rückt ein Fokus im Bild
+ * darunter hervor, statt verdeckt zu werden.
  */
 export function useWorkbenchLayout(): {
   root: RefObject<HTMLDivElement | null>; formula: RefObject<HTMLDivElement | null>; image: RefObject<HTMLDivElement | null>;
@@ -36,15 +37,24 @@ export function useWorkbenchLayout(): {
     const el = root.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
     const scroller = el.closest('.network-inspector');
+    let stuck: 'all' | 'formula' | null = null;
     const read = () => {
-      setWide(el.clientWidth >= WIDE_FROM);
-      const room = (scroller?.clientHeight ?? 0) - 24, f = formula.current?.offsetHeight ?? 0, i = image.current?.offsetHeight ?? 0;
-      setStick(!f ? null : f + i + 20 <= room ? 'all' : f <= room ? 'formula' : null);
+      const isWide = el.clientWidth >= WIDE_FROM;
+      setWide(isWide);
+      stuck = isWide ? stickFor(formula.current?.offsetHeight ?? 0, image.current?.offsetHeight ?? 0, (scroller?.clientHeight ?? 0) - 24) : null;
+      setStick(stuck);
+    };
+    const reveal = (e: FocusEvent) => {
+      const target = e.target as Element, top = formula.current;
+      if (stuck !== 'formula' || !scroller || !top || !image.current?.contains(target)) return;
+      const hidden = top.getBoundingClientRect().bottom + 12 - target.getBoundingClientRect().top;
+      if (hidden > 0) scroller.scrollTop -= hidden;
     };
     read();
     const observer = new ResizeObserver(read);
     for (const box of [el, scroller, formula.current, image.current]) if (box) observer.observe(box);
-    return () => observer.disconnect();
+    el.addEventListener('focusin', reveal);
+    return () => { observer.disconnect(); el.removeEventListener('focusin', reveal); };
   }, [wide]);
   return { root, formula, image, wide, stick };
 }

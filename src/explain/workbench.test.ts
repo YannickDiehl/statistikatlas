@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createWorkbenchStore, fitWidth, maxWidth, standardWidth, WORKBENCH, WORKBENCH_KEY } from './workbench';
+import { createWorkbenchStore, fitWidth, maxWidth, standardWidth, stickFor, WORKBENCH, WORKBENCH_KEY } from './workbench';
 
 test('workbench width: about two thirds of the window, capped, and the map keeps 340 px', () => {
   assert.equal(standardWidth(1440), 922);
@@ -47,4 +47,15 @@ test('workbench store: remembers a dragged width, forgets it on reset, survives 
   fallback.set(700);
   assert.equal(fallback.get(), 700);
   assert.equal(createWorkbenchStore(null).get(), null);
+});
+
+test('two-column workbench: formula and picture stay in view only while they fit', () => {
+  assert.equal(stickFor(300, 300, 700), 'all');
+  assert.equal(stickFor(300, 381, 700), 'formula');
+  assert.equal(stickFor(420, 400, 700), 'formula');
+  // Die Formel allein darf höchstens 60 % des sichtbaren Platzes einnehmen.
+  assert.equal(stickFor(421, 400, 700), null);
+  assert.equal(stickFor(545, 300, 663), null);
+  assert.equal(stickFor(0, 300, 700), null);
+  assert.equal(stickFor(200, 200, 0), null);
 });

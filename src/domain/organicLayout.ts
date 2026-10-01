@@ -43,7 +43,7 @@ export type LabelPlacement={x:number;y:number;width:number;height:number};
 // Matches .organic-label in styles.css (16px/20px).
 function labelSize(title:string){const font=16,max=182,words=title.split(/\s+/),lines=[''];for(const word of words){const line=lines[lines.length-1];if(line&&(line+' '+word).length*font*.57>max)lines.push(word);else lines[lines.length-1]=(line+' '+word).trim();}return {width:Math.min(262,Math.max(...lines.map(line=>line.length*font*.61))+8),height:lines.length*20+6};}
 const candidateCache=new Map<string,LabelPlacement[]>();
-function labelCandidates(title:string){
+export function labelCandidates(title:string){
  const cached=candidateCache.get(title);if(cached)return cached;
  const {width,height}=labelSize(title),candidates:LabelPlacement[]=[];
  for(const gap of [15,30,50,75,105])candidates.push({x:-width/2,y:-height-gap,width,height},{x:-width/2,y:gap,width,height},{x:gap,y:-height/2,width,height},{x:-width-gap,y:-height/2,width,height},{x:gap,y:gap,width,height},{x:-width-gap,y:gap,width,height},{x:gap,y:-height-gap,width,height},{x:-width-gap,y:-height-gap,width,height});

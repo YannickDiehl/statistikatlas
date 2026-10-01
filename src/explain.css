@@ -13,10 +13,11 @@
 .workbench-handle:hover>span,.workbench-dragging .workbench-handle>span{background:var(--green)}
 .workbench-handle:focus-visible>span{background:var(--green);outline:2px solid var(--green);outline-offset:3px}
 .explain-wide.has-inspector .react-flow__minimap,.explain-wide.has-inspector .react-flow__attribution{right:calc(var(--xw-panel) + 16px)}
-.explain-wide.has-inspector .map-direction-key{right:calc(var(--xw-panel) + 14px);max-width:calc(100% - var(--xw-panel) - 40px)}
+.explain-wide.has-inspector .map-direction-key{right:calc(var(--xw-panel) + 14px);max-width:calc(100% - var(--xw-panel) - 82px)}
 .explain-wide.has-inspector .organic-zoom-note{display:none}
 .explain-wide.has-inspector .organic-edge-caption{left:calc((100% - var(--xw-panel))/2);max-width:calc(100% - var(--xw-panel) - 48px)}
-.explain-wide.has-inspector .network-map-note{max-width:calc(100% - var(--xw-panel) - 90px)}
+.explain-wide.has-inspector .network-map-note{max-width:calc(100% - var(--xw-panel) - 131px)}
+.explain-wide .network-inspector :is(p,li){max-width:78ch}
 }
 .workbench-dragging,.workbench-dragging body{cursor:col-resize;user-select:none}
 .network-inspector{container-type:inline-size}
@@ -217,11 +218,11 @@
 /* Zweispaltige Werkbank (ab 800 px Inhaltsbreite, useWorkbenchLayout): links Formel und Bild, rechts Lernkarte,
    Rechentabelle und Kurz prüfen. Die linke Spalte bleibt stehen, solange sie ganz in den Inspector passt. */
 .xw p{max-width:78ch}
-.xw-work{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:36px;margin-top:22px;border-top:1px solid var(--line);padding-top:6px}
-.xw-study{align-self:start}
+.xw-work.wide{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:36px;margin-top:22px;border-top:1px solid var(--line);padding-top:6px}
+.xw-work.wide .xw-study{align-self:start}
+.xw-work.wide .xw-stage-formula{display:flow-root}
 .xw-stage.stick{align-self:start;position:sticky;top:0}
-.xw-stage-formula{display:flow-root}
-.xw-stage-formula.stick{position:sticky;top:0;z-index:2;background:var(--paper);padding-bottom:6px;box-shadow:0 10px 10px -10px #3545282e}
+.xw-stage-formula.stick{position:sticky;top:0;z-index:2;background:var(--paper);box-shadow:0 10px 10px -10px #3545282e}
 .xw-wide .xw-symbolic{font-size:36px;margin:22px 0 10px}
 .xw-wide .xw-steps{margin-bottom:4px}
 .xw-wide .xw-steps{gap:4px}
@@ -230,6 +231,7 @@
 .xw-wide .xw-study .xw-check{margin-top:22px}
 .xw-wide .xw-legend{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 .xw-wide .xw-metrics{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.xw-wide .xw-table th,.xw-wide .xw-table td{padding:4px 8px}
 
 /* Breite Werkbank: die Häufigkeitsbalken beim Rekodieren dürfen länger werden. */
 @container (min-width:760px){.xw-row{--bar:150px}}
@@ -241,7 +243,8 @@
 .xw-slider>label{grid-column:1/-1}
 .xw-worked-steps span{padding-left:0}
 .xw-map{grid-template-columns:minmax(0,1fr) 36px minmax(0,1fr)}
-.xw-row{--bar:26px;gap:4px;font-size:14px}
+.xw-row{--bar:26px;gap:4px;font-size:13px}
+.xw-row-label{white-space:normal;line-height:1.15;max-height:2.3em}
 .xw-count{min-width:34px;font-size:13px}
 .xw-code{min-width:18px}
 }

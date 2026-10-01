@@ -20,6 +20,17 @@ export const maxWidth = (viewport: number) => Math.max(WORKBENCH.min, viewport -
 export const fitWidth = (width: number, viewport: number) => Math.round(Math.min(maxWidth(viewport), Math.max(WORKBENCH.min, width)));
 export const standardWidth = (viewport: number) => fitWidth(Math.min(WORKBENCH.standardMax, viewport * WORKBENCH.share), viewport);
 
+/**
+ * Was in der linken Spalte der zweispaltigen Werkbank beim Scrollen stehen bleibt (Höhen in px, `room` ist
+ * der sichtbare Teil des Inspectors): Formel und Bild, wenn beide hineinpassen; sonst nur die Formel, solange
+ * sie höchstens 60 % des Platzes braucht und vom Bild noch etwas zu sehen ist; sonst nichts.
+ */
+export function stickFor(formula: number, image: number, room: number): 'all' | 'formula' | null {
+  if (formula <= 0 || room <= 0) return null;
+  if (formula + image + 20 <= room) return 'all';
+  return formula <= room * 0.6 ? 'formula' : null;
+}
+
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 export function createWorkbenchStore(storage: Store | null) {
