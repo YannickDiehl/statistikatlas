@@ -232,7 +232,7 @@ export const haeufigkeiten: Workshop<number[], Haeufigkeit> = {
       interpret: c => {
         const upTo2 = c.s.xs.filter(x => x <= 2).length / c.s.n;
         return {
-          kurz: `${pct(c.s.maxShare / 100)} der acht haben ${c.s.modes.length === 1 ? abschluss(c.s.mode) : list(c.s.modes.map(abschluss))}; das ist die häufigste Antwort. Höchstens einen mittleren Abschluss haben ${pct(upTo2)}.`,
+          kurz: `${c.s.modes.length === 1 ? `${pct(c.s.maxShare / 100)} der acht haben ${abschluss(c.s.mode)}; das ist die häufigste Antwort.` : `Je ${pct(c.s.maxShare / 100)} der acht haben ${list(c.s.modes.map(abschluss))}; das sind die häufigsten Antworten.`} Höchstens einen mittleren Abschluss haben ${pct(upTo2)}.`,
           fachlich: `n = ${c.s.n}; hⱼ für die Codes 0 bis 4: ${CODES.map(k => pct(countOf(c.s, k) / c.s.n)).join(', ')}. Zusammen ergeben sie 100 %.`,
         };
       },
@@ -308,7 +308,7 @@ export const bridgeHaeufigkeit: Bridge<Haeufigkeit> = {
       zusatz: rest.length ? `Danach folgt ${vt(c, rest[0].v)} mit ${rest[0].k} Befragten.` : 'Alle haben dieselbe Antwort.',
     };
     return {
-      kurz: `${share(c, s.max)} der ${n} Befragten antworten bei „${t}“ mit ${s.modes.length === 1 ? vt(c, s.mode) : modesText(c)}; das ist die häufigste Antwort. Alle Anteile zusammen ergeben 100 %.`,
+      kurz: `${s.modes.length === 1 ? `${share(c, s.max)} der ${n} Befragten antworten bei „${t}“ mit ${vt(c, s.mode)}; das ist die häufigste Antwort.` : `Je ${share(c, s.max)} der ${n} Befragten antworten bei „${t}“ mit ${modesText(c)}; das sind die häufigsten Antworten.`} Alle Anteile zusammen ergeben 100 %.`,
       fachlich: `Häufigkeiten von „${t}“ bei n = ${n}: ${s.k} verschiedene Werte; der häufigste hat nⱼ = ${s.max}, also hⱼ = ${share(c, s.max)}.`,
       zusatz: s.k <= 8 ? `Je Wert: ${s.values.map((v, i) => `${num(v)}: ${s.counts[i]}`).join(', ')}.` : `Bei ${s.k} verschiedenen Werten wird die Tabelle lang; Klassen fassen sie zusammen.`,
     };

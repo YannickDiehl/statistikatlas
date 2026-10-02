@@ -3,6 +3,8 @@
 // Beispielpersonen mit ihrer Lernzeit; die Brücke rechnet dasselbe mit allen 200 Befragten. Referenzwerte: b03-lage.test.ts.
 import type { Bridge, BridgeCtx, ConceptTabs, Ctx, FNode, Workshop } from '../../types';
 import { num, unit } from '../../format';
+/** Breite in der Einheit der Spalte, ohne Einheit in Skalenpunkten. */
+const breadth = (c: BridgeCtx<Reihe>, v: number) => c.col.unit ? c.u(v) : unit(v, 'Skalenpunkt', 'Skalenpunkte');
 import { countWithin } from '../../sample';
 import { quantile6, valueText } from './lage';
 
@@ -39,7 +41,7 @@ const SUB = '₀₁₂₃₄₅₆₇₈₉';
 /** Platz als tiefgestellte Zahl in Klammern: x₍₃₎. */
 export const at = (k: number) => `x₍${String(k).split('').map(d => SUB[Number(d)]).join('')}₎`;
 /** „unter dem Median“, „über dem Median“, „genau auf dem Median“ mit Abstand. */
-const toMedian = (v: number, med: number, u: (v: number) => string) => Math.abs(v - med) < 1e-9 ? 'genau auf dem Median' : `${u(Math.abs(v - med))} ${v > med ? 'über' : 'unter'} dem Median`;
+const toMedian = (v: number, med: number, u: (v: number) => string) => Math.abs(v - med) < 1e-9 ? 'genau auf dem Median' : `um ${u(Math.abs(v - med))} ${v > med ? 'über' : 'unter'} dem Median`;
 /** Wo ein Wert zu den Quartilen liegt. */
 const quarter = (v: number, s: Reihe) => v < s.q1 - 1e-9 ? 'im unteren Viertel' : v > s.q3 + 1e-9 ? 'im oberen Viertel' : 'in der mittleren Hälfte';
 /** Einteilen zwischen den Nachbarn auf Platz ⌊h⌋ und ⌊h⌋ + 1, als Rechnung mit den sichtbaren Zahlen. */
@@ -348,7 +350,7 @@ export const bridgeReihe: Bridge<Reihe> = {
     if (variant === 'quantile') return {
       kurz: lernzeit(c)
         ? `Die mittlere Hälfte der ${n} Befragten hat in den letzten sieben Tagen zwischen ${num(s.q1)} und ${h(s.q3)} gelernt. Diese Spanne ist ${h(s.iqr)} breit.`
-        : `Die mittlere Hälfte der ${n} Befragten liegt bei „${c.col.title}“ zwischen ${c.u(s.q1)} und ${c.u(s.q3)}. Diese Spanne ist ${c.u(s.iqr)} breit.`,
+        : `Die mittlere Hälfte der ${n} Befragten liegt bei „${c.col.title}“ zwischen ${c.u(s.q1)} und ${c.u(s.q3)}. Diese Spanne ist ${breadth(c, s.iqr)} breit.`,
       fachlich: `Q₁ ${eq(s.q1)} ${c.u(s.q1)}, x̃ ${eq(s.median)} ${c.u(s.median)}, Q₃ ${eq(s.q3)} ${c.u(s.q3)}; IQR = Q₃ − Q₁ ${eq(s.iqr)} ${c.u(s.iqr)} bei n = ${n}, gerechnet nach Type 6 wie in mariposa.`,
       zusatz: `${countWithin(c.values, s.q1, s.q3)} von ${n} Befragten liegen zwischen Q₁ und Q₃, die Grenzen eingeschlossen.`,
     };

@@ -136,7 +136,7 @@ export const mehrfachantworten: Workshop<number[][], Mehrfach> = {
     lines: [
       { from: 3, step: 3, text: c => `% der Antworten: ${OPTIONEN.map((o, j) => `${o} ${c.s.counts[j]} / ${c.s.total} ${eq(c.s.respPct[j])} ${p2(c.s.respPct[j])}`).join(', ')}` },
       { from: 4, step: 4, text: c => `% der Fälle: ${OPTIONEN.map((o, j) => `${o} ${c.s.counts[j]} / ${c.s.n} = ${p2(c.s.casePct[j])}`).join(', ')}` },
-      { from: 5, step: 5, text: c => `Zusammen: ${p2(c.s.caseSum)} der Fälle, aber 100 % der Antworten` },
+      { from: 5, step: 5, text: c => `Zusammen: ${p2(c.s.caseSum)} der Fälle ${Math.abs(c.s.caseSum - 100) < 0.005 ? 'und' : 'gegenüber'} 100 % der Antworten` },
     ],
   },
   captions: {
