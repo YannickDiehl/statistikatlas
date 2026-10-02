@@ -12,6 +12,7 @@ import { LABELS_MITTEL, labels, labelsTabs } from './labels';
 import { CONVERSION_MITTEL, conversion, conversionTabs } from './conversion';
 import { EINKOMMEN, missingMittel, missingTools, missingToolsTabs, mitCode } from './missing-tools';
 import { FORMATE, dataExport } from './data-export';
+import { positionP002, reihe, sorting, sortingTabs } from './sorting';
 
 /*
  * Referenzwerte des Bereichs B2, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -179,6 +180,38 @@ test('Weitergeben: was nach dem Wiedereinlesen ankommt, wie in R', () => {
   assert.deepEqual(dataExport.apply(dataExport.rows, 'xpt').rows.map(r => [r.erwerbstaetig, r.einkommen]), [[1, 'NA (.a)'], [1, 3850], [0, 2762], [1, 4604], [1, 1868]]);
   assert.deepEqual(dataExport.apply(dataExport.rows, 'sav').rows.map(r => r.erwerbstaetig), ['1 [Ja]', '1 [Ja]', '0 [Nein]', '1 [Ja]', '1 [Ja]']);
   assert.match(dataExport.rCode('xpt'), /write_xpt\("atlas\.xpt", version = 8, name = "atlas"\)/);
+});
+
+/*
+ * Sortieren (P001 bis P005, Lernzeit und Wissenstest):
+ *   five %>% arrange(lernzeit) %>% select(id, lernzeit, wissenstest)
+ *   #   P001 6.0 12, P003 6.3 14, P005 6.8 11, P002 8.3 9, P004 10.5 13      (P002 an Position 4)
+ *   five %>% arrange(desc(lernzeit)) %>% select(id, lernzeit, wissenstest)  # P004, P002, P005, P003, P001 (P002 an Position 2)
+ *   five %>% mutate(lernzeit = sort(lernzeit)) %>% select(id, lernzeit, wissenstest)
+ *   #   P001 6.0 12, P002 6.3 9, P003 6.8 14, P004 8.3 13, P005 10.5 11      (fremde Lernzeiten)
+ *   median(five$lernzeit)                                        # 6.8
+ *   s <- sort(atlas$lernzeit); s[c(1, 2, 100, 101, 200)]; median(s); length(unique(s))   # 0 0.9 7.6 7.6 18.4; 7.6; 99
+ *   atlas %>% mutate(lernzeit = lernzeit + 1) %>% describe(lernzeit, show = c("min", "max"))   # Min 1.000, Max 19.400
+ *   atlas %>% describe(lernzeit, show = "minimum")               # Unknown `show` value: "minimum".
+ */
+test('Sortieren: Reihenfolge, Positionen und die 200 wie in R', () => {
+  const zeilen = (o: string) => sorting.apply(sorting.rows, o).rows.map(r => [r.person, r.lernzeit, r.wissenstest, r.os]);
+  assert.deepEqual(zeilen('auf'), [['P001', '6', 12, 'x₍₁₎'], ['P003', '6,3', 14, 'x₍₂₎'], ['P005', '6,8', 11, 'x₍₃₎'], ['P002', '8,3', 9, 'x₍₄₎'], ['P004', '10,5', 13, 'x₍₅₎']]);
+  assert.deepEqual(zeilen('ab'), [['P004', '10,5', 13, 'x₍₅₎'], ['P002', '8,3', 9, 'x₍₄₎'], ['P005', '6,8', 11, 'x₍₃₎'], ['P003', '6,3', 14, 'x₍₂₎'], ['P001', '6', 12, 'x₍₁₎']]);
+  assert.deepEqual(zeilen('spalte'), [['P001', '6', 12, 'x₍₁₎'], ['P002', '6,3', 9, 'x₍₂₎'], ['P003', '6,8', 14, 'x₍₃₎'], ['P004', '8,3', 13, 'x₍₄₎'], ['P005', '10,5', 11, 'x₍₅₎']]);
+  assert.deepEqual(['auf', 'ab', 'spalte'].map(positionP002), [4, 2, 2]);
+  assert.match(sorting.steps[2].was as string, /x₍₃₎ = 6,8 h\./);
+  const r = reihe(rows.map(x => x.values.lernzeit));
+  assert.deepEqual([r.n, r.min, r.unten, r.oben, r.max, r.median, r.verschieden], [200, 0, 7.6, 7.6, 18.4, 7.6, 99]);
+  const s = sortingTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const res = s.result(ctx(rows, 'lernzeit'));
+  assert.match(res.kurz, /x₍₁₎ = 0 h und endet bei x₍₂₀₀₎ = 18,4 h\. An den Positionen 100 und 101 .* Median: 7,6 h\./);
+  assert.match(res.zusatz!, /^Nur 99 der 200 Lernzeiten/);
+  assert.equal(s.value!(ctx(applyOp(rows, 'lernzeit', 'shift', 1), 'lernzeit')), 1);
+  const next = sortingTabs.next.next.why;
+  assert.equal(typeof next === 'function' ? next(ctx(rows, 'lernzeit')) : next, 'Der mittlere Wert der Reihe nach: Bei den 200 Befragten liegt er bei 7,6 h, an den Positionen 100 und 101.');
+  assert.equal(liveOutput({ fn: 'describe', show: ['min', 'max'] }, applyOp(rows, 'lernzeit', 'shift', 1), 'lernzeit').split('\n')[7], '  lernzeit  1.000  19.400  200        0');
 });
 
 // ALLBUS 2023 nur, wenn die eigene GESIS-Datei da ist (ALLBUS_SAV); die Aggregate stehen fest in ./daten.ts.
