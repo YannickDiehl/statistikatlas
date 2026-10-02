@@ -1,5 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { readSav } from '../../../sandbox/readSav';
+import { validValues } from '../../../tasks/kit/stats';
 import { createSurvey } from '../../../domain/survey';
 import { applyOp } from '../../sample';
 import { close } from '../../format';
@@ -8,6 +11,9 @@ import { cronbach, itemColumns, methodenPca, methodenR, mlOneFactor, pca, varima
 import { alphaStats, alphaWerkstatt, KAUM, reliabilityTabs, shiftAll, ZUSAMMEN, type AlphaStats } from './reliability';
 import { efa, efaTabs, METHODEN_PCA } from './efa';
 import { beideModelle, factorModel, factorModelTabs, METHODEN_ML } from './factor-model';
+import { dimensionality, dimensionalityTabs } from './dimensionality';
+import { VERTRAUEN } from './allbus';
+import { corMatrix } from './rechnen';
 
 /*
  * Referenzwerte des Bereichs B14, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -51,6 +57,19 @@ import { beideModelle, factorModel, factorModelTabs, METHODEN_ML } from './facto
  *   unclass(ml$loadings)       # 0.8126905 0.7954346 0.7761573 0.8202676 0.7954613
  *   ml$communalities           # 0.6604671 0.6327186 0.6024152 0.6728405 0.6327587; uniquenesses 1 minus diese
  *   atlas %>% efa(…, extraction = "ml", n_factors = 3)   # `n_factors` = 3 is too many for ML extraction with 5 variables.
+ *
+ * ALLBUS 2023 (ZA8831 v1.3.0, ungewichtet, nur Aggregate; dimensionality, loadings, communality, rotation):
+ *   allbus <- read_spss("ZA8831_v1-3-0.sav")
+ *   T <- as.data.frame(lapply(allbus[c("pt03","pt12","pt15","pt06","pt07")], as.numeric)); T <- T[complete.cases(T),]
+ *   nrow(T); cor(T)                          # 3333; Politik .790 .676 .708, Kirchen .719, dazwischen .259 bis .349
+ *   eigen(cor(T))$values                     # 2.9219141 1.2518745 0.3408948 0.2789437 0.2063728
+ *   allbus %>% efa(pt03, pt12, pt15, pt06, pt07, extraction = "pca", n_factors = 2, rotation = "none", use = "complete")
+ *   # ungedreht 0.8433806 −0.3469028 / 0.8400864 −0.3907181 / 0.8256293 −0.2860410 / 0.6181754 0.6949669 / 0.6641336 0.6434857
+ *   allbus %>% efa(pt03, pt12, pt15, pt06, pt07, extraction = "pca", n_factors = 2, rotation = "varimax", use = "complete")
+ *   # Varimax 0.8962963 0.1681830 / 0.9173876 0.1296370 / 0.8482711 0.2095696 / 0.1401630 0.9194967 / 0.2067410 0.9013354
+ *   # Kommunalitäten 0.832 0.858 0.763 0.865 0.855; Rotation Sums 48.538 % und 34.938 %, zusammen 83.476 %; 3 Iterationen
+ *   allbus %>% reliability(pt03, pt12, pt15, pt06, pt07)    # Cronbach's Alpha = 0.817, N = 3333
+ *   table(as_factor(pt03, levels = "both"))  # TNZ: SPLIT 1596 (nur einem Teil gestellt)
  */
 
 const rows = createSurvey();
@@ -166,4 +185,46 @@ test('B14 Komponenten & Faktoren: PCA gegen ML wie in R', () => {
   const r = s.result(ctx());
   assert.match(r.kurz, /bündelt 71,2 % der Streuung, der gemeinsame Faktor erklärt 64,0 %\./);
   assert.match(r.zusatz!, /Komponente 73 % .* Faktor 66 %; ihr eigener Rest im Faktorenmodell ist 0,34\./);
+});
+
+test('B14 Dimensionalität: Texte und Reiter mit den Zahlen aus R', () => {
+  assert.match(dimensionality.stellDirVor.text, /3\.333 Befragte .* mit 0,68 bis 0,79, die beiden Kirchen mit 0,72\. .* nur bei 0,26 bis 0,35\. .* nämlich 2,92 und 1,25\./);
+  assert.match(dimensionality.regler!.describe(1), /\(3,56\), der nächste bei 0,41/);
+  assert.match(dimensionality.regler!.describe(0), /\(2,92 und 1,25\), der dritte bei 0,34/);
+  assert.match(dimensionality.ausprobieren[1].question, /Alpha von 0,82\./);
+  const s = dimensionalityTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = s.result(ctx());
+  assert.match(r.kurz, /^Nur eine Komponente hat einen Eigenwert über 1 \(3,56\); der zweite liegt bei 0,41\./);
+  assert.equal(r.fachlich, 'Eigenwerte der Korrelationsmatrix: 3,56, 0,41, 0,37, 0,34, 0,31. Zusammen ergeben sie mit allen Nachkommastellen 5, die Zahl der Fragen.');
+  assert.equal(r.zusatz, 'Die erste Komponente bündelt 71,2 % der Streuung, die zweite nur 8,3 %.');
+  // In R: Variance explained 79.5 % mit zwei Komponenten, 71.2 % mit einer: 8,3 Prozentpunkte dazu.
+  assert.ok(close(METHODEN_PCA.eigen[1] / 5 * 100, 8.27, 0.01));
+});
+
+const allbusFile = process.env.ALLBUS_SAV;
+test('B14 ALLBUS 2023: die Aggregate zum Vertrauen stimmen mit der Datei überein', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, () => {
+  const bytes = readFileSync(allbusFile!);
+  const sav = readSav(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+  const cols = VERTRAUEN.items.map(id => Array.from(validValues(sav.byName.get(id)!), v => (v >= 1 && v <= 7 ? v : NaN)));
+  const keep = cols[0].map((_, i) => i).filter(i => cols.every(c => Number.isFinite(c[i])));
+  assert.equal(keep.length, VERTRAUEN.n, 'listenweise vollständige Fälle');
+  const X = cols.map(c => keep.map(i => c[i])), R = corMatrix(X)!;
+  assert.ok(close(R[0][1], VERTRAUEN.rPolitik[0], 1e-6) && close(R[0][2], VERTRAUEN.rPolitik[1], 1e-6) && close(R[1][2], VERTRAUEN.rPolitik[2], 1e-6), 'Politik');
+  assert.ok(close(R[3][4], VERTRAUEN.rKirche, 1e-6), 'Kirchen');
+  const cross = [0, 1, 2].flatMap(i => [3, 4].map(j => R[i][j]));
+  assert.ok(close(Math.min(...cross), VERTRAUEN.rQuer[0], 1e-6) && close(Math.max(...cross), VERTRAUEN.rQuer[1], 1e-6), 'dazwischen');
+  const p = pca(R, 2);
+  VERTRAUEN.eigen.forEach((v, i) => assert.ok(close(p.values[i], v, 1e-6), `Eigenwert ${i + 1}`));
+  VERTRAUEN.unrotated.forEach((row, i) => row.forEach((v, j) => assert.ok(close(p.loadings[i][j], v, 1e-6), `ungedreht ${i + 1}/${j + 1}`)));
+  const vm = varimax(p.loadings);
+  VERTRAUEN.rotated.forEach((row, i) => row.forEach((v, j) => assert.ok(close(vm.loadings[i][j], v, 1e-6), `Varimax ${i + 1}/${j + 1}`)));
+  assert.equal(vm.iterations, 3);
+  assert.ok(close(Math.abs(vm.angle) * 180 / Math.PI, VERTRAUEN.angle, 1e-3), 'Drehwinkel');
+  VERTRAUEN.communalities.forEach((v, i) => assert.ok(close(p.communalities[i], v, 1e-6), `Kommunalität ${i + 1}`));
+  const ss = [0, 1].map(j => vm.loadings.reduce((a, row) => a + row[j] ** 2, 0) / 5 * 100);
+  assert.ok(close(ss[0], VERTRAUEN.shareRotated[0], 1e-3) && close(ss[1], VERTRAUEN.shareRotated[1], 1e-3), 'gedrehte Anteile');
+  assert.ok(close(p.share[0] * 100, VERTRAUEN.shareUnrotated[0], 1e-4) && close(p.share[1] * 100, VERTRAUEN.shareUnrotated[1], 1e-4), 'ungedrehte Anteile');
+  assert.ok(close((p.values[0] + p.values[1]) / 5 * 100, VERTRAUEN.total, 1e-4), 'zusammen');
+  assert.ok(close(cronbach(X).alpha, VERTRAUEN.alpha, 5e-4), 'Alpha 0.817');
 });

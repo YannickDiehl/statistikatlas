@@ -3,7 +3,10 @@
 // Eigene Stile in src/explain/areas/b14-faktoren.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { fixed, num } from '../../../explain/format';
 import type { AlphaStats, Antworten } from '../../../explain/content/b14-faktoren/reliability';
-import { clamp, DragPoint, forWorkshop, keyStep, linear, useDrag, useWidth, type Picture } from './kit';
+import { METHODEN_PCA } from '../../../explain/content/b14-faktoren/efa';
+import { VERTRAUEN } from '../../../explain/content/b14-faktoren/allbus';
+import { isMethoden } from '../../../explain/content/b14-faktoren/dimensionality';
+import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useWidth, useDrag, type Picture } from './kit';
 
 const ITEM = { min: 1, max: 7 };
 
@@ -106,6 +109,40 @@ function AlphaProfile({ data, s, step, who, names, onChange, onWho }: {
   );
 }
 
+/**
+ * Eigenwerte als Balken (Scree-Plot) mit der Linie bei 1: Komponenten darüber bündeln mehr als eine einzelne Frage.
+ * `title` steht über dem Bild.
+ */
+export function Scree({ values, title }: { values: readonly number[]; title: string }) {
+  const [box, W] = useWidth();
+  const left = 48, right = W - 16, top = 40, base = 196, max = 5;
+  const y = linear([0, max], [base, top]), slot = (right - left) / values.length, bw = Math.min(56, slot - 18);
+  const above = values.filter(v => v > 1).length;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={270} viewBox={`0 0 ${W} 270`} role="img"
+        aria-label={`${title}: Eigenwerte ${values.map(v => num(v)).join(', ')}. ${above === 1 ? 'Einer liegt' : `${above} liegen`} über 1.`}>
+        <text className="xw-t xw-strong" x={8} y={18}>{title}</text>
+        <Axis scale={y} ticks={[0, 1, 2, 3, 4, 5]} at={left} from={base} to={top} orient="left" labelGap={24} />
+        <MarkLine y={y(1)} from={left} to={right} className="b14-kaiser" />
+        {values.map((v, k) => {
+          const x = left + k * slot + (slot - bw) / 2;
+          return <g key={k}>
+            <Bar x={x} y={y(v)} width={bw} height={base - y(v)} tone={v > 1 ? 'pos' : 'plain'} />
+            <text className="xw-t" x={x + bw / 2} y={y(v) - 6} textAnchor="middle">{num(v)}</text>
+            <text className="xw-t" x={x + bw / 2} y={base + 20} textAnchor="middle">{k + 1}</text>
+          </g>;
+        })}
+        <text className="xw-t" x={(left + right) / 2} y={base + 40} textAnchor="middle">Komponente</text>
+        <text className="xw-t" x={8} y={base + 64}>gestrichelt: Eigenwert 1, eine Frage</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b14-scree': forCard(p => isMethoden(p.value ?? 0)
+    ? <Scree values={METHODEN_PCA.eigen} title="Methoden-Zuversicht, Lehrdatensatz" />
+    : <Scree values={VERTRAUEN.eigen} title="Vertrauen, ALLBUS 2023" />),
   'b14-alpha': forWorkshop(p => <AlphaProfile data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} onChange={p.setData} onWho={p.pickWho} />),
 };
