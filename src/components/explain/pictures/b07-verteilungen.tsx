@@ -3,13 +3,13 @@
 // Eigene Stile in src/explain/areas/b07-verteilungen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { num, pct } from '../../../explain/format';
 import { baseSurvey } from '../../../explain/sample';
-import { columnStats, dbinom, dchisq, dF, dhyper, dnorm, dt, prob, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
-import { inside } from '../../../explain/content/b07-verteilungen/normal';
+import { dbinom, dchisq, dF, dhyper, dnorm, dt, prob, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
+import { inside, series } from '../../../explain/content/b07-verteilungen/normal';
 import { areaText, type ZStats } from '../../../explain/content/b07-verteilungen/standard-normal';
 import { SCHLAF_T, tCrit } from '../../../explain/content/b07-verteilungen/t';
 import { CHI } from '../../../explain/content/b07-verteilungen/chi-square';
 import { ANOVA, fTail, pText } from '../../../explain/content/b07-verteilungen/f';
-import type { BernStats } from '../../../explain/content/b07-verteilungen/bernoulli';
+import { eqProb, type BernStats } from '../../../explain/content/b07-verteilungen/bernoulli';
 import type { BinStats } from '../../../explain/content/b07-verteilungen/binomial';
 import { HYPER } from '../../../explain/content/b07-verteilungen/hypergeometric';
 import { AreaUnder, Axis, Bar, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
@@ -17,7 +17,7 @@ import { AreaUnder, Axis, Bar, Curve, forCard, forSentence, linear, MarkLine, us
 /** Histogramm der Schlafdauer (halbe Stunden) mit der Normalverteilung x̄, s; markiert ist x̄ ± k · s. */
 function NormalFit({ k }: { k: number }) {
   const [box, W] = useWidth();
-  const { xs, n, mean, sd } = columnStats(baseSurvey(), 'schlafdauer');
+  const { xs, n, mean, sd } = series(baseSurvey(), 'schlafdauer');
   const width = 0.5, start = 4.5, bins = Array.from({ length: 11 }, (_, i) => start + i * width);
   const counts = bins.map(a => xs.filter(x => x >= a - 1e-9 && x < a + width - 1e-9).length);
   const curve = (x: number) => n * width * dnorm((x - mean) / sd) / sd;
@@ -34,7 +34,7 @@ function NormalFit({ k }: { k: number }) {
         <line className="xw-mean" x1={X(mean)} x2={X(mean)} y1={52} y2={base} />
         <text className="xw-t" x={X(mean) + 5} y={base - 6}>x̄</text>
         <Axis scale={X} ticks={[5, 6, 7, 8, 9, 10]} at={base} from={left} to={right} labelGap={20} title="Schlafdauer in Stunden pro Nacht" />
-        <text className="xw-t xw-strong" x={left} y={16}>Grüne Fläche im Modell: {pct(inside(k))}</text>
+        <text className="xw-t xw-strong" x={left} y={16}>Grün gefüllte Fläche: Modell {pct(inside(k))}</text>
         <text className="xw-t" x={left} y={36}>In den Daten: {count} von {n}</text>
       </svg>
     </div>
@@ -74,16 +74,16 @@ function TCompare({ df }: { df: number }) {
     <div ref={box}>
       <svg className="xw-svg" width={W} height={268} viewBox={`0 0 ${W} 268`} role="img"
         aria-label={`t-Verteilung mit ${num(df)} Freiheitsgraden und gestrichelt die Standardnormalverteilung. Die äußeren 5 % liegen jenseits von ±${num(crit)}. Markiert ist t = ${num(t)} aus dem Lehrdatensatz.`}>
-        {crit < lim && <><AreaUnder f={f} from={-lim} to={-cut} x={X} y={Y} tone="neg" /><AreaUnder f={f} from={cut} to={lim} x={X} y={Y} tone="neg" /></>}
+        {crit < lim && <g className="b07-tail"><AreaUnder f={f} from={-lim} to={-cut} x={X} y={Y} tone="neg" /><AreaUnder f={f} from={cut} to={lim} x={X} y={Y} tone="neg" /></g>}
         <Curve f={dnorm} from={-lim} to={lim} x={X} y={Y} className="b07-ref" />
         <Curve f={f} from={-lim} to={lim} x={X} y={Y} />
-        {crit < lim && <><MarkLine x={X(cut)} from={top} to={base} /><MarkLine x={X(-cut)} from={top} to={base} /></>}
+        {crit < lim && <><MarkLine x={X(cut)} from={top} to={base} className="xw-axis" /><MarkLine x={X(-cut)} from={top} to={base} className="xw-axis" /></>}
         <line className="xw-pos" strokeWidth={2.5} x1={X(t)} x2={X(t)} y1={Y(Math.max(f(t), dnorm(t))) - 14} y2={base} />
         <Axis scale={X} ticks={[-4, -2, 0, 2, 4]} at={base} from={left} to={right} labelGap={20} title="t" />
         <text className="xw-t xw-strong" x={left} y={16}>t-Verteilung, {fgText(df)}</text>
-        <text className="xw-t" x={left} y={36}>gestrichelt: Standardnormalverteilung</text>
-        <text className="xw-t" x={left} y={56}>braunrot: äußere 5 %, jenseits von ±{num(crit)}</text>
-        <text className="xw-t" x={left} y={76}>grüner Strich bei {num(t)}: t der Schlafdauer</text>
+        <text className="xw-t" x={left} y={36}>gestrichelte Kurve: Standardnormalverteilung</text>
+        <text className="xw-t" x={left} y={56}>braunrote Ränder ab ±{num(crit)}: äußere 5 %</text>
+        <text className="xw-t" x={left} y={76}>dicker grüner Strich bei {num(t)}: t der 200</text>
       </svg>
     </div>
   );
@@ -99,15 +99,15 @@ function ChiShape({ df }: { df: number }) {
     <div ref={box}>
       <svg className="xw-svg" width={W} height={268} viewBox={`0 0 ${W} 268`} role="img"
         aria-label={`χ²-Verteilung mit ${num(df)} Freiheitsgraden. Erwartungswert ${num(df)}, die äußeren 5 % liegen über ${num(crit)}.${four ? ` Markiert ist χ² = ${num(CHI.chi2)} aus dem Lehrdatensatz.` : ''}`}>
-        <AreaUnder f={f} from={crit} to={lim} x={X} y={Y} tone="neg" />
+        <g className="b07-tail"><AreaUnder f={f} from={crit} to={lim} x={X} y={Y} tone="neg" /></g>
         <Curve f={f} from={0.02} to={lim} x={X} y={Y} samples={200} />
         <MarkLine x={X(df)} from={top} to={base} />
         {four && <line className="xw-pos" strokeWidth={2.5} x1={X(CHI.chi2)} x2={X(CHI.chi2)} y1={Y(f(CHI.chi2)) - 14} y2={base} />}
         <Axis scale={X} ticks={[0, 5, 10, 15, 20, 25]} at={base} from={left} to={right} labelGap={20} title="χ²" />
         <text className="xw-t xw-strong" x={left} y={16}>χ²-Verteilung, {fgText(df)}</text>
-        <text className="xw-t" x={left} y={36}>gestrichelt: Erwartungswert {num(df)}</text>
-        <text className="xw-t" x={left} y={56}>braunrot: äußere 5 %, ab {num(crit)}</text>
-        {four && <text className="xw-t" x={left} y={76}>grüner Strich bei {num(CHI.chi2)}: χ² der 200</text>}
+        <text className="xw-t" x={left} y={36}>gestrichelte Linie: Erwartungswert {num(df)}</text>
+        <text className="xw-t" x={left} y={56}>braunrote Fläche ab {num(crit)}: äußere 5 %</text>
+        {four && <text className="xw-t" x={left} y={76}>dicker grüner Strich bei {num(CHI.chi2)}: χ² der 200</text>}
       </svg>
     </div>
   );
@@ -115,21 +115,22 @@ function ChiShape({ df }: { df: number }) {
 /** F-Verteilung mit 4 und 195 Freiheitsgraden: Fläche rechts vom gewählten F braunrot, Grenze für die äußeren 5 % gestrichelt. */
 function FTail({ value }: { value: number }) {
   const [box, W] = useWidth();
-  const lim = 10, base = 202, top = 78, left = 28, right = W - 20, p = fTail(value);
+  const lim = 10, base = 222, top = 98, left = 28, right = W - 20, p = fTail(value);
   const f = (v: number) => dF(v, ANOVA.df1, ANOVA.df2);
   const X = linear([0, lim], [left, right]), Y = linear([0, 0.8], [base, top]);
   return (
     <div ref={box}>
-      <svg className="xw-svg" width={W} height={248} viewBox={`0 0 ${W} 248`} role="img"
+      <svg className="xw-svg" width={W} height={268} viewBox={`0 0 ${W} 268`} role="img"
         aria-label={`F-Verteilung mit 4 und 195 Freiheitsgraden. Braunrot ist die Fläche rechts von F = ${num(value)}: ${pText(p)}. Gestrichelt die Grenze ${num(ANOVA.crit)} für die äußeren 5 %.`}>
-        <AreaUnder f={f} from={Math.min(value, lim)} to={lim} x={X} y={Y} tone="neg" samples={120} />
+        <g className="b07-tail"><AreaUnder f={f} from={Math.min(value, lim)} to={lim} x={X} y={Y} tone="neg" samples={120} /></g>
         <Curve f={f} from={0.01} to={lim} x={X} y={Y} samples={200} />
         <MarkLine x={X(ANOVA.crit)} from={top} to={base} />
         <line className="xw-pos" strokeWidth={2.5} x1={X(Math.min(value, lim))} x2={X(Math.min(value, lim))} y1={Y(f(Math.min(value, lim))) - 14} y2={base} />
         <Axis scale={X} ticks={[0, 2, 4, 6, 8, 10]} at={base} from={left} to={right} labelGap={20} title="F" />
         <text className="xw-t xw-strong" x={left} y={16}>Fläche rechts von F = {num(value)}: {pText(p)}</text>
         <text className="xw-t" x={left} y={36}>F-Verteilung, 4 und 195 Freiheitsgrade</text>
-        <text className="xw-t" x={left} y={56}>gestrichelt: Grenze {num(ANOVA.crit)} für 5 %</text>
+        <text className="xw-t" x={left} y={56}>gestrichelte Linie: Grenze {num(ANOVA.crit)} für 5 %</text>
+        <text className="xw-t" x={left} y={76}>dicker grüner Strich: dein F</text>
       </svg>
     </div>
   );
@@ -156,7 +157,7 @@ function BernoulliBars({ s }: { s: BernStats }) {
         <circle className="b07-dot" cx={VX(s.p)} cy={VY(s.v)} r={6} />
         <Axis scale={VX} ticks={[0, 0.5, 1]} at={base} from={half + 24} to={W - 16} labelGap={20} format={v => num(v)} title="p" />
         <text className="xw-t xw-strong" x={8} y={16}>P(X = 0) und P(X = 1)</text>
-        <text className="xw-t xw-strong" x={half + 24} y={36}>Var(X) = {prob(s.v)}</text>
+        <text className="xw-t xw-strong" x={half + 24} y={36}>Var(X) {eqProb(s.v)}</text>
       </svg>
     </div>
   );
@@ -174,7 +175,7 @@ function BinomialBars({ s }: { s: BinStats }) {
         <MarkLine x={X(s.e)} from={top - 8} to={base} />
         <Axis scale={X} ticks={Array.from({ length: s.n + 1 }, (_, j) => j)} at={base} from={left} to={right} labelGap={20} title="Zahl der Erfolge" />
         <text className="xw-t xw-strong" x={left} y={16}>{s.valid ? `P(X = ${s.k}) ≈ ${prob(s.P)}` : `k = ${s.k} ist größer als n = ${s.n}`}</text>
-        <text className="xw-t" x={left} y={36}>gestrichelt: Erwartungswert {num(s.e)}</text>
+        <text className="xw-t" x={left} y={36}>gestrichelte Linie: Erwartungswert {num(s.e)}</text>
       </svg>
     </div>
   );

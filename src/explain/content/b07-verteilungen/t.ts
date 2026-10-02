@@ -5,7 +5,9 @@
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num, unit } from '../../format';
 import { ref, titleFor } from '../../../domain/learning';
-import { columnStats, often, pnorm, pt, pValue, qt } from './dist';
+import { often, pnorm, pt, pValue, qt } from './dist';
+import { oneSampleT } from '../../../tasks/kit/means';
+import { series } from './normal';
 
 /** Schlafdauer gegen 7 Stunden (R: t.test(x, mu = 7)); Unterschied und Standardfehler in Minuten. */
 export const SCHLAF_T = { mean: 7.0825, diffMin: 4.95, seMin: 3.47794, t: 1.423256, df: 199, p: 0.1562278, pz: 0.1546619 } as const;
@@ -18,10 +20,10 @@ const fg = (v: number) => unit(v, 'Freiheitsgrad', 'Freiheitsgraden');
 export const tVerteilung: ConceptCard = {
   concept: 't_distribution',
   picture: 'b07-t',
-  wofuer: 'Mit wenigen Befragten ist auch die Streuung nur unsicher geschätzt. Die t-Verteilung rechnet diese Unsicherheit ein. Sie ist die Vergleichskurve, mit der der t-Test seine Prüfgröße t einordnet.',
+  wofuer: 'Schlafen die 200 Befragten im Mittel anders lange als 7 Stunden pro Nacht? Ihr Mittel liegt knapp 5 Minuten darüber. Ob das auffällig ist, prüft der t-Test mit einer Vergleichskurve: der t-Verteilung.',
   kurz: 'Die t-Verteilung sieht aus wie die Standardnormalverteilung, hat aber dickere Ränder. Je mehr Befragte, desto ähnlicher werden die beiden.',
   stellDirVor: {
-    text: `Schlafen die 200 Befragten im Mittel anders lange als 7 Stunden pro Nacht? Ihr Mittel liegt bei ${num(S.mean)} Stunden, knapp 5 Minuten darüber. Der t-Test teilt diese ${num(S.diffMin)} Minuten durch ihren Standardfehler von ${num(S.seMin)} Minuten: t ≈ ${num(S.t)} bei ${S.df} Freiheitsgraden. Ob so ein t ungewöhnlich ist, sagt die t-Verteilung.`,
+    text: `Ihr Mittel liegt bei ${num(S.mean)} Stunden, ${num(S.diffMin)} Minuten über 7 Stunden. Der t-Test teilt diese ${num(S.diffMin)} Minuten durch ihren Standardfehler von ${num(S.seMin)} Minuten: t ≈ ${num(S.t)} bei ${S.df} Freiheitsgraden. Weil die Streuung nur geschätzt ist, ordnet er dieses t mit der t-Verteilung ein.`,
     figures: [
       { label: 'Mittel', value: `${num(S.mean)} h` },
       { label: 'Unterschied zu 7 h', value: `${num(S.diffMin)} min` },
@@ -45,7 +47,7 @@ export const tVerteilung: ConceptCard = {
     {
       title: 'Die geschätzte Streuung einrechnen',
       was: 'Weil s nur geschätzt ist, schwankt t etwas stärker als ein z-Wert. Große Werte kommen öfter vor: Die Ränder der t-Verteilung sind dicker.',
-      warum: 'Bei wenigen Befragten kann s zufällig klein ausfallen. Dann wird t groß, obwohl es in Wahrheit keinen Unterschied gibt.',
+      warum: 'Bei wenigen Befragten kann s zufällig klein ausfallen. Dann kann t groß werden, auch wenn es in Wahrheit keinen Unterschied gibt.',
       acht: 'Die t-Verteilung beschreibt nicht die Daten. Sie zeigt, wie t von Stichprobe zu Stichprobe schwanken würde, wenn es keinen Unterschied gäbe.',
       concept: 'null_distribution',
     },
@@ -82,7 +84,10 @@ export const tVerteilung: ConceptCard = {
     label: 'Wie viele Freiheitsgrade hat die t-Verteilung?',
     min: 1, max: 200, step: 1, initial: 4,
     format: v => unit(v, 'Freiheitsgrad', 'Freiheitsgrade'),
-    describe: v => `Bei ${fg(v)} liegen die äußeren 5 % jenseits von ±${num(tCrit(v))}, bei der Standardnormalverteilung jenseits von ±1,96. Gäbe es keinen Unterschied, käme ein t von ${num(S.t)} oder weiter außen ${often(2 * pt(-S.t, v))} Stichproben vor.`,
+    describe: v => {
+      const p = often(2 * pt(-S.t, v)), own = Math.abs(v - S.df) < 1e-9;
+      return `Bei ${fg(v)} liegen die äußeren 5 % jenseits von ±${num(tCrit(v))}, bei der Standardnormalverteilung jenseits von ±1,96. Die Schlafdauer hat ${S.df} Freiheitsgrade${own ? ':' : `. Hätte sie ${v < S.df ? 'nur ' : ''}${num(v)},`} ${own ? 'Gäbe es keinen Unterschied, käme' : 'käme ohne Unterschied'} ein t von ${num(S.t)} oder weiter außen ${p} Stichproben vor.`;
+    },
   },
   check: {
     question: 'Ein t-Test mit 10 Befragten einer Gruppe meldet t(9) = 2,1. Wo liegt die Grenze für die äußeren 5 %?',
@@ -100,8 +105,8 @@ export const tVerteilung: ConceptCard = {
     paragraphs: [
       'T = Z / √(U / ν): Z ist standardnormalverteilt, U unabhängig davon χ²-verteilt mit ν Freiheitsgraden. Beim t-Test ist Z der Unterschied geteilt durch den wahren Standardfehler; U kommt aus der geschätzten Streuung.',
       'Exakt gilt das, wenn die Werte in der Grundgesamtheit normalverteilt sind. Bei großen Gruppen ist der Mittelwert nach dem zentralen Grenzwertsatz annähernd normalverteilt; dann passt die t-Verteilung auch bei anderer Form gut.',
-      'Bei einem Freiheitsgrad hat die t-Verteilung so dicke Ränder, dass sie keinen Erwartungswert hat. Ab ν > 2 ist ihre Varianz ν / (ν − 2), also immer etwas größer als 1.',
-      `Für die Schlafdauer gegen 7 Stunden liefert die t-Verteilung mit 199 Freiheitsgraden p ≈ ${num(S.p)}, die Standardnormalverteilung p ≈ ${num(S.pz)}. Beide fragen: Wie oft käme ein so großes t vor, wenn das Mittel aller Menschen genau 7 Stunden wäre?`,
+      'Bei einem Freiheitsgrad hat die t-Verteilung so dicke Ränder, dass sie keinen Erwartungswert hat. Ab ν > 2 ist ihre Varianz ν / (ν − 2), also immer größer als 1.',
+      `Für die Schlafdauer gegen 7 Stunden liefert die t-Verteilung mit 199 Freiheitsgraden p ≈ ${num(S.p)}, die Standardnormalverteilung p ≈ ${num(S.pz)}. Beide fragen: Wie oft käme ein t mindestens so weit von 0 vor, wenn das Mittel aller Menschen genau 7 Stunden wäre?`,
       'Beim Welch-Test für zwei Gruppen mit ungleicher Streuung rechnet R die Freiheitsgrade nach Welch und Satterthwaite aus. Daher kommen Werte wie 175,8.',
     ],
   },
@@ -109,9 +114,8 @@ export const tVerteilung: ConceptCard = {
 
 /** Einstichproben-t-Test der Schlafdauer gegen 7 Stunden für die aktuellen Daten. */
 export function tFit(c: SampleCtx) {
-  const { n, mean, sd } = columnStats(c.rows, c.columns.x?.[0] ?? 'schlafdauer');
-  const se = sd / Math.sqrt(n), t = (mean - 7) / se, df = n - 1;
-  return { n, mean, sd, se, t, df, crit: tCrit(df), p: 2 * pt(-Math.abs(t), df), pz: 2 * pnorm(-Math.abs(t)) };
+  const { xs, n, mean, sd } = series(c.rows, c.columns.x?.[0] ?? 'schlafdauer'), test = oneSampleT(xs, null, 7)!;
+  return { n, mean, sd, se: sd / Math.sqrt(n), t: test.t, df: test.df, crit: tCrit(test.df), p: test.p, pz: 2 * pnorm(-Math.abs(test.t)) };
 }
 
 export const tTabs: ConceptTabs = {
@@ -123,7 +127,7 @@ export const tTabs: ConceptTabs = {
       const f = tFit(c), d = f.mean - 7;
       const gap = Math.abs(d) < 1e-9 ? 'genau 7 Stunden' : `${num(Math.abs(d) * 60)} Minuten ${d > 0 ? 'über' : 'unter'} 7 Stunden`;
       return {
-        kurz: `Im Mittel schlafen die Befragten ${num(f.mean)} Stunden pro Nacht, ${gap}. Das ergibt t = ${num(f.t)} bei ${f.df} Freiheitsgraden; die Grenze für die äußeren 5 % liegt bei ±${num(f.crit)}. Wäre das Mittel aller Menschen genau 7 Stunden, käme ein so großes t ${often(f.p)} Stichproben vor.`,
+        kurz: `Im Mittel schlafen die Befragten ${num(f.mean)} Stunden pro Nacht, ${gap}. Das ergibt t = ${num(f.t)} bei ${f.df} Freiheitsgraden; die Grenze für die äußeren 5 % liegt bei ±${num(f.crit)}. Wäre das Mittel aller Menschen 7 Stunden, käme ein t mindestens so weit von 0 ${often(f.p)} Stichproben vor.`,
         fachlich: `Einstichproben-t-Test gegen 7 Stunden: Unterschied ${num(d * 60)} Minuten, Standardfehler ${num(f.se * 60)} Minuten, t ≈ ${num(f.t)}, df = ${f.df}, zweiseitig p ${pValue(f.p)}. Mit der Standardnormalverteilung statt der t-Verteilung wäre p ${pValue(f.pz)}.`,
         zusatz: `Bei ${f.df} Freiheitsgraden ist die t-Verteilung kaum von der Standardnormalverteilung zu unterscheiden: Grenze ${num(f.crit)} statt 1,96.`,
       };
@@ -164,7 +168,7 @@ export const tTabs: ConceptTabs = {
     outputMap: [
       { match: 't', atlas: 't', step: 1, explain: 'Der Unterschied zu 7 Stunden, geteilt durch seinen Standardfehler.' },
       { match: '199', atlas: 'Freiheitsgrade', step: 3, explain: 'Die Freiheitsgrade n − 1 = 199. Sie wählen die passende t-Verteilung aus.' },
-      { match: 'p', atlas: 'p-Wert', explain: 'Wäre das Mittel aller Menschen genau 7 Stunden, käme ein so großes t in etwa 16 von 100 Stichproben vor. Die Fläche dafür kommt aus der t-Verteilung.' },
+      { match: 'p', atlas: 'p-Wert', explain: 'Wäre das Mittel aller Menschen genau 7 Stunden, käme ein t mindestens so weit von 0 in etwa 16 von 100 Stichproben vor. Die Fläche dafür kommt aus der t-Verteilung.' },
       { match: 'N', atlas: 'n', explain: 'N zählt die Befragten. Ihre Zahl minus 1 ergibt die Freiheitsgrade.' },
     ],
     check: {
@@ -189,7 +193,7 @@ export const tTabs: ConceptTabs = {
     ],
     more: [
       { id: 'prediction_interval', why: 'Vorhersagebereiche der Regression nutzen ebenfalls t-Grenzen.' },
-      { id: 'f_distribution', why: 'Bei zwei Gruppen ist F das Quadrat von t.' },
+      { id: 'f_distribution', why: 'Bei zwei Gruppen ist F das Quadrat von t, beim t-Test mit gleichen Varianzen.' },
     ],
   },
 };

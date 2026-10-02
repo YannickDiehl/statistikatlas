@@ -4,8 +4,9 @@ import { createSurvey } from '../../../domain/survey';
 import { close } from '../../format';
 import { applyOp } from '../../sample';
 import type { SampleCtx } from '../../types';
-import { columnStats, skewness, within } from './dist';
-import { ALTER_WITHIN1, EINKOMMEN_SKEW, SCHLAF, inside, normalverteilung, normalTabs, schlafFit } from './normal';
+import { skewness, within } from './dist';
+import { tTest } from '../../../tasks/kit/means';
+import { ALTER_WITHIN1, EINKOMMEN_SKEW, SCHLAF, inside, normalverteilung, normalTabs, schlafFit, series as columnStats } from './normal';
 
 /*
  * Referenzwerte des Bereichs B7, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -67,7 +68,7 @@ test('B7 Normalverteilung: Schlafdauer, Flächen und Schiefe wie in R', () => {
  *   pnorm(-2); qnorm(0.975); qnorm(0.995); pnorm(2)                          # 0.02275013 1.959964 2.575829 0.9772499
  *   z <- (x - mean(x)) / sd(x); sum(abs(z) > 1.96); max(z); min(z)          # 10; 2.94904; -2.418396
  *   atlas$id[which.max(z)]                                                   # P181 (9,5 Stunden)
- *   mean(x) + c(-1.96, 1.96) * sd(x)                                        # 5.475794 8.689206
+ *   mean(x) + c(-1.96, 1.96) * sd(x)                                        # 5.475774 8.689226
  *   sapply(1:200, function(i) { xx <- x; xx[i] <- 14; max(scale(xx)) })     # 7.210069 bis 7.339311
  *   sapply(1:200, function(i) { xx <- x + 0.5; xx[i] <- 14; max(scale(xx)) })   # mindestens 6.814707
  *   atlas %>% std(lernzeit, method = "sd", suffix = "_z") %>% describe(lernzeit, lernzeit_z, show = c("mean", "sd"))
@@ -102,7 +103,7 @@ test('B7 Standardnormalverteilung: z, Fläche und die z-Werte der 200 wie in R',
  *   atlas %>% t_test(schlafdauer)                                                # t(199) = 122.184 (ohne mu: gegen 0)
  *   qt(0.975, c(1, 4, 9, 28, 30, 199))       # 12.706205 2.776445 2.262157 2.048407 2.042272 1.971957
  *   2 * pt(-1.423256, c(4, 199)); 2 * pt(-2.5, 4)                               # 0.2278 0.1563; 0.06676654
- *   t.test(x + 0.5, mu = 7)$statistic; t.test(x - 0.5, mu = 7)$statistic        # 10.04906 -7.202567
+ *   t.test(x + 0.5, mu = 7)$statistic; t.test(x - 0.5, mu = 7)$statistic        # 10.04906 -7.202539
  */
 test('B7 t-Verteilung: t-Test der Schlafdauer gegen 7 Stunden und Grenzen wie in R', async () => {
   const { SCHLAF_T, tCrit, tFit, tTabs, tVerteilung } = await import('./t');
@@ -113,13 +114,19 @@ test('B7 t-Verteilung: t-Test der Schlafdauer gegen 7 Stunden und Grenzen wie in
   assert.equal(Math.round(4.95 / 3.48 * 100) / 100, 1.42);
   for (const [df, q] of [[1, 12.706205], [4, 2.776445], [9, 2.262157], [28, 2.048407], [30, 2.042272], [199, 1.971957]]) ok(tCrit(df), q, `qt(0.975, ${df})`);
   ok(tFit({ rows: applyOp(rows, 'schlafdauer', 'shift', 0.5), columns: { x: ['schlafdauer'] } }).t, 10.04906, 't nach +0,5 h', 1e-4);
-  ok(tFit({ rows: applyOp(rows, 'schlafdauer', 'shift', -0.5), columns: { x: ['schlafdauer'] } }).t, -7.202567, 't nach −0,5 h', 1e-4);
-  assert.match(tVerteilung.stellDirVor.text, /7,08 Stunden, knapp 5 Minuten darüber\. .* 4,95 Minuten .* 3,48 Minuten: t ≈ 1,42 bei 199 Freiheitsgraden\./);
+  ok(tFit({ rows: applyOp(rows, 'schlafdauer', 'shift', -0.5), columns: { x: ['schlafdauer'] } }).t, -7.202539, 't nach −0,5 h', 1e-5);
+  assert.match(tVerteilung.wofuer, /^Schlafen die 200 Befragten im Mittel anders lange als 7 Stunden pro Nacht\? Ihr Mittel liegt knapp 5 Minuten darüber\./);
+  assert.match(tVerteilung.stellDirVor.text, /^Ihr Mittel liegt bei 7,08 Stunden, 4,95 Minuten über 7 Stunden\. .* 3,48 Minuten: t ≈ 1,42 bei 199 Freiheitsgraden\./);
   assert.match(tVerteilung.bausteine[2].rechnung!, /±2,78\. .* ±2,04\. .* ±1,97\./);
-  assert.equal(tVerteilung.regler!.describe(4), 'Bei 4 Freiheitsgraden liegen die äußeren 5 % jenseits von ±2,78, bei der Standardnormalverteilung jenseits von ±1,96. Gäbe es keinen Unterschied, käme ein t von 1,42 oder weiter außen in etwa 23 von 100 Stichproben vor.');
-  assert.match(tVerteilung.regler!.describe(199), /±1,97.*in etwa 16 von 100/);
+  assert.equal(tVerteilung.regler!.describe(4), 'Bei 4 Freiheitsgraden liegen die äußeren 5 % jenseits von ±2,78, bei der Standardnormalverteilung jenseits von ±1,96. Die Schlafdauer hat 199 Freiheitsgrade. Hätte sie nur 4, käme ohne Unterschied ein t von 1,42 oder weiter außen in etwa 23 von 100 Stichproben vor.');
+  assert.match(tVerteilung.regler!.describe(199), /Die Schlafdauer hat 199 Freiheitsgrade: Gäbe es keinen Unterschied, käme ein t von 1,42 oder weiter außen in etwa 16 von 100 Stichproben vor\.$/);
+  assert.match(tVerteilung.regler!.describe(200), /Hätte sie 200, käme/);
+  // Welch-Freiheitsgrade 175,8 (Baustein 3, Genau genommen): atlas %>% t_test(lernzeit, group = weiterbildung)   # t(175.8) = 0.156
+  const welch = tTest(rows.map(r => r.values.lernzeit), rows.map(r => r.values.weiterbildung))!.welch;
+  assert.equal(Math.round(welch.df * 10) / 10, 175.8); assert.match(tVerteilung.bausteine[2].acht, /175,8/); assert.match(tVerteilung.genau.paragraphs[4], /175,8/);
   assert.match(tVerteilung.check.options[1], /2,26/); assert.match(tVerteilung.fuerDich, /bei 2,05/);
   if (tTabs.sample?.kind === 'analysis') assert.match(tTabs.sample.result(ctx).kurz, /7,08 Stunden pro Nacht, 4,95 Minuten über 7 Stunden\. Das ergibt t = 1,42 bei 199 Freiheitsgraden; .* ±1,97\. .* in etwa 16 von 100 Stichproben vor\./);
+  assert.match(tTabs.next.more!.find(m => m.id === 'f_distribution')!.why as string, /gleichen Varianzen/);
 });
 
 /*
@@ -132,6 +139,8 @@ test('B7 t-Verteilung: t-Test der Schlafdauer gegen 7 Stunden und Grenzen wie in
  *   chisq.test(table(4 - sa, wb), correct = FALSE)$statistic                          # 3.082033 (umgepolt gleich)
  *   pchisq(12.3, 4, lower.tail = FALSE)                                               # 0.01526 (unter den äußeren 5 %)
  *   atlas %>% chi_square(schulabschluss, weiterbildung, correct = FALSE)   # chi2(4) = 3.082, p = 0.544, V = 0.124 (small), N = 200
+ *   atlas %>% cramers_v(schulabschluss, weiterbildung); sqrt(3.082033 / 200)        # 0.1241377 0.1241377
+ *   optimize(function(v) dchisq(v, 4), c(0, 30), maximum = TRUE)$maximum             # 2 (Gipfel); bei 10: 8
  *   atlas %>% chi_square(schulabschluss)    # Fehler: Exactly two variables must be specified for `chi_square()`.
  */
 test('B7 χ²-Verteilung: Chi-Quadrat-Test von Schulabschluss und Weiterbildung wie in R', async () => {
@@ -145,10 +154,22 @@ test('B7 χ²-Verteilung: Chi-Quadrat-Test von Schulabschluss und Weiterbildung 
   ok(chiFit({ rows: applyOp(rows, 'schulabschluss', 'reverse'), columns: ctx.columns }).chi2, 3.082033, 'umgepolt');
   ok((CHI.cellB - CHI.cellE) ** 2 / CHI.cellE, 1.180488, 'Beitrag der Zelle');
   assert.match(chiQuadratVerteilung.bausteine[0].rechnung!, /beobachtet 12, erwartet 16,4\. \(12 − 16,4\)² \/ 16,4 = 19,36 \/ 16,4 ≈ 1,18\. .* χ² ≈ 3,08\./);
-  assert.match(chiQuadratVerteilung.bausteine[2].rechnung!, /in etwa 54 von 100 Stichproben/);
+  assert.match(chiQuadratVerteilung.bausteine[2].rechnung!, /mindestens so großes χ² in etwa 54 von 100 Stichproben/);
+  assert.equal(chiQuadratVerteilung.bausteine[2].was, 'Bei 4 Freiheitsgraden liegen die χ²-Werte im Schnitt bei 4, am häufigsten um 2. Nur 5 % sind größer als 9,49.');
+  assert.match(chiQuadratVerteilung.ausprobieren[0].explain, /^Bei 4 Freiheitsgraden liegt der Gipfel bei 2, bei 10 Freiheitsgraden bei 8\./);
+  assert.match(chiQuadratVerteilung.fuerDich, /vergleiche mit dem Erwartungswert: .* im Schnitt bei 4\./);
+  assert.match(chiQuadratVerteilung.wofuer, /^Hängt der Schulabschluss damit zusammen/); assert.match(chiQuadratVerteilung.stellDirVor.text, /^Die Kreuztabelle der 200 Befragten/);
+  assert.match(chiQuadratVerteilung.bausteine[1].warum, /Summen am Rand der Tabelle/);
+  const { dchisq } = await import('./dist');
+  for (const [df, top] of [[4, 2], [10, 8]]) assert.ok(dchisq(top, df) > dchisq(top - 0.01, df) && dchisq(top, df) > dchisq(top + 0.01, df), `Gipfel von χ²(${df}) bei ${top}`);
+  ok(f.v, 0.1241377, 'Cramérs V');
   assert.match(chiQuadratVerteilung.ausprobieren[2].explain, /etwa 6,16/);
-  assert.match(chiQuadratVerteilung.regler!.describe(4), /^Bei 4 Freiheitsgraden liegt der Erwartungswert bei 4, und nur 5 % der χ²-Werte sind größer als 9,49\. So ist es/);
-  if (chiTabs.sample?.kind === 'analysis') assert.match(chiTabs.sample.result(ctx).kurz, /5 Abschlüssen und 2 Antworten ergibt χ² = 3,08 bei 4 Freiheitsgraden\. .* unter 9,49\. .* in etwa 54 von 100 Stichproben vor\./);
+  assert.match(chiQuadratVerteilung.regler!.describe(4), /^Bei 4 Freiheitsgraden liegt der Gipfel bei 2 und der Erwartungswert bei 4; nur 5 % der χ²-Werte sind größer als 9,49\. So ist es/);
+  if (chiTabs.sample?.kind === 'analysis') {
+    const r = chiTabs.sample.result(ctx);
+    assert.match(r.kurz, /5 Abschlüssen und 2 Antworten ergibt χ² = 3,08 bei 4 Freiheitsgraden\. .* unter 9,49\. .* mindestens so großes χ² in etwa 54 von 100 Stichproben vor\./);
+    assert.match(r.zusatz!, /Cramérs V ≈ 0,12, nach der üblichen Faustregel ein schwacher Zusammenhang\./);
+  }
 });
 
 /*
@@ -174,8 +195,8 @@ test('B7 F-Verteilung: ANOVA der Lernzeit nach Schulabschluss wie in R', async (
   ok(qf(0.95, 4, 195), 2.417963, 'qf');
   for (const d of [applyOp(rows, 'lernzeit', 'double'), applyOp(rows, 'lernzeit', 'shift', 1)]) ok(fFit({ rows: d, columns: ctx.columns }).f, 8.638858, 'F bleibt');
   assert.match(fVerteilung.stellDirVor.text, /zwischen 5,9 Stunden \(ohne Schulabschluss\) und 9,4 Stunden \(Abitur\).* F ≈ 8,64 bei 4 und 195 .* unter 2,42\./);
-  assert.equal(fVerteilung.bausteine[0].rechnung, '313,98 / 4 ≈ 78,5. Geteilt wird durch 5 Gruppen minus 1, die Zähler-Freiheitsgrade.');
-  assert.equal(fVerteilung.bausteine[1].rechnung, '1.771,84 / 195 ≈ 9,09. Geteilt wird durch 200 Befragte minus 5 Gruppen, die Nenner-Freiheitsgrade.');
+  assert.match(fVerteilung.bausteine[0].rechnung!, /^Quadratsumme zwischen den Gruppen 313,98: .* 313,98 \/ 4 ≈ 78,5\.$/);
+  assert.match(fVerteilung.bausteine[1].rechnung!, /^Quadratsumme innerhalb der Gruppen 1\.771,84: .* 1\.771,84 \/ 195 ≈ 9,09\.$/);
   assert.equal(fVerteilung.bausteine[2].rechnung, 'F = 78,5 / 9,09 ≈ 8,64.');
   assert.equal(Math.round(78.5 / 9.09 * 100) / 100, 8.64, 'die Rechnung geht mit den sichtbaren Zahlen auf');
   assert.match(fVerteilung.bausteine[3].rechnung!, /in weniger als 1 von 1\.000 Stichproben/);
@@ -223,7 +244,16 @@ test('B7 Binomialverteilung: Reihenfolgen, Wahrscheinlichkeit und Binomialtest w
   const { binomial, binomialTabs, binFit, BIN_START } = await import('./binomial');
   const { binomTest, dbinom, choose } = await import('./dist');
   const s = binomial.compute(BIN_START);
-  assert.equal(s.c, 10); ok(s.one, 0.03452421, 'eine Reihenfolge'); ok(s.P, 0.3452421, 'P(X = 2)'); ok(s.e, 2.05, 'n · p'); ok(s.v, 1.2095, 'Varianz'); assert.equal(s.mode, 2);
+  assert.equal(s.c, 10); ok(s.one, 0.03452421, 'eine Reihenfolge'); ok(s.P, 0.3452421, 'P(X = 2)'); ok(s.e, 2.05, 'n · p'); ok(s.v, 1.2095, 'Varianz'); assert.deepEqual(s.modes, [2]);
+  // Gleichstand: dbinom(2:3, 5, 0.5) = 0.3125 0.3125; dbinom(1:2, 3, 0.5) = 0.375 0.375; dbinom(2:3, 4, 0.6) = 0.3456 0.3456
+  for (const [v, m] of [[{ n: 5, k: 2, p: 0.5 }, [2, 3]], [{ n: 3, k: 2, p: 0.5 }, [1, 2]], [{ n: 4, k: 2, p: 0.6 }, [2, 3]], [{ n: 1, k: 1, p: 0.5 }, [0, 1]]] as const) {
+    const t = binomial.compute({ ...v }); assert.deepEqual(t.modes, m, `Modi bei ${JSON.stringify(v)}`);
+    assert.match(binomial.compare(t), new RegExp(`Am wahrscheinlichsten sind ${m[0]} und ${m[1]} Erfolge, beide gleich wahrscheinlich\\.$`));
+  }
+  assert.match(binomial.compare(s), /Am wahrscheinlichsten sind 2 Erfolge\.$/);
+  assert.match(binomial.compare(binomial.compute({ n: 5, k: 1, p: 0.2 })), /Am wahrscheinlichsten ist 1 Erfolg\.$/);
+  assert.match(binomial.worked(binomial.compute({ n: 1, k: 0, p: 0.3 }))[0].text, /^Zum Beispiel lauter Misserfolge\./);
+  assert.match(binomial.worked(binomial.compute({ n: 1, k: 0, p: 0.3 }))[1].text, /auf 1 Platz verteilen/);
   assert.deepEqual(binomial.worked(s).map(w => w.text), [
     'Zum Beispiel erst 2 Erfolge, dann 3 Misserfolge. Weil die Versuche unabhängig sind, wird malgenommen: 0,41² · 0,59³ ≈ 0,035.',
     'Auf wie viele Arten lassen sich 2 Erfolge auf 5 Plätze verteilen? C(5, 2) = 10.',
@@ -274,4 +304,40 @@ test('B7 Hypergeometrische Verteilung: 10 aus 200 und der Test von Fisher wie in
   assert.match(hypergeometrisch.regler!.describe(200), /sicher: genau 82 .* 6,96\./);
   assert.match(hypergeometrisch.genau.paragraphs[1], /≈ 0,95\./); assert.match(hypergeometrisch.genau.paragraphs[3], /, 0,26\.$/);
   if (hyperTabs.sample?.kind === 'analysis') assert.match(hyperTabs.sample.result({ rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }).kurz, /Von den 82 .* sind 59 erwerbstätig; .* 56,17 zu erwarten\. .* in etwa 44 von 100 Stichproben vor\./);
+});
+
+/*
+ * Befunde der Begutachtung (Fix-Runde 1), Wortlaut und Zahlen:
+ *   sqrt(n * .41 * .59 * (200 - n) / 199); sqrt(n * .41 * .59) für n = 1, 2, 10, 100, 199, 200
+ *     # 0.4918 0.6938 1.5197 3.4865 0.4918 0 gegen 0.4918 0.6956 1.5553 4.9183 6.9382 6.9556: ohne ≤ mit, gleich nur bei n = 1
+ */
+test('B7 Fix-Runde 1: Wortlaut der Befunde I2, I5 und der Minors', async () => {
+  const { hypergeometrisch, hyperTabs, spread } = await import('./hypergeometric');
+  const { fVerteilung } = await import('./f');
+  const { standardnormal } = await import('./standard-normal');
+  const { bernoulli } = await import('./bernoulli');
+  const { binomial, binomialTabs } = await import('./binomial');
+  // I2: ohne Zurücklegen nie mehr Streuung als mit, gleich nur bei n = 1, bei 200 keine.
+  for (let n = 1; n <= 200; n++) { const s = spread(n); assert.ok(s.without <= s.with + 1e-12 && (n === 1 || s.without < s.with), `n = ${n}`); }
+  ok(spread(1).without, spread(1).with, 'n = 1 gleich'); ok(spread(100).without, 3.486514, 'n = 100'); assert.equal(spread(200).without, 0);
+  assert.equal(hypergeometrisch.ausprobieren[0].kurz, 'Ohne Zurücklegen streut das Ergebnis weniger als mit Zurücklegen, sobald du mehr als eine Person ziehst. Ziehst du alle 200, bleibt kein Zufall.');
+  // I5 und M12
+  assert.match(hypergeometrisch.bausteine[3].was, /^Fisher prüft eine Kreuztabelle mit zwei mal zwei Feldern, eine Vierfeldertafel\./);
+  assert.match(hypergeometrisch.bausteine[0].was, /Du zählst beide Teile und nimmst sie mal\./);
+  assert.match(fVerteilung.bausteine[0].was, /mittlere Quadratsumme zwischen den Gruppen: ihre Quadratsumme geteilt durch ihre Freiheitsgrade/);
+  assert.match(fVerteilung.bausteine[1].acht, /Vertauschst du sie/); assert.match(fVerteilung.ausprobieren[0].explain, /erwartest du/);
+  for (const card of [hypergeometrisch, fVerteilung]) for (const b of card.bausteine) assert.ok(!/\bman\b/i.test(`${b.was} ${b.warum} ${b.acht}`), `„man“ in ${b.title}`);
+  // M6
+  assert.match(fVerteilung.bausteine[3].acht, /mindestens zwei Gruppen/); assert.match(fVerteilung.genau.kurz, /Bei ungleicher Varianz hilft der Welch-Test\.$/);
+  // M8, M9, M10
+  assert.match(standardnormal.sentence.at(-1) as string, /der Anteil der Werte, die höchstens so groß sind\.$/);
+  assert.match(bernoulli.interpret(bernoulli.compute({ p: 0.41 })).kurz, /Ja und Nein kommen beide häufig vor/);
+  assert.equal(bernoulli.check.tolerance, 0.011);
+  // M11
+  assert.match(binomial.check.right, /3 \/ 8, also etwa 0,38\.$/);
+  if (binomialTabs.sample?.kind === 'analysis') assert.match(binomialTabs.sample.result({ rows, columns: { x: ['weiterbildung'] } }).fachlich, /B\(n = 200, p = 0,5\).* p-Wert ≈ 0,013\./);
+  // M13, M14
+  assert.match(normalTabs.r!.check.wrong.p, /wenn die Schlafdauer normalverteilt wäre/);
+  assert.equal(normalverteilung.stellDirVor.figures![3].label, 'Modell: innerhalb x̄ ± s');
+  if (hyperTabs.sample?.kind === 'analysis') assert.match(hyperTabs.sample.result({ rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }).zusatz!, /^Erwerbstätig sind 72 % der Befragten mit und 66,1 % der Befragten ohne Weiterbildung\.$/);
 });

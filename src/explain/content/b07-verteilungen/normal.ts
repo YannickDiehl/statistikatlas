@@ -4,9 +4,10 @@
 // und die Flächenregel verstehen. Deshalb Begriffskarte mit Regler statt Formel als Satz.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num, pct, unit } from '../../format';
-import { baseSurvey } from '../../sample';
+import { baseSurvey, sampleSeries } from '../../sample';
+import type { SurveyRow } from '../../../domain/survey';
 import { ref, titleFor } from '../../../domain/learning';
-import { columnStats, pnorm, skewness, within } from './dist';
+import { pnorm, skewness, within } from './dist';
 
 /** Schlafdauer der 200 Befragten (Stunden pro Nacht in den letzten sieben Tagen), Referenzwerte aus R. */
 export const SCHLAF = { n: 200, mean: 7.0825, sd: 0.819758, within1: 140, within2: 191, below2: 6, skew: -0.057802 } as const;
@@ -18,8 +19,13 @@ export const EINKOMMEN_SKEW = 0.791522;
 const S = SCHLAF;
 const T = (id: string) => titleFor(ref(id));
 /** Schlafdauer der Ausgangsdaten, für den Regler (zählt für jedes k nach). */
-let schlaf: ReturnType<typeof columnStats> | null = null;
-const schlafStats = () => schlaf ??= columnStats(baseSurvey(), 'schlafdauer');
+/** Werte, Fallzahl, Mittelwert und Standardabweichung (n − 1) einer Spalte, aus sampleSeries (src/explain/sample.ts). */
+export function series(rows: readonly SurveyRow[], column: string) {
+  const s = sampleSeries(rows, column);
+  return { xs: s.values, n: s.values.length, mean: s.mean, sd: s.sd };
+}
+let schlaf: ReturnType<typeof series> | null = null;
+const schlafStats = () => schlaf ??= series(baseSurvey(), 'schlafdauer');
 /** Anteil einer Normalverteilung innerhalb von μ ± k · σ. */
 export const inside = (k: number) => 2 * pnorm(k) - 1;
 
@@ -34,7 +40,7 @@ export const normalverteilung: ConceptCard = {
       { label: 'Mitte x̄', value: `${num(S.mean)} h` },
       { label: 'Standardabweichung s', value: `${num(S.sd)} h` },
       { label: 'innerhalb x̄ ± s', value: `${S.within1} von 200` },
-      { label: 'Normalverteilung', value: pct(inside(1)) },
+      { label: 'Modell: innerhalb x̄ ± s', value: pct(inside(1)) },
     ],
   },
   heisst: {
@@ -128,7 +134,7 @@ export const normalverteilung: ConceptCard = {
 
 /** Schlafdauer der aktuellen Daten: Mitte, Standardabweichung, Zahl innerhalb von x̄ ± s und x̄ ± 2s, Schiefe. */
 export function schlafFit(c: SampleCtx) {
-  const { xs, n, mean, sd } = columnStats(c.rows, c.columns.x?.[0] ?? 'schlafdauer');
+  const { xs, n, mean, sd } = series(c.rows, c.columns.x?.[0] ?? 'schlafdauer');
   return { n, mean, sd, k1: within(xs, mean, sd, 1), k2: within(xs, mean, sd, 2), skew: skewness(xs) };
 }
 
@@ -173,14 +179,14 @@ export const normalTabs: ConceptTabs = {
     outputMap: [
       { match: 'W', atlas: 'Shapiro-Wilk W', step: 4, explain: 'W misst, wie gut die geordneten Werte zu einer Normalverteilung passen. 1 hieße perfekt; die Schlafdauer ist sehr nah dran.' },
       { match: 'KS', atlas: 'Abstand nach Kolmogorov-Smirnov', step: 4, explain: 'Der größte Abstand zwischen den kumulierten Anteilen der Daten und der Normalverteilung. Klein heißt: gute Passung.' },
-      { match: 'p', atlas: 'p-Wert', explain: 'Wäre die Schlafdauer aller Menschen normalverteilt, käme ein so großer KS-Abstand in etwa 24 von 100 Stichproben vor. Der zweite p-Wert gehört zu W.' },
+      { match: 'p', atlas: 'p-Wert', explain: 'Wäre die Schlafdauer aller Menschen normalverteilt, käme ein mindestens so großer KS-Abstand in etwa 24 von 100 Stichproben vor. Der zweite p-Wert gehört zu W.' },
       { match: 'n', atlas: 'n', explain: 'n zählt die Befragten mit gültiger Schlafdauer.' },
     ],
     check: {
       question: 'Welche Zahl sagt nach Shapiro-Wilk, wie gut die Schlafdauer zu einer Glocke passt? Tippe sie an.', correct: 'W',
       wrong: {
         KS: 'Fast! Das ist der Abstand nach Kolmogorov-Smirnov, ein anderer Test. Shapiro-Wilk steht hinter W.',
-        p: 'Fast! Das ist ein p-Wert. Er sagt, wie überraschend die Abweichung wäre, nicht wie gut die Passung ist.',
+        p: 'Fast! Das ist ein p-Wert. Er sagt, wie überraschend so ein Abstand wäre, wenn die Schlafdauer normalverteilt wäre, nicht wie gut sie passt.',
         n: 'Fast! n zählt die Befragten. Die Passung nach Shapiro-Wilk steht hinter W.',
       },
     },

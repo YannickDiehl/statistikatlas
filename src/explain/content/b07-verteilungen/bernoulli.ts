@@ -14,7 +14,7 @@ export const WEITERBILDUNG = { n: 200, k: 82, p: 0.41, var: 0.2419, s2: 0.243115
 const T = (id: string) => titleFor(ref(id));
 const eq = (v: number, shown: string) => Math.abs(Number(shown.replace(',', '.')) - v) > 1e-9 ? '≈' : '=';
 /** „= 0,25“ oder „≈ 0,24“, je nachdem, ob die angezeigte Zahl genau ist. */
-const eqProb = (v: number) => `${eq(v, prob(v))} ${prob(v)}`;
+export const eqProb = (v: number) => `${eq(v, prob(v))} ${prob(v)}`;
 
 export const bernoulli: SentenceTemplate<BernValues, BernStats> = {
   concept: 'bernoulli_distribution',
@@ -56,18 +56,18 @@ export const bernoulli: SentenceTemplate<BernValues, BernStats> = {
   compare: s => `Umgepolt, mit p = ${num(s.q)}, bleibt die Varianz gleich: ${num(s.q)} · ${num(s.p)} ${eqProb(s.v)}.`,
   check: {
     question: 'Wie groß ist die Varianz einer Bernoulli-Variable mit p = 0,2?',
-    answer: 0.16, tolerance: 0.0011,
+    answer: 0.16, tolerance: 0.011,
     right: 'Genau, 0,16: 0,2 · (1 − 0,2) = 0,2 · 0,8 = 0,16.',
-    diagnose: v => close(v, 0.2, 0.0011) ? 'Fast! 0,2 ist p selbst, der Erwartungswert. Die Varianz ist p · (1 − p) = 0,2 · 0,8.'
-      : close(v, 0.8, 0.0011) ? 'Fast! 0,8 ist 1 − p. Malnehmen mit p = 0,2 fehlt noch.'
-      : close(v, 0.04, 0.0011) ? 'Fast! Das ist p · p. Malnehmen musst du mit 1 − p = 0,8.'
-      : close(v, 0.4, 0.0011) ? 'Fast! 0,4 ist die Standardabweichung, die Wurzel aus 0,16. Gefragt ist die Varianz.'
+    diagnose: v => close(v, 0.2) ? 'Fast! 0,2 ist p selbst, der Erwartungswert. Die Varianz ist p · (1 − p) = 0,2 · 0,8.'
+      : close(v, 0.8) ? 'Fast! 0,8 ist 1 − p. Malnehmen mit p = 0,2 fehlt noch.'
+      : close(v, 0.04) ? 'Fast! Das ist p · p. Malnehmen musst du mit 1 − p = 0,8.'
+      : close(v, 0.4) ? 'Fast! 0,4 ist die Standardabweichung, die Wurzel aus 0,16. Gefragt ist die Varianz.'
       : 'Noch nicht ganz. Rechne p · (1 − p) = 0,2 · 0,8.',
   },
   interpret: s => ({
     kurz: s.v < 1e-9
       ? `Alle haben denselben Wert, ${s.p >= 0.5 ? 'eine 1' : 'eine 0'}. Die Varianz ist 0: Es gibt nichts zu streuen.`
-      : `Bei p = ${num(s.p)} sind im Schnitt ${Math.round(s.p * 100)} von 100 Antworten eine 1. Die Varianz ${prob(s.v)} ist ${s.v >= 0.24 ? 'fast so groß wie möglich: Ja und Nein sind ungefähr gleich häufig' : s.v <= 0.09 ? 'klein: Fast alle geben dieselbe Antwort' : 'mittelgroß'}; am größten ist sie bei p = 0,5.`,
+      : `Bei p = ${num(s.p)} sind im Schnitt ${Math.round(s.p * 100)} von 100 Antworten eine 1. Die Varianz ${prob(s.v)} ist ${s.v >= 0.24 ? 'fast so groß wie möglich: Ja und Nein kommen beide häufig vor' : s.v <= 0.09 ? 'klein: Fast alle geben dieselbe Antwort' : 'mittelgroß'}; am größten ist sie bei p = 0,5.`,
     fachlich: `P(X = 1) = ${num(s.p)}, P(X = 0) = ${num(s.q)}, E(X) = ${num(s.p)}, Var(X) = p · (1 − p) ${eqProb(s.v)}, Standardabweichung ${prob(s.sd)}.`,
   }),
   think: {

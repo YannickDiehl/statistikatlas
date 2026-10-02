@@ -37,7 +37,7 @@ export const hypergeometrisch: ConceptCard = {
   bausteine: [
     {
       title: 'Passende Auswahlen zählen',
-      was: 'Wie viele Möglichkeiten gibt es, genau k Erfolge und n − k andere zu ziehen? Man zählt beide Teile und nimmt sie mal.',
+      was: 'Wie viele Möglichkeiten gibt es, genau k Erfolge und n − k andere zu ziehen? Du zählst beide Teile und nimmst sie mal.',
       rechnung: 'Kleine Gruppe: 10 Befragte, 4 davon mit Weiterbildung, 3 werden gezogen. Genau 1 mit Weiterbildung: C(4, 1) · C(6, 2) = 4 · 15 = 60 Möglichkeiten.',
       warum: 'Jede Auswahl von Personen ist gleich wahrscheinlich. Dann reicht es, die passenden Auswahlen zu zählen.',
       acht: 'Gezählt werden Gruppen von Personen, keine Reihenfolgen. Wer zuerst gezogen wird, spielt keine Rolle.',
@@ -61,9 +61,9 @@ export const hypergeometrisch: ConceptCard = {
     },
     {
       title: 'Den exakten Test von Fisher verstehen',
-      was: 'Fisher fragt bei einer Vierfeldertafel: Wie wahrscheinlich ist diese Besetzung, wenn die Randsummen feststehen? Die Antwort liefert die hypergeometrische Verteilung.',
-      rechnung: `Von den ${H.row1} mit Weiterbildung sind ${H.a} erwerbstätig, zu erwarten wären ${num(H.expected)}. Gäbe es keinen Zusammenhang, käme eine so große Abweichung ${often(H.fisherP)} Stichproben vor (R: p = 0.440).`,
-      warum: 'Mit festen Randsummen reicht eine Zelle; die anderen drei folgen daraus. Ihre Verteilung ist hypergeometrisch.',
+      was: 'Fisher prüft eine Kreuztabelle mit zwei mal zwei Feldern, eine Vierfeldertafel. Er fragt: Wie wahrscheinlich ist genau diese Verteilung auf die vier Felder, wenn die Summen je Zeile und je Spalte feststehen?',
+      rechnung: `Von den ${H.row1} mit Weiterbildung sind ${H.a} erwerbstätig, zu erwarten wären ${num(H.expected)}. Gäbe es keinen Zusammenhang, käme eine mindestens so große Abweichung ${often(H.fisherP)} Stichproben vor (R: p = 0.440).`,
+      warum: 'Stehen diese Summen fest, reicht ein Feld; die anderen drei folgen daraus. Die Zahl in diesem Feld ist hypergeometrisch verteilt.',
       acht: 'Der Test heißt exakt, weil er ohne Näherung rechnet. Das hilft bei kleinen erwarteten Häufigkeiten, wo der Chi-Quadrat-Test nur grob nähert.',
       concept: 'fisher_test',
     },
@@ -73,7 +73,7 @@ export const hypergeometrisch: ConceptCard = {
       question: 'Du ziehst alle 200 Befragten. Wie viele mit Weiterbildung bekommst du?',
       options: ['sicher 82', 'meistens etwa 82', 'zwischen 0 und 200'], correct: 0, step: 3,
       explain: 'Ohne Zurücklegen ziehst du jede Person genau einmal. Dann ist das Ergebnis sicher: alle 82. Schieb den Regler auf 200.',
-      kurz: 'Ohne Zurücklegen schrumpft der Zufall, je mehr du ziehst.',
+      kurz: 'Ohne Zurücklegen streut das Ergebnis weniger als mit Zurücklegen, sobald du mehr als eine Person ziehst. Ziehst du alle 200, bleibt kein Zufall.',
     },
     {
       question: 'Was streut stärker: 10 aus 200 ohne Zurücklegen oder mit Zurücklegen?',
@@ -115,7 +115,7 @@ export const hypergeometrisch: ConceptCard = {
     paragraphs: [
       'P(X = k) = C(K, k) · C(N − K, n − k) / C(N, n). Die möglichen Werte reichen von max(0, n − (N − K)) bis min(n, K).',
       `Varianz: n · K / N · (1 − K / N) · (N − n) / (N − 1). Der letzte Faktor heißt Endlichkeitskorrektur. Bei 10 aus 200 ist er 190 / 199 ≈ ${num(190 / 199)}.`,
-      'Beim exakten Test von Fisher hält man alle Randsummen der Vierfeldertafel fest. Die Zahl in einer Zelle ist dann unter der Nullhypothese hypergeometrisch verteilt. Der p-Wert summiert alle Tafeln, die höchstens so wahrscheinlich sind wie die beobachtete.',
+      'Beim exakten Test von Fisher hält man die Randsummen der Vierfeldertafel fest, also die Summen je Zeile und je Spalte. Die Zahl in einer Zelle ist dann unter der Nullhypothese hypergeometrisch verteilt. Der p-Wert summiert alle Tafeln, die höchstens so wahrscheinlich sind wie die beobachtete.',
       `In R liefert dhyper(4, 82, 118, 10) die Wahrscheinlichkeit für genau 4 Treffer, ${prob(dhyper(4, H.K, H.N, H.n))}.`,
     ],
   },
@@ -137,14 +137,14 @@ export const hyperTabs: ConceptTabs = {
     result: c => {
       const f = fisherFit(c), rest = f.n - f.row1;
       return {
-        kurz: `Von den ${f.row1} Befragten mit Weiterbildung sind ${f.a} erwerbstätig; bei festen Randsummen wären ${num(f.expected)} zu erwarten. Gäbe es keinen Zusammenhang, käme eine so große Abweichung oder eine größere ${often(f.p)} Stichproben vor.`,
+        kurz: `Von den ${f.row1} Befragten mit Weiterbildung sind ${f.a} erwerbstätig; bei festen Summen je Zeile und Spalte wären ${num(f.expected)} zu erwarten. Gäbe es keinen Zusammenhang, käme eine mindestens so große Abweichung ${often(f.p)} Stichproben vor.`,
         fachlich: `Exakter Test von Fisher, zweiseitig: Vierfeldertafel ${f.a}, ${f.b}, ${f.c}, ${f.d}. Bei festen Randsummen ist die erste Zelle hypergeometrisch verteilt mit Erwartungswert ${num(f.expected)}; p ${pValue(f.p)}.`,
         zusatz: f.row1 > 0 && rest > 0
           ? `Erwerbstätig sind ${pct(f.a / f.row1)} der Befragten mit und ${pct(f.c / rest)} der Befragten ohne Weiterbildung.`
           : 'Alle stehen jetzt in einer Zeile der Tafel; einen Vergleich gibt es nicht mehr.',
       };
     },
-    voraussetzung: 'Der Test hält die Randsummen fest: wie viele eine Weiterbildung gemacht haben und wie viele erwerbstätig sind. Die Befragten sind unabhängig voneinander.',
+    voraussetzung: 'Der Test hält die Summen je Zeile und Spalte fest: wie viele eine Weiterbildung gemacht haben und wie viele erwerbstätig sind. Die Befragten sind unabhängig voneinander.',
     think: [
       {
         question: 'Weiterbildung wird umgepolt: 1 heißt jetzt keine Weiterbildung. Was passiert mit dem p-Wert von Fisher?',
@@ -157,7 +157,7 @@ export const hyperTabs: ConceptTabs = {
       {
         question: 'Angenommen, alle hätten eine Weiterbildung gemacht. Was passiert mit dem p-Wert?',
         options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 0,
-        explain: 'Dann gibt es nur noch eine Zeile, und bei festen Randsummen ist nur eine einzige Tafel möglich. Sie ist sicher: p = 1.',
+        explain: 'Dann gibt es nur noch eine Zeile, und bei festen Summen je Zeile und Spalte ist nur eine einzige Tafel möglich. Sie ist sicher: p = 1.',
         kurz: 'Ohne Vergleichsgruppe gibt es nichts zu testen.',
         tryIt: { label: 'alle auf Weiterbildung (1)', op: 'constant', column: 'x', value: 1 },
         expect: { change: 'up' },
@@ -170,7 +170,7 @@ export const hyperTabs: ConceptTabs = {
       fisher_test: { sym: 'fisher_test()', term: 'Exakter Test von Fisher', kurz: 'Rechnet den exakten Test von Fisher für zwei Spalten mit Kategorien. Bei einer Vierfeldertafel nutzt er die hypergeometrische Verteilung.', fehler: 'Ohne zweite Spalte meldet mariposa: Argument `col` is missing, with no default.' },
     },
     outputMap: [
-      { match: 'p', atlas: 'p-Wert', step: 4, explain: 'Gäbe es keinen Zusammenhang, käme eine so große Abweichung oder eine größere in etwa 44 von 100 Stichproben vor. Die Wahrscheinlichkeiten liefert die hypergeometrische Verteilung.' },
+      { match: 'p', atlas: 'p-Wert', step: 4, explain: 'Gäbe es keinen Zusammenhang, käme eine mindestens so große Abweichung in etwa 44 von 100 Stichproben vor. Die Wahrscheinlichkeiten liefert die hypergeometrische Verteilung.' },
       { match: 'OR', atlas: 'Odds Ratio', explain: 'Das Chancenverhältnis: Mit Weiterbildung ist die Chance, erwerbstätig zu sein, etwa 1,3-mal so groß wie ohne. In Klammern steht das 95-%-Konfidenzintervall.' },
       { match: 'N', atlas: 'n', explain: 'N zählt die Befragten in der Vierfeldertafel.' },
     ],

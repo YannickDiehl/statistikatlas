@@ -5,7 +5,8 @@ import type { ConceptTabs, SampleCtx, SentenceTemplate } from '../../types';
 import { close, num, paren, pct, unit } from '../../format';
 import { baseSurvey } from '../../sample';
 import { ref, titleFor } from '../../../domain/learning';
-import { columnStats, pnorm, shown2 } from './dist';
+import { pnorm, shown2 } from './dist';
+import { series } from './normal';
 
 export type ZValues = { x: number; mu: number; sigma: number };
 export type ZStats = ZValues & { diff: number; z: number; zr: number; area: number; count: number; n: number };
@@ -22,7 +23,7 @@ const eq = (v: number) => Math.abs(shown2(v) - v) > 1e-9 ? '≈' : '=';
 const side = (d: number) => d < 0 ? 'unter' : 'über';
 
 let schlaf: number[] | null = null;
-const schlafdauer = () => schlaf ??= columnStats(baseSurvey(), 'schlafdauer').xs;
+const schlafdauer = () => schlaf ??= series(baseSurvey(), 'schlafdauer').xs;
 
 export const standardnormal: SentenceTemplate<ZValues, ZStats> = {
   concept: 'standard_normal',
@@ -51,7 +52,7 @@ export const standardnormal: SentenceTemplate<ZValues, ZStats> = {
   numeric: s => [{ part: ['z'], m: 'z' }, ' = (', { part: [num(s.x)], m: 'x' }, ' − ', { part: [num(s.mu)], m: 'mu' }, ') / ', { part: [num(s.sigma)], m: 'sigma' },
     ` = ${num(s.diff)} / ${num(s.sigma)} ${eq(s.z)} ${num(s.z)}`, { br: true }, { part: [`Φ(${num(s.zr)})`], m: 'phi' }, ` ≈ ${areaText(s.area)}`],
   sentence: ['Der ', { m: 'z', t: 'z-Wert' }, ' zählt, wie viele ', { m: 'sigma', t: 'Standardabweichungen' }, ' ', { m: 'x', t: 'ein Wert' }, ' über oder unter ', { m: 'mu', t: 'der Mitte' }, ' liegt. ',
-    { m: 'phi', t: 'Die Fläche links von z' }, ' unter der Standardnormalverteilung ist der Anteil, der höchstens so groß ist.'],
+    { m: 'phi', t: 'Die Fläche links von z' }, ' unter der Standardnormalverteilung ist der Anteil der Werte, die höchstens so groß sind.'],
   worked: s => [
     { title: 'Den Abstand zur Mitte messen', text: `x − μ = ${num(s.x)} − ${num(s.mu)} = ${num(s.diff)} Stunden.${Math.abs(s.diff) < 0.005 ? ' Der Wert liegt genau auf der Mitte.' : ` ${num(s.x)} Stunden liegen ${unit(Math.abs(s.diff), 'Stunde', 'Stunden')} ${side(s.diff)} der Mitte.`}` },
     { title: 'In Standardabweichungen umrechnen', text: `${paren(s.diff)} / ${num(s.sigma)} ${eq(s.z)} ${num(s.z)}.${Math.abs(s.zr) < 0.005 ? ' Null Standardabweichungen: genau die Mitte.' : ` Das sind ${unit(Math.abs(s.zr), 'Standardabweichung', 'Standardabweichungen')} ${side(s.zr)} der Mitte.`}` },
@@ -106,7 +107,7 @@ export const standardnormal: SentenceTemplate<ZValues, ZStats> = {
 
 /** z-Werte der Schlafdauer in den aktuellen Daten: wie viele jenseits von ±1,96, kleinster und größter z-Wert. */
 export function zFit(c: SampleCtx) {
-  const id = c.columns.x?.[0] ?? 'schlafdauer', { xs, n, mean, sd } = columnStats(c.rows, id);
+  const id = c.columns.x?.[0] ?? 'schlafdauer', { xs, n, mean, sd } = series(c.rows, id);
   const z = xs.map(x => (x - mean) / sd), max = Math.max(...z);
   return { n, mean, sd, outside: z.filter(v => Math.abs(v) > 1.96).length, zmax: max, zmin: Math.min(...z), who: c.rows[z.indexOf(max)].id };
 }

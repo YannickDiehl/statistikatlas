@@ -1,10 +1,10 @@
-// Rechnungen des Bereichs B7 „Verteilungsfamilien“: Quantile, Einzelwahrscheinlichkeiten, exakte Tests wie in R und
-// Kennwerte der 200 Befragten. Ohne React, damit Inhalte, Bilder und Tests sie teilen. Referenzwerte und R-Befehle
-// stehen in b07-verteilungen.test.ts.
+// Rechnungen des Bereichs B7 „Verteilungsfamilien“, die im gemeinsamen Baukasten fehlen: Quantile von χ² und F,
+// Dichten, Einzelwahrscheinlichkeiten, exakte Tests wie in R, Schiefe wie mariposa und Zahlformate. Kennwerte der Daten
+// kommen aus src/explain/sample.ts und src/tasks/kit (sampleSeries, crosstab, chiSquare, onewayAnova, oneSampleT).
+// Ohne React, damit Inhalte, Bilder und Tests sie teilen. Referenzwerte und R-Befehle stehen in b07-verteilungen.test.ts.
 import { lgamma, pchisq, pf, pnorm, pt, qt } from '../../../tasks/kit/dist';
 import { num } from '../../format';
-import { sampleColumn } from '../../sample';
-import type { SurveyRow } from '../../../domain/survey';
+import { countWithin } from '../../sample';
 
 export { pchisq, pf, pnorm, pt, qt };
 
@@ -87,47 +87,8 @@ export function skewness(xs: readonly number[]): number {
   return m2 > 0 ? m3 / m2 ** 1.5 * Math.sqrt(n * (n - 1)) / (n - 2) : 0;
 }
 
-/** Mittelwert, Standardabweichung (n − 1) und Werte einer Spalte. */
-export function columnStats(rows: readonly SurveyRow[], column: string) {
-  const xs = sampleColumn(rows, column), n = xs.length, mean = xs.reduce((a, b) => a + b, 0) / n;
-  const sd = Math.sqrt(xs.reduce((a, x) => a + (x - mean) ** 2, 0) / (n - 1));
-  return { xs, n, mean, sd };
-}
-
 /** Wie viele Werte höchstens k Standardabweichungen von der Mitte entfernt liegen (wie R: abs(x − mean(x)) <= k * sd(x)). */
-export function within(xs: readonly number[], mean: number, sd: number, k: number): number {
-  return xs.filter(x => Math.abs(x - mean) <= k * sd + 1e-12).length;
-}
-
-/** Einfaktorielle ANOVA wie R aov(y ~ factor(g)): F, Freiheitsgrade, mittlere Quadratsummen. */
-export function anova(y: readonly number[], g: readonly number[]) {
-  const groups = [...new Set(g)].sort((a, b) => a - b), n = y.length, mean = y.reduce((a, b) => a + b, 0) / n;
-  let between = 0, inside = 0;
-  for (const level of groups) {
-    const v = y.filter((_, i) => g[i] === level), m = v.reduce((a, b) => a + b, 0) / v.length;
-    between += v.length * (m - mean) ** 2;
-    inside += v.reduce((a, x) => a + (x - m) ** 2, 0);
-  }
-  const df1 = groups.length - 1, df2 = n - groups.length, msb = between / df1, msw = inside / df2;
-  return { between, inside, df1, df2, msb, msw, f: msw > 0 ? msb / msw : NaN, k: groups.length };
-}
-
-/** Kreuztabelle zweier Spalten mit den Codes, die vorkommen (Zeilen x, Spalten y). */
-export function table(rows: readonly SurveyRow[], x: string, y: string) {
-  const xs = sampleColumn(rows, x), ys = sampleColumn(rows, y);
-  const rl = [...new Set(xs)].sort((a, b) => a - b), cl = [...new Set(ys)].sort((a, b) => a - b);
-  const cells = rl.map(r => cl.map(c => xs.filter((v, i) => v === r && ys[i] === c).length));
-  return { rows: rl, cols: cl, cells, n: xs.length };
-}
-
-/** Pearsons χ² ohne Korrektur für eine Kreuztabelle, mit Freiheitsgraden. */
-export function chiSquare(cells: number[][]) {
-  const rs = cells.map(r => r.reduce((a, b) => a + b, 0)), cs = cells[0].map((_, j) => cells.reduce((a, r) => a + r[j], 0));
-  const n = rs.reduce((a, b) => a + b, 0);
-  let chi2 = 0;
-  cells.forEach((r, i) => r.forEach((o, j) => { const e = rs[i] * cs[j] / n; chi2 += (o - e) ** 2 / e; }));
-  return { chi2, df: (cells.length - 1) * (cs.length - 1) };
-}
+export const within = (xs: readonly number[], mean: number, sd: number, k: number) => countWithin(xs, mean - k * sd, mean + k * sd);
 
 /**
  * Wahrscheinlichkeit als Text mit zwei gültigen Ziffern: „0,35“, „0,013“, „0,0019“; sehr kleine als „weniger als 0,0001“.
@@ -146,5 +107,3 @@ export const often = (p: number) => p >= 0.005 ? `in etwa ${Math.round(p * 100)}
 export const shown2 = (v: number) => Math.round(v * 100) / 100;
 /** Hochgestellte Zahl für Potenzen: 2 → „²“, 12 → „¹²“. */
 export const sup = (n: number) => String(n).split('').map(d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[Number(d)]).join('');
-/** Zahl als Wort bis zwölf („vier Freiheitsgrade“), sonst die Ziffern. */
-export const word = (n: number) => ['null', 'ein', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf'][n] ?? String(n);

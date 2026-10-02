@@ -9,13 +9,17 @@ import { sampleColumn } from '../../sample';
 import { binomTest, choose, dbinom, often, prob, pValue, sup } from './dist';
 
 export type BinValues = { n: number; k: number; p: number };
-export type BinStats = BinValues & { q: number; c: number; one: number; P: number; e: number; v: number; mode: number; valid: boolean };
+export type BinStats = BinValues & { q: number; c: number; one: number; P: number; e: number; v: number; modes: number[]; valid: boolean };
 export const BIN_START: BinValues = { n: 5, k: 2, p: 0.41 };
 const T = (id: string) => titleFor(ref(id));
 /** Zahl aus einem Text von `prob` („0,035“), NaN für „weniger als …“. */
 const value = (t: string) => Number(t.replace(',', '.'));
 /** Wahrscheinlichkeit einer Reihenfolge als Potenzen: „0,41² · 0,59³“. */
 const powers = (s: BinStats) => `${num(s.p)}${sup(s.k)} · ${num(s.q)}${sup(s.n - s.k)}`;
+/** „Am wahrscheinlichsten sind 2 Erfolge.“; bei Gleichstand beide: „… sind 2 und 3 Erfolge, beide gleich wahrscheinlich.“ */
+export const likeliest = (modes: number[]) => modes.length > 1
+  ? `Am wahrscheinlichsten sind ${modes.join(' und ')} Erfolge, beide gleich wahrscheinlich.`
+  : modes[0] === 1 ? 'Am wahrscheinlichsten ist 1 Erfolg.' : `Am wahrscheinlichsten sind ${modes[0]} Erfolge.`;
 const persons = (n: number) => n === 1 ? 'einer zufällig ausgewählten Person' : `${n} zufällig ausgewählten Personen`;
 
 export const binomial: SentenceTemplate<BinValues, BinStats> = {
@@ -29,7 +33,8 @@ export const binomial: SentenceTemplate<BinValues, BinStats> = {
     const q = Math.round((1 - v.p) * 100) / 100, valid = v.k <= v.n;
     const one = valid ? v.p ** v.k * q ** (v.n - v.k) : 0, P = valid ? dbinom(v.k, v.n, v.p) : 0;
     const probs = Array.from({ length: v.n + 1 }, (_, j) => dbinom(j, v.n, v.p));
-    return { ...v, q, c: choose(v.n, v.k), one, P, e: v.n * v.p, v: v.n * v.p * q, mode: probs.indexOf(Math.max(...probs)), valid };
+    const top = Math.max(...probs), modes = probs.flatMap((x, j) => x >= top * (1 - 1e-9) ? [j] : []);
+    return { ...v, q, c: choose(v.n, v.k), one, P, e: v.n * v.p, v: v.n * v.p * q, modes, valid };
   },
   metrics: [
     { label: 'P(X = k)', value: s => prob(s.P) },
@@ -55,8 +60,8 @@ export const binomial: SentenceTemplate<BinValues, BinStats> = {
     ];
     const step3 = value(prob(s.one)) * s.c, fits = prob(step3) === prob(s.P);
     return [
-      { title: 'Eine Reihenfolge ansehen', text: `Zum Beispiel erst ${unit(s.k, 'Erfolg', 'Erfolge')}, dann ${unit(s.n - s.k, 'Misserfolg', 'Misserfolge')}. Weil die Versuche unabhängig sind, wird malgenommen: ${powers(s)} ≈ ${prob(s.one)}.` },
-      { title: 'Die Reihenfolgen zählen', text: `Auf wie viele Arten lassen sich ${unit(s.k, 'Erfolg', 'Erfolge')} auf ${s.n} Plätze verteilen? C(${s.n}, ${s.k}) = ${s.c}.` },
+      { title: 'Eine Reihenfolge ansehen', text: `Zum Beispiel ${s.k === 0 ? 'lauter Misserfolge' : s.k === s.n ? 'lauter Erfolge' : `erst ${unit(s.k, 'Erfolg', 'Erfolge')}, dann ${unit(s.n - s.k, 'Misserfolg', 'Misserfolge')}`}. Weil die Versuche unabhängig sind, wird malgenommen: ${powers(s)} ≈ ${prob(s.one)}.` },
+      { title: 'Die Reihenfolgen zählen', text: `Auf wie viele Arten lassen sich ${unit(s.k, 'Erfolg', 'Erfolge')} auf ${unit(s.n, 'Platz', 'Plätze')} verteilen? C(${s.n}, ${s.k}) = ${s.c}.` },
       { title: 'Beides malnehmen', text: `${fits ? `${s.c} · ${prob(s.one)}` : `${s.c} · ${powers(s)}`} ≈ ${prob(s.P)}. Genau ${s.k} von ${s.n} kämen ${often(s.P)} solcher Stichproben vor.` },
     ];
   },
@@ -71,11 +76,11 @@ export const binomial: SentenceTemplate<BinValues, BinStats> = {
     { label: 'p = 0,5', mark: 'p', apply: v => ({ ...v, p: 0.5 }) },
     { label: 'Beispiel von oben', mark: 'n', apply: () => ({ ...BIN_START }) },
   ],
-  compare: s => `Im Schnitt erwartest du n · p = ${s.n} · ${num(s.p)} = ${num(s.e)} Erfolge. Am wahrscheinlichsten ${s.mode === 1 ? 'ist 1 Erfolg' : `sind ${s.mode} Erfolge`}.`,
+  compare: s => `Im Schnitt erwartest du n · p = ${s.n} · ${num(s.p)} = ${num(s.e)} Erfolge. ${likeliest(s.modes)}`,
   check: {
     question: 'Wie wahrscheinlich sind genau 2 Erfolge bei 3 Versuchen mit p = 0,5? Zwei Nachkommastellen reichen.',
     answer: 0.375, tolerance: 0.011,
-    right: 'Genau, 0,375: 3 Reihenfolgen mal 0,5² · 0,5 = 3 · 0,125.',
+    right: 'Genau. Es gibt 3 Reihenfolgen, jede mit 0,5 · 0,5 · 0,5 = 1 / 8. Zusammen 3 / 8, also etwa 0,38.',
     diagnose: v => close(v, 0.125) ? 'Fast! Das ist eine einzelne Reihenfolge. Es gibt 3 davon, denn der Misserfolg kann an jeder der drei Stellen stehen.'
       : close(v, 0.75) ? 'Fast! Hier fehlt der Misserfolg: 3 · 0,5² = 0,75. Für ihn musst du noch mit 0,5 malnehmen.'
       : close(v, 0.25) ? 'Fast! 0,5² ist erst die Wahrscheinlichkeit der beiden Erfolge. Es fehlen der Misserfolg und die 3 Reihenfolgen.'
@@ -123,8 +128,8 @@ export const binomialTabs: ConceptTabs = {
     result: c => {
       const f = binFit(c);
       return {
-        kurz: `${f.k} von ${f.n} Befragten haben eine Weiterbildung gemacht. Bei p = 0,5 erwartet die Binomialverteilung im Schnitt ${num(f.e)}, mit einer Standardabweichung von ${num(f.sd)}. Wäre der Anteil aller Menschen 50 %, käme eine so große Abweichung von ${num(f.e)} ${often(f.p)} Stichproben vor.`,
-        fachlich: `X ∼ B(${f.n}, 0,5) unter der Nullhypothese: E(X) = ${num(f.e)}, Standardabweichung √(n · p · (1 − p)) = ${num(f.sd)}. Exakter Binomialtest, zweiseitig: p ${pValue(f.p)}.`,
+        kurz: `${f.k} von ${f.n} Befragten haben eine Weiterbildung gemacht. Bei p = 0,5 erwartet die Binomialverteilung im Schnitt ${num(f.e)}, mit einer Standardabweichung von ${num(f.sd)}. Wäre der Anteil aller Menschen 50 %, käme eine mindestens so große Abweichung von ${num(f.e)} ${often(f.p)} Stichproben vor.`,
+        fachlich: `X ∼ B(n = ${f.n}, p = 0,5) unter der Nullhypothese: E(X) = ${num(f.e)}, Standardabweichung √(n · p · (1 − p)) = ${num(f.sd)}. Exakter Binomialtest, zweiseitig: p-Wert ${pValue(f.p)}.`,
         zusatz: `Beobachtet ${f.k}, erwartet ${num(f.e)}: ein Abstand von ${num(Math.abs(f.k - f.e) / f.sd)} Standardabweichungen.`,
       };
     },
@@ -157,7 +162,7 @@ export const binomialTabs: ConceptTabs = {
     outputMap: [
       { match: 'prop', atlas: 'Anteil der Erfolge', explain: '82 Erfolge geteilt durch 200 Versuche.' },
       { match: '0.500', atlas: 'p der Binomialverteilung', explain: 'Das p, mit dem die Binomialverteilung hier rechnet. Erwartet wären 200 · 0,5 = 100 Erfolge.' },
-      { match: 'p', atlas: 'p-Wert', explain: 'Wäre der Anteil aller Menschen 50 %, käme eine so große Abweichung von 100 in etwa 1 von 100 Stichproben vor. Die Wahrscheinlichkeiten liefert die Binomialverteilung.' },
+      { match: 'p', atlas: 'p-Wert', explain: 'Wäre der Anteil aller Menschen 50 %, käme eine mindestens so große Abweichung von 100 in etwa 1 von 100 Stichproben vor. Die Wahrscheinlichkeiten liefert die Binomialverteilung.' },
       { match: 'N', atlas: 'n', explain: 'N ist die Zahl der Versuche n der Binomialverteilung.' },
     ],
     check: {
