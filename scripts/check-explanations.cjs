@@ -24,14 +24,15 @@
  * - in jedem Reiter (alle Abschnitte aufgeklappt): Konsolenfehler und -warnungen, kleinste Schrift sichtbarer Texte
  *   (berechnete font-size; Bilder zeichnet der Baukasten 1 : 1, eine Skalierung des SVG misst das Skript nicht),
  *   seitliches Überlaufen von Seite und Inspector, Steuerelemente ohne zugänglichen Namen (Barrierefreiheitsbaum),
- *   übersprungene Überschriftenebenen (etwa h2 → h4);
+ *   übersprungene Überschriftenebenen (etwa h2 → h4), Text in Bildern, der am Bildrand abgeschnitten ist oder einen
+ *   anderen Text überdeckt, und Knopfbeschriftungen, die über ihren Knopf hinauslaufen (Schrittknöpfe bei 360 px);
  * - Zustand: Ein gewählter Schritt bleibt nach einem Reiterwechsel erhalten;
  * - „Weiter“: jedes Ziel nur einmal;
  * - Fokus: nach „Schritt k ansehen“ in „In R“ steht der Fokus bei Schritt k im richtigen Reiter und liegt nicht unter
  *   einem klebenden Element; mit der Tabulatortaste durch jeden Reiter (bis zu 30 Stopps) liegt kein Fokus unter einem
  *   klebenden Element (Reiterleiste, stehende Formel, Kopf des Blatts); nach „Zu … wechseln“, nach „Ausprobieren“ und
  *   „Ausgangsdaten wiederherstellen“ (im Reiter und in der Kopfzeile) und nach dem Link „Als Nächstes“ steht der
- *   Fokus nicht auf der Seite (body).
+ *   Fokus nicht auf der Seite (body); im Reiter „Mit 200 Befragten“ gibt es nur einen Knopf „Ausgangsdaten wiederherstellen“.
  * Nicht parallel laufen lassen (zwei Läufe gleichzeitig führen zu Zeitüberschreitungen): erst Ausführlich, dann Kompakt.
  * Begriffe ohne Reiter werden ohne die Reiterpunkte geprüft. Konsolenmeldungen beim Laden der Seite zählen zum
  * ersten Begriff. Gibt je Begriff eine JSON-Zeile aus und endet mit Code 1, wenn ein Befund auftritt.
@@ -70,8 +71,42 @@ function measure() {
   // Überschriften im sichtbaren Teil (auch sr-only): Eine Ebene darf nicht übersprungen werden (h2 → h4).
   const levels = [...ins.querySelectorAll('h1,h2,h3,h4,h5,h6')].filter(h => !h.closest('[hidden]') && !h.closest('details:not([open])')).map(h => ({ n: Number(h.tagName[1]), t: h.textContent.trim().slice(0, 30) }));
   const jumps = levels.flatMap((h, i) => i && h.n > levels[i - 1].n + 1 ? [`h${levels[i - 1].n} „${levels[i - 1].t}“ → h${h.n} „${h.t}“`] : []);
+  // Text in Bildern (IB36): Rahmen jedes SVG-Texts auf dem Bildschirm gegen den sichtbaren Bildausschnitt (seitlich
+  // abgeschnitten, oben oder unten ganz weg) und gegen die anderen Texte desselben Bildes (überlappt).
+  const pictureText = [];
+  for (const svg of ins.querySelectorAll('svg')) {
+    if (svg.ownerSVGElement || svg.closest('[hidden]') || svg.closest('details:not([open])') || !svg.getClientRects().length) continue;
+    const box = svg.getBoundingClientRect(), name = (svg.getAttribute('aria-label') || String(svg.className.baseVal || 'Bild')).slice(0, 40);
+    const texts = [...svg.querySelectorAll('text')].filter(t => {
+      const st = getComputedStyle(t);
+      return t.textContent.trim() && t.getClientRects().length && st.visibility !== 'hidden' && st.display !== 'none' && Number(st.opacity) > 0;
+    }).map(t => ({ t: t.textContent.trim().slice(0, 30), r: t.getBoundingClientRect() }));
+    for (const { t, r } of texts) {
+      if (r.left < box.left - 1 || r.right > box.right + 1) pictureText.push(`„${t}“ am Bildrand abgeschnitten (${name})`);
+      else if (r.bottom < box.top + 2 || r.top > box.bottom - 2) pictureText.push(`„${t}“ außerhalb des Bildes (${name})`);
+    }
+    for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) {
+      const a = texts[i].r, b = texts[j].r;
+      const x = Math.min(a.right, b.right) - Math.max(a.left, b.left), y = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (x > 2 && y > 3) pictureText.push(`„${texts[i].t}“ und „${texts[j].t}“ überlappen (${name})`);
+    }
+  }
+  // Beschriftungen, die über ihren Knopf hinauslaufen (IB38, etwa „zusammenzählen“ auf den Schrittknöpfen bei 360 bis 390 px).
+  const buttonText = [];
+  for (const b of ins.querySelectorAll('button')) {
+    if (b.closest('svg') || b.closest('[hidden]') || b.closest('details:not([open])') || !b.getClientRects().length) continue;
+    const box = b.getBoundingClientRect(), walk = document.createTreeWalker(b, NodeFilter.SHOW_TEXT);
+    let over = 0;
+    for (let node = walk.nextNode(); node; node = walk.nextNode()) {
+      if (!node.textContent.trim() || node.parentElement.closest('svg')) continue;
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      for (const r of range.getClientRects()) if (r.width > 0.5) over = Math.max(over, r.right - box.right, box.left - r.left);
+    }
+    if (over > 1) buttonText.push(`„${b.textContent.trim().replace(/\s+/g, ' ').slice(0, 40)}“ läuft ${Math.round(over)} px über den Knopf`);
+  }
   const doc = document.scrollingElement || document.documentElement;
-  return { jumps,
+  return { jumps, pictureText: [...new Set(pictureText)], buttonText: [...new Set(buttonText)],
     minFont: Number.isFinite(minFont) ? minFont : null, minAt,
     pageOverflow: doc.scrollWidth > window.innerWidth + 1,
     inspectorOverflow: ins.scrollWidth > ins.clientWidth + 1,
@@ -213,6 +248,8 @@ async function checkConcept(page, id, width, errors) {
     if (m.pageOverflow) problems.push(`${label}: Seite läuft seitlich über`);
     if (m.inspectorOverflow) problems.push(`${label}: Inspector läuft seitlich über`);
     if (m.jumps.length) problems.push(`${label}: Überschriftenebene übersprungen: ${m.jumps.slice(0, 2).join(' | ')}`);
+    if (m.pictureText.length) problems.push(`${label}: Text im Bild: ${m.pictureText.slice(0, 3).join(' | ')}`);
+    if (m.buttonText.length) problems.push(`${label}: Beschriftung zu lang: ${m.buttonText.slice(0, 3).join(' | ')}`);
     const nameless = await unnamed();
     if (nameless.length) problems.push(`${label}: Steuerelemente ohne Namen: ${[...new Set(nameless)].slice(0, 4).join(' | ')}`);
     if (process.env.SHOTS) await page.screenshot({ path: path.join(OUT, 'shots', `${id}-${width}-${result.panels.length}.png`) });
@@ -324,6 +361,8 @@ async function checkConcept(page, id, width, errors) {
           if (await picker.inputValue() !== current) await picker.selectOption(current);
         }
       }
+      // Ausprobieren mit der ersten Vorhersage. Passt die Änderung nicht zur gewählten Spalte (eine Auswertung ohne feste
+      // Spalten erbt die Spaltenwahl des vorigen Begriffs), lehnt der Reiter sie ab; dann bleiben die Daten, wie sie sind.
       const tryOnce = async () => {
         const q = panel.locator('.xw-question').first();
         if (!await q.count()) return false;
@@ -331,10 +370,14 @@ async function checkConcept(page, id, width, errors) {
         const tryIt = q.getByRole('button', { name: /^Ausprobieren/ });
         if (!await tryIt.count()) return false;
         await tryIt.click();
-        return true;
+        await page.waitForTimeout(150);
+        return /^Vorher/.test((await q.locator('.xw-answer .xw-note').last().textContent().catch(() => '')).trim());
       };
       if (await tryOnce()) {
-        const reset = panel.getByRole('button', { name: 'Ausgangsdaten wiederherstellen' });
+        // Genau ein Rücksetzknopf im Reiter (IB15): der im Hinweis über dem Ergebnis (.xw-status).
+        const all = await panel.getByRole('button', { name: 'Ausgangsdaten wiederherstellen' }).count();
+        if (all > 1) problems.push(`${all} Knöpfe „Ausgangsdaten wiederherstellen“ im Reiter „Mit 200 Befragten“`);
+        const reset = panel.locator('.xw-status').getByRole('button', { name: 'Ausgangsdaten wiederherstellen' }).first();
         if (await reset.count()) {
           await reset.click();
           await page.waitForTimeout(300);

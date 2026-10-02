@@ -40,17 +40,18 @@ function DragScatter({ d, W, L, T, plot, xTitle, yTitle, help, extra }: { d: Dra
   };
   const ticks = Array.from({ length: bounds.max - bounds.min + 1 }, (_, k) => bounds.min + k);
   const helpId = useId();
-  const H = B + 44;
+  // Achsenzahlen mit Abstand zu den Punkten: Ein Punkt am Rand (Radius bis 13 px) deckt sonst die Zahl darunter oder daneben zu (IB36).
+  const H = B + 54;
   return (
     <svg ref={svg} className="xw-svg xw-drag" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`Streudiagramm der fünf Beispielpersonen: ${xTitle} und ${yTitle}`} {...handlers}>
       <desc id={helpId}>{help} Pos1 und Ende setzen x an den Rand, Bild auf und Bild ab y.</desc>
       {ticks.map(t => <g key={`t${t}`}>
         <line className="xw-guide" x1={X(t)} x2={X(t)} y1={Y(bounds.max)} y2={Y(bounds.min)} />
         <line className="xw-guide" x1={X(bounds.min)} x2={X(bounds.max)} y1={Y(t)} y2={Y(t)} />
-        <text className="xw-t" x={X(t)} y={B + 16} textAnchor="middle">{t}</text>
-        <text className="xw-t" x={L - 10} y={Y(t) + 4} textAnchor="end">{t}</text>
+        <text className="xw-t" x={X(t)} y={B + 28} textAnchor="middle">{t}</text>
+        <text className="xw-t" x={L - 16} y={Y(t) + 4} textAnchor="end">{t}</text>
       </g>)}
-      <text className="xw-t" x={L + plot / 2} y={B + 36} textAnchor="middle">{xTitle} (x)</text>
+      <text className="xw-t" x={L + plot / 2} y={B + 47} textAnchor="middle">{xTitle} (x)</text>
       <text className="xw-t" x={12} y={T + plot / 2} textAnchor="middle" transform={`rotate(-90 12 ${T + plot / 2})`}>{yTitle} (y)</text>
       {extra?.(g)}
       {data.x.map((x, i) => (
@@ -71,7 +72,7 @@ function RankPicture({ d, s, step }: { d: Drag; s: RankStats; step: number }) {
   const n = s.n, rb: Bounds = { min: 1, max: n }, g = grid(L, 30, plot, rb), { X, Y, B } = g;
   const mid = s.mid, who = d.who;
   const scale = Math.max(1, s.pos, -s.neg), barMax = Math.max(60, W - 190), bar = (v: number) => Math.abs(v) / scale * barMax;
-  const below = B + 50, H = below + (step >= 4 ? 96 : 0);
+  const below = B + 62, H = below + (step >= 4 ? 96 : 0);
   return (
     <div ref={box}>
       <DragScatter d={d} W={W} L={L} T={T} plot={plot} xTitle="Lernstunden" yTitle="Gelöste Aufgaben"
@@ -82,10 +83,10 @@ function RankPicture({ d, s, step }: { d: Drag; s: RankStats; step: number }) {
         {Array.from({ length: n }, (_, k) => k + 1).map(t => <g key={`r${t}`}>
           <line className="xw-guide" x1={X(t)} x2={X(t)} y1={Y(n)} y2={Y(1)} />
           <line className="xw-guide" x1={X(1)} x2={X(n)} y1={Y(t)} y2={Y(t)} />
-          <text className="xw-t" x={X(t)} y={B + 16} textAnchor="middle">{t}</text>
-          <text className="xw-t" x={L - 10} y={Y(t) + 4} textAnchor="end">{t}</text>
+          <text className="xw-t" x={X(t)} y={B + 28} textAnchor="middle">{t}</text>
+          <text className="xw-t" x={L - 16} y={Y(t) + 4} textAnchor="end">{t}</text>
         </g>)}
-        <text className="xw-t" x={L + plot / 2} y={B + 36} textAnchor="middle">Rang Stunden R(x)</text>
+        <text className="xw-t" x={L + plot / 2} y={B + 47} textAnchor="middle">Rang Stunden R(x)</text>
         <text className="xw-t" x={12} y={30 + plot / 2} textAnchor="middle" transform={`rotate(-90 12 ${30 + plot / 2})`}>Rang Aufgaben R(y)</text>
         {step >= 3 && s.rx.map((rx, i) => Math.abs(s.prod[i]) > 1e-9 && (
           <rect key={`q${i}`} className={`${s.prod[i] > 0 ? 'xw-rect-pos' : 'xw-rect-neg'}${i === who ? ' sel' : ''}`}

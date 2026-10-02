@@ -67,8 +67,9 @@ function DotPlot({ values, names, who, pic, col, onWho }: { values: number[]; na
 /** Streudiagramm der 200 Wertepaare mit Achsenkreuz aus x̄ und ȳ, Plus- und Minusflächen und dem Rechteck der gewählten Person. */
 function Scatter({ values, values2, names, who, pic, col, col2, onWho }: { values: number[]; values2: number[]; names: readonly string[]; who: number; pic: BridgePicture; col: SampleColumn; col2: SampleColumn; onWho: (i: number) => void }) {
   const [box, W] = useWidth();
-  const left = 50, right = W - 16, top = 22, plotH = Math.min(300, Math.max(220, (right - left) * 0.7)), bottom = top + plotH, H = bottom + 46;
-  const [x0, x1] = pad(Math.min(...values), Math.max(...values)), [y0, y1] = pad(Math.min(...values2), Math.max(...values2));
+  const [x0, x1] = pad(Math.min(...values), Math.max(...values)), [y0, y1] = pad(Math.min(...values2), Math.max(...values2)), yTicks = niceTicks(y0, y1, 5);
+  // Platz links nach der breitesten Zahl der y-Achse (rund 8 px je Zeichen), damit der gedrehte Achsentitel sie nicht überdeckt (IB36).
+  const left = Math.max(50, 32 + 8 * Math.max(...yTicks.map(v => num(v).length))), right = W - 16, top = 22, plotH = Math.min(300, Math.max(220, (right - left) * 0.7)), bottom = top + plotH, H = bottom + 46;
   const X = linear([x0, x1], [left, right]), Y = linear([y0, y1], [bottom, top]);
   const center = Array.isArray(pic.center) ? pic.center : undefined;
   // Gleiche Antworten leicht versetzt, damit Stapel sichtbar bleiben (gerechnet wird mit den echten Werten).
@@ -99,7 +100,7 @@ function Scatter({ values, values2, names, who, pic, col, col2, onWho }: { value
         <circle className="xw-s-dot sel" cx={me.x} cy={me.y} r={5.5} />
         <text className="xw-t xw-strong xw-halo" x={Math.min(right - 20, Math.max(left + 20, me.x))} y={me.y - 10} textAnchor="middle">{names[who]}</text>
         <Axis scale={X} ticks={niceTicks(x0, x1)} at={bottom} from={left} to={right} format={v => num(v)} labelGap={16} />
-        <Axis scale={Y} ticks={niceTicks(y0, y1, 5)} at={left} from={top} to={bottom} orient="left" format={v => num(v)} />
+        <Axis scale={Y} ticks={yTicks} at={left} from={top} to={bottom} orient="left" format={v => num(v)} />
         <text className="xw-t" x={(left + right) / 2} y={bottom + 38} textAnchor="middle">{unitTitle(col)} (x)</text>
         <text className="xw-t" x={12} y={(top + bottom) / 2} textAnchor="middle" transform={`rotate(-90 12 ${(top + bottom) / 2})`}>{col2.title} (y)</text>
       </svg>
