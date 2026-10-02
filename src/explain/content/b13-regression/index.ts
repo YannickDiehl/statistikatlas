@@ -4,16 +4,22 @@
 import type { AreaIndex } from '../../types';
 import { gerade } from './gerade';
 import { linearRegressionTabs, predictionTabs, residualsTabs } from './gerade-tabs';
+import { erklaerteVarianz, erklaerteVarianzTabs } from './explained-variance';
+import { interaktion, interaktionTabs } from './interaction';
 
 export const b13Regression: AreaIndex = {
   explanations: {
     linear_regression: { kind: 'werkstatt', workshop: gerade, variant: 'linear_regression' },
     prediction: { kind: 'werkstatt', workshop: gerade, variant: 'prediction' },
     residuals: { kind: 'werkstatt', workshop: gerade, variant: 'residuals' },
+    explained_variance: { kind: 'satz', template: erklaerteVarianz },
+    interaction: { kind: 'begriff', card: interaktion },
   },
   tabs: {
     linear_regression: linearRegressionTabs,
     prediction: predictionTabs,
     residuals: residualsTabs,
+    explained_variance: erklaerteVarianzTabs,
+    interaction: interaktionTabs,
   },
 };

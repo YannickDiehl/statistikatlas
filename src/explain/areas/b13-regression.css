@@ -10,3 +10,4 @@
 .b13-mark{fill:var(--wash);stroke:var(--green);stroke-width:2.5}
 .b13-train{fill:none;stroke:var(--green);stroke-width:2.2}
 .b13-test{fill:none;stroke:var(--xw-neg);stroke-width:2.2;stroke-dasharray:6 4}
+.b13-open{fill:none;stroke:var(--green);stroke-width:1.4}

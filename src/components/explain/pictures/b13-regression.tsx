@@ -4,7 +4,9 @@
 import type { KeyboardEvent } from 'react';
 import { num, signed } from '../../../explain/format';
 import type { Fit, Pairs } from '../../../explain/content/b13-regression/fit';
-import { clamp, DragPoint, forWorkshop, useDrag, useWidth, type Bounds, type Picture } from './kit';
+import { IA } from '../../../explain/content/b13-regression/interaction';
+import { baseSurvey, sampleColumn } from '../../../explain/sample';
+import { Axis, clamp, DragPoint, forCard, forSentence, forWorkshop, linear, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /**
  * Streudiagramm der fünf Personen mit der Regressionsgeraden: Mitten (Schritt 1), Gerade mit Steigungsdreieck (2),
@@ -100,6 +102,62 @@ function Gerade({ data, s, step, who, names, bounds, onChange, onWho }: {
   );
 }
 
+/** Zwei Balken: Quadratsumme ohne Gerade (SST) und mit Gerade (SSE); was wegfällt, ist der Anteil R². */
+function R2Bars({ sse, sst }: { sse: number; sst: number }) {
+  const [box, W] = useWidth();
+  const L = 16, R = W - 16, max = Math.max(sse, sst, 1), X = (v: number) => L + v / max * (R - L);
+  const r2 = 1 - sse / sst, gone = sst - sse;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={150} viewBox={`0 0 ${W} 150`} role="img"
+        aria-label={`Quadratsumme ohne Gerade ${num(sst)}, mit Gerade ${num(sse)}; R² ≈ ${num(r2)}`}>
+        <text className="xw-t" x={L} y={18}>Ohne Gerade, um den Mittelwert: SST = {num(sst)}</text>
+        <rect className="xw-bar-plain" x={L} y={26} width={Math.max(2, X(sst) - L)} height={24} />
+        <text className="xw-t" x={L} y={78}>Mit Gerade, Residuen: SSE = {num(sse)}</text>
+        <rect className="xw-bar-neg" x={L} y={86} width={Math.max(2, X(sse) - L)} height={24} />
+        {gone > 1e-9 && <rect className="xw-max" x={X(sse)} y={86} width={X(sst) - X(sse)} height={24} />}
+        <text className="xw-t xw-strong" x={L} y={136}>{r2 >= 0 ? `Weggefallen: ${num(r2 * 100, 0)} % von SST, also R² ≈ ${num(r2)}` : `SSE ist größer als SST: R² ≈ ${num(r2)}`}</text>
+      </svg>
+    </div>
+  );
+}
+
+/** Lernzeit, Wissenstest und eine dritte Spalte der 200 Befragten (Ausgangsdaten). */
+const base = (col: string) => sampleColumn(baseSurvey(), col);
+
+/**
+ * Interaktion: die 200 Befragten (gefüllt ohne, offen mit Weiterbildung) und zwei Geraden. Ohne Weiterbildung gilt
+ * die Steigung b₁ aus R, mit Weiterbildung b₁ + b₃; b₃ kommt vom Regler.
+ */
+function InteractionLines({ b3 }: { b3: number }) {
+  const [box, W] = useWidth();
+  const L = 46, T = 14, R = W - 16, B = T + 230, H = B + 100;
+  const X = linear([0, 20], [L, R]), Y = linear([0, 20], [B, T]);
+  const x = base('lernzeit'), y = base('wissenstest'), g = base('weiterbildung');
+  const ohne = (v: number) => IA.b0 + IA.b1 * v, mit = (v: number) => IA.b0 + IA.b2 + (IA.b1 + b3) * v;
+  const clip = (v: number) => Math.max(0, Math.min(20, v));
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Streudiagramm der 200 Befragten mit zwei Geraden: ohne Weiterbildung Steigung ${num(IA.b1)}, mit Weiterbildung ${num(IA.b1 + b3)} Aufgaben je Stunde`}>
+        {x.map((v, i) => g[i] === 1
+          ? <circle key={i} className="b13-open" cx={X(v)} cy={Y(y[i])} r={3} />
+          : <circle key={i} className="b13-dot" cx={X(v)} cy={Y(y[i])} r={2.6} />)}
+        <line className="b13-line" x1={X(0)} x2={X(20)} y1={Y(clip(ohne(0)))} y2={Y(clip(ohne(20)))} />
+        <line className="b13-line b13-alt" x1={X(0)} x2={X(20)} y1={Y(clip(mit(0)))} y2={Y(clip(mit(20)))} />
+        <Axis scale={X} ticks={[0, 5, 10, 15, 20]} at={B} from={L} to={R} labelGap={20} title="Lernzeit in Stunden" />
+        <Axis scale={Y} ticks={[0, 5, 10, 15, 20]} at={L} from={B} to={T} orient="left" title="Gelöste Aufgaben" />
+        <line className="b13-line" x1={L - 30} x2={L - 6} y1={B + 66} y2={B + 66} /><circle className="b13-dot" cx={L - 18} cy={B + 66} r={2.6} />
+        <text className="xw-t" x={L} y={B + 71}>ohne Weiterbildung: {num(IA.b1)} je Stunde</text>
+        <line className="b13-line b13-alt" x1={L - 30} x2={L - 6} y1={B + 88} y2={B + 88} /><circle className="b13-open" cx={L - 18} cy={B + 88} r={3} />
+        <text className="xw-t" x={L} y={B + 93}>mit Weiterbildung: {num(IA.b1 + b3)} je Stunde</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b13-interaktion': forCard(p => <InteractionLines b3={p.value ?? IA.b3} />),
+  'b13-r2': forSentence(p => <R2Bars sse={p.values.sse} sst={p.values.sst} />),
   'b13-gerade': forWorkshop(p => <Gerade data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
 };

@@ -6,6 +6,8 @@ import { close } from '../../format';
 import { txt } from '../../types';
 import { fitLine, ols } from './fit';
 import { gerade, bridgeGerade, BEISPIEL, AUSREISSER } from './gerade';
+import { erklaerteVarianz, erklaerteVarianzTabs, QS } from './explained-variance';
+import { IA, interaktion, interactionFor, interaktionTabs } from './interaction';
 
 /*
  * Referenzwerte des Bereichs B13 „Regression“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -45,6 +47,18 @@ import { gerade, bridgeGerade, BEISPIEL, AUSREISSER } from './gerade';
  *   # B: (Intercept) 5.822, lernzeit 0.518, alter 0.006; Residual 1368.215, Total 1931.875; Std. Error 2.635
  *   coef(lm(y ~ x + as.numeric(atlas$alter)))        # 5.822370021838  0.517959761657  0.006112726002
  *   fitted(...)[1]                                   # P001 (6 h, 41 Jahre): 9.180750358
+ *
+ * Erklärter Varianzanteil:
+ *   summary(m)$r.squared; cor(x, y)                  # 0.2907031  0.5391689
+ *   summary(lm(y ~ x + alter))$r.squared             # 0.2917683 (Adjusted 0.2845781; R druckt 0.292 und 0.285)
+ *   1931.875 - 1370.273                              # 561.602 = SSR
+ *   sapply(1:200, function(k) { xx <- x; xx[k] <- 40; cor(xx, y)^2 - cor(x, y)^2 })   # −0.2099 bis −0.0047: sinkt immer
+ *
+ * Interaktion (Katalog linear_regression, Variante 1):
+ *   w <- as.numeric(atlas$weiterbildung); mi <- lm(y ~ x * w)
+ *   coef(mi)        # 6.46656417701  0.48240625911  -0.88941068393  0.08977126592
+ *   # Steigung mit Weiterbildung 0.5721775, Achsenabschnitt 5.577153; p(b3) = 0.4469257; sum(w) = 82; w[1] = 1
+ *   coef(lm(y ~ x:w))  # nur das Produkt: B 0.106, p .038 (Token-Karte zu *)
  */
 
 const rows = createSurvey();
@@ -119,4 +133,35 @@ test('B13 Gerade: Leitaufruf mit Lernzeit und Alter wie in R', () => {
   assert.ok(close(m.sse, 1368.215, 1e-3) && close(Math.sqrt(m.sse / 197), 2.635385, 1e-6), 'SSE und Standardfehler der Schätzung');
   assert.ok(close(m.yhat[0], 9.180750358, 1e-8), 'Vorhersage P001');
   assert.deepEqual([X[0], A[0], Y[0]], [6, 41, 12], 'P001: 6 Stunden, 41 Jahre, 12 Aufgaben');
+});
+
+test('B13 R²: Quadratsummen und Anteile wie in R', () => {
+  const s = fitLine({ x: X, y: Y });
+  assert.ok(close(s.r2!, 0.2907031, 1e-7), `R² ${s.r2}`);
+  assert.deepEqual([QS.sst, QS.sse], [1931.875, 1370.273], 'Quadratsummen der Lernzeit-Geraden');
+  assert.ok(close(s.sst, QS.sst, 1e-3) && close(s.sse, QS.sse, 1e-3), 'aus den Daten');
+  assert.ok(close(ols([X, A], Y)!.sse, QS.sse2, 1e-3), 'SSE mit Lernzeit und Alter');
+  assert.ok(close(ols([X, A], Y)!.r2, 0.2917683, 1e-7), 'R² mit Alter');
+  assert.ok(close(ols([X, A], Y)!.r2 - s.r2!, 0.0010652, 1e-6), 'R² wächst um gut 0,001');
+  assert.ok(close(QS.sst - QS.sse, 561.602, 1e-6), 'SSR');
+  const st = erklaerteVarianz.compute(erklaerteVarianz.initial);
+  assert.match(erklaerteVarianz.interpret(st).kurz, /^Die Gerade erfasst 29 % der Streuung\. 71 % bleiben/);
+  assert.match(erklaerteVarianz.interpret(st).fachlich, /r ≈ 0,54, und 0,54 · 0,54 ≈ 0,29/);
+  const sample = erklaerteVarianzTabs.sample!;
+  if (sample.kind === 'analysis') assert.match(sample.result({ rows, columns: { x: ['lernzeit'], y: ['wissenstest'] } }).fachlich, /R² = 1 − 1\.370,27 \/ 1\.931,88 ≈ 0,29\. Das ist das Quadrat der Pearson-Korrelation r ≈ 0,54/);
+});
+
+test('B13 Interaktion: Modell mit Produkt wie in R', () => {
+  const m = interactionFor({ rows, columns: {} })!;
+  [IA.b0, IA.b1, IA.b2, IA.b3].forEach((b, k) => assert.ok(close(m.b[k], b, 1e-9), `b${k}: ${m.b[k]} statt ${b}`));
+  assert.deepEqual([m.n1, m.n0], [82, 118], 'Gruppengrößen');
+  assert.ok(close(IA.b1 + IA.b3, 0.5721775, 1e-7) && close(IA.b0 + IA.b2, 5.577153, 1e-6), 'Gerade mit Weiterbildung');
+  assert.deepEqual([X[0], sampleColumn(rows, 'weiterbildung')[0]], [6, 1], 'P001: 6 Stunden, Weiterbildung');
+  assert.match(interaktion.stellDirVor.text, /um 0,48 Aufgaben je Stunde, mit Weiterbildung um 0,48 \+ 0,09 = 0,57/);
+  // Regler: 0,48 + v rundet für jeden Schritt wie die Summe der angezeigten Zahlen.
+  for (let v = -0.5; v <= 0.5 + 1e-9; v += 0.01) assert.equal(Math.round((IA.b1 + v) * 100), Math.round(IA.b1 * 100) + Math.round(v * 100), `Regler ${v}`);
+  const doubled = interactionFor({ rows: applyOp(rows, 'lernzeit', 'double'), columns: {} })!;
+  assert.ok(close(doubled.b[3], IA.b3 / 2, 1e-9), 'verdoppelte Lernzeit halbiert b₃');
+  const sample = interaktionTabs.sample!;
+  if (sample.kind === 'analysis') assert.match(sample.result({ rows, columns: { x: ['lernzeit'], y: ['wissenstest'], group: ['weiterbildung'] } }).kurz, /je Stunde 0,48 Aufgaben mehr voraus, mit Weiterbildung 0,57 Aufgaben mehr\. Der Unterschied b₃ beträgt 0,09/);
 });
