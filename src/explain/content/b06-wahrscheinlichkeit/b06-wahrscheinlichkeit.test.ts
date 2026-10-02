@@ -12,6 +12,7 @@ import { randomVariable, randomVariableTabs } from './random_variable';
 import { empiricalDistribution, empiricalDistributionTabs } from './empirical_distribution';
 import { theoreticalDistribution, theoreticalDistributionTabs } from './theoretical_distribution';
 import { discreteContinuous, discreteContinuousTabs } from './discrete_continuous';
+import { probabilityMass, probabilityMassTabs, massUpTo } from './probability_mass';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -195,4 +196,23 @@ test('B6 discrete_continuous: Haushaltsgröße und Schlafdauer wie in R', () => 
   const r = tab.result(ctxFor(tab));
   assert.equal(r.kurz, 'Die Haushaltsgröße hat bei 200 Befragten 5 verschiedene Werte, von 1 bis 5. Die Schlafdauer hat 38 verschiedene Werte, weil sie auf 0,1 Stunden gerundet ist; ungerundet wären fast alle verschieden.');
   assert.equal(tab.value!(ctxFor(tab)), 38);
+});
+
+/*
+ *   prop.table(table(h)); cumsum(prop.table(table(h)))   # 0.235 0.19 0.175 0.215 0.185; kumuliert 0.235 0.425 0.6 0.815 1
+ *   mean(h >= 4)                                         # 0.4
+ */
+test('B6 probability_mass: Haushaltsgröße p(1) bis p(5) wie in R', () => {
+  const card = probabilityMass;
+  assert.deepEqual(card.stellDirVor.figures!.map(f => f.value), ['23,5 %', '19 %', '17,5 %', '21,5 %', '18,5 %']);
+  assert.equal(card.bausteine[1].rechnung, 'p(4) = P(X = 4) = 43 / 200 = 21,5 %');
+  assert.equal(card.bausteine[2].rechnung, 'P(X ≥ 4) = p(4) + p(5) = 21,5 % + 18,5 % = 40 %');
+  assert.deepEqual(card.check.options, ['18,5 %', '20 %', '81,5 %', '100 %']);
+  assert.equal(card.regler!.describe(2), 'p(2) = 19 %: So wahrscheinlich ziehst du jemanden aus einem Haushalt mit 2 Personen. Mit allen kleineren Werten zusammen: P(X ≤ 2) = 42,5 %.');
+  assert.ok(close(massUpTo(5), 1, 1e-12), 'alle Balken zusammen 1');
+  const tab = probabilityMassTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, 'Am wahrscheinlichsten zieht man jemanden aus einem Haushalt mit einer Person: 23,5 %. Alle 5 Balken zusammen ergeben 100 %.');
+  assert.ok(close(tab.value!(ctxFor(tab))!, 0.235, 1e-12));
 });

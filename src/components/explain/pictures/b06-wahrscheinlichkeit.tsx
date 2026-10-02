@@ -2,9 +2,10 @@
 // `forWorkshop`/`forCard`/`forSentence`/`forTable` aus ./kit.tsx.
 // Eigene Stile in src/explain/areas/b06-wahrscheinlichkeit.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { useMemo } from 'react';
-import { num } from '../../../explain/format';
+import { num, pct } from '../../../explain/format';
 import { baseSurvey, sampleColumn } from '../../../explain/sample';
-import { SCHLAF, dnorm, sleepMu } from '../../../explain/content/b06-wahrscheinlichkeit/gemeinsam';
+import { HAUSHALT, SCHLAF, dnorm, sleepMu } from '../../../explain/content/b06-wahrscheinlichkeit/gemeinsam';
+import { massOf, massUpTo } from '../../../explain/content/b06-wahrscheinlichkeit/probability_mass';
 import { Axis, Bar, Curve, forCard, linear, useWidth, type Picture } from './kit';
 
 /** Schlafdauer der 200 Befragten in Klassen von einer halben Stunde, als Dichte (Anteil je Stunde). */
@@ -39,6 +40,28 @@ function Modell({ mu }: { mu: number }) {
   );
 }
 
+/** Wahrscheinlichkeitsmasse der Haushaltsgröße: ein Balken je Wert, die Balken bis k grün hervorgehoben. */
+function Masse({ k }: { k: number }) {
+  const [box, W] = useWidth();
+  const base = 186, top = 44, left = 44, right = W - 16;
+  const x = linear([0.4, 5.6], [left, right]), y = linear([0, 0.3], [base, top]), half = Math.min(28, (right - left) / 5 / 2 - 6);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={244} viewBox={`0 0 ${W} 244`} role="img"
+        aria-label={`Wahrscheinlichkeitsmasse der Haushaltsgröße: ${HAUSHALT.values.map(v => `p(${v}) = ${pct(massOf(v))}`).join(', ')}. Hervorgehoben sind die Werte bis ${k}, zusammen ${pct(massUpTo(k))}.`}>
+        {HAUSHALT.values.map(v => <g key={v}>
+          <Bar x={x(v) - half} y={y(massOf(v))} width={2 * half} height={base - y(massOf(v))} tone={v <= k ? 'pos' : 'plain'} selected={v === k} />
+          <text className="xw-t" x={x(v)} y={y(massOf(v)) - 6} textAnchor="middle">{num(massOf(v) * 100, 1)}</text>
+        </g>)}
+        <Axis scale={x} ticks={[...HAUSHALT.values]} at={base} from={left} to={right} labelGap={22} title="Personen im Haushalt" />
+        <text className="xw-t" x={left} y={16}>Balkenhöhe: Wahrscheinlichkeit in %</text>
+        <text className="xw-t xw-strong" x={left} y={34}>P(X ≤ {k}) = {pct(massUpTo(k))}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b06-masse': forCard(p => <Masse k={p.value ?? 2} />),
   'b06-modell': forCard(p => <Modell mu={sleepMu(p.value ?? SCHLAF.mean)} />),
 };
