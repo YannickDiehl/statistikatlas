@@ -5,6 +5,7 @@ import { sampling, samplingTabs } from './sampling';
 import { populationParameter, populationParameterTabs } from './population-parameter';
 import { estimator, estimatorTabs } from './estimator';
 import { samplingDistribution, samplingDistributionTabs } from './sampling-distribution';
+import { lawLargeNumbers, lawLargeNumbersTabs } from './law-large-numbers';
 
 export const b08Schaetzen: AreaIndex = {
   explanations: {
@@ -12,11 +13,13 @@ export const b08Schaetzen: AreaIndex = {
     population_parameter: { kind: 'begriff', card: populationParameter },
     estimator: { kind: 'begriff', card: estimator },
     sampling_distribution: { kind: 'begriff', card: samplingDistribution },
+    law_large_numbers: { kind: 'begriff', card: lawLargeNumbers },
   },
   tabs: {
     sampling: samplingTabs,
     population_parameter: populationParameterTabs,
     estimator: estimatorTabs,
     sampling_distribution: samplingDistributionTabs,
+    law_large_numbers: lawLargeNumbersTabs,
   },
 };

@@ -11,6 +11,7 @@ import { parameter, populationParameter, populationParameterTabs } from './popul
 import { LERNZEIT, estimator, estimatorTabs, schaetzungen } from './estimator';
 import { ANTEIL_N, WEITERBILDUNG, anteilText, mittelwerte, samplingDistribution, samplingDistributionTabs, seAnteil } from './sampling-distribution';
 import { binomial, middle95 } from './daten';
+import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft } from './law-large-numbers';
 
 /*
  * Referenzwerte des Bereichs B8, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand).
@@ -37,6 +38,11 @@ import { binomial, middle95 } from './daten';
  *   #  50  6.956 0.28 0.54 0.95703    100  4.918 0.31 0.51 0.96778    200  3.478 0.34 0.48 0.96318
  *   # 500  2.200 0.368 0.454 0.95446  1000 1.555 0.380 0.441 0.95371
  *   1.96 * sqrt(0.25 / 1000)                                  # 0.03099 (plus minus 3 Prozentpunkte)
+ *   # mehr als 5 Prozentpunkte neben 41 % (ganzzahlig verglichen: |200 k − 82 n| · 20 > 200 n):
+ *   for (n in c(10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000)) { k <- 0:n
+ *     print(sum(dbinom(k, n, 0.41)[abs(200 * k - 82 * n) * 20 > 200 * n])) }
+ *   # 0.7496966 0.6552191 0.3885462 0.2633219 0.1309173 0.02031882 0.001156979 4.838542e-06 5.8997e-13 2.78257e-24
+ *   # umgepolt (π = 0,59) bei n = 100: 0.2633219; alle mit Weiterbildung (π = 1): 0
  *
  * ALLBUS 2023 (ZA8831_v1-3-0.sav, nur lesen, Pfad in ALLBUS_SAV), nur Aggregate:
  *   d <- haven::read_sav(Sys.getenv("ALLBUS_SAV"))
@@ -139,6 +145,27 @@ test('B8 sampling_distribution: exakte Binomialverteilung der Anteile und SE der
   if (s.kind === 'analysis') {
     assert.match(s.result(ctx()).kurz, /schwanken um 7,75 Stunden, den Mittelwert aller 200\. Typischerweise liegen sie etwa 0,65 Stunden daneben/);
     assert.match(s.result(ctx()).fachlich, /σ \/ √25 = 3,23 \/ 5 ≈ 0,65 h/);
+  }
+});
+
+test('B8 law_large_numbers: exakte Wahrscheinlichkeiten, mehr als 5 Prozentpunkte danebenzuliegen, wie in R', () => {
+  const R = [0.7496965755, 0.6552190711, 0.3885461937, 0.2633218877, 0.1309172641, 0.02031882353, 0.001156979431, 4.838542493e-06, 5.8996955e-13, 2.78256602e-24];
+  GESETZ_N.forEach((n, i) => assert.ok(Math.abs(daneben(n) - R[i]) <= 1e-9 * Math.max(R[i], 1e-15) + 1e-15, `n = ${n}: ${daneben(n)} ≠ R ${R[i]}`));
+  assert.equal(wieOft(daneben(10)), 'in etwa 75 von 100 Stichproben');
+  assert.equal(wieOft(daneben(1000)), 'in etwa 1 von 1.000 Stichproben');
+  assert.equal(wieOft(daneben(2000)), 'in weniger als 1 von 100.000 Stichproben');
+  assert.equal(wieOft(0), 'in keiner Stichprobe');
+  assert.match(lawLargeNumbers.stellDirVor.text, /Bei 10 Gezogenen liegt der Anteil in etwa 75 von 100 Stichproben mehr als 5 Prozentpunkte neben 41 %\. Bei 100 Gezogenen nur noch in etwa 26 von 100 Stichproben, bei 1\.000 Gezogenen in etwa 1 von 1\.000 Stichproben\./);
+  assert.equal(lawLargeNumbers.bausteine[1].rechnung, 'Mehr als 5 Prozentpunkte daneben: bei 10 Gezogenen 75 %, bei 100 Gezogenen 26,3 %, bei 1.000 Gezogenen 0,12 %.');
+  const wctx = (data = rows) => ({ rows: data, columns: { x: ['weiterbildung'] } });
+  const g = gesetz(wctx());
+  assert.equal(g.ones, 82); assert.ok(close(g.p, 0.2633218877, 1e-9));
+  assert.ok(close(gesetz(wctx(applyOp(rows, 'weiterbildung', 'reverse'))).p, 0.2633218877, 1e-9), 'umgepolt gleich');
+  assert.equal(gesetz(wctx(applyOp(rows, 'weiterbildung', 'constant', 1))).p, 0, 'alle Ja: nie daneben');
+  const s = lawLargeNumbersTabs.sample!;
+  if (s.kind === 'analysis') {
+    assert.match(s.result(wctx()).kurz, /82 von 200 .* also 41 %\. Bei 100 Gezogenen liegt der Anteil in etwa 26 von 100 Stichproben mehr als 5 Prozentpunkte daneben\./);
+    assert.match(s.result(wctx()).fachlich, /: 0,263, exakt .* n = 1\.000: 0,0012\./);
   }
 });
 
