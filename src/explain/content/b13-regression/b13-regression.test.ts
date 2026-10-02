@@ -13,6 +13,7 @@ import { likelihoodKarte, llWb } from './likelihood';
 import { BESTANDEN, WB_MODELL, pBestanden, wbModel } from './logistisch-kit';
 import { logistic } from './fit';
 import { logistischeRegression, logistischeRegressionTabs } from './logistic-regression';
+import { marginaleEffekte, marginaleEffekteTabs } from './marginal-effects';
 
 /*
  * Referenzwerte des Bereichs B13 „Regression“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -242,4 +243,17 @@ test('B13 Logistische Regression: S-Kurve und Katalogmodell wie in R', () => {
     assert.match(r.fachlich, /0,01 − 0,006 · Lernzeit − 0,007 · Alter\. Die Odds Ratio der Lernzeit ist e\^b₁ ≈ 0,994/);
     assert.match(r.zusatz!, /von 0,35 bis 0,46/);
   }
+});
+
+test('B13 Marginale Effekte: Formel, Beispiel und AME wie in R', () => {
+  const s = marginaleEffekte.compute(marginaleEffekte.initial);
+  assert.ok(close(s.me, 0.076296, 1e-6), `ME ${s.me}`);
+  assert.match(marginaleEffekte.interpret(s).kurz, /um etwa 7,6 Prozentpunkte\. In der Mitte, bei p = 0,5, wären es 8,5 Prozentpunkte/);
+  assert.ok(close(pBestanden(8), 0.66, 0.005) && close(BESTANDEN.b1, 0.34, 0.005), 'Startwerte gerundet aus R');
+  assert.match(marginaleEffekte.genau.paragraphs[0], /je Stunde im Schnitt 6,5 Prozentpunkte/);
+  assert.match(marginaleEffekte.genau.paragraphs[1], /b ≈ 0,336 sind das 8,4 Prozentpunkte/);
+  const pass = Y.map(v => v >= 10 ? 1 : 0), m = logistic([X], pass)!;
+  assert.ok(close(m.p.reduce((a, p) => a + m.b[1] * p * (1 - p), 0) / 200, BESTANDEN.ame, 1e-7), 'AME bestanden wie R');
+  const t = marginaleEffekteTabs.sample!;
+  if (t.kind === 'analysis') assert.match(t.result({ rows, columns: { x: ['lernzeit'], y: ['weiterbildung'] } }).kurz, /im Schnitt um −0,14 Prozentpunkte, bei gleichem Alter\. Das ist so gut wie nichts/);
 });

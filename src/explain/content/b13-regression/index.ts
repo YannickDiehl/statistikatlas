@@ -9,6 +9,7 @@ import { interaktion, interaktionTabs } from './interaction';
 import { logitSatz, logitTabs } from './logit';
 import { likelihoodKarte, likelihoodTabs } from './likelihood';
 import { logistischeRegression, logistischeRegressionTabs } from './logistic-regression';
+import { marginaleEffekte, marginaleEffekteTabs } from './marginal-effects';
 
 export const b13Regression: AreaIndex = {
   explanations: {
@@ -20,6 +21,7 @@ export const b13Regression: AreaIndex = {
     logit: { kind: 'satz', template: logitSatz },
     likelihood: { kind: 'begriff', card: likelihoodKarte },
     logistic_regression: { kind: 'begriff', card: logistischeRegression },
+    marginal_effects: { kind: 'satz', template: marginaleEffekte },
   },
   tabs: {
     linear_regression: linearRegressionTabs,
@@ -30,5 +32,6 @@ export const b13Regression: AreaIndex = {
     logit: logitTabs,
     likelihood: likelihoodTabs,
     logistic_regression: logistischeRegressionTabs,
+    marginal_effects: marginaleEffekteTabs,
   },
 };
