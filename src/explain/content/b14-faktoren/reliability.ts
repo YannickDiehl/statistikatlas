@@ -3,7 +3,7 @@
 // Alle Zahlen in R nachgerechnet, siehe b14-faktoren.test.ts.
 import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
 import { close, fixed, num, paren } from '../../format';
-import { cronbach, itemColumns, SPALTEN } from './rechnen';
+import { cronbach, FRAGE, itemColumns, SPALTEN, variance } from './rechnen';
 
 /** Fünf Personen (Zeilen) mal drei Fragen (Spalten), Antworten von 1 bis 7. */
 export type Antworten = number[][];
@@ -67,7 +67,7 @@ const SUB = ['₁', '₂', '₃'];
  * Acceptable ab 0.70, Questionable ab 0.60, sonst Poor) auf dem ungerundeten Wert: 0.898 ist „gut“ wie R „Good“.
  */
 export function fit(alpha: number): string {
-  return alpha >= 0.9 ? 'sehr gut' : alpha >= 0.8 ? 'gut' : alpha >= 0.7 ? 'ausreichend' : alpha >= 0.6 ? 'nur fraglich' : 'schlecht';
+  return alpha >= 0.9 ? 'sehr gut' : alpha >= 0.8 ? 'gut' : alpha >= 0.7 ? 'ausreichend' : alpha >= 0.6 ? 'nur bedingt' : 'schlecht';
 }
 
 /** Alpha mit zwei Stellen; liegt es knapp unter einer Grenze, die das Runden erreichen würde: „knapp 0,9“ statt „0,90“. */
@@ -230,7 +230,7 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
     {
       question: 'In der Gruppe „Passen zusammen“ kreuzen alle bei Frage 2 dasselbe an, zum Beispiel 4. Was macht Alpha?',
       options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 2, step: 4,
-      explain: 'Frage 2 unterscheidet dann niemanden mehr, ihre Varianz ist 0. Sie trägt nichts zur Streuung der Summenwerte bei, zählt aber weiter als eine von drei Fragen. Hier sinkt Alpha von 0,96 auf 0,73. Meist ist das so; nur wenn Frage 2 vorher gegen die anderen lief, kann Alpha steigen.',
+      explain: 'Frage 2 unterscheidet dann niemanden mehr, ihre Varianz ist 0. Sie trägt nichts zur Streuung der Summenwerte bei, zählt aber weiter als eine von drei Fragen. Hier sinkt Alpha von 0,96 auf 0,73. Meist ist das so. Hing Frage 2 vorher kaum mit den anderen zusammen oder lief sie gegen sie, kann Alpha auch steigen. R würde eine Frage ohne Streuung übrigens ganz weglassen; die Formel hier zählt sie mit.',
       kurz: 'Eine Frage, auf die alle gleich antworten, misst nichts.',
       tryIt: { label: 'Passen zusammen, Frage 2 für alle auf 4', apply: () => ZUSAMMEN.map(r => [r[0], 4, r[2]]) },
     },
@@ -298,27 +298,45 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
 
 // Reiter ----------------------------------------------------------------------------------------------------------
 
-/** Alpha der fünf Fragen zur Methoden-Zuversicht in den aktuellen Daten. */
-export const alphaAll = (c: SampleCtx) => cronbach(itemColumns(c.rows));
+/**
+ * Alpha der Fragen zur Methoden-Zuversicht in den aktuellen Daten, gerechnet wie mariposa::reliability() 0.7.4: Fragen
+ * ohne Streuung lässt R weg (Warnung „item with zero variance is removed from the scale“, wie SPSS), gerechnet wird mit
+ * den übrigen; mit weniger als zwei Fragen gibt es kein Alpha.
+ */
+export function alphaAll(c: SampleCtx) {
+  const cols = itemColumns(c.rows), all = cols.map((_, j) => j);
+  const keep = all.filter(j => variance(cols[j]) > 1e-12), dropped = all.filter(j => !keep.includes(j));
+  return { a: keep.length >= 2 ? cronbach(keep.map(j => cols[j])) : null, keep, dropped };
+}
+
+const ZAHLWORT = ['null', 'eine', 'zwei', 'drei', 'vier', 'fünf'];
+/** Die Beschriftung, die mariposa 0.7.4 hinter Alpha druckt (.alpha_interpretation). */
+export function rLabel(alpha: number): string {
+  return alpha < 0 ? 'negative; check item coding' : alpha >= 0.9 ? 'Excellent' : alpha >= 0.8 ? 'Good' : alpha >= 0.7 ? 'Acceptable' : alpha >= 0.6 ? 'Questionable' : 'Poor';
+}
 
 export const reliabilityTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { ...SPALTEN },
     kurz: 'Dieselbe Rechnung mit allen 200 Befragten und allen fünf Fragen zur Methoden-Zuversicht.',
-    value: c => { const a = alphaAll(c).alpha; return Number.isFinite(a) ? a : null; },
+    value: c => { const a = alphaAll(c).a?.alpha; return a !== undefined && Number.isFinite(a) ? a : null; },
     result: c => {
-      const a = alphaAll(c);
-      if (!(a.totalVar > 1e-12) || !Number.isFinite(a.alpha)) return { kurz: 'Alle Summenwerte sind gleich. Dann lässt sich Alpha nicht berechnen.', fachlich: 'Mit sₓ² = 0 ist Alpha nicht definiert.' };
+      const { a, keep, dropped } = alphaAll(c);
+      if (!a || !(a.totalVar > 1e-12) || !Number.isFinite(a.alpha)) return { kurz: 'Zu viele Fragen streuen nicht oder alle Summenwerte sind gleich. Dann lässt sich Alpha nicht berechnen.', fachlich: 'Alpha braucht mindestens zwei Fragen, die streuen, und Summenwerte mit sₓ² > 0.' };
+      const k = keep.length, wer = dropped.length ? `Die übrigen ${ZAHLWORT[k]} Fragen` : 'Die fünf Fragen';
+      // R druckt das Minus als Bindestrich; im Text steht das echte Minus (Regel 11).
+      const rv = `R meldet ${a.alpha.toFixed(3).replace('-', '−')}`, r = `${rv} (${rLabel(a.alpha)})`;
       const kurz = a.alpha < 0
-        ? `Alpha ist negativ (${fixed(a.alpha)}): Die fünf Fragen laufen eher gegeneinander. Meist ist dann eine Frage verkehrt herum gepolt.`
+        ? `Alpha ist negativ (${fixed(a.alpha)}): ${wer} laufen eher gegeneinander. Meist ist dann eine Frage verkehrt herum gepolt; R meldet dazu „negative; check item coding“.`
         : a.alpha >= 0.7
-          ? `Die fünf Fragen zur Methoden-Zuversicht passen ${fit(a.alpha)} zusammen: Cronbachs Alpha ist ${alphaText(a.alpha)} (R meldet ${a.alpha.toFixed(3)}). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.`
-          : `Die fünf Fragen zur Methoden-Zuversicht passen ${fit(a.alpha)} zusammen: Cronbachs Alpha ist ${alphaText(a.alpha)} (R meldet ${a.alpha.toFixed(3)}). Wer einer Frage zustimmt, stimmt den anderen nicht unbedingt zu.`;
-      const std = Number.isFinite(a.alphaStd) ? ` Aus den Korrelationen gerechnet (standardisiert) ergibt sich ${fixed(a.alphaStd)}.` : ' Ein standardisiertes Alpha gibt es hier nicht, weil eine Frage nicht streut.';
+          ? `${wer} zur Methoden-Zuversicht passen ${fit(a.alpha)} zusammen: Cronbachs Alpha ist ${alphaText(a.alpha)} (${rv}). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.`
+          : `${wer} zur Methoden-Zuversicht passen ${fit(a.alpha)} zusammen: Cronbachs Alpha ist ${alphaText(a.alpha)} (${rv}). Wer einer Frage zustimmt, stimmt den anderen nicht unbedingt zu.`;
+      const weg = dropped.length ? ` ${dropped.map(j => FRAGE[j]).join(' und ')} ${dropped.length > 1 ? 'streuen' : 'streut'} nicht: R lässt sie weg und warnt (item with zero variance is removed from the scale); gerechnet ist mit den übrigen ${ZAHLWORT[k]}.` : '';
+      const edge = alphaText(a.alpha).startsWith('knapp') ? `; das liegt knapp unter ${alphaText(a.alpha).slice(6)}` : '';
       return {
         kurz,
-        fachlich: `k = 5 Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = 5/4 · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${std} mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good und ab 0,7 mit Acceptable; hier heißt das sehr gut, gut und ausreichend. Das sind Faustregeln, keine festen Grenzen.`,
-        zusatz: a.sumItemVar > 1e-12 ? `Die Summenwerte streuen ${num(a.totalVar / a.sumItemVar)}-mal so stark wie die fünf Fragen einzeln zusammen.` : undefined,
+        fachlich: `k = ${k} Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = ${k}/${k - 1} · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${weg} Aus den Korrelationen gerechnet (standardisiert) ergibt sich ${fixed(a.alphaStd)}. ${r}${edge}. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good und ab 0,7 mit Acceptable; hier heißt das sehr gut, gut und ausreichend. Das sind Faustregeln, keine festen Grenzen.`,
+        zusatz: a.sumItemVar > 1e-12 ? `Die Summenwerte streuen ${num(a.totalVar / a.sumItemVar)}-mal so stark wie die ${ZAHLWORT[k]} Fragen einzeln zusammen.` : undefined,
       };
     },
     voraussetzung: 'Alpha setzt voraus, dass alle fünf Fragen gleich gepolt sind und etwa gleich stark mit dem Gemeinsamen zusammenhängen.',
@@ -334,7 +352,7 @@ export const reliabilityTabs: ConceptTabs = {
       {
         question: 'Alle kreuzen bei Frage 2 „Weder noch“ an, also 4. Was macht Alpha?',
         options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 2,
-        explain: 'Frage 2 unterscheidet niemanden mehr. Sie trägt nichts zur Streuung der Summenwerte bei, zählt aber weiter als eine von fünf Fragen. In den Ausgangsdaten sinkt Alpha von knapp 0,9 auf 0,82.',
+        explain: 'Frage 2 unterscheidet niemanden mehr. R lässt sie deshalb weg und rechnet mit den übrigen vier; eine gut passende Frage fehlt dann. In den Ausgangsdaten sinkt Alpha von knapp 0,9 auf 0,88.',
         kurz: 'Eine Frage ohne Streuung trägt nichts zur Messung bei.',
         tryIt: { label: 'alle bei Frage 2 auf 4', op: 'constant', column: 'y', value: 4 },
         expect: { change: 'down' },

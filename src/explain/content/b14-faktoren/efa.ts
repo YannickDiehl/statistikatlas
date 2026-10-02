@@ -138,7 +138,7 @@ export const efaTabs: ConceptTabs = {
       const L = p.loadings.map(r => r[0]), n = aboveOne(p.values);
       return {
         kurz: L.every(l => l >= 0.5)
-          ? `Wer sich bei einer Methodenfrage viel zutraut, traut sich meist auch bei den anderen viel zu: Eine Komponente bündelt ${pct1(p.share[0])} der Streuung aller fünf Fragen. ${loadingSentence(L)}`
+          ? `Wer sich bei einer Methodenfrage viel zutraut, traut sich meist auch bei den anderen viel zu. Eine Komponente bündelt ${pct1(p.share[0])} der Streuung aller fünf Fragen. ${loadingSentence(L)}`
           : `Eine Komponente bündelt ${pct1(p.share[0])} der Streuung aller fünf Fragen. ${loadingSentence(L)}`,
         fachlich: `Hauptkomponentenanalyse der Korrelationsmatrix: erster Eigenwert ${num(p.values[0])} von 5, also ${pct1(p.share[0])}. Der zweite Eigenwert ist ${num(p.values[1])}; ${n === 1 ? 'nur eine Komponente liegt' : `${n} Komponenten liegen`} über 1.`,
         zusatz: `Die Ladungen: ${loadingList(L)}.`,

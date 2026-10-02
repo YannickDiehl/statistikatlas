@@ -8,7 +8,7 @@ import { applyOp } from '../../sample';
 import { close } from '../../format';
 import { txt, type Ctx, type SampleCtx } from '../../types';
 import { cronbach, itemColumns, methodenPca, methodenR, mlOneFactor, pca, varimax, SPALTEN } from './rechnen';
-import { alphaStats, alphaText, alphaWerkstatt, fit, KAUM, reliabilityTabs, ZUSAMMEN, type AlphaStats } from './reliability';
+import { alphaStats, alphaText, alphaWerkstatt, fit, KAUM, reliabilityTabs, rLabel, ZUSAMMEN, type AlphaStats } from './reliability';
 import { efa, efaTabs, METHODEN_PCA } from './efa';
 import { beideModelle, factorModel, factorModelTabs, METHODEN_ML } from './factor-model';
 import { dimensionality, dimensionalityTabs } from './dimensionality';
@@ -40,6 +40,8 @@ import { corMatrix } from './rechnen';
  *   reliability(as.data.frame(zus), V1, V2, V3)$alpha                      # 0.96
  *   cov(zus); cov(kaum)          # Paare 1–2, 1–3, 2–3: 2.5 2.5 2.2 (2 · 7.2 = 14.4); 2.5 −0.5 −0.8 (2 · 1.2 = 2.4)
  *   d <- matrix(c(2,6,2, 3,5,4, 4,4,4, 5,3,6, 6,2,6), ncol = 3, byrow = TRUE); alpha(d); d[,2] <- 4; alpha(d)   # −2.678571 → 0.7281553: kann steigen
+ *   e <- matrix(c(2,1,3, 3,7,3, 4,7,5, 5,1,5, 6,7,6), ncol = 3, byrow = TRUE); cor(e)[2, c(1,3)]; alpha(e); e[,2] <- 4; alpha(e)
+ *   # 0.2886751 0.2721655; 0.5755102 → 0.7228916: steigt auch bei positiv, aber schwach zusammenhängender Frage 2
  *
  * Mit 200 Befragten und In R (reliability):
  *   atlas %>% reliability(methoden1, methoden2, methoden3, methoden4, methoden5, na.rm = TRUE) %>% summary()
@@ -49,7 +51,10 @@ import { corMatrix } from './rechnen';
  *   alpha(M); sum(apply(M, 2, var)); var(rowSums(M))                       # 0.8981982; 10.15633; 36.08683
  *   Mr <- M; Mr$methoden1 <- 8 - Mr$methoden1; alpha(Mr)                   # 0.4064987
  *   Mc <- M; Mc$methoden2 <- 4; alpha(Mc)                                  # 0.8221579
- *   Mrc <- Mr; Mrc$methoden2 <- 4; alpha(Mrc)                              # -0.03941032
+ *   Mrc <- Mr; Mrc$methoden2 <- 4; alpha(Mrc)                              # -0.03941032 (Formel mit fünf Fragen)
+ *   reliability(Mc, methoden1, …, methoden5)   # Warnung: item with zero variance is removed from the scale: `methoden2`
+ *   # 4 items, Cronbach's Alpha = 0.877 (Good); alpha(Mc[, -2]) 0.8769684, std 0.8779127, Σsⱼ² 7.975528, sₓ² 23.30161
+ *   reliability(Mrc, …)                         # 4 items, Cronbach's Alpha = -0.042 (negative; check item coding)
  *
  * Hauptkomponenten (efa, eigenvalues, loadings, communality):
  *   R <- cor(M); range(R[upper.tri(R)])                                    # 0.607512729 0.676334515; mean 0.639935668
@@ -106,6 +111,9 @@ test('B14 Cronbachs Alpha: die Werkstatt rechnet wie R', () => {
   assert.ok(close(alphaStats(t3.tryIt!.apply(KAUM)).alpha, 0.96, 1e-12), 'verschieben: gleich');
   assert.ok(close(alphaStats(t1.tryIt!.apply(KAUM)).alpha, 0.7281553, 1e-6), 'S1: an Passen zusammen gebunden');
   assert.match(txt(t1.explain, at(ZUSAMMEN)), /von 0,96 auf 0,73/);
+  const schwach = [[2, 1, 3], [3, 7, 3], [4, 7, 5], [5, 1, 5], [6, 7, 6]];
+  assert.ok(close(alphaStats(schwach).alpha, 0.5755102, 1e-6) && close(alphaStats(schwach.map(r => [r[0], 4, r[2]])).alpha, 0.7228916, 1e-6), 'N1: Gegenbeispiel aus R, positiv aber schwach');
+  assert.match(txt(t1.explain, at(ZUSAMMEN)), /Hing Frage 2 vorher kaum mit den anderen zusammen oder lief sie gegen sie, kann Alpha auch steigen\./);
   const gegen = [[2, 6, 2], [3, 5, 4], [4, 4, 4], [5, 3, 6], [6, 2, 6]];
   assert.ok(close(alphaStats(gegen).alpha, -2.678571, 1e-6) && close(alphaStats(gegen.map(r => [r[0], 4, r[2]])).alpha, 0.7281553, 1e-6), 'S1: Gegenbeispiel aus R, Alpha steigt');
   assert.ok(close(alphaStats(t4.tryIt!.apply(ZUSAMMEN)).alpha, 1, 1e-12), 'gleiche Antworten: Alpha 1');
@@ -121,7 +129,8 @@ test('B14 Cronbachs Alpha: die Werkstatt rechnet wie R', () => {
   assert.deepEqual([alphaWerkstatt.steps[4].sym, alphaWerkstatt.steps[4].concept], ['sⱼₗ', 'covariance']);
   assert.ok(close(alphaStats(ZUSAMMEN).sumCov * 2, alphaStats(ZUSAMMEN).diff, 1e-12) && close(alphaStats(KAUM).sumCov * 2, alphaStats(KAUM).diff, 1e-12), 'diff = 2 · Σ Kovarianzen');
   // I2: Grenzen wie mariposa, auf dem ungerundeten Wert.
-  assert.deepEqual([fit(0.898), fit(0.9), fit(0.75), fit(0.65), fit(0.34)], ['gut', 'sehr gut', 'ausreichend', 'nur fraglich', 'schlecht']);
+  assert.deepEqual([fit(0.898), fit(0.9), fit(0.75), fit(0.65), fit(0.34)], ['gut', 'sehr gut', 'ausreichend', 'nur bedingt', 'schlecht']);
+  assert.deepEqual([rLabel(0.898), rLabel(0.877), rLabel(0.406), rLabel(-0.042), rLabel(0.95), rLabel(0.65)], ['Good', 'Good', 'Poor', 'negative; check item coding', 'Excellent', 'Questionable']);
   assert.deepEqual([alphaText(0.898), alphaText(0.96), alphaText(0.797), alphaText(-1.783784)], ['knapp 0,9', '0,96', 'knapp 0,8', '−1,78']);
   assert.match(v.interpret(at(t2.tryIt!.apply(ZUSAMMEN))).kurz, /^Alpha ist negativ \(−1,78\)/);
   // Diagnosen der typischen Fehler.
@@ -146,17 +155,22 @@ test('B14 Cronbachs Alpha mit 200 Befragten wie in R', () => {
   const s = reliabilityTabs.sample!;
   assert.equal(s.kind, 'analysis');
   if (s.kind !== 'analysis') return;
+  const rev = applyOp(rows, 'methoden1', 'reverse'), con = applyOp(rows, 'methoden2', 'constant', 4);
   const r = s.result(ctx());
   assert.equal(r.kurz, 'Die fünf Fragen zur Methoden-Zuversicht passen gut zusammen: Cronbachs Alpha ist knapp 0,9 (R meldet 0.898). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.');
-  assert.match(r.fachlich, /Excellent, ab 0,8 mit Good/);
+  assert.match(r.fachlich, /≈ 0,90\. .* R meldet 0\.898 \(Good\); das liegt knapp unter 0,9\. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good/);
+  // N2: Frage 2 ohne Streuung lässt R weg und rechnet mit vier Fragen (0.877); so auch der Reiter.
+  const r2 = s.result(ctx(con));
+  assert.equal(r2.kurz, 'Die übrigen vier Fragen zur Methoden-Zuversicht passen gut zusammen: Cronbachs Alpha ist 0,88 (R meldet 0.877). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.');
+  assert.match(r2.fachlich, /^k = 4 Fragen, Σsⱼ² = 7,98, sₓ² = 23,3: α = 4\/3 · \(1 − 7,98 \/ 23,3\) ≈ 0,88\. Frage 2 streut nicht: R lässt sie weg/);
+  assert.match(r2.fachlich, /standardisiert\) ergibt sich 0,88\. R meldet 0\.877 \(Good\)\./);
+  assert.match(s.result(ctx(applyOp(rev, 'methoden2', 'constant', 4))).kurz, /^Alpha ist negativ \(−0,04\): Die übrigen vier Fragen/);
   assert.match(r.fachlich, /Σsⱼ² = 10,16, sₓ² = 36,09: α = 5\/4 · \(1 − 10,16 \/ 36,09\) ≈ 0,90\. .* 0,90\./);
   assert.equal(r.zusatz, 'Die Summenwerte streuen 3,55-mal so stark wie die fünf Fragen einzeln zusammen.');
-  const rev = applyOp(rows, 'methoden1', 'reverse'), con = applyOp(rows, 'methoden2', 'constant', 4);
   assert.ok(close(s.value!(ctx(rev))!, 0.4064987, 1e-6), 'umgepolt wie R');
-  assert.ok(close(s.value!(ctx(con))!, 0.8221579, 1e-6), 'Frage 2 konstant wie R');
-  assert.ok(close(s.value!(ctx(applyOp(rev, 'methoden2', 'constant', 4)))!, -0.03941032, 1e-6), 'beides wie R');
-  assert.match(s.think[0].explain, /von knapp 0,9 auf 0,41/); assert.match(s.think[1].explain, /von knapp 0,9 auf 0,82/);
-  assert.match(s.result(ctx(con)).fachlich, /weil eine Frage nicht streut/);
+  assert.ok(close(s.value!(ctx(con))!, 0.8769684, 1e-6), 'Frage 2 konstant: R lässt sie weg, 0.877');
+  assert.ok(close(s.value!(ctx(applyOp(rev, 'methoden2', 'constant', 4)))!, -0.04203767, 1e-6), 'beides wie R: −0.042');
+  assert.match(s.think[0].explain, /von knapp 0,9 auf 0,41/); assert.match(s.think[1].explain, /R lässt sie deshalb weg .* von knapp 0,9 auf 0,88\./);
   // In R: 1,425² ≈ 2,03 (var(methoden1) = 2.029246).
   assert.ok(close(1.425 ** 2, 2.03, 0.005) && close(a.itemVars[0], 2.029246, 1e-6));
 });
@@ -189,7 +203,7 @@ test('B14 Komponenten- & Faktorenanalyse: die Zahlen der Karte und der Reiter wi
   const s = efaTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const r = s.result(ctx());
-  assert.equal(r.kurz, 'Wer sich bei einer Methodenfrage viel zutraut, traut sich meist auch bei den anderen viel zu: Eine Komponente bündelt 71,2 % der Streuung aller fünf Fragen. Alle fünf Fragen laden stark auf ihr, zwischen 0,83 und 0,86.');
+  assert.equal(r.kurz, 'Wer sich bei einer Methodenfrage viel zutraut, traut sich meist auch bei den anderen viel zu. Eine Komponente bündelt 71,2 % der Streuung aller fünf Fragen. Alle fünf Fragen laden stark auf ihr, zwischen 0,83 und 0,86.');
   assert.match(r.zusatz!, /^Die Ladungen: Frage 1: 0,85; Frage 2: 0,84; /);
   assert.match(efa.bausteine[0].acht, /Kaiser-Meyer-Olkin, zwischen 0 und 1/);
   assert.match(efa.genau.paragraphs[0], /sobald es mindestens zwei Komponenten gibt/);
@@ -294,7 +308,7 @@ test('B14 Rotation: Drehwinkel, Karte und Reiter mit den Zahlen aus R', () => {
   const s = rotationTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const r = s.result(ctx());
-  assert.match(r.kurz, /zwischen 0,83 und 0,86\. .* vorher wie nachher 79,5 %\./);
+  assert.equal(r.kurz, 'Vor der Rotation laden alle fünf Fragen stark auf der ersten Komponente, zwischen 0,83 und 0,86. Nach Varimax teilen sich die Fragen auf beide Komponenten auf; zusammen erfassen sie wie vorher 79,5 %. Dabei unterscheiden sich die Befragten im Wesentlichen nur in einer Sache.');
   assert.equal(r.fachlich, 'Ungedreht 71,2 % und 8,3 %, nach Varimax 40,0 % und 39,5 %. Der zweite Eigenwert ist 0,41, also unter 1: Die Aufteilung ist hier ein Kunstprodukt der erzwungenen zweiten Komponente.');
   assert.equal(r.zusatz, 'Nach der Rotation: Frage 3 und Frage 5 laden vor allem auf der ersten Komponente. Frage 2 und Frage 4 laden vor allem auf der zweiten. Frage 1 lädt auf beiden etwa gleich (0,60 und 0,61).');
 });
