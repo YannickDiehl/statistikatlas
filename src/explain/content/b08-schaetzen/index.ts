@@ -2,12 +2,15 @@
 // Je Begriff eine Datei in diesem Ordner, hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
 import type { AreaIndex } from '../../types';
 import { sampling, samplingTabs } from './sampling';
+import { populationParameter, populationParameterTabs } from './population-parameter';
 
 export const b08Schaetzen: AreaIndex = {
   explanations: {
     sampling: { kind: 'begriff', card: sampling },
+    population_parameter: { kind: 'begriff', card: populationParameter },
   },
   tabs: {
     sampling: samplingTabs,
+    population_parameter: populationParameterTabs,
   },
 };

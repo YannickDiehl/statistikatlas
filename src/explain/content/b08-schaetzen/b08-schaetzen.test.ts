@@ -7,6 +7,7 @@ import { applyOp } from '../../sample';
 import { close } from '../../format';
 import { ALLBUS, INTERESSE, VERTRAUEN } from './daten';
 import { haelften, kopienSE, sampling, samplingTabs } from './sampling';
+import { parameter, populationParameter, populationParameterTabs } from './population-parameter';
 
 /*
  * Referenzwerte des Bereichs B8, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand).
@@ -18,6 +19,8 @@ import { haelften, kopienSE, sampling, samplingTabs } from './sampling';
  *   x <- as.numeric(atlas$lernzeit)
  *   mean(x[1:100]); mean(x[101:200]); mean(x)                 # 7.824  7.679  7.7515
  *   cor(1:200, x)                                             # 0.0168: Die Nummern sagen nichts über die Lernzeit
+ *   atlas %>% slice(1:20) %>% summarise(xq = mean(lernzeit), p = mean(weiterbildung))   # 7.43  0.35 (P001 bis P020)
+ *   mean(as.numeric(atlas$weiterbildung))                     # 0.41
  *
  * ALLBUS 2023 (ZA8831_v1-3-0.sav, nur lesen, Pfad in ALLBUS_SAV), nur Aggregate:
  *   d <- haven::read_sav(Sys.getenv("ALLBUS_SAV"))
@@ -28,7 +31,7 @@ import { haelften, kopienSE, sampling, samplingTabs } from './sampling';
  *   ok <- !is.na(t3); sum(d$wghtpew[ok] * t3[ok]) / sum(d$wghtpew[ok])   # 4.013856 (gewichtet)
  *   mean(t3[ok & d$eastwest == 2]); mean(t3[ok & d$eastwest == 1])       # 3.666382  4.08213
  *   x <- 6 - as.numeric(d$pa02a); x <- x[!is.na(x)]          # politisches Interesse, umgepolt
- *   length(x); mean(x); sd(x); sum(x >= 4)                   # 5225  3.297225  0.93954  2069
+ *   length(x); mean(x); sd(x); sum(x >= 4)                   # 5225  3.297225  0.93954  2069; 2069 / 5225 = 0.39598
  *   for (k in 1:4) { xx <- rep(x, k); print(sd(xx) / sqrt(length(xx))) }   # 0.012998 0.009190 0.007504 0.006498
  */
 
@@ -66,6 +69,20 @@ test('B8 sampling: ALLBUS-Aggregate, Kopien im Regler und die zwei Hälften wie 
     assert.match(r.kurz, /im Schnitt 7,82 Stunden gelernt, die anderen 100 7,68 Stunden\. .* 0,14 Stunden auseinander\./);
     assert.match(r.fachlich, /Mittelwert aller 200, 7,75 h\./);
     assert.match(s.result(ctx(applyOp(rows, 'lernzeit', 'double'))).kurz, /0,29 Stunden auseinander/, 'verdoppelt: 0,29');
+  }
+});
+
+test('B8 population_parameter: Anteil der stark Interessierten und die 200 als gedachte Grundgesamtheit wie in R', () => {
+  assert.ok(close(INTERESSE.stark / INTERESSE.n, 0.39598, 1e-5));
+  assert.match(populationParameter.stellDirVor.text, /2\.069 von ihnen antworten „stark“ oder „sehr stark“, das sind 39,6 % \(ungewichtet\)/);
+  const p = parameter(ctx());
+  assert.ok(close(p.mu, 7.7515, 1e-9) && close(p.xbar, 7.43, 1e-9) && close(p.pi, 0.41, 1e-9) && close(p.p, 0.35, 1e-9), 'μ, x̄, π und p wie in R');
+  const s = populationParameterTabs.sample!;
+  if (s.kind === 'analysis') {
+    const r = s.result(ctx());
+    assert.match(r.kurz, /μ = 7,75 Stunden: die mittlere Lernzeit aller 200\. .* ersten 20 befragt, wäre deine Schätzung 7,43 Stunden\./);
+    assert.match(r.fachlich, /P001 bis P020: x̄ = 7,43 h/);
+    assert.match(r.zusatz!, /π = 41 % aller 200, aber 35 % unter den ersten 20/);
   }
 });
 
