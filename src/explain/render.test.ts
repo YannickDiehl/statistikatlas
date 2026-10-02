@@ -20,12 +20,15 @@ import { modeStore } from './mode';
 import { ConceptInspector } from '../components/ConceptInspector';
 import { forgetTabs, kurzOf, tabList } from '../components/explain/ExplainTabs';
 import { KurzGesagt } from '../components/explain/basics';
+import { pLabel } from '../components/foundations/InferenceLab';
+import { Experiment } from '../components/Experiment';
+import { defaultPairs } from '../domain/statistics';
 import { asNumber, catalogLead, RTab } from '../components/explain/RTab';
 import { TAB_IDS, tabsFor } from './registry';
 import { applyOp } from './sample';
 import { columnById, createSurvey, defaultSelection, projectPairs, surveyColumns, type ColumnSelection, type SurveyRow } from '../domain/survey';
 import { inputs, lessonContext, ref, type Ref } from '../domain/learning';
-import { entryById } from '../domain/mariposaCatalog';
+import { entryById, mariposaEntries } from '../domain/mariposaCatalog';
 import { eligible } from '../domain/mariposaRoles';
 import { initialRSettings, rolesFor, startBlock, type RSettings } from '../domain/mariposa';
 import { CATALOG_OUTPUT } from './catalogOutput';
@@ -512,6 +515,14 @@ test('previous labs and texts under the new explanations: no „·“ separator 
       assert.doesNotMatch(r, /(?<![\d.,])(?:[1-9]\d*|0),(?!0)\d{3}|-\d/, `${id}: mehr als zwei Nachkommastellen oder Bindestrich-Minus in „${r}“`);
     }
   }
+  // Die Ansicht mit fünf Beispielpersonen nennt sie ohne „fiktiv“ und ohne „·“ als Trenner; die Katalogtexte sagen es auch nicht.
+  const five = text(renderToStaticMarkup(createElement(Experiment, { reference: ref('mean'), context: lessonContext(defaultPairs, defaultPairs[0].id, 'covariance'), showBoth: false, onPairs: noop, onCase: noop, onReset: noop })));
+  assert.ok(five.includes('Fünf Beispielpersonen. Änderungen gelten im ganzen Baukasten'), 'Experiment: Hinweis zu den Beispielpersonen');
+  assert.doesNotMatch(five, /fiktiv/i);
+  assert.doesNotMatch(JSON.stringify(mariposaEntries), /fiktiv/i, 'Katalog: „fiktiv“');
+  // Der kleine p-Wert steht als „p < 0,001“, nicht als „p = < 0,001“ (Nachprüfung).
+  assert.equal(pLabel(0.0004), 'p < 0,001');
+  assert.match(pLabel(0.03), /^p = 0,03$/);
   // Regel 5 in allen bisherigen Texten, die eine Karte zeigt (Einordnung, Fachlich nachlesen, Labore), außer den Fachbegriffen.
   const banned = new RegExp(`(^|[^\\p{L}])(${BANNED_WORDS.join('|')})`, 'giu');
   for (const c of Object.values(conceptById)) {

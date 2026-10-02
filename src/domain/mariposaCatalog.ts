@@ -220,7 +220,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "requires": [],
   "notes": [
    "Verschiedene Fragen an dieselbe Person sind nicht automatisch vergleichbare Messzeitpunkte.",
-   "Die zusätzlichen Wissenstests sind fiktive, gleich skalierte Parallelformen; die binäre Kursfrage wird identisch vor und nach dem Kurs gestellt."
+   "Die zusätzlichen Wissenstests sind gleich skalierte Parallelformen; die binäre Kursfrage wird identisch vor und nach dem Kurs gestellt."
   ],
   "output": "Gepaarte Verfahren nutzen die Veränderung innerhalb derselben Person.",
   "variants": [],
