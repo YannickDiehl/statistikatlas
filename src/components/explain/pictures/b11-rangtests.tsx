@@ -8,7 +8,9 @@ import { KW_GROUP, KW_LABELS, type KwStats } from '../../../explain/content/b11-
 import type { WxStats } from '../../../explain/content/b11-rangtests/wilcoxon';
 import type { FrStats } from '../../../explain/content/b11-rangtests/friedman';
 import type { Pairs } from '../../../explain/math';
-import { Axis, clamp, DragPoint, forWorkshop, GridCell, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
+import { basePairs, pairShort, tukeyHurdle } from '../../../explain/content/b11-rangtests/posthoc';
+import { hurdlesFor } from '../../../explain/content/b11-rangtests/scheffe';
+import { Axis, clamp, DragPoint, forCard, forWorkshop, GridCell, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Ein Punkt einer Zeile: Wert, Beschriftung im Kreis, vorgelesener Name, Index in den Daten. */
 type RowPoint = { value: number; label: string; name: string; at: number };
@@ -248,7 +250,58 @@ function FriedmanPicture({ data, s, step, who, setData, pickWho, names }: { data
   </>;
 }
 
+// Tukey und Scheffé ----------------------------------------------------------------------
+
+/** Die zehn Paare der Lernzeit nach Schulabschluss: Betrag der Differenz als Balken, die Tukey-Hürde des Paars als Strich. */
+function TukeyPairs({ alpha }: { alpha: number }) {
+  const [box, W] = useWidth();
+  const r = basePairs(), left = 118, right = W - 54, X = linear([0, 4], [left, right]), ROW = 26, top = 24;
+  const H = top + r.pairs.length * ROW + 46;
+  const hits = r.pairs.filter(p => p.pTukey < alpha).length;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Zehn Paare von Schulabschlüssen: Unterschied der mittleren Lernzeit und die Tukey-Hürde bei α = ${num(alpha, 3)}. ${hits} Paare liegen über ihrer Hürde.`}>
+        <text className="xw-t xw-strong" x={4} y={14}>Unterschied in Stunden; Strich: Hürde bei α = {num(alpha, 3)}; +: darüber</text>
+        {r.pairs.map((p, k) => {
+          const y = top + k * ROW, d = Math.abs(p.diff), h = tukeyHurdle(alpha, p.se, r.k, r.df), on = p.pTukey < alpha;
+          return <g key={k}>
+            <text className="xw-t" x={4} y={y + 15}>{pairShort(p)}</text>
+            <rect className={on ? 'xw-bar-pos' : 'xw-bar-plain'} x={left} y={y + 3} width={Math.max(2, X(d) - left)} height={16} />
+            <line className="b11-hurdle" x1={X(h)} x2={X(h)} y1={y} y2={y + 22} />
+            <text className="xw-t" x={Math.max(X(d), X(h)) + 6} y={y + 15}>{num(d)}{on ? ' +' : ''}</text>
+          </g>;
+        })}
+        <Axis scale={X} ticks={[0, 1, 2, 3, 4]} at={top + r.pairs.length * ROW + 4} from={left} to={right} labelGap={18} />
+      </svg>
+    </div>
+  );
+}
+
+/** Hürden in Stunden für k Gruppen mit je 40 Personen: einzelner t-Test, Tukey, Scheffé. */
+function Hurdles({ k }: { k: number }) {
+  const [box, W] = useWidth();
+  const h = hurdlesFor(k), left = 120, right = W - 60, X = linear([0, 3], [left, right]);
+  const rows: [string, number, string][] = [['t-Test allein', h.t, 'xw-bar-plain'], ['Tukey', h.tukey, 'xw-bar-pos'], ['Scheffé', h.scheffe, 'xw-bar-pos']];
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={170} viewBox={`0 0 ${W} 170`} role="img"
+        aria-label={`Bei ${h.k} Gruppen mit je 40 Personen braucht ein Paar beim t-Test ${num(h.t)}, bei Tukey ${num(h.tukey)} und bei Scheffé ${num(h.scheffe)} Stunden Unterschied.`}>
+        <text className="xw-t xw-strong" x={4} y={14}>Nötiger Unterschied, {h.k} Gruppen mit je 40 Personen</text>
+        {rows.map(([name, v, cls], j) => <g key={name}>
+          <text className="xw-t" x={4} y={46 + j * 34}>{name}</text>
+          <rect className={cls} x={left} y={32 + j * 34} width={Math.max(2, X(v) - left)} height={20} />
+          <text className="xw-t" x={X(v) + 6} y={46 + j * 34}>{num(v)} h</text>
+        </g>)}
+        <Axis scale={X} ticks={[0, 1, 2, 3]} at={136} from={left} to={right} labelGap={18} />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b11-tukey': forCard(p => <TukeyPairs alpha={p.value ?? 0.05} />),
+  'b11-scheffe': forCard(p => <Hurdles k={p.value ?? 5} />),
   'b11-kw': forWorkshop(p => <KruskalWallisPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
   'b11-wilcoxon': forWorkshop(p => <WilcoxonPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
   'b11-friedman': forWorkshop(p => <FriedmanPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),

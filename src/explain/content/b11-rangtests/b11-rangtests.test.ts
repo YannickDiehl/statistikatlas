@@ -8,6 +8,14 @@ import { mannWhitney, midRanks } from './rank';
 import { mannWhitneyTabs, mannWhitneyWorkshop as mwW, mwSample, MW_START, MW_TIES } from './mann-whitney';
 import { wilcoxonTabs, wilcoxonWorkshop as wxW, wxSample, WX_START, WX_TIES } from './wilcoxon';
 import { friedmanTabs, friedmanWorkshop as frW, frSample, FR_START, FR_TIES, FR_SAME_ORDER } from './friedman';
+import { tukeyCard, tukeyCount, tukeyTabs } from './tukey';
+import { hurdlesFor, scheffeCard, scheffeTabs } from './scheffe';
+import { dunnCard, dunnSample, dunnTabs, DUNN_MIN_P } from './dunn';
+import { bonferroniFor, pairwiseWilcoxonCard, pairwiseWilcoxonTabs, pwImproved, pwSample } from './pairwise-wilcoxon';
+import { basePairs, hurdle40, tukeyHurdle } from './posthoc';
+import { qt } from '../../../tasks/kit/dist';
+import { qtukey } from '../../../tasks/kit/means';
+import { qf } from './rank';
 import { kruskalWallisTabs, kruskalWallisWorkshop as kwW, kwMeanRank, kwSample, KW_EVEN, KW_START, KW_TIES } from './kruskal-wallis';
 
 /*
@@ -323,4 +331,142 @@ test('B11 Friedman: 200 Befragte und In R wie in R', () => {
   assert.match(s.think[1].explain, /von 2,05 auf 1,73/);
   const map = Object.fromEntries(friedmanTabs.r!.outputMap.map(o => [o.match, o.explain]));
   assert.match(map["Kendall's W"], /78,08 \/ 400 ≈ 0,2/);
+});
+
+/*
+ * Tukey und Scheffé, Lehrdatensatz (Lernzeit nach Schulabschluss):
+ *   atlas %>% oneway_anova(lernzeit, group = schulabschluss) %>% summary()
+ *     # Mittelwerte 5.883333 6.95 7.945946 8.707317 9.355 (n = 42, 40, 37, 41, 40); F = 8.638858, p = 1.937e-06; MSE = 9.086344, df = 195
+ *   atlas %>% oneway_anova(lernzeit, group = schulabschluss) %>% tukey_test() %>% summary()
+ *     # p (Tukey) .498 .023 <.001 <.001 .597 .070 .004 .799 .247 .870; ohne − Abitur −3.472, Intervall −5.305 bis −1.638
+ *   atlas %>% oneway_anova(lernzeit, group = schulabschluss) %>% scheffe_test() %>% summary()
+ *     # p (Scheffé) .634 .060 .002 <.001 .718 .147 .015 .871 .383 .919
+ *   qtukey(0.95, 5, 195); qtukey(0.95, 10, 195)                             # 3.893996; 4.526526
+ *   se <- function(i, j) sqrt(mse * (1 / n[i] + 1 / n[j]))                  # ohne–Abitur 0.665958, Haupt–FHR 0.669908, ohne–Mittlerer 0.679646
+ *   qtukey(0.95, 5, 195) / sqrt(2) * se(1, 5); … se(2, 4); … se(1, 3)        # Hürden 1.833696, 1.844572, 1.871385
+ *   1 - 0.95^10; qt(0.975, 195) * se(1, 5)                                  # 0.401263; 1.313405
+ *   2 * pt(-abs(m[2] - m[4]) / se(2, 4), 195)                               # 0.009399 (ein t-Test für Haupt gegen FHR)
+ *   for (al in c(.01, .05, .10)) qtukey(1 - al, 5, 195) * sqrt(mse / 40)    # 2.224553, 1.855924, 1.669930
+ *   qf(0.95, 4, 195); sqrt(4 * qf(0.95, 4, 195))                            # 2.417963; S = 3.109960 (1.129469 mal 2.753471)
+ *   sqrt(4 * qf(0.95, 4, 195)) * se(1, 3)                                   # 2.113671
+ *   k Gruppen mit je 40, df = 39k: t, Tukey, Scheffé in Stunden
+ *     # k = 2: 1.341892 1.341892 1.341892; k = 3: 1.334882 1.600089 1.671205; k = 5: 1.329326 1.855924 2.096208; k = 10: 1.325188 2.144876 2.790122
+ *   atlas %>% oneway_anova(lernzeit, group = schulabschluss) %>% scheffe_test()   # direkt auf atlas: not available for objects of class <tbl_df/tbl/data.frame>
+ */
+test('B11 Tukey und Scheffé: Lehrdatensatz wie in R', () => {
+  const r = basePairs();
+  assert.ok(r.anova.groups.every((g, j) => near(g.mean, [5.883333, 6.95, 7.945946, 8.707317, 9.355][j])) && near(r.mse, 9.086344) && r.df === 195, 'Mittelwerte und MSE');
+  assert.ok(near(r.anova.F, 8.638858) && near(r.anova.p, 1.937e-6, 1e-9), `F ${r.anova.F}`);
+  const pT = [0.4981007, 0.02268198, 0.0002959011, 4.659976e-6, 0.5971051, 0.07007976, 0.004092882, 0.7990774, 0.2466722, 0.8697207];
+  const pS = [0.6336146, 0.05997996, 0.001547187, 3.862793e-5, 0.717797, 0.1470042, 0.01463932, 0.8709408, 0.3826445, 0.9191521];
+  r.pairs.forEach((p, k) => { assert.ok(near(p.pTukey, pT[k], 1e-6), `Tukey ${k}: ${p.pTukey}`); assert.ok(near(p.pScheffe, pS[k], 1e-6), `Scheffé ${k}: ${p.pScheffe}`); });
+  assert.deepEqual([0.01, 0.05, 0.1].map(tukeyCount), [3, 4, 5]);
+  assert.ok(near(qtukey(0.95, 5, 195), 3.893996, 1e-4) && near(qtukey(0.95, 10, 195), 4.526526, 1e-4), 'qtukey');
+  const [ohneAbi, hauptFhr, ohneMittel] = [r.pairs[3], r.pairs[5], r.pairs[1]];
+  assert.ok(near(ohneAbi.se, 0.665958) && near(hauptFhr.se, 0.669908) && near(ohneMittel.se, 0.679646), 'SE');
+  assert.ok(near(tukeyHurdle(0.05, ohneAbi.se, 5, 195), 1.833696, 1e-4) && near(tukeyHurdle(0.05, hauptFhr.se, 5, 195), 1.844572, 1e-4) && near(tukeyHurdle(0.05, ohneMittel.se, 5, 195), 1.871385, 1e-4), 'Hürden');
+  assert.ok(near(ohneAbi.diff, -3.471667) && near(ohneAbi.diff - 2.753471 * ohneAbi.se, -5.305363, 1e-4), 'Intervall');
+  assert.ok(near(1 - 0.95 ** 10, 0.401263) && near(qt(0.975, 195) * ohneAbi.se, 1.313405), 'ohne Schutz');
+  [[0.01, 2.224553], [0.05, 1.855924], [0.1, 1.66993]].forEach(([a, v]) => assert.ok(near(hurdle40(r, 'tukey', a), v, 1e-4), `HSD α ${a}`));
+  assert.ok(near(qf(0.95, 4, 195), 2.417963) && near(Math.sqrt(4 * qf(0.95, 4, 195)) * ohneMittel.se, 2.113671), 'Scheffé-Hürde');
+  [[2, 1.341892, 1.341892, 1.341892], [3, 1.334882, 1.600089, 1.671205], [5, 1.329326, 1.855924, 2.096208], [10, 1.325188, 2.144876, 2.790122]].forEach(([k, t, tu, sc]) => {
+    const h = hurdlesFor(k);
+    assert.ok(near(h.t, t) && near(h.tukey, tu, 1e-4) && near(h.scheffe, sc), `k = ${k}: ${h.t} ${h.tukey} ${h.scheffe}`);
+  });
+  // Texte mit diesen Zahlen
+  assert.match(tukeyCard.stellDirVor.text, /5,88 Stunden gelernt, Befragte mit Abitur 9,36 .* 6,95, Mittlerer Abschluss mit 7,95 und Fachhochschulreife mit 8,71 .* 4 der 10 Paare/);
+  assert.match(tukeyCard.bausteine[0].rechnung!, /≈ 40 %/);
+  assert.match(tukeyCard.bausteine[1].rechnung!, /q ≈ 3,89\. .* ≈ 1,84 Stunden; mit allen Nachkommastellen rechnet R 1,83\./);
+  assert.match(tukeyCard.bausteine[2].rechnung!, /−3,47 Stunden, im Betrag mehr als die Hürde von 1,83\. .* von −5,31 bis −1,64/);
+  assert.match(tukeyCard.bausteine[2].acht, /−1,76 Stunden, knapp unter seiner Hürde von 1,84/);
+  assert.match(tukeyCard.ausprobieren[0].explain, /von 3,89 auf 4,53/);
+  assert.match(tukeyCard.ausprobieren[1].explain, /1,31 Stunden .* 1,83 Stunden/);
+  assert.match(tukeyCard.check.diagnose[3]!, /etwa 0,01/);
+  assert.equal(tukeyCard.regler!.describe(0.05), 'Bei α = 0,05 muss ein Paar mit je 40 Personen mindestens 1,86 Stunden auseinanderliegen. Das schaffen im Lehrdatensatz 4 der 10 Paare.');
+  assert.match(tukeyCard.regler!.describe(0.1), /1,67 Stunden .* 5 der 10 Paare/);
+  assert.match(scheffeCard.stellDirVor.text, /Tukey 4 der 10 .* Scheffé nur 3\. .* −2,06 Stunden\. Tukey meldet dafür p ≈ 0,023, Scheffé p ≈ 0,06/);
+  assert.match(scheffeCard.bausteine[1].rechnung!, /√\(\(5 − 1\) · 2,42\) ≈ 3,11 .* 3,89 \/ √2 ≈ 2,75\. .* 3,11 · 0,68 ≈ 2,11 Stunden statt 1,87\./);
+  assert.match(scheffeCard.bausteine[1].was, /etwa 13 % höher/);
+  assert.match(scheffeCard.ausprobieren[1].explain, /hier 1,34 Stunden/);
+  assert.match(scheffeCard.regler!.describe(5), /Tukey mindestens 1,86 Stunden Unterschied, bei Scheffé 2,1 Stunden\. Ein einzelner t-Test bräuchte 1,33 Stunden\./);
+  // Reiter
+  const columns = { x: ['lernzeit'], group: ['schulabschluss'] };
+  const t = tukeyTabs.sample!, s = scheffeTabs.sample!;
+  if (t.kind !== 'analysis' || s.kind !== 'analysis') return assert.fail('Auswertungen erwartet');
+  const rt = t.result(ctx(rows, columns)), rs = s.result(ctx(rows, columns));
+  assert.equal(rt.kurz, 'Bei α = 0,05 meldet Tukey 4 der 10 Paare als auffällig. Am weitesten auseinander liegen Ohne Schulabschluss und Abitur / fachgebundene Hochschulreife: 5,88 gegen 9,36 Stunden.');
+  assert.match(rt.fachlich, /MSE ≈ 9,09 bei 195 Freiheitsgraden\. Auffällig .*Ohne Schulabschluss − Mittlerer Abschluss −2,06 h; Ohne Schulabschluss − Fachhochschulreife −2,82 h; Ohne Schulabschluss − Abitur \/ fachgebundene Hochschulreife −3,47 h; Haupt-\/Volksschulabschluss − Abitur \/ fachgebundene Hochschulreife −2,41 h\./);
+  assert.equal(rs.kurz, 'Bei α = 0,05 meldet Scheffé 3 der 10 Paare als auffällig, Tukey 4. Für zwei Gruppen mit je 40 Personen liegt die Scheffé-Hürde bei 2,1 Stunden, die von Tukey bei 1,86.');
+  assert.equal(rs.zusatz, 'Ein Paar fällt nur bei Tukey auf, keines nur bei Scheffé.');
+});
+
+/*
+ * Dunn-Vergleiche, Lehrdatensatz (finanzielle Lage nach Schulabschluss):
+ *   atlas %>% kruskal_wallis(finanzlage, group = schulabschluss) %>% dunn_test(p_adjust = "holm") %>% summary()
+ *     # z: −1.810 0.083 −2.747 −1.555 1.836 −0.914 0.252 −2.742 −1.588 1.167
+ *     # p (unadj) kleinstes 0.006019911 (ohne gegen FHR), 0.006106845 (Mittlerer gegen FHR); p (adj) beide 0.06019911
+ *   rk <- rank(fl); tt <- table(fl); T <- sum(tt^3 - tt)
+ *   sqrt((200 * 201 / 12 - T / (12 * 199)) * (1/42 + 1/41))                  # SE ohne gegen FHR 12.306841
+ *   0.006019911 * 1:10                                                      # … 5: 0.030100, 8: 0.048159, 9: 0.054179, 10: 0.060199
+ *   atlas %>% mutate(finanzlage = 6 - finanzlage) %>% kruskal_wallis(…) %>% dunn_test(p_adjust = "holm")   # z gespiegelt, kleinstes p (adj) 0.060199
+ *   atlas %>% mutate(schulabschluss = 4 - schulabschluss) %>% kruskal_wallis(…) %>% dunn_test(…)       # kleinstes p (adj) 0.060199
+ *   dunn_test.kruskal_wallis(x, p_adjust = "bonferroni", …)                 # Voreinstellung im Quellstand 0.7.4
+ *   … %>% dunn_test(p_adjust = "Holm")                                      # Fehler: `p_adjust` must be one of "bonferroni", "holm", … ✖ Got "Holm".
+ */
+test('B11 Dunn-Vergleiche: Lehrdatensatz wie in R', () => {
+  const columns = { x: ['finanzlage'], y: ['schulabschluss'], group: ['schulabschluss'] };
+  const d = dunnSample(ctx(rows, columns));
+  const z = [-1.8104515, 0.08309158, -2.74669488, -1.55509074, 1.83571176, -0.91361396, 0.25230243, -2.74198866, -1.58837314, 1.16746904];
+  d.pairs.forEach((p, k) => assert.ok(near(p.z, z[k]), `z ${k}: ${p.z}`));
+  assert.ok(near(d.pairs[2].p, DUNN_MIN_P, 1e-9) && near(d.pairs[2].pAdj, 0.06019911) && near(d.pairs[7].pAdj, 0.06019911), 'Holm');
+  assert.equal(d.pairs.filter(p => p.pAdj < 0.05).length, 0);
+  assert.equal(d.pairs.filter(p => p.p < 0.05).length, 2);
+  assert.ok(near((d.kw.mean[0] - d.kw.mean[3]) / d.pairs[2].z, 12.306841, 1e-5), 'SE');
+  const rev = dunnSample(ctx(applyOp(rows, 'finanzlage', 'reverse'), columns));
+  assert.ok(rev.pairs.every((p, k) => near(p.z, -z[k])), 'umgepolt: z gespiegelt');
+  assert.ok(near(Math.min(...dunnSample(ctx(applyOp(rows, 'schulabschluss', 'reverse'), columns)).pairs.map(p => p.pAdj)), 0.060199), 'andersherum nummeriert');
+  assert.match(dunnCard.bausteine[1].rechnung!, /\(85,43 − 119,23\) \/ 12,31 ≈ −2,75/);
+  assert.match(dunnCard.ausprobieren[1].explain, /0,006 · 5 ≈ 0,03/);
+  assert.match(dunnCard.regler!.describe(8), /8 · 0,006 ≈ 0,048\. Er liegt noch unter α = 0,05\./);
+  assert.match(dunnCard.regler!.describe(9), /9 · 0,006 ≈ 0,054\. Er liegt über α = 0,05/);
+  assert.match(dunnCard.regler!.describe(10), /≈ 0,06\. /);
+  const s = dunnTabs.sample!;
+  if (s.kind !== 'analysis') return assert.fail('Auswertung erwartet');
+  const r = s.result(ctx(rows, columns));
+  assert.equal(r.kurz, 'Am deutlichsten unterscheiden sich Ohne Schulabschluss und Fachhochschulreife: z ≈ −2,75, nach der Holm-Korrektur p ≈ 0,06. Bei α = 0,05 ist nach der Korrektur kein Paar auffällig; ohne Korrektur wären es 2.');
+  assert.equal(r.zusatz, 'Kruskal–Wallis über alle Gruppen: H ≈ 11,59, p ≈ 0,02.');
+});
+
+/*
+ * Paarweiser Wilcoxon, Lehrdatensatz (Wissenstest zu drei Zeitpunkten):
+ *   atlas %>% friedman_test(wissenstest, wissenstest_t2, wissenstest_t3) %>% pairwise_wilcoxon(p_adjust = "holm") %>% summary()
+ *     # 1–2: z = −5.358338, p = 8.399089e-08, p (adj) = 1.679818e-07
+ *     # 1–3: z = −8.541720, p = 1.322386e-17, p (adj) = 3.967157e-17
+ *     # 2–3: z = −3.755427, p = 1.730464e-04, p (adj) = 1.730464e-04
+ *   atlas %>% wilcoxon_test(wissenstest_t2, wissenstest_t3)                 # 108 besser, 65 schlechter, 27 gleich; r = 0.285520
+ *   atlas %>% wilcoxon_test(wissenstest, wissenstest_t3)                    # 145 besser, 31 schlechter, 24 gleich
+ *   atlas %>% mutate(wissenstest = wissenstest + 1) %>% wilcoxon_test(wissenstest, wissenstest_t3)       # 101 besser
+ *   atlas %>% mutate(wissenstest_t2 = wissenstest_t2 - 1) %>% wilcoxon_test(wissenstest_t2, wissenstest_t3) # 135 besser
+ *   pairwise_wilcoxon.friedman_test(x, p_adjust = "bonferroni", …)          # Voreinstellung im Quellstand 0.7.4
+ *   atlas %>% pairwise_wilcoxon()                                           # Fehler: not available for objects of class <tbl_df/tbl/data.frame>
+ */
+test('B11 Paarweiser Wilcoxon: Lehrdatensatz wie in R', () => {
+  const columns = { x: ['wissenstest'], y: ['wissenstest_t2'], z: ['wissenstest_t3'] };
+  const ps = pwSample(ctx(rows, columns));
+  [[-5.358338, 1.679818e-7], [-8.54172, 3.967157e-17], [-3.755427, 1.730464e-4]].forEach(([z, p], k) => assert.ok(near(ps[k].z, z) && near(ps[k].pAdj, p, 1e-9 * Math.max(1, p * 1e3)), `Paar ${k}: ${ps[k].z} ${ps[k].pAdj}`));
+  assert.deepEqual([ps[2].test.nPos, ps[2].test.nNeg, ps[2].test.nZero, ps[1].test.nPos, ps[1].test.nNeg], [108, 65, 27, 145, 31]);
+  assert.ok(near(ps[2].test.r, 0.28552), `r ${ps[2].test.r}`);
+  assert.equal(pwImproved(ctx(applyOp(rows, 'wissenstest', 'shift', 1), columns), 0, 2), 101);
+  assert.equal(pwImproved(ctx(applyOp(rows, 'wissenstest_t2', 'shift', -1), columns), 1, 2), 135);
+  assert.deepEqual([3, 4, 8].map(k => bonferroniFor(k).m), [3, 6, 28]);
+  assert.match(pairwiseWilcoxonCard.regler!.describe(4), /6 Paare\. .* 0,05 \/ 6 ≈ 0,0083/);
+  assert.match(pairwiseWilcoxonCard.stellDirVor.text, /115 Befragte, 53 werden schlechter\. Vom zweiten zum dritten verbessern sich 108, und 65 .* z ≈ −3,76 statt −5,36/);
+  assert.match(pairwiseWilcoxonCard.genau.paragraphs[2], /r ≈ 0,29/);
+  const s = pairwiseWilcoxonTabs.sample!;
+  if (s.kind !== 'analysis') return assert.fail('Auswertung erwartet');
+  const r = s.result(ctx(rows, columns));
+  assert.equal(r.kurz, 'Nach der Holm-Korrektur sind 3 der 3 Paare bei α = 0,05 auffällig. Den kleinsten Unterschied gibt es zwischen dem zweiten und dem dritten Messzeitpunkt (z ≈ −3,76, p < 0,001).');
+  assert.equal(r.zusatz, '1 gegen 2: 115 besser, 53 schlechter; 1 gegen 3: 145 besser, 31 schlechter; 2 gegen 3: 108 besser, 65 schlechter.');
+  assert.match(s.think[0].explain, /101 statt 145/);
+  assert.match(s.think[1].explain, /135 statt 108/);
 });
