@@ -6,6 +6,7 @@ import type { AlphaStats, Antworten } from '../../../explain/content/b14-faktore
 import { METHODEN_PCA } from '../../../explain/content/b14-faktoren/efa';
 import { VERTRAUEN } from '../../../explain/content/b14-faktoren/allbus';
 import { isMethoden } from '../../../explain/content/b14-faktoren/dimensionality';
+import { equalCorrelation } from '../../../explain/content/b14-faktoren/eigenvalues';
 import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useWidth, useDrag, type Picture } from './kit';
 
 const ITEM = { min: 1, max: 7 };
@@ -144,5 +145,6 @@ export const pictures: Record<string, Picture> = {
   'b14-scree': forCard(p => isMethoden(p.value ?? 0)
     ? <Scree values={METHODEN_PCA.eigen} title="Methoden-Zuversicht, Lehrdatensatz" />
     : <Scree values={VERTRAUEN.eigen} title="Vertrauen, ALLBUS 2023" />),
+  'b14-eigen': forCard(p => <Scree values={equalCorrelation(p.value ?? 0.64)} title={`Fünf Fragen, jedes Paar mit r = ${num(p.value ?? 0.64)}`} />),
   'b14-alpha': forWorkshop(p => <AlphaProfile data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} onChange={p.setData} onWho={p.pickWho} />),
 };

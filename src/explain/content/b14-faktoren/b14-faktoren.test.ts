@@ -12,6 +12,7 @@ import { alphaStats, alphaWerkstatt, KAUM, reliabilityTabs, shiftAll, ZUSAMMEN, 
 import { efa, efaTabs, METHODEN_PCA } from './efa';
 import { beideModelle, factorModel, factorModelTabs, METHODEN_ML } from './factor-model';
 import { dimensionality, dimensionalityTabs } from './dimensionality';
+import { eigenvalues, eigenvaluesTabs, equalCorrelation } from './eigenvalues';
 import { VERTRAUEN } from './allbus';
 import { corMatrix } from './rechnen';
 
@@ -200,6 +201,20 @@ test('B14 Dimensionalität: Texte und Reiter mit den Zahlen aus R', () => {
   assert.equal(r.zusatz, 'Die erste Komponente bündelt 71,2 % der Streuung, die zweite nur 8,3 %.');
   // In R: Variance explained 79.5 % mit zwei Komponenten, 71.2 % mit einer: 8,3 Prozentpunkte dazu.
   assert.ok(close(METHODEN_PCA.eigen[1] / 5 * 100, 8.27, 0.01));
+});
+
+test('B14 Eigenwerte: Karte, Regler und Reiter mit den Zahlen aus R', () => {
+  assert.match(eigenvalues.stellDirVor.text, /erste Eigenwert 3,56\. Die übrigen vier sind klein: 0,41, 0,37, 0,34, 0,31\. .* 3,56 \/ 5 ≈ 71,2 %/);
+  assert.match(eigenvalues.regler!.describe(0.64), /1 \+ 4 · 0,64 = 3,56\. Die erste Komponente bündelt 71,2 %, die anderen vier je 0,36\./);
+  assert.deepEqual(equalCorrelation(0).map(v => Math.round(v * 1e9) / 1e9), [1, 1, 1, 1, 1]);
+  assert.ok(close(equalCorrelation(0.6399357)[0], METHODEN_PCA.eigen[0], 1e-3), 'mittlere Korrelation 0.6399 (R) trifft den ersten Eigenwert fast');
+  assert.ok(close(0.712 * 5, 3.56, 1e-9));
+  const s = eigenvaluesTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = s.result(ctx());
+  assert.match(r.kurz, /^Der erste Eigenwert ist 3,56: Die erste Komponente bündelt 71,2 % .* zwischen 0,31 und 0,41\./);
+  const out = applyOp(rows, 'methoden1', 'outlier', 1, 1), p = methodenPca(out)!;
+  assert.ok(close(p.values.reduce((a, b) => a + b, 0), 5, 1e-9), 'Summe 5');
 });
 
 const allbusFile = process.env.ALLBUS_SAV;

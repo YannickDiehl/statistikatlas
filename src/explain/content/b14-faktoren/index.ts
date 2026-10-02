@@ -5,6 +5,7 @@ import { alphaWerkstatt, reliabilityTabs } from './reliability';
 import { efa, efaTabs } from './efa';
 import { factorModel, factorModelTabs } from './factor-model';
 import { dimensionality, dimensionalityTabs } from './dimensionality';
+import { eigenvalues, eigenvaluesTabs } from './eigenvalues';
 
 export const b14Faktoren: AreaIndex = {
   explanations: {
@@ -12,11 +13,13 @@ export const b14Faktoren: AreaIndex = {
     efa: { kind: 'begriff', card: efa },
     factor_model: { kind: 'begriff', card: factorModel },
     dimensionality: { kind: 'begriff', card: dimensionality },
+    eigenvalues: { kind: 'begriff', card: eigenvalues },
   },
   tabs: {
     reliability: reliabilityTabs,
     efa: efaTabs,
     factor_model: factorModelTabs,
     dimensionality: dimensionalityTabs,
+    eigenvalues: eigenvaluesTabs,
   },
 };
