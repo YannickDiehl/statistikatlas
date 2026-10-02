@@ -9,6 +9,7 @@ import { FUENF } from './shared';
 import { series, seriesTabs } from './series';
 import { pairs, pairsTabs, R_FUENF } from './pairs';
 import { metric, metricTabs } from './metric';
+import { BERUF, nominal, nominalTabs } from './nominal';
 import { surveyColumns } from '../../../domain/survey';
 import { styleProblems } from '../../style';
 
@@ -42,6 +43,12 @@ import { styleProblems } from '../../style';
  *   sapply(c("lernplanung5", "schulabschluss", "erwerbstaetig", "berufsabschluss"), function(v) mean(as.numeric(atlas[[v]])))
  *   #   3.26 1.985 0.685 3.81   (frequency(schulabschluss) druckt mean=1.99)
  *   atlas %>% describe(lernzeit, einkommen, show = "all")      # Mean 7.752, Median 7.600, SD 3.238, N 200
+ *
+ * Nominale Kategorien (nominal):
+ *   table(as.numeric(atlas$berufsabschluss))   # Codes 0 bis 8: 16 29 29 22 27 17 21 22 17
+ *   mean(as.numeric(atlas$berufsabschluss)); mean(8 - as.numeric(atlas$berufsabschluss))   # 3.81; 4.19
+ *   29 / 200                                    # 0.145 (je 14,5 % duale und schulische Berufsausbildung)
+ *   atlas %>% to_label(erwerbstaetig) %>% frequency(erwerbstaetig)   # Nein 63 (31.50 %), Ja 137, total N=200
  */
 
 const rows = createSurvey();
@@ -112,4 +119,18 @@ test('B1 metrisch: Deutung je Skalenniveau mit den Mittelwerten aus R, für jede
     assert.deepEqual(styleProblems(t!, { maxWords: 25, maxSentences: k === 'kurz' ? 3 : undefined }), [], `${c.id} ${k}: ${t}`);
     assert.ok(!/NaN|undefined/.test(t!), `${c.id} ${k}`);
   }
+});
+
+test('B1 nominal: Berufsabschlüsse wie in R, Umdrehen der Codes ändert keine Gruppe', () => {
+  const codes = col('berufsabschluss');
+  assert.deepEqual([0, 1, 2, 3, 4, 5, 6, 7, 8].map(k => codes.filter(v => v === k).length), [...BERUF]);
+  assert.ok(close(codes.reduce((a, b) => a + b, 0) / 200, 3.81, 1e-9), 'Mittelwert der Codes wie in R');
+  assert.match(nominal.stellDirVor.text, /29 Befragte nennen eine duale Berufsausbildung \(Code 1\), 22 .* 27 einen Bachelor \(Code 4\)\. .* Mittelwert der Codes ist 3,81/);
+  assert.match(nominal.bausteine[2].rechnung!, /je 29 von 200, das sind je 14,5 %/);
+  const tab = analysis(nominalTabs.sample), at = (data = rows) => tab.result(ctx(data, { x: ['berufsabschluss'] }));
+  assert.match(at().kurz, /„Duale Berufsausbildung“ und „Schulische Berufsausbildung“ \(je 29 von 200\)/);
+  assert.match(at().fachlich, /9 besetzten Kategorien.*Mittelwert der Codes \(3,81\)/);
+  assert.match(nominalTabs.sample!.think[0].explain, /von 3,81 auf 4,19/);
+  assert.match(at(applyOp(rows, 'berufsabschluss', 'reverse')).fachlich, /Mittelwert der Codes \(4,19\)/);
+  assert.match(at(applyOp(rows, 'berufsabschluss', 'constant', 1)).kurz, /„Duale Berufsausbildung“ \(200 von 200\)/);
 });
