@@ -7,6 +7,7 @@ import type { SampleCtx, SampleTab } from '../../types';
 import { ABSCHLUSS, HAUSHALT, SCHLAF, WISSEN, meanSd } from './gemeinsam';
 import { probability, probabilityTabs } from './probability';
 import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
+import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic_independence';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -91,4 +92,24 @@ test('B6 conditional_probability: 19 von 40 und 19 von 82, Auswertung und Vorher
   assert.equal(r.kurz, 'Von den 40 Befragten mit Abitur haben 19 eine Weiterbildung gemacht, also 47,5 %. Unter allen 200 sind es 41 %. Umgekehrt haben von den 82 mit Weiterbildung 19 Abitur: 23,2 %.');
   assert.ok(close(tab.value!(ctxFor(tab))!, 0.475, 1e-12));
   assert.ok(close(tab.think[1].expect.measure!(ctxFor(tab))!, 6.5, 1e-9), 'Abstand 6,5 Prozentpunkte');
+});
+
+/*
+ *   17 / 82; 25 / 118; 42 / 200; 19 / 82; 21 / 118               # 0.2073171, 0.2118644, 0.21, 0.2317073, 0.1779661
+ *   0.2 * 0.41; 0.2 * 0.41 * 200                                  # 0.082, 16.4 (erwartet bei Unabhängigkeit)
+ *   prop.table(table(s, w), 1)[, 2]; mean(w)                       # 40.5 30.0 45.9 41.5 47.5 %; 41 %: größter Abstand 11 Punkte (Hauptschule)
+ *   atlas %>% crosstab(row = schulabschluss, col = weiterbildung, percentages = "col")   # erste Zeile: 21.2% | 20.7% | 21.0%
+ */
+test('B6 stochastic_independence: fast gleiche Anteile ohne Abschluss, Produktregel und größter Abstand wie in R', () => {
+  const card = stochasticIndependence;
+  assert.deepEqual(card.stellDirVor.figures!.map(f => f.value), ['21 %', '20,7 %', '23,2 %', '17,8 %']);
+  assert.equal(card.bausteine[1].rechnung, 'Erwartet: P(Abitur) · P(Weiterbildung) = 20 % · 41 % = 8,2 %, also 16,4 von 200. Beobachtet: 19 von 200.');
+  assert.match(card.check.diagnose[3]!, /12 von 200, also 6 %/);
+  const tab = stochasticIndependenceTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, 'Insgesamt haben 41 % eine Weiterbildung gemacht. Am weitesten davon entfernt ist die Gruppe Hauptschulabschluss mit 30 %, also 11 Prozentpunkte. Exakt unabhängig sind die beiden Merkmale in diesen Daten nicht.');
+  assert.match(r.fachlich, /ohne Schulabschluss 40,5 %, Hauptschulabschluss 30 %, mittlerer Abschluss 45,9 %, Fachhochschulreife 41,5 %, Abitur 47,5 %/);
+  assert.equal(r.zusatz, 'Bei Unabhängigkeit erwartet man unter den 40 mit Abitur 16,4 mit Weiterbildung; beobachtet sind es 19.');
+  assert.ok(close(tab.value!(ctxFor(tab))!, 11, 1e-9), 'größter Abstand 11 Prozentpunkte');
 });
