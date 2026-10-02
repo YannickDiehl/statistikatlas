@@ -31,7 +31,7 @@ const AUFRUF: Record<string, string[]> = {
 export const conversion: TableTool = {
   concept: 'conversion',
   wofuer: 'In R kann dieselbe Antwort verschieden gespeichert sein: als Zahl 1, als Zahl mit Label 1 [Ja], als Faktor Ja oder als Text Ja. Was R damit tun kann, hängt von dieser Form ab, etwa ob es einen Mittelwert rechnet.',
-  kurz: 'Datentypen umwandeln heißt: dieselbe Antwort in eine andere Form bringen. Mit Zahlen rechnet R, Faktoren und Text zählt es nur.',
+  kurz: 'Datentypen umwandeln heißt: dieselbe Antwort in eine andere Form bringen, etwa von der Zahl 1 zum Text Ja. Mit Zahlen rechnet R, Antworttexte zählt es nur.',
   mut: 'Du rechnest nichts aus. Du entscheidest nur, in welcher Form R eine Antwort speichert.',
   columns: [{ key: 'person', label: 'Person' }, { key: 'erwerbstaetig', label: 'erwerbstaetig <dbl+lbl>' }],
   rows: FUENF.map(r => ({ person: r.person, erwerbstaetig: `${r.erwerbstaetig} [${JA_NEIN[r.erwerbstaetig]}]` })),
@@ -54,7 +54,7 @@ export const conversion: TableTool = {
       title: 'Die Zielform wählen',
       was: 'to_numeric() behält nur die Zahl, to_label() macht einen Faktor mit den Antworttexten, to_character() reinen Text.',
       warum: 'Für Mittelwerte brauchst du Zahlen. Für Tabellen, Grafiken und Gruppenvergleiche sind Faktoren mit Texten bequemer.',
-      acht: 'to_numeric() macht eine nominale Variable nicht metrisch. Der Mittelwert der Codes 0 bis 4 beim Schulabschluss bedeutet nichts.',
+      acht: 'to_numeric() macht eine nominale Variable nicht metrisch. Der Mittelwert der Codes 0 bis 4 beim Schulabschluss ist keine Menge an Bildung.',
       fach: 'Ein Faktor speichert Kategorien als Stufen mit Namen; intern trägt jede Stufe eine laufende Nummer ab 1.',
       concept: 'conversion',
     },
@@ -116,6 +116,7 @@ export const conversion: TableTool = {
     paragraphs: [
       'to_labelled() macht aus einer Zahl wieder einen gelabelten Vektor: labels = setzt die Antworttexte, label = den Fragetext.',
       'Für Gruppenvergleiche und Regressionen mit Vergleichsgruppe nimm ungeordnete Faktoren. Mit to_label(ordered = TRUE) entsteht ein geordneter Faktor; R gibt ihm in Modellen oft polynomiale Kontraste, die schwerer zu deuten sind.',
+      'to_character() vergisst die Reihenfolge der Codes: frequency() sortiert die Texte dann nach dem Alphabet, Ja vor Nein. Ein Faktor behält die Reihenfolge der Codes.',
       'describe() rechnet nur mit Zahlen. Nach to_label() meldet mariposa: Variable `erwerbstaetig` is not numeric.',
       'Umwandeln ändert nie das Skalenniveau. to_numeric() macht eine nominale Variable nicht metrisch, auch wenn R danach mit ihren Codes rechnet.',
     ],

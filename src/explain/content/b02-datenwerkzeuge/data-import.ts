@@ -9,7 +9,7 @@ const P = ALLBUS.pt03;
 export const dataImport: ConceptCard = {
   concept: 'data_import',
   wofuer: 'Du hast eine Datei mit Befragungsdaten, etwa den ALLBUS als SPSS-Datei. Bevor R damit rechnen kann, muss es die Datei lesen. Dabei entscheidet sich, ob Fragetexte, Antworttexte und Codes für fehlende Angaben mitkommen.',
-  kurz: 'Einlesen holt eine Datei als Tabelle nach R. Die passende Funktion zum Dateiformat bringt auch Labels und Codes für fehlende Angaben mit.',
+  kurz: 'Einlesen holt eine Datei als Tabelle nach R. Die passende Funktion zum Dateiformat bringt auch Fragetexte, Antworttexte und Codes für fehlende Angaben mit.',
   stellDirVor: {
     text: `Du liest den ALLBUS 2023 mit read_spss() ein. R zeigt ${count(ALLBUS.befragte)} Befragte und ${ALLBUS.spalten} Spalten. Beim Vertrauen in den Bundestag (pt03, Skala 1 bis 7) erkennt R die Codes −42, −11 und −9 als fehlend: ${count(P.gueltig)} gültige Antworten, im Schnitt ${num(P.mittel)}, ungewichtet. Kämen dieselben Zahlen ohne diese Information an, rechnete R die Codes mit, und der Schnitt fiele auf ${num(P.mittelMitCodes)}.`,
     figures: [

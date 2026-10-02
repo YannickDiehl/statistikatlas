@@ -96,6 +96,7 @@ test('Labels: Tabelle nachher, Mittelwert und Häufigkeiten wie in R', () => {
  *   Schulabschluss P001 bis P005: as.numeric(to_label(…)) 1 4 3 3 1, to_numeric(to_label(…)) 0 3 2 2 0
  *   200 Befragte: mean(atlas$erwerbstaetig) 0.685 (137 Ja, 63 Nein), as.numeric(to_label(…)) im Mittel 1.685
  *   atlas %>% to_label(erwerbstaetig) %>% mutate(erwerbstaetig = as.numeric(erwerbstaetig)) %>% frequency(erwerbstaetig)   # mean=1.69
+ *   atlas %>% to_character(erwerbstaetig) %>% frequency(erwerbstaetig)  # Ja 137 vor Nein 63: Texte nach dem Alphabet, ohne mean=
  *   atlas %>% to_label(erwerbstaetig) %>% describe(erwerbstaetig, show = "mean")
  *   # Fehler: Variable `erwerbstaetig` is not numeric. `describe()` only works with numeric variables.
  */

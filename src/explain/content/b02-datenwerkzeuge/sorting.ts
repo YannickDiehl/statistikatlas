@@ -35,7 +35,7 @@ const SORT: Record<string, string[]> = {
 export const sorting: TableTool = {
   concept: 'sorting',
   picture: 'b02-sortieren-paare',
-  wofuer: 'Wer von den ersten fünf Befragten hat in den letzten sieben Tagen am wenigsten gelernt, wer am meisten, und welcher Wert liegt der Reihe nach in der Mitte? Sortierst du sie nach ihrer Lernzeit, kannst du es ablesen.',
+  wofuer: 'Wer von den ersten fünf Befragten hat in den letzten sieben Tagen am wenigsten gelernt, wer am meisten, und welcher Wert ist der Reihe nach der mittlere? Sortierst du sie nach ihrer Lernzeit, kannst du es ablesen.',
   kurz: 'Sortieren stellt die Werte der Größe nach in eine Reihe. Den Wert an Position i schreibt man x₍ᵢ₎: x₍₁₎ ist der kleinste, x₍ₙ₎ der größte.',
   mut: 'Hier rechnest du nichts. Du stellst nur fünf Zahlen der Größe nach auf, wie Menschen in einer Schlange.',
   columns: [{ key: 'person', label: 'Person' }, { key: 'lernzeit', label: 'lernzeit (h)' }, { key: 'wissenstest', label: 'wissenstest' }],
@@ -63,7 +63,7 @@ export const sorting: TableTool = {
       concept: 'sorting',
     },
     {
-      title: 'Ränder und Mitte ablesen',
+      title: 'Ränder und mittleren Wert ablesen',
       was: `Bei fünf Werten steht der mittlere Wert der Reihe nach an Position 3: x₍₃₎ = ${num(nachLernzeit[2].lernzeit)} h. Das ist der Median.`,
       warum: 'Median, Quartile und Spannweite lesen alle an Positionen der sortierten Reihe ab.',
       acht: `Sortieren behält die Werte. Ränge ersetzen sie durch ihre Positionen: Aus ${num(nachLernzeit[2].lernzeit)} h würde die 3.`,
