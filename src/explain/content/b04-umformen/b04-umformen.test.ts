@@ -13,6 +13,7 @@ import { ssOf, tabsSs } from './ss';
 import { LERNZEIT, proTag, skalieren, tabsScaling } from './skalieren';
 import { bridgeRaenge, raenge, rankStats } from './raenge';
 import { pompLernplanung, pomps, tabsPomps } from './pomps';
+import { ITEMS, itemMeans, tabsRowOperations, zeilen } from './zeilen';
 
 /*
  * Referenzwerte des Bereichs B4 „Umformen“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -70,6 +71,19 @@ import { pompLernplanung, pomps, tabsPomps } from './pomps';
  *   atlas %>% mutate(pomp = pomps(lernplanung5, scale_min = 2, scale_max = 5))   # Warnung: `lernplanung5` has value outside the scale range 2-5: 1.
  *   atlas %>% mutate(pomp = pomps(lernplanung5, scale_min = 1, scale_max = 5)) %>%
  *     describe(lernplanung5, pomp, show = c("mean", "min", "max"))               # pomp 56.500 0.000 100.000
+ * Rechnen innerhalb einer Person (Methoden-Zuversicht, methoden1 bis methoden5):
+ *   atlas %>% filter(id %in% c("P001", "P002", "P003", "P004", "P007")) %>%
+ *     mutate(methoden_mittel = row_means(pick(methoden1, methoden2, methoden3, methoden4, methoden5), min_valid = 5),
+ *            methoden_summe = row_sums(pick(methoden1, methoden2, methoden3, methoden4, methoden5), min_valid = 5),
+ *            methoden_zustimmung = row_count(pick(methoden1, methoden2, methoden3, methoden4, methoden5), count = c(5, 6, 7)))
+ *   #   P001 2 3 3 2 3 → 2.6 13 0; P002 5 5 5 5 5 → 5 25 5; P003 5 5 3 4 4 → 4.2 21 2; P004 4 4 4 5 4 → 4.2 21 1; P007 3 2 1 1 3 → 2 10 0
+ *   M <- sapply(1:5, function(i) as.numeric(atlas[[paste0("methoden", i)]])); score <- rowMeans(M)
+ *   mean(score); sd(score); min(score); max(score)                            # 4.012 1.201446 1.2 7
+ *   sum(score > 4); sum(score < 4); sum(score == 4)                           # 101 85 14
+ *   M7 <- M; M7[, 1] <- 7; mean(rowMeans(M7)); M1 <- M; M1[, 1] <- 1; mean(rowMeans(M1))   # 4.618; 3.418
+ *   table(rowSums(sapply(c("buch", "video", "kurs"), function(n) as.numeric(atlas[[paste0("quelle_", n)]]))))   # 0: 17, 1: 68, 2: 76, 3: 39
+ *   atlas %>% mutate(m = row_means(pick(methoden1, methoden2), min_valid = 3))    # Warnung: `min_valid` (3) is greater than the number of items (2). All rows will be "NA".
+ *   atlas %>% mutate(m = row_means(pick(methoden1, methoden2), min_valid = 2.5))  # Fehler: `min_valid` must be a positive whole number of items.
  */
 
 const rows = createSurvey();
@@ -207,4 +221,28 @@ test('B4 POMP: Formel und Lernplanung der 200 Befragten wie in R', () => {
   const out = CATALOG_OUTPUT['pomps:0'].output;
   assert.deepEqual(['56.500', 'Mean', '0.000', '100.000'].map(m => locate(out, m)?.text), ['56.500', '3.260', '0.000', '100.000']);
   assert.match(out, /pomp {10}56\.500 {2}0\.000 {2}100\.000/);
+});
+
+test('B4 Rechnen innerhalb einer Person: fünf Befragte und alle 200 wie in R', () => {
+  const byId = new Map(rows.map(r => [r.id, r.values]));
+  for (const r of zeilen.rows) for (const k of ITEMS) assert.equal(byId.get(String(r.person))![k], r[k], `${r.person} ${k}`);
+  const show = (o: string) => zeilen.apply(zeilen.rows, o).rows.map(r => r[`methoden_${o}`]);
+  assert.deepEqual(show('mittel'), ['2,6', '5', '4,2', '4,2', '2']);
+  assert.deepEqual(show('summe'), ['13', '25', '21', '21', '10']);
+  assert.deepEqual(show('zustimmung'), ['0', '5', '2', '1', '0']);
+  assert.deepEqual(['mittel', 'summe', 'zustimmung'].map(o => zeilen.check.answer(o)), [4.2, 21, 2]);
+  assert.match(zeilen.check.diagnose('mittel', 5.25)!, /^Fast! Du hast durch 4 geteilt/);
+  assert.match(zeilen.rCode('zustimmung'), /mutate\(methoden_zustimmung = row_count\(pick\(methoden1, methoden2, methoden3, methoden4, methoden5\), count = c\(5, 6, 7\)\)\)/);
+  const c = { rows, columns: { x: ['methoden1'] } }, m = itemMeans(c);
+  assert.ok(close(m.mean, 4.012, 1e-9) && close(m.sd, 1.201446, 1e-6) && close(m.min, 1.2, 1e-9) && m.max === 7, 'Itemmittel wie in R');
+  assert.deepEqual([m.above, m.below], [101, 85]);
+  assert.ok(close(itemMeans({ ...c, rows: applyOp(rows, 'methoden1', 'constant', 7) }).mean, 4.618, 1e-9) && close(itemMeans({ ...c, rows: applyOp(rows, 'methoden1', 'constant', 1) }).mean, 3.418, 1e-9));
+  const sample = tabsRowOperations.sample!;
+  if (sample.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = sample.result(c);
+  assert.equal(r.kurz, 'Die 200 Itemmittel reichen von 1,2 bis 7; im Schnitt liegen sie bei 4,01. 101 Befragte liegen über der Skalenmitte 4 („Weder noch“), 85 darunter.');
+  assert.equal(r.zusatz, 'P002 hat 5, 5, 5, 5, 5 angekreuzt und bekommt 5.');
+  const quellen = [0, 1, 2, 3].map(k => rows.filter(row => row.values.quelle_buch + row.values.quelle_video + row.values.quelle_kurs === k).length);
+  assert.deepEqual(quellen, [17, 68, 76, 39]);
+  assert.match(zeilen.genau.paragraphs[2], /17 Befragte keine der drei Quellen gewählt, 39 alle drei/);
 });
