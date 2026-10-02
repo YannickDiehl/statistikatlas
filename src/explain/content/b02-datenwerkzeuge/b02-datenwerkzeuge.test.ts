@@ -9,6 +9,7 @@ import { applyOp } from '../../sample';
 import type { SampleCtx } from '../../types';
 import { ALLBUS, FUENF } from './daten';
 import { LABELS_MITTEL, labels, labelsTabs } from './labels';
+import { CONVERSION_MITTEL, conversion, conversionTabs } from './conversion';
 
 /*
  * Referenzwerte des Bereichs B2, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -75,6 +76,39 @@ test('Labels: Tabelle nachher, Mittelwert und Häufigkeiten wie in R', () => {
   assert.match(out, /erwerbstaetig \(Erwerbstätig\)/);
   assert.match(out, /\|\s+0 \| Nein\s+\|\s+63 \|/);
   assert.match(out, /mean=0\.69/);
+});
+
+/*
+ * Datentypen umwandeln (erwerbstaetig, P001 bis P005):
+ *   five %>% to_numeric(erwerbstaetig)                          # <dbl> 1 1 0 1 1, mean 0.8
+ *   f <- five %>% to_label(erwerbstaetig)                       # <fct> Ja Ja Nein Ja Ja, levels Nein, Ja
+ *   as.numeric(f$erwerbstaetig)                                 # 2 2 1 2 2, mean 1.8
+ *   mean(f$erwerbstaetig)                                       # NA, Warnung: Argument ist weder numerisch noch boolesch: gebe NA zurück
+ *   five %>% to_character(erwerbstaetig)                        # <chr> Ja Ja Nein Ja Ja, mean ebenso NA
+ *   f %>% to_numeric(erwerbstaetig)                             # wieder 1 1 0 1 1
+ *   Schulabschluss P001 bis P005: as.numeric(to_label(…)) 1 4 3 3 1, to_numeric(to_label(…)) 0 3 2 2 0
+ *   200 Befragte: mean(atlas$erwerbstaetig) 0.685 (137 Ja, 63 Nein), as.numeric(to_label(…)) im Mittel 1.685
+ *   atlas %>% to_label(erwerbstaetig) %>% mutate(erwerbstaetig = as.numeric(erwerbstaetig)) %>% frequency(erwerbstaetig)   # mean=1.69
+ *   atlas %>% to_label(erwerbstaetig) %>% describe(erwerbstaetig, show = "mean")
+ *   # Fehler: Variable `erwerbstaetig` is not numeric. `describe()` only works with numeric variables.
+ */
+test('Datentypen umwandeln: Tabelle nachher und Mittelwerte wie in R', () => {
+  assert.deepEqual([CONVERSION_MITTEL.codes, CONVERSION_MITTEL.stufen].map(x => Math.round(x * 1e9) / 1e9), [0.8, 1.8]);
+  assert.deepEqual(conversion.apply(conversion.rows, 'zahl').rows.map(r => r.erwerbstaetig), [1, 1, 0, 1, 1]);
+  assert.deepEqual(conversion.apply(conversion.rows, 'faktor').rows.map(r => r.erwerbstaetig), ['Ja', 'Ja', 'Nein', 'Ja', 'Ja']);
+  assert.deepEqual(conversion.apply(conversion.rows, 'text').rows.map(r => r.erwerbstaetig), ['Ja', 'Ja', 'Nein', 'Ja', 'Ja']);
+  assert.deepEqual(conversion.apply(conversion.rows, 'stufen').rows.map(r => r.erwerbstaetig), [2, 2, 1, 2, 2]);
+  assert.deepEqual(conversion.options.map(o => conversion.check.answer(o.id)), [CONVERSION_MITTEL.codes, 'NA', 'NA', CONVERSION_MITTEL.stufen]);
+  assert.equal(conversion.check.diagnose('faktor', 'NA'), null);
+  const s = conversionTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = s.result(ctx(rows, 'erwerbstaetig'));
+  assert.match(r.kurz, /Mittelwert 0,69: 68,5 % der Befragten .* 137-mal „Ja“ und 63-mal „Nein“/);
+  assert.match(r.fachlich, /Mittelwert 0,69\. .*Mittelwert 1,69\.$/);
+  assert.ok(close(s.value!(ctx(applyOp(rows, 'erwerbstaetig', 'reverse'), 'erwerbstaetig'))!, 0.315, 1e-12), 'getauscht: 63 / 200');
+  const out = CATALOG_OUTPUT['conversion:0'].output;
+  assert.match(out, /\| Nein\s+\|\s+63 \|\s+31\.50 \|/);
+  assert.doesNotMatch(out, /mean=/);
 });
 
 // ALLBUS 2023 nur, wenn die eigene GESIS-Datei da ist (ALLBUS_SAV); die Aggregate stehen fest in ./daten.ts.
