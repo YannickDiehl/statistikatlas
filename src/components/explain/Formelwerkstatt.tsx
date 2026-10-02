@@ -128,6 +128,9 @@ export function StepCard(p: StepCardProps) {
 function StepCardView<D, S>({ card, current, onConcept, onOpen, workshop: w }: StepCardProps & { workshop: Workshop<D, S> }) {
   const v = w.variants[card.variant], step = w.steps[card.step - 1];
   const ctx: Ctx<S> = { s: w.compute(w.presets[0].data), who: 0, names: w.names };
+  // In der Reiterleiste: „Weiter mit 200 Befragten“ öffnet die Brücke bei diesem Schritt (wie die Werkstatt ihren meldet).
+  const link = useTabLink();
+  useEffect(() => { link.onStep?.(card.step); }, [card.step, link.onStep]);
   // Die Lernkarte beginnt mit h3; unter dem Titel des Begriffs (h1) hält eine Überschrift h2 die Gliederung lückenlos (IB16).
   return (
     <div className="xw xw-stepcard">
