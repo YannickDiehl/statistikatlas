@@ -5,8 +5,7 @@ import type { ConceptTabs, SampleCtx, SentenceTemplate } from '../../types';
 import { close, num, paren, pct, unit } from '../../format';
 import { baseSurvey } from '../../sample';
 import { ref, titleFor } from '../../../domain/learning';
-import { pnorm, shown2 } from './dist';
-import { series } from './normal';
+import { pnorm, series, shown2 } from './dist';
 
 export type ZValues = { x: number; mu: number; sigma: number };
 export type ZStats = ZValues & { diff: number; z: number; zr: number; area: number; count: number; n: number };

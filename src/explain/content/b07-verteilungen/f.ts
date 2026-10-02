@@ -39,15 +39,15 @@ export const fVerteilung: ConceptCard = {
     {
       title: 'Die Streuung zwischen den Gruppen messen',
       was: 'Wie weit liegen die fünf Gruppenmittel auseinander? Das misst die mittlere Quadratsumme zwischen den Gruppen: ihre Quadratsumme geteilt durch ihre Freiheitsgrade, eine Art Varianz der Gruppenmittel.',
-      rechnung: `Quadratsumme zwischen den Gruppen ${num(A.ssb)}: die quadrierten Abstände der Gruppenmittel zur Mitte aller 200, für jede Person gezählt. Geteilt durch 5 Gruppen minus 1, die Zähler-Freiheitsgrade: ${num(A.ssb)} / ${A.df1} ≈ ${num(A.msb, 1)}.`,
+      rechnung: `Quadratsumme zwischen den Gruppen ${num(A.ssb)}: die quadrierten Abstände der Gruppenmittel zur Mitte aller 200, für jede Person zusammengezählt. Geteilt durch 5 Gruppen minus 1, die Zähler-Freiheitsgrade: ${num(A.ssb)} / ${A.df1} ≈ ${num(A.msb, 1)}.`,
       warum: 'Lägen alle Gruppenmittel gleich, wäre diese Streuung 0. Je weiter sie auseinanderliegen, desto größer wird sie.',
       acht: 'Auch ohne echte Unterschiede liegen die Gruppenmittel einer Stichprobe nie genau gleich. Etwas Streuung zwischen den Gruppen gibt es immer.',
       concept: 'group_variation',
     },
     {
       title: 'Die Streuung innerhalb der Gruppen messen',
-      was: 'Wie stark schwankt die Lernzeit innerhalb jeder Gruppe? Das misst die mittlere Quadratsumme innerhalb der Gruppen: die quadrierten Abstände zum eigenen Gruppenmittel, geteilt durch die Freiheitsgrade.',
-      rechnung: `Quadratsumme innerhalb der Gruppen ${num(A.ssw)}: die quadrierten Abstände jeder Person zum Mittel ihrer Gruppe. Geteilt durch 200 Befragte minus 5 Gruppen, die Nenner-Freiheitsgrade: ${num(A.ssw)} / ${A.df2} ≈ ${num(A.msw)}.`,
+      was: 'Wie stark schwankt die Lernzeit innerhalb jeder Gruppe? Das misst die mittlere Quadratsumme innerhalb der Gruppen: die quadrierten Abstände zum eigenen Gruppenmittel, zusammengezählt und geteilt durch die Freiheitsgrade.',
+      rechnung: `Quadratsumme innerhalb der Gruppen ${num(A.ssw)}: die quadrierten Abstände jeder Person zum Mittel ihrer Gruppe, zusammengezählt. Geteilt durch 200 Befragte minus 5 Gruppen, die Nenner-Freiheitsgrade: ${num(A.ssw)} / ${A.df2} ≈ ${num(A.msw)}.`,
       warum: 'Diese Streuung zeigt, wie stark die Befragten innerhalb einer Gruppe auseinanderliegen. Mit ihr wird die Streuung zwischen den Gruppen verglichen.',
       acht: 'Zähler und Nenner haben verschiedene Freiheitsgrade. Vertauschst du sie, gilt eine andere F-Verteilung.',
       concept: 'ss',
@@ -124,7 +124,9 @@ export const fVerteilung: ConceptCard = {
 /** Einfaktorielle ANOVA der Lernzeit nach Schulabschluss für die aktuellen Daten. */
 export function fFit(c: SampleCtx) {
   const y = sampleColumn(c.rows, c.columns.x?.[0] ?? 'lernzeit'), g = sampleColumn(c.rows, c.columns.group?.[0] ?? 'schulabschluss');
-  const a = onewayAnova(y, g)!, means = a.groups.map(x => x.mean);
+  const a = onewayAnova(y, g);
+  if (!a) return null;
+  const means = a.groups.map(x => x.mean);
   return {
     k: a.levels.length, df1: a.dfBetween, df2: a.dfWithin, between: a.ssBetween, inside: a.ssWithin, msb: a.msBetween, msw: a.msWithin,
     f: a.F, p: a.p, crit: qf(0.95, a.dfBetween, a.dfWithin), lowest: Math.min(...means), highest: Math.max(...means),
@@ -135,9 +137,10 @@ export const fTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { x: 'lernzeit', group: 'schulabschluss' },
     kurz: 'Dieselbe Rechnung mit allen 200 Befragten: Unterscheidet sich die Lernzeit je nach Schulabschluss?',
-    value: c => fFit(c).f,
+    value: c => fFit(c)?.f ?? null,
     result: c => {
       const f = fFit(c);
+      if (!f) return { kurz: 'Alle Befragten stehen jetzt in einer einzigen Gruppe. Dann gibt es nichts zu vergleichen.', fachlich: 'Mit nur einer Gruppe hat die ANOVA keine Zähler-Freiheitsgrade; F ist nicht definiert.' };
       return {
         kurz: `Die Streuung zwischen den ${f.k} Gruppen ist ${num(f.f)}-mal so groß wie die Streuung innerhalb: F = ${num(f.f)} bei ${f.df1} und ${f.df2} Freiheitsgraden. Ohne Unterschiede lägen 95 % der F-Werte unter ${num(f.crit)}. Gäbe es keine Unterschiede zwischen den Gruppen, käme ein mindestens so großes F ${often(f.p)} Stichproben vor.`,
         fachlich: `Einfaktorielle ANOVA: mittlere Quadratsumme zwischen den Gruppen ${num(f.msb)}, innerhalb ${num(f.msw)}, F(${f.df1}, ${f.df2}) ≈ ${num(f.f)}, ${pText(f.p)}.`,

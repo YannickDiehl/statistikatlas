@@ -3,8 +3,8 @@
 // Eigene Stile in src/explain/areas/b07-verteilungen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { num, pct } from '../../../explain/format';
 import { baseSurvey } from '../../../explain/sample';
-import { dbinom, dchisq, dF, dhyper, dnorm, dt, prob, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
-import { inside, series } from '../../../explain/content/b07-verteilungen/normal';
+import { series, dbinom, dchisq, dF, dhyper, dnorm, dt, prob, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
+import { inside } from '../../../explain/content/b07-verteilungen/normal';
 import { areaText, type ZStats } from '../../../explain/content/b07-verteilungen/standard-normal';
 import { SCHLAF_T, tCrit } from '../../../explain/content/b07-verteilungen/t';
 import { CHI } from '../../../explain/content/b07-verteilungen/chi-square';

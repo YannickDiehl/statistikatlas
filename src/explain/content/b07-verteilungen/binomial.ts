@@ -20,6 +20,10 @@ const powers = (s: BinStats) => `${num(s.p)}${sup(s.k)} · ${num(s.q)}${sup(s.n 
 export const likeliest = (modes: number[]) => modes.length > 1
   ? `Am wahrscheinlichsten sind ${modes.join(' und ')} Erfolge, beide gleich wahrscheinlich.`
   : modes[0] === 1 ? 'Am wahrscheinlichsten ist 1 Erfolg.' : `Am wahrscheinlichsten sind ${modes[0]} Erfolge.`;
+/** Eine Reihenfolge der Erfolge; bei k = 0, k = n oder n = 1 gibt es nur eine. */
+const order = (s: BinStats) => s.n === 1 ? `Hier gibt es nur eine Reihenfolge: ${s.k === 1 ? 'ein Erfolg' : 'ein Misserfolg'}.`
+  : s.k === 0 ? 'Hier gibt es nur eine Reihenfolge: lauter Misserfolge.' : s.k === s.n ? 'Hier gibt es nur eine Reihenfolge: lauter Erfolge.'
+  : `Zum Beispiel erst ${unit(s.k, 'Erfolg', 'Erfolge')}, dann ${unit(s.n - s.k, 'Misserfolg', 'Misserfolge')}.`;
 const persons = (n: number) => n === 1 ? 'einer zufällig ausgewählten Person' : `${n} zufällig ausgewählten Personen`;
 
 export const binomial: SentenceTemplate<BinValues, BinStats> = {
@@ -60,7 +64,7 @@ export const binomial: SentenceTemplate<BinValues, BinStats> = {
     ];
     const step3 = value(prob(s.one)) * s.c, fits = prob(step3) === prob(s.P);
     return [
-      { title: 'Eine Reihenfolge ansehen', text: `Zum Beispiel ${s.k === 0 ? 'lauter Misserfolge' : s.k === s.n ? 'lauter Erfolge' : `erst ${unit(s.k, 'Erfolg', 'Erfolge')}, dann ${unit(s.n - s.k, 'Misserfolg', 'Misserfolge')}`}. Weil die Versuche unabhängig sind, wird malgenommen: ${powers(s)} ≈ ${prob(s.one)}.` },
+      { title: 'Eine Reihenfolge ansehen', text: `${order(s)} ${s.n > 1 ? 'Weil die Versuche unabhängig sind, wird malgenommen' : 'Ihre Wahrscheinlichkeit'}: ${powers(s)} ≈ ${prob(s.one)}.` },
       { title: 'Die Reihenfolgen zählen', text: `Auf wie viele Arten lassen sich ${unit(s.k, 'Erfolg', 'Erfolge')} auf ${unit(s.n, 'Platz', 'Plätze')} verteilen? C(${s.n}, ${s.k}) = ${s.c}.` },
       { title: 'Beides malnehmen', text: `${fits ? `${s.c} · ${prob(s.one)}` : `${s.c} · ${powers(s)}`} ≈ ${prob(s.P)}. Genau ${s.k} von ${s.n} kämen ${often(s.P)} solcher Stichproben vor.` },
     ];
@@ -76,7 +80,7 @@ export const binomial: SentenceTemplate<BinValues, BinStats> = {
     { label: 'p = 0,5', mark: 'p', apply: v => ({ ...v, p: 0.5 }) },
     { label: 'Beispiel von oben', mark: 'n', apply: () => ({ ...BIN_START }) },
   ],
-  compare: s => `Im Schnitt erwartest du n · p = ${s.n} · ${num(s.p)} = ${num(s.e)} Erfolge. ${likeliest(s.modes)}`,
+  compare: s => `Im Schnitt erwartest du n · p = ${s.n} · ${num(s.p)} = ${unit(s.e, 'Erfolg', 'Erfolge')}. ${likeliest(s.modes)}`,
   check: {
     question: 'Wie wahrscheinlich sind genau 2 Erfolge bei 3 Versuchen mit p = 0,5? Zwei Nachkommastellen reichen.',
     answer: 0.375, tolerance: 0.011,

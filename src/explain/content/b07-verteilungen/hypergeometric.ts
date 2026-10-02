@@ -3,7 +3,7 @@
 // Grenzfall Vorlage: Die Formel ist ein Zählen von Auswahlen, das als Rechnung in zwei Bausteinen steht; der Kern ist
 // die Idee „ohne Zurücklegen“ im Vergleich zur Binomialverteilung. Deshalb Begriffskarte mit einem Regler für n.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
-import { num, pct, unit } from '../../format';
+import { fixed, num, unit } from '../../format';
 import { sampleColumn } from '../../sample';
 import { dbinom, dhyper, fisherTest, often, prob, pValue } from './dist';
 
@@ -140,7 +140,7 @@ export const hyperTabs: ConceptTabs = {
         kurz: `Von den ${f.row1} Befragten mit Weiterbildung sind ${f.a} erwerbstätig; bei festen Summen je Zeile und Spalte wären ${num(f.expected)} zu erwarten. Gäbe es keinen Zusammenhang, käme eine mindestens so große Abweichung ${often(f.p)} Stichproben vor.`,
         fachlich: `Exakter Test von Fisher, zweiseitig: Vierfeldertafel ${f.a}, ${f.b}, ${f.c}, ${f.d}. Bei festen Randsummen ist die erste Zelle hypergeometrisch verteilt mit Erwartungswert ${num(f.expected)}; p ${pValue(f.p)}.`,
         zusatz: f.row1 > 0 && rest > 0
-          ? `Erwerbstätig sind ${pct(f.a / f.row1)} der Befragten mit und ${pct(f.c / rest)} der Befragten ohne Weiterbildung.`
+          ? `Erwerbstätig sind ${fixed(f.a / f.row1 * 100, 1)} % der Befragten mit und ${fixed(f.c / rest * 100, 1)} % der Befragten ohne Weiterbildung.`
           : 'Alle stehen jetzt in einer Zeile der Tafel; einen Vergleich gibt es nicht mehr.',
       };
     },

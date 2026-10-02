@@ -5,9 +5,8 @@
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num, unit } from '../../format';
 import { ref, titleFor } from '../../../domain/learning';
-import { often, pnorm, pt, pValue, qt } from './dist';
+import { often, pnorm, pt, pValue, qt, series } from './dist';
 import { oneSampleT } from '../../../tasks/kit/means';
-import { series } from './normal';
 
 /** Schlafdauer gegen 7 Stunden (R: t.test(x, mu = 7)); Unterschied und Standardfehler in Minuten. */
 export const SCHLAF_T = { mean: 7.0825, diffMin: 4.95, seMin: 3.47794, t: 1.423256, df: 199, p: 0.1562278, pz: 0.1546619 } as const;
@@ -23,9 +22,9 @@ export const tVerteilung: ConceptCard = {
   wofuer: 'Schlafen die 200 Befragten im Mittel anders lange als 7 Stunden pro Nacht? Ihr Mittel liegt knapp 5 Minuten darüber. Ob das auffällig ist, prüft der t-Test mit einer Vergleichskurve: der t-Verteilung.',
   kurz: 'Die t-Verteilung sieht aus wie die Standardnormalverteilung, hat aber dickere Ränder. Je mehr Befragte, desto ähnlicher werden die beiden.',
   stellDirVor: {
-    text: `Ihr Mittel liegt bei ${num(S.mean)} Stunden, ${num(S.diffMin)} Minuten über 7 Stunden. Der t-Test teilt diese ${num(S.diffMin)} Minuten durch ihren Standardfehler von ${num(S.seMin)} Minuten: t ≈ ${num(S.t)} bei ${S.df} Freiheitsgraden. Weil die Streuung nur geschätzt ist, ordnet er dieses t mit der t-Verteilung ein.`,
+    text: `Die 200 Befragten schlafen im Mittel ${num(S.mean)} Stunden pro Nacht, ${num(S.diffMin)} Minuten länger als 7 Stunden. Der t-Test teilt diese ${num(S.diffMin)} Minuten durch ihren Standardfehler von ${num(S.seMin)} Minuten: t ≈ ${num(S.t)} bei ${S.df} Freiheitsgraden. Weil die Streuung nur geschätzt ist, ordnet er dieses t mit der t-Verteilung ein.`,
     figures: [
-      { label: 'Mittel', value: `${num(S.mean)} h` },
+      { label: 'Schlafdauer im Mittel', value: `${num(S.mean)} h` },
       { label: 'Unterschied zu 7 h', value: `${num(S.diffMin)} min` },
       { label: 'Standardfehler', value: `${num(S.seMin)} min` },
       { label: `t bei ${S.df} Freiheitsgraden`, value: num(S.t) },
@@ -86,7 +85,7 @@ export const tVerteilung: ConceptCard = {
     format: v => unit(v, 'Freiheitsgrad', 'Freiheitsgrade'),
     describe: v => {
       const p = often(2 * pt(-S.t, v)), own = Math.abs(v - S.df) < 1e-9;
-      return `Bei ${fg(v)} liegen die äußeren 5 % jenseits von ±${num(tCrit(v))}, bei der Standardnormalverteilung jenseits von ±1,96. Die Schlafdauer hat ${S.df} Freiheitsgrade${own ? ':' : `. Hätte sie ${v < S.df ? 'nur ' : ''}${num(v)},`} ${own ? 'Gäbe es keinen Unterschied, käme' : 'käme ohne Unterschied'} ein t von ${num(S.t)} oder weiter außen ${p} Stichproben vor.`;
+      return `Bei ${fg(v)} liegen die äußeren 5 % jenseits von ±${num(tCrit(v))}, bei der Standardnormalverteilung jenseits von ±1,96. Der t-Test der Schlafdauer hat ${S.df} Freiheitsgrade${own ? ':' : `. Hätte er ${v < S.df ? 'nur ' : ''}${num(v)},`} ${own ? 'Gäbe es keinen Unterschied, käme' : 'käme ohne Unterschied'} ein t von ${num(S.t)} oder weiter außen ${p} Stichproben vor.`;
     },
   },
   check: {
@@ -114,7 +113,8 @@ export const tVerteilung: ConceptCard = {
 
 /** Einstichproben-t-Test der Schlafdauer gegen 7 Stunden für die aktuellen Daten. */
 export function tFit(c: SampleCtx) {
-  const { xs, n, mean, sd } = series(c.rows, c.columns.x?.[0] ?? 'schlafdauer'), test = oneSampleT(xs, null, 7)!;
+  const { xs, n, mean, sd } = series(c.rows, c.columns.x?.[0] ?? 'schlafdauer'), test = oneSampleT(xs, null, 7);
+  if (!test || sd < 1e-9 * Math.max(1, Math.abs(mean))) return null;  // ohne Streuung (bis auf Rundungsreste) kein t
   return { n, mean, sd, se: sd / Math.sqrt(n), t: test.t, df: test.df, crit: tCrit(test.df), p: test.p, pz: 2 * pnorm(-Math.abs(test.t)) };
 }
 
@@ -122,9 +122,11 @@ export const tTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { x: 'schlafdauer' },
     kurz: 'Dieselbe Frage mit allen 200 Befragten: Schlafen sie im Mittel anders lange als 7 Stunden pro Nacht?',
-    value: c => tFit(c).t,
+    value: c => tFit(c)?.t ?? null,
     result: c => {
-      const f = tFit(c), d = f.mean - 7;
+      const f = tFit(c);
+      if (!f) return { kurz: 'Alle Befragten haben dieselbe Schlafdauer. Ohne Streuung lässt sich kein t-Test rechnen.', fachlich: 'Der Standardfehler ist 0; t ist nicht definiert.' };
+      const d = f.mean - 7;
       const gap = Math.abs(d) < 1e-9 ? 'genau 7 Stunden' : `${num(Math.abs(d) * 60)} Minuten ${d > 0 ? 'über' : 'unter'} 7 Stunden`;
       return {
         kurz: `Im Mittel schlafen die Befragten ${num(f.mean)} Stunden pro Nacht, ${gap}. Das ergibt t = ${num(f.t)} bei ${f.df} Freiheitsgraden; die Grenze für die äußeren 5 % liegt bei ±${num(f.crit)}. Wäre das Mittel aller Menschen 7 Stunden, käme ein t mindestens so weit von 0 ${often(f.p)} Stichproben vor.`,
@@ -148,7 +150,7 @@ export const tTabs: ConceptTabs = {
         explain: 'Die Freiheitsgrade zählen nur Befragte: n − 1 = 199. Welche Werte sie haben, spielt dafür keine Rolle.',
         kurz: 'Freiheitsgrade hängen an der Fallzahl, nicht an den Werten.',
         tryIt: { label: 'die gewählte Person auf 14 Stunden', op: 'outlier', column: 'x', value: 14 },
-        expect: { change: 'same', measure: c => tFit(c).df },
+        expect: { change: 'same', measure: c => tFit(c)?.df ?? null },
       },
       {
         question: 'Alle schlafen eine halbe Stunde weniger. Was passiert mit t?',

@@ -5,11 +5,11 @@
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num, unit } from '../../format';
 import { often, pchisq, pValue, qchisq } from './dist';
-import { chiSquare, crosstab } from '../../../tasks/kit/stats';
+import { chiSquare, cramersV, crosstab } from '../../../tasks/kit/stats';
 import { sampleColumn } from '../../sample';
 
 /** Schulabschluss × Weiterbildung (R: chisq.test(table(sa, wb), correct = FALSE)); Zelle Haupt-/Volksschule mit Weiterbildung. */
-export const CHI = { chi2: 3.082033, df: 4, p: 0.5441925, crit: 9.487729, cellB: 12, cellE: 16.4, minE: 15.17, doubled: 6.164065, v: 0.124138 } as const;
+export const CHI = { chi2: 3.082033, df: 4, p: 0.5441925, crit: 9.487729, cellB: 12, cellE: 16.4, minE: 15.17, doubled: 6.164065 } as const;
 /** Gipfel der χ²-Verteilung: ν − 2 ab zwei Freiheitsgraden, sonst 0. */
 export const peak = (df: number) => Math.max(0, df - 2);
 const C = CHI;
@@ -21,7 +21,7 @@ export const chiQuadratVerteilung: ConceptCard = {
   wofuer: 'Hängt der Schulabschluss damit zusammen, ob jemand in den letzten zwölf Monaten eine Weiterbildung gemacht hat? Der Chi-Quadrat-Test fasst die Antwort in einer Zahl zusammen: χ², sprich Chi-Quadrat. Ob diese Zahl groß ist, zeigt die χ²-Verteilung.',
   kurz: 'Die χ²-Verteilung zeigt, wie groß eine Summe quadrierter Abweichungen allein durch Zufall wird. Sie beginnt bei 0 und läuft nach rechts in einem langen Ausläufer aus.',
   stellDirVor: {
-    text: `Die Kreuztabelle der 200 Befragten hat 5 Zeilen für die Abschlüsse und 2 Spalten für ja und nein. Der Chi-Quadrat-Test fasst alle Abweichungen von der Erwartung ohne Zusammenhang in einer Zahl zusammen: χ² ≈ ${num(C.chi2)} bei ${C.df} Freiheitsgraden. Ohne Zusammenhang lägen 95 % der χ²-Werte unter ${num(C.crit)}.`,
+    text: `Die Kreuztabelle der 200 Befragten hat 5 Zeilen für die Schulabschlüsse und 2 Spalten für Weiterbildung ja oder nein. Der Chi-Quadrat-Test fasst alle Abweichungen von der Erwartung ohne Zusammenhang in einer Zahl zusammen: χ² ≈ ${num(C.chi2)} bei ${C.df} Freiheitsgraden. Ohne Zusammenhang lägen 95 % der χ²-Werte unter ${num(C.crit)}.`,
     figures: [
       { label: 'χ²', value: num(C.chi2) },
       { label: 'Freiheitsgrade', value: String(C.df) },
@@ -108,15 +108,15 @@ export const chiQuadratVerteilung: ConceptCard = {
 };
 
 /** Stärke nach Cohens Faustregel für Cramérs V bei einer Tabelle mit zwei Spalten (0,1 / 0,3 / 0,5), wie mariposa „small“. */
-const strength = (v: number) => v < 0.1 ? 'kaum ein Zusammenhang' : v < 0.3 ? 'ein schwacher Zusammenhang' : v < 0.5 ? 'ein mittlerer Zusammenhang' : 'ein starker Zusammenhang';
+const strength = (v: number) => v < 0.1 ? 'kaum vorhanden' : v < 0.3 ? 'schwach' : v < 0.5 ? 'mittel' : 'stark';
 
 /** Chi-Quadrat-Test von Schulabschluss und Weiterbildung für die aktuellen Daten. */
 export function chiFit(c: SampleCtx) {
-  const t = crosstab(sampleColumn(c.rows, c.columns.x?.[0] ?? 'schulabschluss'), sampleColumn(c.rows, c.columns.y?.[0] ?? 'weiterbildung'));
-  const { chi2, df } = chiSquare(t.cells), m = Math.min(t.rows.length, t.cols.length) - 1;
+  const x = sampleColumn(c.rows, c.columns.x?.[0] ?? 'schulabschluss'), y = sampleColumn(c.rows, c.columns.y?.[0] ?? 'weiterbildung');
+  const t = crosstab(x, y), { chi2, df } = chiSquare(t.cells);
   const rs = t.cells.map(r => r.reduce((a, b) => a + b, 0)), cs = t.cells[0].map((_, j) => t.cells.reduce((a, r) => a + r[j], 0));
   const minE = Math.min(...rs.flatMap(r => cs.map(k => r * k / t.n)));
-  return { rows: t.rows.length, cols: t.cols.length, chi2, df, p: df > 0 ? pchisq(chi2, df, false) : 1, crit: df > 0 ? qchisq(0.95, df) : NaN, minE, v: m > 0 ? Math.sqrt(chi2 / (t.n * m)) : 0 };
+  return { rows: t.rows.length, cols: t.cols.length, chi2, df, p: df > 0 ? pchisq(chi2, df, false) : 1, crit: df > 0 ? qchisq(0.95, df) : NaN, minE, v: df > 0 ? cramersV(x, y) : 0 };
 }
 
 export const chiTabs: ConceptTabs = {
@@ -130,7 +130,7 @@ export const chiTabs: ConceptTabs = {
       return {
         kurz: `Die Kreuztabelle aus ${f.rows} Abschlüssen und ${f.cols} Antworten ergibt χ² = ${num(f.chi2)} bei ${f.df} Freiheitsgraden. Ohne Zusammenhang lägen 95 % der χ²-Werte unter ${num(f.crit)}. Gäbe es keinen Zusammenhang, käme ein mindestens so großes χ² ${often(f.p)} Stichproben vor.`,
         fachlich: `Pearsons χ² ohne Korrektur: χ²(${f.df}) ≈ ${num(f.chi2)}, p ${pValue(f.p)}. Grenze für α = 5 %: ${num(f.crit)}; Erwartungswert der χ²-Verteilung: ${f.df}.`,
-        zusatz: `Die Stärke des Zusammenhangs misst Cramérs V ≈ ${num(f.v)}, nach der üblichen Faustregel ${strength(f.v)}. Die kleinste erwartete Häufigkeit ist ${num(f.minE)}; ${f.minE >= 5 ? 'die Faustregel „mindestens 5“ ist erfüllt.' : 'das ist weniger als 5, die Näherung ist fraglich.'}`,
+        zusatz: `Cramérs V ≈ ${num(f.v)} misst die Stärke des Zusammenhangs: nach der üblichen Faustregel ${strength(f.v)}. Die kleinste erwartete Häufigkeit ist ${num(f.minE)}; ${f.minE >= 5 ? 'die Regel „mindestens 5“ ist erfüllt.' : 'das ist weniger als 5, die Näherung ist fraglich.'}`,
       };
     },
     voraussetzung: 'Die Befragten sind unabhängig voneinander. Die χ²-Verteilung ist hier eine Näherung; als Faustregel sollen alle erwarteten Häufigkeiten mindestens 5 betragen.',

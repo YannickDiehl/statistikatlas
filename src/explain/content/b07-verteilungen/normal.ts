@@ -4,10 +4,9 @@
 // und die Flächenregel verstehen. Deshalb Begriffskarte mit Regler statt Formel als Satz.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num, pct, unit } from '../../format';
-import { baseSurvey, sampleSeries } from '../../sample';
-import type { SurveyRow } from '../../../domain/survey';
+import { baseSurvey } from '../../sample';
 import { ref, titleFor } from '../../../domain/learning';
-import { pnorm, skewness, within } from './dist';
+import { pnorm, series, skewness, within } from './dist';
 
 /** Schlafdauer der 200 Befragten (Stunden pro Nacht in den letzten sieben Tagen), Referenzwerte aus R. */
 export const SCHLAF = { n: 200, mean: 7.0825, sd: 0.819758, within1: 140, within2: 191, below2: 6, skew: -0.057802 } as const;
@@ -19,11 +18,6 @@ export const EINKOMMEN_SKEW = 0.791522;
 const S = SCHLAF;
 const T = (id: string) => titleFor(ref(id));
 /** Schlafdauer der Ausgangsdaten, für den Regler (zählt für jedes k nach). */
-/** Werte, Fallzahl, Mittelwert und Standardabweichung (n − 1) einer Spalte, aus sampleSeries (src/explain/sample.ts). */
-export function series(rows: readonly SurveyRow[], column: string) {
-  const s = sampleSeries(rows, column);
-  return { xs: s.values, n: s.values.length, mean: s.mean, sd: s.sd };
-}
 let schlaf: ReturnType<typeof series> | null = null;
 const schlafStats = () => schlaf ??= series(baseSurvey(), 'schlafdauer');
 /** Anteil einer Normalverteilung innerhalb von μ ± k · σ. */

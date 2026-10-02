@@ -4,9 +4,9 @@ import { createSurvey } from '../../../domain/survey';
 import { close } from '../../format';
 import { applyOp } from '../../sample';
 import type { SampleCtx } from '../../types';
-import { skewness, within } from './dist';
+import { series as columnStats, skewness, within } from './dist';
 import { tTest } from '../../../tasks/kit/means';
-import { ALTER_WITHIN1, EINKOMMEN_SKEW, SCHLAF, inside, normalverteilung, normalTabs, schlafFit, series as columnStats } from './normal';
+import { ALTER_WITHIN1, EINKOMMEN_SKEW, SCHLAF, inside, normalverteilung, normalTabs, schlafFit } from './normal';
 
 /*
  * Referenzwerte des Bereichs B7, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -107,20 +107,23 @@ test('B7 Standardnormalverteilung: z, Fläche und die z-Werte der 200 wie in R',
  */
 test('B7 t-Verteilung: t-Test der Schlafdauer gegen 7 Stunden und Grenzen wie in R', async () => {
   const { SCHLAF_T, tCrit, tFit, tTabs, tVerteilung } = await import('./t');
-  const ctx: SampleCtx = { rows, columns: { x: ['schlafdauer'] } }, f = tFit(ctx);
+  const ctx: SampleCtx = { rows, columns: { x: ['schlafdauer'] } }, f = tFit(ctx)!;
   ok(f.t, 1.423256, 't'); assert.equal(f.df, 199); ok(f.p, 0.1562278, 'p'); ok(f.pz, 0.1546619, 'p normal'); ok(f.se * 60, 3.47794, 'SE in Minuten', 1e-5);
+  const flat = { rows: applyOp(rows, 'schlafdauer', 'constant', 7.1), columns: { x: ['schlafdauer'] } };
+  assert.equal(tFit(flat), null, 'ohne Streuung kein t');
+  if (tTabs.sample?.kind === 'analysis') assert.match(tTabs.sample.result(flat).kurz, /Ohne Streuung lässt sich kein t-Test rechnen\./);
   ok(SCHLAF_T.t, f.t, 'SCHLAF_T.t'); ok(SCHLAF_T.p, f.p, 'SCHLAF_T.p'); ok(SCHLAF_T.seMin, f.se * 60, 'SCHLAF_T.seMin', 1e-5); ok(SCHLAF_T.diffMin, (f.mean - 7) * 60, 'SCHLAF_T.diffMin');
   // Die Rechnung im Text geht mit den sichtbaren Zahlen auf: 4,95 / 3,48 ≈ 1,42.
   assert.equal(Math.round(4.95 / 3.48 * 100) / 100, 1.42);
   for (const [df, q] of [[1, 12.706205], [4, 2.776445], [9, 2.262157], [28, 2.048407], [30, 2.042272], [199, 1.971957]]) ok(tCrit(df), q, `qt(0.975, ${df})`);
-  ok(tFit({ rows: applyOp(rows, 'schlafdauer', 'shift', 0.5), columns: { x: ['schlafdauer'] } }).t, 10.04906, 't nach +0,5 h', 1e-4);
-  ok(tFit({ rows: applyOp(rows, 'schlafdauer', 'shift', -0.5), columns: { x: ['schlafdauer'] } }).t, -7.202539, 't nach −0,5 h', 1e-5);
+  ok(tFit({ rows: applyOp(rows, 'schlafdauer', 'shift', 0.5), columns: { x: ['schlafdauer'] } })!.t, 10.04906, 't nach +0,5 h', 1e-4);
+  ok(tFit({ rows: applyOp(rows, 'schlafdauer', 'shift', -0.5), columns: { x: ['schlafdauer'] } })!.t, -7.202539, 't nach −0,5 h', 1e-5);
   assert.match(tVerteilung.wofuer, /^Schlafen die 200 Befragten im Mittel anders lange als 7 Stunden pro Nacht\? Ihr Mittel liegt knapp 5 Minuten darüber\./);
-  assert.match(tVerteilung.stellDirVor.text, /^Ihr Mittel liegt bei 7,08 Stunden, 4,95 Minuten über 7 Stunden\. .* 3,48 Minuten: t ≈ 1,42 bei 199 Freiheitsgraden\./);
+  assert.match(tVerteilung.stellDirVor.text, /^Die 200 Befragten schlafen im Mittel 7,08 Stunden pro Nacht, 4,95 Minuten länger als 7 Stunden\. .* 3,48 Minuten: t ≈ 1,42 bei 199 Freiheitsgraden\./);
   assert.match(tVerteilung.bausteine[2].rechnung!, /±2,78\. .* ±2,04\. .* ±1,97\./);
-  assert.equal(tVerteilung.regler!.describe(4), 'Bei 4 Freiheitsgraden liegen die äußeren 5 % jenseits von ±2,78, bei der Standardnormalverteilung jenseits von ±1,96. Die Schlafdauer hat 199 Freiheitsgrade. Hätte sie nur 4, käme ohne Unterschied ein t von 1,42 oder weiter außen in etwa 23 von 100 Stichproben vor.');
-  assert.match(tVerteilung.regler!.describe(199), /Die Schlafdauer hat 199 Freiheitsgrade: Gäbe es keinen Unterschied, käme ein t von 1,42 oder weiter außen in etwa 16 von 100 Stichproben vor\.$/);
-  assert.match(tVerteilung.regler!.describe(200), /Hätte sie 200, käme/);
+  assert.equal(tVerteilung.regler!.describe(4), 'Bei 4 Freiheitsgraden liegen die äußeren 5 % jenseits von ±2,78, bei der Standardnormalverteilung jenseits von ±1,96. Der t-Test der Schlafdauer hat 199 Freiheitsgrade. Hätte er nur 4, käme ohne Unterschied ein t von 1,42 oder weiter außen in etwa 23 von 100 Stichproben vor.');
+  assert.match(tVerteilung.regler!.describe(199), /Der t-Test der Schlafdauer hat 199 Freiheitsgrade: Gäbe es keinen Unterschied, käme ein t von 1,42 oder weiter außen in etwa 16 von 100 Stichproben vor\.$/);
+  assert.match(tVerteilung.regler!.describe(200), /Hätte er 200, käme/);
   // Welch-Freiheitsgrade 175,8 (Baustein 3, Genau genommen): atlas %>% t_test(lernzeit, group = weiterbildung)   # t(175.8) = 0.156
   const welch = tTest(rows.map(r => r.values.lernzeit), rows.map(r => r.values.weiterbildung))!.welch;
   assert.equal(Math.round(welch.df * 10) / 10, 175.8); assert.match(tVerteilung.bausteine[2].acht, /175,8/); assert.match(tVerteilung.genau.paragraphs[4], /175,8/);
@@ -158,7 +161,7 @@ test('B7 χ²-Verteilung: Chi-Quadrat-Test von Schulabschluss und Weiterbildung 
   assert.equal(chiQuadratVerteilung.bausteine[2].was, 'Bei 4 Freiheitsgraden liegen die χ²-Werte im Schnitt bei 4, am häufigsten um 2. Nur 5 % sind größer als 9,49.');
   assert.match(chiQuadratVerteilung.ausprobieren[0].explain, /^Bei 4 Freiheitsgraden liegt der Gipfel bei 2, bei 10 Freiheitsgraden bei 8\./);
   assert.match(chiQuadratVerteilung.fuerDich, /vergleiche mit dem Erwartungswert: .* im Schnitt bei 4\./);
-  assert.match(chiQuadratVerteilung.wofuer, /^Hängt der Schulabschluss damit zusammen/); assert.match(chiQuadratVerteilung.stellDirVor.text, /^Die Kreuztabelle der 200 Befragten/);
+  assert.match(chiQuadratVerteilung.wofuer, /^Hängt der Schulabschluss damit zusammen/); assert.match(chiQuadratVerteilung.stellDirVor.text, /^Die Kreuztabelle der 200 Befragten hat 5 Zeilen für die Schulabschlüsse und 2 Spalten für Weiterbildung ja oder nein\./);
   assert.match(chiQuadratVerteilung.bausteine[1].warum, /Summen am Rand der Tabelle/);
   const { dchisq } = await import('./dist');
   for (const [df, top] of [[4, 2], [10, 8]]) assert.ok(dchisq(top, df) > dchisq(top - 0.01, df) && dchisq(top, df) > dchisq(top + 0.01, df), `Gipfel von χ²(${df}) bei ${top}`);
@@ -168,7 +171,7 @@ test('B7 χ²-Verteilung: Chi-Quadrat-Test von Schulabschluss und Weiterbildung 
   if (chiTabs.sample?.kind === 'analysis') {
     const r = chiTabs.sample.result(ctx);
     assert.match(r.kurz, /5 Abschlüssen und 2 Antworten ergibt χ² = 3,08 bei 4 Freiheitsgraden\. .* unter 9,49\. .* mindestens so großes χ² in etwa 54 von 100 Stichproben vor\./);
-    assert.match(r.zusatz!, /Cramérs V ≈ 0,12, nach der üblichen Faustregel ein schwacher Zusammenhang\./);
+    assert.match(r.zusatz!, /^Cramérs V ≈ 0,12 misst die Stärke des Zusammenhangs: nach der üblichen Faustregel schwach\. .*die Regel „mindestens 5“ ist erfüllt\.$/);
   }
 });
 
@@ -186,14 +189,18 @@ test('B7 χ²-Verteilung: Chi-Quadrat-Test von Schulabschluss und Weiterbildung 
 test('B7 F-Verteilung: ANOVA der Lernzeit nach Schulabschluss wie in R', async () => {
   const { ANOVA, fFit, fTabs, fTail, fVerteilung } = await import('./f');
   const { qf } = await import('./dist');
-  const ctx: SampleCtx = { rows, columns: { x: ['lernzeit'], group: ['schulabschluss'] } }, f = fFit(ctx);
+  const ctx: SampleCtx = { rows, columns: { x: ['lernzeit'], group: ['schulabschluss'] } }, f = fFit(ctx)!;
   ok(f.f, 8.638858, 'F'); assert.deepEqual([f.df1, f.df2, f.k], [4, 195, 5]); ok(f.msb, 78.49563, 'MS zwischen', 1e-4); ok(f.msw, 9.086344, 'MS innerhalb', 1e-5);
   ok(f.between, 313.9825, 'SS zwischen', 1e-3); ok(f.inside, 1771.837, 'SS innerhalb', 1e-3); ok(f.crit, 2.417963, 'Grenze'); ok(f.p, 1.936406e-6, 'p', 1e-9);
-  ok(f.lowest, 5.883333, 'kleinstes Gruppenmittel'); ok(f.highest, 9.355, 'größtes Gruppenmittel');
+  ok(f.lowest, 5.883333, 'kleinstes Gruppenmittel');
+  // Nur noch eine Gruppe: keine ANOVA, aber ein lesbarer Text statt eines Fehlers.
+  const one = { rows: applyOp(rows, 'schulabschluss', 'constant', 2), columns: ctx.columns };
+  assert.equal(fFit(one), null);
+  if (fTabs.sample?.kind === 'analysis') { assert.match(fTabs.sample.result(one).kurz, /einer einzigen Gruppe/); assert.equal(fTabs.sample.value!(one), null); } ok(f.highest, 9.355, 'größtes Gruppenmittel');
   for (const [k, v] of Object.entries({ f: f.f, msb: f.msb, msw: f.msw, crit: f.crit })) ok(ANOVA[k as 'f'], v, `ANOVA.${k}`, 1e-4);
   [[1, 0.408754], [2, 0.0960657], [2.42, 0.0498391], [3, 0.0196893], [5, 0.000739]].forEach(([v, p]) => ok(fTail(v), p, `pf(${v})`, 1e-6));
   ok(qf(0.95, 4, 195), 2.417963, 'qf');
-  for (const d of [applyOp(rows, 'lernzeit', 'double'), applyOp(rows, 'lernzeit', 'shift', 1)]) ok(fFit({ rows: d, columns: ctx.columns }).f, 8.638858, 'F bleibt');
+  for (const d of [applyOp(rows, 'lernzeit', 'double'), applyOp(rows, 'lernzeit', 'shift', 1)]) ok(fFit({ rows: d, columns: ctx.columns })!.f, 8.638858, 'F bleibt');
   assert.match(fVerteilung.stellDirVor.text, /zwischen 5,9 Stunden \(ohne Schulabschluss\) und 9,4 Stunden \(Abitur\).* F ≈ 8,64 bei 4 und 195 .* unter 2,42\./);
   assert.match(fVerteilung.bausteine[0].rechnung!, /^Quadratsumme zwischen den Gruppen 313,98: .* 313,98 \/ 4 ≈ 78,5\.$/);
   assert.match(fVerteilung.bausteine[1].rechnung!, /^Quadratsumme innerhalb der Gruppen 1\.771,84: .* 1\.771,84 \/ 195 ≈ 9,09\.$/);
@@ -252,7 +259,10 @@ test('B7 Binomialverteilung: Reihenfolgen, Wahrscheinlichkeit und Binomialtest w
   }
   assert.match(binomial.compare(s), /Am wahrscheinlichsten sind 2 Erfolge\.$/);
   assert.match(binomial.compare(binomial.compute({ n: 5, k: 1, p: 0.2 })), /Am wahrscheinlichsten ist 1 Erfolg\.$/);
-  assert.match(binomial.worked(binomial.compute({ n: 1, k: 0, p: 0.3 }))[0].text, /^Zum Beispiel lauter Misserfolge\./);
+  assert.equal(binomial.worked(binomial.compute({ n: 1, k: 0, p: 0.3 }))[0].text, 'Hier gibt es nur eine Reihenfolge: ein Misserfolg. Ihre Wahrscheinlichkeit: 0,3⁰ · 0,7¹ ≈ 0,7.');
+  assert.match(binomial.worked(binomial.compute({ n: 4, k: 0, p: 0.3 }))[0].text, /^Hier gibt es nur eine Reihenfolge: lauter Misserfolge\. Weil die Versuche unabhängig sind/);
+  assert.match(binomial.worked(binomial.compute({ n: 4, k: 4, p: 0.3 }))[0].text, /^Hier gibt es nur eine Reihenfolge: lauter Erfolge\./);
+  assert.match(binomial.compare(binomial.compute({ n: 5, k: 1, p: 0.2 })), /= 1 Erfolg\./);
   assert.match(binomial.worked(binomial.compute({ n: 1, k: 0, p: 0.3 }))[1].text, /auf 1 Platz verteilen/);
   assert.deepEqual(binomial.worked(s).map(w => w.text), [
     'Zum Beispiel erst 2 Erfolge, dann 3 Misserfolge. Weil die Versuche unabhängig sind, wird malgenommen: 0,41² · 0,59³ ≈ 0,035.',
@@ -307,11 +317,11 @@ test('B7 Hypergeometrische Verteilung: 10 aus 200 und der Test von Fisher wie in
 });
 
 /*
- * Befunde der Begutachtung (Fix-Runde 1), Wortlaut und Zahlen:
+ * Streuung ohne und mit Zurücklegen (Wortlaut der hypergeometrischen Karte):
  *   sqrt(n * .41 * .59 * (200 - n) / 199); sqrt(n * .41 * .59) für n = 1, 2, 10, 100, 199, 200
  *     # 0.4918 0.6938 1.5197 3.4865 0.4918 0 gegen 0.4918 0.6956 1.5553 4.9183 6.9382 6.9556: ohne ≤ mit, gleich nur bei n = 1
  */
-test('B7 Fix-Runde 1: Wortlaut der Befunde I2, I5 und der Minors', async () => {
+test('B7 Wortlaut: Streuung ohne Zurücklegen, übersetzte Fachwörter, du-Form, Bernoulli, Binomial und Normal-Rückmeldungen', async () => {
   const { hypergeometrisch, hyperTabs, spread } = await import('./hypergeometric');
   const { fVerteilung } = await import('./f');
   const { standardnormal } = await import('./standard-normal');
@@ -339,5 +349,5 @@ test('B7 Fix-Runde 1: Wortlaut der Befunde I2, I5 und der Minors', async () => {
   // M13, M14
   assert.match(normalTabs.r!.check.wrong.p, /wenn die Schlafdauer normalverteilt wäre/);
   assert.equal(normalverteilung.stellDirVor.figures![3].label, 'Modell: innerhalb x̄ ± s');
-  if (hyperTabs.sample?.kind === 'analysis') assert.match(hyperTabs.sample.result({ rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }).zusatz!, /^Erwerbstätig sind 72 % der Befragten mit und 66,1 % der Befragten ohne Weiterbildung\.$/);
+  if (hyperTabs.sample?.kind === 'analysis') assert.match(hyperTabs.sample.result({ rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }).zusatz!, /^Erwerbstätig sind 72,0 % der Befragten mit und 66,1 % der Befragten ohne Weiterbildung\.$/);
 });

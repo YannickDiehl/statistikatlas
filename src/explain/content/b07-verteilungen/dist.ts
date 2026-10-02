@@ -4,7 +4,8 @@
 // Ohne React, damit Inhalte, Bilder und Tests sie teilen. Referenzwerte und R-Befehle stehen in b07-verteilungen.test.ts.
 import { lgamma, pchisq, pf, pnorm, pt, qt } from '../../../tasks/kit/dist';
 import { num } from '../../format';
-import { countWithin } from '../../sample';
+import { countWithin, sampleSeries } from '../../sample';
+import type { SurveyRow } from '../../../domain/survey';
 
 export { pchisq, pf, pnorm, pt, qt };
 
@@ -85,6 +86,12 @@ export function skewness(xs: readonly number[]): number {
   const n = xs.length, m = xs.reduce((a, b) => a + b, 0) / n;
   const m2 = xs.reduce((a, x) => a + (x - m) ** 2, 0) / n, m3 = xs.reduce((a, x) => a + (x - m) ** 3, 0) / n;
   return m2 > 0 ? m3 / m2 ** 1.5 * Math.sqrt(n * (n - 1)) / (n - 2) : 0;
+}
+
+/** Werte, Fallzahl, Mittelwert und Standardabweichung (n − 1) einer Spalte, aus sampleSeries (src/explain/sample.ts). */
+export function series(rows: readonly SurveyRow[], column: string) {
+  const s = sampleSeries(rows, column);
+  return { xs: s.values, n: s.values.length, mean: s.mean, sd: s.sd };
 }
 
 /** Wie viele Werte höchstens k Standardabweichungen von der Mitte entfernt liegen (wie R: abs(x − mean(x)) <= k * sd(x)). */
