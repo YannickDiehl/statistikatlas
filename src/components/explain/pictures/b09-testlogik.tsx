@@ -6,6 +6,7 @@ import type { TStats } from '../../../explain/content/b09-testlogik/pruefgroesse
 import { MISCHEN, asFarAs, mixCount } from '../../../explain/content/b09-testlogik/nullverteilung';
 import { SEITEN, sideOf } from '../../../explain/content/b09-testlogik/seiten';
 import { ANTEIL } from '../../../explain/content/b09-testlogik/alpha';
+import type { CStats } from '../../../explain/content/b09-testlogik/kritisch';
 import { MU0, SCHLAF, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
 import { baseSurvey } from '../../../explain/sample';
@@ -148,7 +149,34 @@ function Alpha({ a }: { a: number }) {
   );
 }
 
+/** t-Verteilung mit df Freiheitsgraden, beide Ränder jenseits von ±c markiert (je α/2), dazu t der Schlafdauer. */
+function Kritisch({ s }: { s: CStats }) {
+  const [box, W] = useWidth();
+  const lim = Math.min(14, Math.max(4, Math.ceil(s.c + 0.5))), c = Math.min(s.c, lim), base = 160;
+  const x = linear([-lim, lim], [28, W - 28]), y = linear([0, 0.42], [base, 50]), f = (v: number) => tDensity(v, s.df);
+  const far = s.c > lim, tx = Math.min(lim, SCHLAF.t);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={214} viewBox={`0 0 ${W} 214`} role="img"
+        aria-label={`t-Verteilung mit ${s.df} Freiheitsgraden. Markiert sind beide Ränder jenseits von c = ±${num(s.c)}, zusammen α = ${num(s.alpha, 3)}. Der Punkt zeigt t = ${num(SCHLAF.t)} der Schlafdauer; er liegt ${SCHLAF.t >= s.c ? 'im Ablehnungsbereich' : 'zwischen den Grenzen'}.`}>
+        <text className="xw-t xw-strong" x={28} y={16}>Ablehnungsbereich: |t| ≥ {num(s.c)}{far ? ' (weiter außen)' : ''}</text>
+        <AreaUnder f={f} from={-lim} to={-c} x={x} y={y} tone="neg" />
+        <AreaUnder f={f} from={c} to={lim} x={x} y={y} tone="neg" />
+        <Curve f={f} from={-lim} to={lim} x={x} y={y} samples={200} />
+        <MarkLine x={x(c)} from={44} to={base} className="xw-mean b09-reject" />
+        <MarkLine x={x(-c)} from={44} to={base} className="xw-mean b09-reject" />
+        <text className="xw-t" x={x(c)} y={38} textAnchor={x(c) > W - 70 ? 'end' : 'middle'}>+c</text>
+        <text className="xw-t" x={x(-c)} y={38} textAnchor={x(-c) < 70 ? 'start' : 'middle'}>−c</text>
+        <circle className="b09-dot" cx={x(tx)} cy={base - 10} r={6} />
+        <text className="xw-t b09-halo" x={x(tx)} y={base - 22} textAnchor="middle">t = {num(SCHLAF.t)}</text>
+        <Axis scale={x} ticks={ticksFor(lim)} at={base} from={28} to={W - 28} labelGap={20} title="t, wenn es keinen Unterschied gäbe" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-kritisch': forSentence(p => <Kritisch s={p.s as CStats} />),
   'b09-alpha': forCard(p => <Alpha a={p.value ?? 0.05} />),
   'b09-seiten': forCard(p => <Seiten value={p.value ?? 1} />),
   'b09-nullverteilung': forCard(p => <Nullverteilung value={p.value ?? 200} />),

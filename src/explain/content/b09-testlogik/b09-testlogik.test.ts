@@ -11,6 +11,7 @@ import { pruefgroesse, T_START } from './pruefgroesse';
 import { MISCHEN, asFarAs, nullverteilung } from './nullverteilung';
 import { SEITEN, seiten } from './seiten';
 import { ANTEIL, alpha } from './alpha';
+import { kritisch } from './kritisch';
 
 /*
  * Referenzwerte des Bereichs B9, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -30,6 +31,8 @@ import { ANTEIL, alpha } from './alpha';
  *   t.test(x + 0.1, mu = 7); t.test(x - 0.1, mu = 7)                       # t = 3.1484, p = 0.0018942; t = -0.3019, p = 0.7630
  *   0.0825 / (0.82 / sqrt(200)); 0.82 / sqrt(200)                          # 1.4228368, 0.0579828 (Formel als Satz mit s ≈ 0,82)
  *   0.0825 / (sd(x) / sqrt(20000)); qt(.975, 199); sd(x) / sqrt(200) * 60  # 14.2326, 1.9719565, 3.4779 Minuten
+ *   qt(.95, 199); qt(.975, 9); qt(.995, 199); qt(.9995, 1); qnorm(c(.975, .95, .995))
+ *   # 1.6525467, 2.2621572, 2.6007602, 636.6192488; 1.959964, 1.644854, 2.575829
  *
  * B. Lernzeit nach Weiterbildung (Welch wie mariposa, ohne minus mit)
  *   lz <- as.numeric(atlas$lernzeit); wb <- as.numeric(atlas$weiterbildung)
@@ -53,7 +56,7 @@ const tabs = (id: string): ConceptTabs => b09Testlogik.tabs[id];
 const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.ok(s?.kind === 'analysis', `${id}: Auswertung`); const cols = Object.fromEntries(Object.entries(s.columns ?? {}).map(([k, v]) => [k, [v]])); return s.result({ rows: data, columns: cols }); };
 
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
-  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level'];
+  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value'];
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -158,4 +161,19 @@ test('B9 Signifikanzniveau: Weiterbildung gegen 50 % wie in R, Entscheidung je n
   assert.match(result('alpha_level').fachlich, /Bei α = 0,01 wäre das nicht signifikant\./);
   assert.match(result('alpha_level', applyOp(rows, 'weiterbildung', 'reverse')).kurz, /118 von 200 .*p ≈ 0,013/);
   assert.match(result('alpha_level', applyOp(rows, 'weiterbildung', 'constant', 1)).kurz, /200 von 200 .*p < 0,001/);
+});
+
+test('B9 Kritischer Wert: Quantile der t-Verteilung wie in R', () => {
+  const s = kritisch.compute(kritisch.initial);
+  assert.ok(close(s.c, 1.9719565, 1e-6) && close(s.cOne, 1.6525467, 1e-6) && close(s.cNormal, 1.959964, 1e-6), `c ${s.c}`);
+  assert.ok(close(kritisch.compute({ alpha: 0.05, df: 9 }).c, 2.2621572, 1e-6) && close(kritisch.compute({ alpha: 0.01, df: 199 }).c, 2.6007602, 1e-6), 'df 9, α 0,01');
+  assert.ok(close(kritisch.compute({ alpha: 0.001, df: 1 }).c, 636.6192488, 1e-4), 'df 1, α 0,001');
+  assert.deepEqual(kritisch.worked(s).map(w => w.text), ['α / 2 = 0,05 / 2 = 0,025. So viel Fläche bekommt jeder Rand.', 'Rechts von c liegt nur noch der Anteil 0,025 der Fläche: c ≈ 1,97 bei 199 Freiheitsgraden.', 'Zum Vergleich die Schlafdauer: t ≈ 1,42. Das liegt zwischen −c und +c: H₀ nicht verwerfen.']);
+  assert.match(kritisch.fehler, /bei 1,96, die einseitige bei 1,64\./);
+  assert.match(kritisch.think.explain, /Bei df = 9 liegt sie bei 2,26\./);
+  assert.match(kritisch.interpret(s).kurz, /mindestens 1,97 von 0 entfernt ist\. .*in 5 % der Studien\./);
+  assert.match(kritisch.genau.paragraphs[0], /t ≈ 1,42 bei 199 Freiheitsgraden\. Die Grenze liegt bei 1,97, .*p ≈ 0,16\./);
+  assert.match(result('critical_value').kurz, /t ≈ 1,42\. Die Grenze bei α = 0,05 liegt bei ±1,97\. t liegt zwischen den Grenzen/);
+  assert.match(result('critical_value').fachlich, /läge die Grenze bei 1,65\./);
+  assert.match(result('critical_value', applyOp(rows, 'schlafdauer', 'shift', 0.1)).kurz, /t ≈ 3,15\. .*t liegt im Ablehnungsbereich: Du verwirfst H₀\./);
 });
