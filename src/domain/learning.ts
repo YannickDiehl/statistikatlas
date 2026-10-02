@@ -36,7 +36,11 @@ export function displayValue(r:Ref,c:LessonContext){const local=contextFor(r,c),
 
 export const indexFor = (c: LessonContext) => Math.max(0,c.pairs.findIndex(p=>p.id===c.caseId));
 export const symbol = (v: Variable, type: 'mean'|'sd'|'variance'|'z'|'value'='value') => ({mean:v==='x'?'x̄':'ȳ',sd:`s${v==='x'?'ₓ':'ᵧ'}`,variance:`s${v==='x'?'ₓ':'ᵧ'}²`,z:`z${v==='x'?'ₓ':'ᵧ'}ᵢ`,value:`${v}ᵢ`}[type]);
-export const numberText = (n: number | null | undefined, digits = 3) => n==null||!Number.isFinite(n)?'nicht definiert':n!==0&&(Math.abs(n)<.001||Math.abs(n)>=1e6)?n.toExponential(2).replace('.',','):new Intl.NumberFormat('de-DE',{maximumFractionDigits:digits}).format(Object.is(n,-0)?0:n);
+/**
+ * Zahl deutsch für die bisherigen Ansichten der Karte (Formel mit Zahlen, Auswertungen, Experimente): höchstens zwei
+ * Nachkommastellen, kleine Werte unter 0,1 mit zwei gültigen Ziffern, echtes Minus (Sprachleitfaden, Regeln 9 und 11).
+ */
+export const numberText = (n: number | null | undefined, digits = 2) => n==null||!Number.isFinite(n)?'nicht definiert':(n!==0&&(Math.abs(n)<.001||Math.abs(n)>=1e6)?n.toExponential(2).replace('.',','):new Intl.NumberFormat('de-DE',{maximumFractionDigits:n!==0&&Math.abs(n)<.1?Math.max(digits,Math.min(4,1-Math.floor(Math.log10(Math.abs(n))))):digits}).format(Object.is(n,-0)?0:n)).replace(/-/g,'−');
 export function valuesFor(id: string, v: Variable, c: LessonContext): (number|null)[] {
  const s=c.stats; const axis=v==='x'?'X':'Y';
  if(id==='series')return c.pairs.map(p=>p[v]);
