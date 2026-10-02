@@ -10,7 +10,9 @@ import { erklaerteVarianz, erklaerteVarianzTabs, QS } from './explained-variance
 import { IA, interaktion, interactionFor, interaktionTabs } from './interaction';
 import { logitSatz, logitTabs, shareFor } from './logit';
 import { likelihoodKarte, llWb } from './likelihood';
-import { WB_MODELL, wbModel } from './logistisch-kit';
+import { BESTANDEN, WB_MODELL, pBestanden, wbModel } from './logistisch-kit';
+import { logistic } from './fit';
+import { logistischeRegression, logistischeRegressionTabs } from './logistic-regression';
 
 /*
  * Referenzwerte des Bereichs B13 „Regression“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -73,6 +75,15 @@ import { WB_MODELL, wbModel } from './logistisch-kit';
  *   range(fitted(g))                                 # 0.3543686  0.4644712
  *   pp <- fitted(g); mean(coef(g)[2] * pp * (1 - pp)); mean(coef(g)[3] * pp * (1 - pp))   # -0.001436868  -0.001693125
  *   atlas %>% logistic_regression(weiterbildung ~ lernzeit + alter) %>% marginal_effects()   # AME -0.00144, -0.00169 (SE 0.01075, p 0.894)
+ *
+ * Logistische Regression, mindestens 10 Aufgaben:
+ *   atlas %>% mutate(bestanden = rec(wissenstest, rules = "10:20=1; 0:9=0")) %>% frequency(bestanden)   # 78 / 122
+ *   gb <- glm(bestanden ~ x, family = binomial); coef(gb)   # -2.043177832  0.335612347; exp(b1) = 1.398797
+ *   deviance(gb); gb$null.deviance                          # 227.9453  267.4992
+ *   predict(gb, data.frame(x = c(4, 6, 7, 8, 12, 15, 16, 17, 40)), type = "response")
+ *   # 0.3316507 0.4926246 0.5759351 0.6551424 0.8791250 0.9521662 0.9653308 0.9749676 0.9999886;  Logit bei 12 h: 1.984170
+ *   -coef(gb)[1] / coef(gb)[2]                              # 6.08791 (50 %)
+ *   mean(coef(gb)[2] * fitted(gb) * (1 - fitted(gb)))       # AME 0.0651654 (mariposa: AME = 0.065)
  */
 
 const rows = createSurvey();
@@ -209,4 +220,26 @@ test('B13 Likelihood: Log-Likelihood und Modellvergleich wie in R', () => {
   assert.match(likelihoodKarte.stellDirVor.text, /−135,37, bei p = 0,9 nur −280,34/);
   assert.match(likelihoodKarte.bausteine[3].rechnung!, /270,74 − 270,06 = 0,68/);
   assert.match(likelihoodKarte.ausprobieren[0].explain, /etwa 26-mal weniger wahrscheinlich/);
+});
+
+test('B13 Logistische Regression: S-Kurve und Katalogmodell wie in R', () => {
+  const pass = Y.map(v => v >= 10 ? 1 : 0);
+  assert.equal(pass.filter(v => v === 1).length, BESTANDEN.k, '122 schaffen mindestens 10 Aufgaben');
+  const m = logistic([X], pass)!;
+  assert.ok(close(m.b[0], BESTANDEN.b0, 1e-8) && close(m.b[1], BESTANDEN.b1, 1e-8), `Koeffizienten ${m.b}`);
+  assert.ok(close(m.deviance, BESTANDEN.dev, 1e-4), 'Devianz');
+  ([[4, 0.3316507], [6, 0.4926246], [7, 0.5759351], [8, 0.6551424], [12, 0.879125], [15, 0.9521662], [16, 0.9653308], [17, 0.9749676], [40, 0.9999886]] as const)
+    .forEach(([h, p]) => assert.ok(close(pBestanden(h), p, 1e-6), `p bei ${h} h`));
+  assert.ok(close(Math.exp(BESTANDEN.b1), 1.398797, 1e-6) && close(-BESTANDEN.b0 / BESTANDEN.b1, 6.08791, 1e-5), 'Odds Ratio und 50-%-Stelle');
+  assert.match(logistischeRegression.stellDirVor.text, /−2,04 \+ 0,34 · Lernzeit\. Bei 4 Stunden Lernzeit sagt das Modell eine Wahrscheinlichkeit von 33 % vorher, bei 8 Stunden 66 %, bei 12 Stunden 88 %/);
+  assert.match(logistischeRegression.bausteine[1].rechnung!, /e\^\(−1,98\)\) ≈ 0,88/);
+  assert.match(logistischeRegression.ausprobieren[0].explain, /von 49 % auf 58 %, von 15 auf 16 Stunden nur von 95 % auf 97 %/);
+  assert.ok(close(1.4 * 1.4, 1.96, 1e-9) && close(Math.exp(2 * BESTANDEN.b1), 1.96, 0.005), 'zwei Stunden: 1,96');
+  const t = logistischeRegressionTabs.sample!;
+  if (t.kind === 'analysis') {
+    const r = t.result({ rows, columns: { x: ['lernzeit'], y: ['weiterbildung'] } });
+    assert.match(r.kurz, /mit 0,99 malgenommen, bei gleichem Alter\. Sie ändern sich also so gut wie gar nicht/);
+    assert.match(r.fachlich, /0,01 − 0,006 · Lernzeit − 0,007 · Alter\. Die Odds Ratio der Lernzeit ist e\^b₁ ≈ 0,994/);
+    assert.match(r.zusatz!, /von 0,35 bis 0,46/);
+  }
 });

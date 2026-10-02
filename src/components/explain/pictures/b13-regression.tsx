@@ -6,6 +6,7 @@ import { num, signed } from '../../../explain/format';
 import type { Fit, Pairs } from '../../../explain/content/b13-regression/fit';
 import { IA } from '../../../explain/content/b13-regression/interaction';
 import { llWb } from '../../../explain/content/b13-regression/likelihood';
+import { pBestanden } from '../../../explain/content/b13-regression/logistisch-kit';
 import { baseSurvey, sampleColumn } from '../../../explain/sample';
 import { Axis, clamp, Curve, DragPoint, forCard, forSentence, forWorkshop, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
@@ -198,7 +199,33 @@ function LikelihoodCurve({ p }: { p: number }) {
   );
 }
 
+/**
+ * S-Kurve „mindestens 10 Aufgaben“ nach Lernzeit: die 200 Befragten oben (geschafft) und unten (nicht geschafft),
+ * leicht gestaffelt, dazu die vorhergesagte Wahrscheinlichkeit und der Wert des Reglers.
+ */
+function SCurve({ hours }: { hours: number }) {
+  const [box, W] = useWidth();
+  const L = 50, R = W - 16, T = 22, B = T + 190, H = B + 52;
+  const X = linear([0, 20], [L, R]), Y = linear([0, 1], [B, T]);
+  const x = base('lernzeit'), y = base('wissenstest'), p = pBestanden(hours);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`S-Kurve: vorhergesagte Wahrscheinlichkeit, mindestens 10 Aufgaben zu lösen, nach Lernzeit; bei ${num(hours)} Stunden ${num(p * 100, 0)} %`}>
+        {x.map((v, i) => <circle key={i} className="b13-dot" cx={X(v)} cy={y[i] >= 10 ? Y(1) + 3 + (i % 4) * 3 : Y(0) - 3 - (i % 4) * 3} r={2.4} />)}
+        <Curve f={pBestanden} from={0} to={20} x={X} y={Y} />
+        <MarkLine x={X(hours)} from={Y(p)} to={B} />
+        <circle className="b13-mark" cx={X(hours)} cy={Y(p)} r={6} />
+        <text className="xw-t xw-strong" x={X(hours) + (hours > 12 ? -10 : 10)} y={Y(p) + 22} textAnchor={hours > 12 ? 'end' : 'start'}>{num(p * 100, 0)} %</text>
+        <Axis scale={X} ticks={[0, 5, 10, 15, 20]} at={B} from={L} to={R} labelGap={20} title="Lernzeit in Stunden" />
+        <Axis scale={Y} ticks={[0, 0.25, 0.5, 0.75, 1]} at={L} from={B} to={T} orient="left" format={pTicks} title="p" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b13-logistisch': forCard(p => <SCurve hours={p.value ?? 8} />),
   'b13-likelihood': forCard(p => <LikelihoodCurve p={p.value ?? 0.41} />),
   'b13-logit': forSentence(p => <LogitCurve p={p.values.p} />),
   'b13-interaktion': forCard(p => <InteractionLines b3={p.value ?? IA.b3} />),
