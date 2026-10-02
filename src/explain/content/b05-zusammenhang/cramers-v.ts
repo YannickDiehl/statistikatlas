@@ -14,9 +14,9 @@ export const SCHUL_GESCHLECHT = { chi2: 10.02, n: 200, k: 3 } as const;
 export type VValues = { 'χ²': number; n: number; k: number };
 export type VStats = { chi2: number; n: number; k: number; denom: number; ratio: number; V: number; possible: boolean };
 
-/** Grobe Einordnung; starre Schwellen sind bei V wenig hilfreich, deshalb nur als Faustregel genannt. */
 /** Startwerte (Lehrdatensatz): dann steht in der Deutung der Vergleich mit dem Zufall. */
 const start = (s: VStats) => s.chi2 === SCHUL_GESCHLECHT.chi2 && s.n === SCHUL_GESCHLECHT.n && s.k === SCHUL_GESCHLECHT.k;
+/** Grobe Einordnung; starre Schwellen sind bei V wenig hilfreich, deshalb nur als Faustregel genannt. */
 const vWords = (v: number) => v < 0.1 ? 'kaum ein Zusammenhang' : v < 0.3 ? 'ein schwacher Zusammenhang' : v < 0.5 ? 'ein mittlerer Zusammenhang' : v < 0.995 ? 'ein starker Zusammenhang' : 'ein vollständiger Zusammenhang';
 
 export const cramerSatz: SentenceTemplate<VValues, VStats> = {
@@ -92,7 +92,7 @@ export const cramerSatz: SentenceTemplate<VValues, VStats> = {
     kurz: 'V liegt zwischen 0 und 1 und hat keine Richtung. Bei zwei Zeilen und zwei Spalten ist V der Betrag von Phi.',
     paragraphs: [
       'Die Zahlen stammen aus dem Lehrdatensatz: χ² ≈ 10,02 bei n = 200 und k = 3, also V ≈ 0,13. Gäbe es keinen Zusammenhang, käme ein so großes χ² bei 12 Freiheitsgraden in etwa 61 von 100 Stichproben vor (p ≈ 0,61). Ein Zusammenhang von Schulabschluss und Geschlechtseintrag ist hier also nicht zu erkennen.',
-      'Ohne jeden Zusammenhang liegt V bei 200 Befragten im Mittel bei etwa 0,06, wenn die Tabelle zwei mal zwei Felder hat, und bei etwa 0,14 mit fünf mal vier Feldern. Vergleiche V deshalb immer mit dem, was die Tabellengröße schon durch Zufall liefert.',
+      'Ohne jeden Zusammenhang liegt V bei 200 Befragten im Mittel bei etwa 0,06, wenn die Tabelle zwei mal zwei Felder hat, und bei etwa 0,14 mit fünf mal vier Feldern. Vergleiche V deshalb immer mit dem, was Tabellengröße und Fallzahl schon durch Zufall liefern.',
       '„Divers“ und „Kein Eintrag“ haben je nur eine Person. So dünn besetzte Spalten machen χ² und V zusätzlich unsicher.',
       'cramers_v() aus mariposa rechnet χ² ohne Kontinuitätskorrektur. Bei seltenen Kategorien warnt R, dass die Chi-Quadrat-Näherung unzuverlässig sein kann.',
       'Starre Schwellen für „schwach“ oder „stark“ helfen bei V wenig: Wie groß ein Zusammenhang wirken muss, hängt vom Thema und von der Tabellengröße ab.',

@@ -182,7 +182,7 @@ export const rangkorrelation: Workshop<Pairs, RankStats> = {
     {
       button: '÷ √( )', title: 'Mit dem Größtmöglichen vergleichen', sym: 'ρ', say: 'rho', concept: 'spearman', perPerson: false,
       links: [{ id: 'pearson', label: 'Pearson-Korrelation' }],
-      was: 'Wir teilen die Summe durch das Größtmögliche: die Wurzel aus dem Produkt der beiden Quadratsummen, also der quadrierten Rangabstände zusammengezählt. Heraus kommt eine Zahl zwischen −1 und +1.',
+      was: 'Wir teilen die Summe durch das Größtmögliche: die Wurzel aus dem Produkt der beiden Quadratsummen (die quadrierten Rangabstände, zusammengezählt). Heraus kommt eine Zahl zwischen −1 und +1.',
       rechnung: c => c.s.rho === null
         ? 'Bei einer Frage haben alle denselben Rang. Dann ist eine Quadratsumme 0, und durch 0 kann man nicht teilen: ρ ist nicht definiert.'
         : c.s.ties
