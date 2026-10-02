@@ -50,7 +50,7 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
   picture: 'b12-unabhaengigkeit',
   dataNote: 'Vier Zellen einer Kreuztabelle aus dem Lehrdatensatz, a bis d. Wähle eine Zelle in der Rechentabelle.',
   names: ['a', 'b', 'c', 'd'],
-  bounds: { min: 0, max: 400 },
+  bounds: { min: 0, max: 100000 },
   presets: [
     { id: 'wb', label: 'Weiterbildung und Erwerbstätigkeit', data: WB_EW },
     { id: 'alter', label: 'Alter und Erwerbstätigkeit', data: ALTER_EW },
@@ -213,8 +213,8 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
       options: ['bleibt gleich', 'verdoppelt sich', 'vervierfacht sich'], correct: 1, step: 4,
       explain: 'Jede Abweichung verdoppelt sich, ihr Quadrat vervierfacht sich. Die erwartete Zahl verdoppelt sich nur. Viermal geteilt durch zweimal: χ² verdoppelt sich.',
       kurz: 'Mehr Befragte mit denselben Anteilen machen χ² größer.',
-      // Verdoppelt nur, solange jede Zahl danach höchstens 400 ist; sonst stimmte das Verhältnis nicht mehr.
-      tryIt: { label: 'alle Zahlen verdoppeln (bis 400 je Zelle)', apply: d => d.o.every(x => x * 2 <= 400) ? { ...d, o: d.o.map(x => x * 2) } : d },
+      // Die Tafel hat keine ziehbaren Punkte; die Grenze 100.000 hält nur die Zahlen lesbar und wird mit Klicks kaum erreicht.
+      tryIt: { label: 'alle Zahlen verdoppeln', apply: d => d.o.every(x => x * 2 <= 100000) ? { ...d, o: d.o.map(x => x * 2) } : d },
     },
     {
       question: 'Du vertauschst die beiden Zeilen. Was macht χ²?',

@@ -3,6 +3,10 @@
 import type { ConceptTabs, SampleCtx, SentenceTemplate } from '../../types';
 import { num, paren, close, count } from '../../format';
 import { binomTestHalf, fourfold, mcnemar, often, pText, wer } from './rechnen';
+import { eqFor } from './chi-gemeinsam';
+
+/** χ² als Text: zwei Nachkommastellen, unter 0,01 zwei gültige Ziffern („0,0033“), damit nie „mindestens 0“ dasteht. */
+export const chiText = (v: number) => v > 0 && v < 0.01 ? v.toLocaleString('de-DE', { maximumSignificantDigits: 2 }) : num(v);
 
 /** Gegenrichtung im Satz: „9 andersherum“, „niemand andersherum“. */
 const andere = (k: number) => k === 0 ? 'niemand' : String(k);
@@ -27,7 +31,7 @@ export const mcnemarTest: SentenceTemplate<McValues, McStats> = {
   compute: mcStats,
   metrics: [
     { label: 'Wechsel b + c', value: s => String(s.total) },
-    { label: 'Prüfgröße χ²', value: s => num(s.chi2) },
+    { label: 'Prüfgröße χ²', value: s => chiText(s.chi2) },
   ],
   glyphs: [
     { key: 'chi2', sym: 'χ²', say: 'Chi-Quadrat', term: 'Prüfgröße nach McNemar', plain: 'wie deutlich sich die beiden Wechselrichtungen unterscheiden' },
@@ -38,15 +42,15 @@ export const mcnemarTest: SentenceTemplate<McValues, McStats> = {
   symbolic: [{ part: ['χ²'], m: 'chi2' }, ' = ', { frac: ['(|', { part: ['b'], m: 'b' }, ' − ', { part: ['c'], m: 'c' }, '| ', { part: ['− 1'], m: 'k' }, ')²'], den: [{ part: ['b'], m: 'b' }, ' + ', { part: ['c'], m: 'c' }], m: 'chi2' }],
   aria: 'Chi-Quadrat gleich: Betrag von b minus c, minus 1, zum Quadrat, geteilt durch b plus c',
   numeric: s => [{ part: ['χ²'], m: 'chi2' }, ' = (|', { part: [String(s.b)], m: 'b' }, ' − ', { part: [String(s.c)], m: 'c' }, '| ', { part: ['− 1'], m: 'k' },
-    s.total > 0 ? `)² / (${s.b} + ${s.c}) = ${paren(s.corr)}² / ${s.total} = ${count(s.sq)} / ${s.total} ${close(Math.round(s.chi2 * 100) / 100, s.chi2, 1e-9) ? '=' : '≈'} ${num(s.chi2)}` : ')² / 0: ohne Wechsel nicht berechenbar'],
+    s.total > 0 ? `)² / (${s.b} + ${s.c}) = ${paren(s.corr)}² / ${s.total} = ${count(s.sq)} / ${s.total} ${eqFor(chiText(s.chi2), s.chi2)} ${chiText(s.chi2)}` : ')² / 0: ohne Wechsel nicht berechenbar'],
   sentence: ['Die ', { m: 'chi2', t: 'Prüfgröße' }, ' ist der Unterschied zwischen ', { m: 'b', t: 'den Wechseln von Nein zu Ja' }, ' und ', { m: 'c', t: 'den Wechseln von Ja zu Nein' }, ', ', { m: 'k', t: 'verkleinert um 1' }, ', zum Quadrat und geteilt durch alle Wechsel.'],
   worked: s => s.total === 0
     ? [{ title: 'Die Wechsel zählen', text: 'Niemand wechselt seine Antwort. Dann gibt es nichts zu prüfen; mariposa meldet den exakten p-Wert 1.' }]
     : [
       { title: 'Die Wechsel zählen', text: `${wer(s.b, 'sagt vorher Nein und nachher Ja', 'sagen vorher Nein und nachher Ja')}, ${andere(s.c)} andersherum. Wer seine Antwort behält, zählt nicht.` },
       { title: 'Den Unterschied bilden und 1 abziehen', text: `|${s.b} − ${s.c}| = ${s.diff}, minus 1 ergibt ${num(s.corr)}.` },
-      { title: 'Quadrieren und durch alle Wechsel teilen', text: `${paren(s.corr)}² = ${count(s.sq)}, geteilt durch ${s.b} + ${s.c} = ${s.total} ergibt χ² ≈ ${num(s.chi2)}.` },
-      { title: 'Mit dem Zufall vergleichen', text: `Gäbe es keine Veränderung, käme bei einem Freiheitsgrad ein χ² von mindestens ${num(s.chi2)} ${often(s.p)} vor (${pText(s.p)}).` },
+      { title: 'Quadrieren und durch alle Wechsel teilen', text: `${paren(s.corr)}² = ${count(s.sq)}, geteilt durch ${s.b} + ${s.c} = ${s.total} ergibt χ² ${eqFor(chiText(s.chi2), s.chi2)} ${chiText(s.chi2)}.` },
+      { title: 'Mit dem Zufall vergleichen', text: `Gäbe es keine Veränderung, käme bei einem Freiheitsgrad ein χ² von mindestens ${chiText(s.chi2)} ${often(s.p)} vor (${pText(s.p)}).` },
     ],
   fehler: 'Vergleiche nicht die Ja-Antworten vorher und nachher als zwei Gruppen. Es sind dieselben Personen; wer zweimal Ja sagt, zählt sonst doppelt und sagt nichts über eine Veränderung.',
   sliders: [
@@ -57,9 +61,9 @@ export const mcnemarTest: SentenceTemplate<McValues, McStats> = {
     { label: 'Lehrdatensatz: 46 und 9', mark: 'b', apply: () => ({ b: KURS.b, c: KURS.c }) },
     { label: 'gleich viele Wechsel', mark: 'c', apply: v => ({ ...v, c: v.b }) },
     // Nur wenn beide Zahlen danach noch auf den Regler passen; sonst bliebe das Verhältnis nicht gleich.
-    { label: 'alle Wechsel mal 4', mark: 'b', apply: v => v.b * 4 <= 200 && v.c * 4 <= 200 ? { b: v.b * 4, c: v.c * 4 } : v },
+    { label: 'alle Wechsel mal 4 (bis 200)', mark: 'b', apply: v => v.b * 4 <= 200 && v.c * 4 <= 200 ? { b: v.b * 4, c: v.c * 4 } : v },
   ],
-  compare: s => s.total === 0 ? 'Ohne Wechsel gibt es keine Prüfgröße.' : `Ohne Korrektur wäre χ² = ${num(s.raw)}, mit Korrektur ${num(s.chi2)}. Bei vielen Wechseln macht die Korrektur wenig aus.`,
+  compare: s => s.total === 0 ? 'Ohne Wechsel gibt es keine Prüfgröße.' : `Ohne Korrektur wäre χ² = ${chiText(s.raw)}, mit Korrektur ${chiText(s.chi2)}. Bei vielen Wechseln macht die Korrektur wenig aus.`,
   check: {
     question: '10 Befragte wechseln von Nein zu Ja, 4 von Ja zu Nein. Wie groß ist χ² mit Korrektur?',
     answer: 25 / 14, tolerance: 0.011,
@@ -74,7 +78,7 @@ export const mcnemarTest: SentenceTemplate<McValues, McStats> = {
     ? { kurz: 'Niemand wechselt seine Antwort. Es gibt keine Veränderung, und mariposa meldet den exakten p-Wert 1.', fachlich: 'Ohne diskordante Paare ist χ² nicht definiert; der exakte Binomialtest ergibt p = 1.' }
     : {
       kurz: `${wer(s.b, 'wechselt', 'wechseln')} von Nein zu Ja, ${andere(s.c)} von Ja zu Nein. Gäbe es in Wahrheit keine Veränderung, wären beide Richtungen gleich häufig. Ein mindestens so großer Unterschied käme dann ${often(s.p)} vor.`,
-      fachlich: `χ² = ${num(s.chi2)} mit Korrektur, 1 Freiheitsgrad, ${pText(s.p)}; exakter Binomialtest für ${s.b} von ${s.total} Wechseln: ${pText(s.exact)}.`,
+      fachlich: `χ² = ${chiText(s.chi2)} mit Korrektur, 1 Freiheitsgrad, ${pText(s.p)}; exakter Binomialtest für ${s.b} von ${s.total} ${s.total === 1 ? 'Wechsel' : 'Wechseln'}: ${pText(s.exact)}.`,
     },
   think: {
     question: 'Zu den 200 Befragten kommen 100 hinzu, die vorher und nachher Ja sagen. Was passiert mit χ²?',
@@ -110,7 +114,7 @@ export const mcnemarTabs: ConceptTabs = {
       if (s.total === 0) return { kurz: 'Niemand wechselt seine Antwort. Es gibt keine Veränderung, und mariposa meldet den exakten p-Wert 1.', fachlich: 'Ohne diskordante Paare meldet mariposa kein χ², nur den exakten p-Wert 1.' };
       return {
         kurz: `${wer(s.b, 'traut sich die Auswertung nachher zu', 'trauen sich die Auswertung nachher zu')}, vorher nicht; ${andere(s.c)} andersherum. Gäbe es in Wahrheit keine Veränderung, käme ein mindestens so großer Unterschied ${often(s.p)} vor (${pText(s.p)}).`,
-        fachlich: `McNemar mit Korrektur: χ² = ${num(s.chi2)}, 1 Freiheitsgrad, ${pText(s.p)}; exakt ${pText(s.exact)}.`,
+        fachlich: `McNemar mit Korrektur: χ² = ${chiText(s.chi2)}, 1 Freiheitsgrad, ${pText(s.p)}; exakt ${pText(s.exact)}.`,
         zusatz: `Vorher sagen ${s.vorher} von ${c.rows.length} Ja, nachher ${s.nachher}.`,
       };
     },

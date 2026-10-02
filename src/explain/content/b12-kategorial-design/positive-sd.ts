@@ -10,6 +10,7 @@ export function spalteSd(c: SampleCtx, role: 'x' | 'y') {
   return { id, sd: sd < 1e-12 ? 0 : sd };
 }
 
+/** Lehrdatensatz: Lernzeit (h), Mittelwert, Standardabweichung, Spannweite; P002 mit z-Wert; Befragte ab 66 Jahren (alle nicht erwerbstätig). */
 export const LERNZEIT = { mean: 7.7515, sd: 3.237515294, min: 0, max: 18.4, p002: 8.3, z002: 0.1694200491, ab66: 29 } as const;
 const Z = LERNZEIT;
 

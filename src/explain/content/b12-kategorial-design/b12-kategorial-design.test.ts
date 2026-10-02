@@ -3,12 +3,15 @@ import assert from 'node:assert/strict';
 import { createSurvey } from '../../../domain/survey';
 import { close } from '../../format';
 import { txt, type ConceptTabs, type SampleCtx, type Workshop } from '../../types';
-import { binomTestHalf, counts, dbinom, fisher2x2, fourfold, mcnemar, often, oddsRatio, pbinom, pText } from './rechnen';
+import { binomTestHalf, counts, dbinom, fisher2x2, fourfold, mcnemar, often, oddsRatio, pbinom, pText, wer } from './rechnen';
 import { anpassung, gofSample, gofStats, gofTabs, LEHR, SCHULE } from './chisq-gof';
 import { ALTER_EW, chiSquareTabs, crossChi, fourStats, unabhaengigkeit, WB_EW } from './chi-square';
 import { binomialTabs, binomialTest, pBinom, WEITERBILDUNG } from './binomial-test';
 import { dFisher, FISHER, fisherSample, fisherTabs, fisherTest, pFisher } from './fisher-test';
-import { KURS, mcnemarTabs, mcnemarTest, mcSample, mcStats } from './mcnemar-test';
+import { chiText, KURS, mcnemarTabs, mcnemarTest, mcSample, mcStats } from './mcnemar-test';
+import { createElement, type ReactElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { pictures } from '../../../components/explain/pictures/b12-kategorial-design';
 import { applyOp } from '../../sample';
 import { confounding, PLANUNG } from './confounding';
 import { causality, LERNEN } from './causality';
@@ -20,7 +23,6 @@ import { stepCardFor } from '../../registry';
 import { conceptById } from '../../../domain/concepts';
 import { styleProblems } from '../../style';
 import { fine, fineSigned } from './chi-gemeinsam';
-import { wer } from './rechnen';
 
 /*
  * Referenzwerte des Bereichs B12, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -415,7 +417,7 @@ test('B12 p-Wert-Sätze: grammatisch in jedem erreichbaren Zustand', () => {
   assert.deepEqual([wer(0, 'wechselt', 'wechseln'), wer(1, 'wechselt', 'wechseln'), wer(46, 'wechselt', 'wechseln')], ['Niemand wechselt', 'Eine Person wechselt', '46 Befragte wechseln']);
   assert.match(mcnemarTest.interpret(mcStats({ b: 1, c: 0 })).kurz, /^Eine Person wechselt von Nein zu Ja, niemand von Ja zu Nein\./);
   // Kurzbefehl „alle Wechsel mal 4“: aus 46 und 9 werden 184 und 36 (R: (abs(184 - 36) - 1)^2 / 220 = 98.22272727).
-  const mal4 = mcnemarTest.quick.find(q => q.label === 'alle Wechsel mal 4')!.apply({ b: 46, c: 9 });
+  const mal4 = mcnemarTest.quick.find(q => q.label.startsWith('alle Wechsel mal 4'))!.apply({ b: 46, c: 9 });
   assert.deepEqual(mal4, { b: 184, c: 36 }); assert.ok(close(mcStats(mal4).chi2, 98.22272727, 1e-6));
   assert.match(randomAssignment.ausprobieren[0].explain, /etwa 8 von 100 Losungen/);
   assert.ok(close(TYPISCH.p081, 0.07610963636, 1e-9));
@@ -436,4 +438,39 @@ test('B12 Confounding: gemeinsame Ursache statt Mediator, Kontrollfrage trennt b
   const mediator = confounding.check.options.findIndex(o => /Die Planung erhöht die Lernzeit/.test(o));
   assert.ok(mediator >= 0 && mediator !== confounding.check.correct && /Mediator/.test(confounding.check.diagnose[mediator]!));
   assert.match(confounding.check.options[confounding.check.correct], /Die Lernzeit beeinflusst die Planung und den Wissenstest/);
+});
+
+/*
+ * Korrekturrunde 2: Bild, Rechentabelle und Rechnung der Vierfeldertafel zeigen dieselben Zahlen (N1, R: 171 * 63 / 200 = 53.865,
+ * 34 - 53.865 = -19.865); McNemar zeigt kleine χ² mit zwei gültigen Ziffern statt „0“ (N2, R: (abs(150 - 150) - 1)^2 / 300 = 0.003333).
+ */
+test('B12 Korrekturrunde 2: Bild und Tabelle gleich gerundet, kein „χ² von mindestens 0“', () => {
+  const pic = pictures['b12-unabhaengigkeit'];
+  assert.equal(pic.kind, 'werkstatt');
+  const col = (head: string) => unabhaengigkeit.table.columns.find(c => c.head === head)!;
+  for (const preset of unabhaengigkeit.presets) {
+    const s = unabhaengigkeit.compute(preset.data);
+    for (const step of [1, 2]) {
+      const html: string = pic.kind === 'werkstatt' ? renderToStaticMarkup(pic.draw({ workshop: unabhaengigkeit, data: preset.data, s, step, who: 0, setData: () => {}, pickWho: () => {} }) as ReactElement) : '';
+      for (let i = 0; i < 4; i++) {
+        const c = { s, who: i, names: unabhaengigkeit.names }, e = col('Eⱼₖ').cell(c, i), dev = col('Oⱼₖ − Eⱼₖ').cell(c, i);
+        if (step === 1) {
+          assert.ok(html.includes(`E = ${e}`) && html.includes(`erwartet ${e}`), `${preset.id} Zelle ${i}: Bild zeigt E nicht als ${e}`);
+          assert.ok(txt(unabhaengigkeit.steps[0].rechnung, c).includes(e), `${preset.id} Zelle ${i}: Rechnung zeigt E nicht als ${e}`);
+        } else {
+          assert.ok(html.includes(`>${dev}<`), `${preset.id} Zelle ${i}: Bild zeigt O − E nicht als ${dev}`);
+          assert.ok(txt(unabhaengigkeit.steps[1].rechnung, c).includes(dev), `${preset.id} Zelle ${i}: Rechnung zeigt O − E nicht als ${dev}`);
+        }
+      }
+    }
+  }
+  const alter: string = renderToStaticMarkup(pic.kind === 'werkstatt' ? pic.draw({ workshop: unabhaengigkeit, data: ALTER_EW, s: fourStats(ALTER_EW), step: 2, who: 0, setData: () => {}, pickWho: () => {} }) as ReactElement : createElement('div'));
+  assert.ok(alter.includes('−19,865') && !alter.includes('19,87') && !alter.includes('19,86<'), 'Alter: ±19,865 im Bild');
+  const gleich = mcStats({ b: 150, c: 150 });
+  assert.equal(chiText(gleich.chi2), '0,0033');
+  for (const t of [...mcnemarTest.worked(gleich).map(x => x.text), mcnemarTest.interpret(gleich).fachlich]) assert.doesNotMatch(t, /mindestens 0 |χ² [=≈] 0[ ;.]/, t);
+  assert.match(mcnemarTest.interpret(mcStats({ b: 1, c: 0 })).fachlich, /für 1 von 1 Wechsel:/);
+  // Verdoppeln der Tafel geht auch mehrmals: χ² verdoppelt sich jedes Mal (R: chisq.test(4 * t1, correct = FALSE)$statistic = 3.068780834).
+  const twice = unabhaengigkeit.think[1].tryIt!.apply(unabhaengigkeit.think[1].tryIt!.apply(WB_EW));
+  assert.ok(near(fourStats(twice).chi2, 3.068780834), 'zweimal verdoppelt');
 });

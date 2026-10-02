@@ -69,7 +69,7 @@ export const fisherTest: ConceptCard = {
       question: 'Wann lohnt sich Fisher statt Chi-Quadrat besonders?',
       options: ['wenn in jeder Zelle sehr viele Befragte stehen', 'wenn erwartete Zellhäufigkeiten unter 5 liegen', 'nie, beide liefern immer dasselbe'], correct: 1, step: 3,
       explain: 'Die χ²-Verteilung ist eine Näherung, die bei kleinen erwarteten Zahlen ungenau wird. Fisher rechnet exakt und passt deshalb gerade dann, wenn in einer Zelle nur wenige Befragte erwartet werden.',
-      kurz: 'Kleine Zellen: Fisher.',
+      kurz: 'Wenige Erwartete in einer Zelle: Fisher.',
     },
     {
       question: 'Du vertauschst die Spalten: erwerbstätig links, nicht erwerbstätig rechts. Was passiert mit p?',

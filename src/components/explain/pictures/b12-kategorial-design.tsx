@@ -3,7 +3,7 @@
 // Bausteine aus ./kit.tsx; eigene Stile in src/explain/areas/b12-kategorial-design.css. Anleitung: src/explain/AUTHORING.md.
 import type { GofData, GofStats } from '../../../explain/content/b12-kategorial-design/chisq-gof';
 import type { FourStats } from '../../../explain/content/b12-kategorial-design/chi-square';
-import { partText } from '../../../explain/content/b12-kategorial-design/chi-gemeinsam';
+import { fine, fineSigned, partText } from '../../../explain/content/b12-kategorial-design/chi-gemeinsam';
 import { pBinom } from '../../../explain/content/b12-kategorial-design/binomial-test';
 import { dFisher, FISHER, pFisher } from '../../../explain/content/b12-kategorial-design/fisher-test';
 import { PLANUNG } from '../../../explain/content/b12-kategorial-design/confounding';
@@ -57,9 +57,9 @@ function FourGrid({ s, step, who }: { s: FourStats; step: number; who: number })
   const [box, W] = useWidth();
   const lab = 62, sumW = 56, gap = 6, cw = (W - lab - sumW - 3 * gap - 4) / 2, ch = 62, y0 = 66;
   const x = (j: number) => lab + gap + j * (cw + gap), y = (r: number) => y0 + r * (ch + gap), H = y(2) + 30 + (step >= 5 ? 32 : 0);
-  const sub = (i: number) => step <= 1 ? `E = ${num(s.e[i])}` : step === 2 ? signed(s.dev[i]) : step === 3 ? num(s.sq[i]) : partText(s.part[i]);
+  const sub = (i: number) => step <= 1 ? `E = ${fine(s.e[i])}` : step === 2 ? fineSigned(s.dev[i]) : step === 3 ? num(s.sq[i]) : partText(s.part[i]);
   const tone = (i: number) => step < 2 ? 'plain' : s.dev[i] > 1e-9 ? 'pos' : s.dev[i] < -1e-9 ? 'neg' : 'plain';
-  const label = `Vierfeldertafel ${s.rowTitle} und ${s.colTitle}: ${s.o.map((o, i) => `${'abcd'[i]} ${o}, erwartet ${num(s.e[i])}`).join('; ')}`;
+  const label = `Vierfeldertafel ${s.rowTitle} und ${s.colTitle}: ${s.o.map((o, i) => `${'abcd'[i]} ${o}, erwartet ${fine(s.e[i])}`).join('; ')}`;
   return (
     <div ref={box}>
       <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
