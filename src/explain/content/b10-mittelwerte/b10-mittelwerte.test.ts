@@ -87,7 +87,11 @@ test('t-Test: ALLBUS-Werte, gerundete Startwerte, Kurzbefehle und Kontrollfrage 
   assert.equal(tTestSentence.check.answer, 2);
   assert.match(tTestSentence.check.diagnose(0.5), /^Fast! Andersherum/);
   assert.match(tTestSentence.wofuer, /2\.423 Befragte .* 4,08 Punkte\. Die 1\.169 Befragten .* 3,67 Punkte \(ungewichtet\)/);
-  assert.match(tTestSentence.genau.paragraphs[0], /t\(2222\.7\) = 7\.128, p < 0\.001 und g = 0\.258\. Mit den gerundeten Werten oben kommt 7,03 heraus/);
+  assert.match(tTestSentence.genau.paragraphs[0], /t\(2222\.7\) = 7\.128, p < 0\.001 und g = 0\.258\. Mit den gerundeten Werten oben kommt t ≈ 7,03 heraus.* sind die von R: 2\.222,7\./);
+  // M8: Die Fachsprache nennt die Freiheitsgrade von R (2.222,7), nicht die aus den gerundeten Streuungen (2.221).
+  assert.match(tTestSentence.interpret(s).fachlich, /t ≈ 7,03 bei 2\.222,7 Freiheitsgraden, p < 0,001/);
+  assert.match(tTestSentence.interpret(small).fachlich, /bei \d+(,\d)? Freiheitsgraden/);
+  assert.ok(!tTestSentence.interpret(small).fachlich.includes('2.222,7'), 'andere Gruppengrößen: Freiheitsgrade aus den eingestellten Werten');
   assert.match(tTestSentence.interpret(s).kurz, /wäre ein so großes t in weniger als 1 von 1\.000 Stichproben zu erwarten \(p < 0,001\)\. Mit d ≈ 0,25 ist der Unterschied nach der Faustregel von Cohen klein\./);
   assert.match(tTestSentence.worked(s)[1].text, /1,59² \/ 2\.423 ≈ 0,00104 und 1,66² \/ 1\.169 ≈ 0,00236/);
   assert.match(tTestSentence.worked(s)[3].text, /0,41 \/ 0,0583 ≈ 7,03/);
@@ -104,7 +108,7 @@ test('t-Test: Lernzeit nach Weiterbildung im Reiter wie in R, auch umgepolt', ()
   assert.equal(sample.kind, 'analysis');
   if (sample.kind === 'analysis') {
     const r = sample.result(ctx({ x: 'lernzeit', group: 'weiterbildung' }));
-    assert.match(r.kurz, /im Schnitt 7,78 Stunden gelernt, mit Weiterbildung 7,71 Stunden\. Das sind 0,07 Stunden Unterschied oder 0,16 Standardfehler\. .* in etwa 88 von 100 Stichproben vor \(p ≈ 0,88\)/);
+    assert.match(r.kurz, /im Schnitt 7,78 Stunden gelernt, mit Weiterbildung 7,71 Stunden\. Das sind 0,07 Stunden Unterschied oder 0,16 Standardfehler\. Gäbe es keinen Unterschied, käme ein mindestens so großes t in etwa 88 von 100 Stichproben vor \(p ≈ 0,88\)/);
     assert.match(r.fachlich, /0,07 h, SE ≈ 0,465 h, t ≈ 0,16 bei 175,8 Freiheitsgraden, p ≈ 0,88, Hedges' g ≈ 0,02/);
   }
 });

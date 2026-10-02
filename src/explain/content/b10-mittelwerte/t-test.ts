@@ -28,6 +28,11 @@ export function welchFromSummary(v: TValues): TStats {
 /** Startwerte: die ALLBUS-Werte auf zwei Nachkommastellen. */
 const START: TValues = { 'x̄₁': 4.08, 'x̄₂': 3.67, 's₁': 1.59, 's₂': 1.66, 'n₁': VERTRAUEN.west.n, 'n₂': VERTRAUEN.ost.n };
 const points = (v: number) => unit(v, 'Punkt', 'Punkte');
+/**
+ * Freiheitsgrade nach Welch für den Satz in der Fachsprache: Mit den Streuungen und Gruppengrößen der Startwerte die
+ * exakten aus R (2.222,7, wie unter „Genau genommen“), sonst die aus den eingestellten Werten.
+ */
+const exactDf = (s: TStats) => s['s₁'] === START['s₁'] && s['s₂'] === START['s₂'] && s['n₁'] === START['n₁'] && s['n₂'] === START['n₂'] ? VERTRAUEN.df : s.df;
 /** Größe des Unterschieds nach der Faustregel von Cohen (0,2 klein, 0,5 mittel, 0,8 groß). */
 const size = (d: number) => { const a = Math.abs(d); return a < 0.2 ? 'sehr klein' : a < 0.5 ? 'klein' : a < 0.8 ? 'mittel' : 'groß'; };
 
@@ -102,7 +107,7 @@ export const tTestSentence: SentenceTemplate<TValues, TStats> = {
     kurz: Math.abs(s.diff) < 0.005
       ? 'Beide Gruppen haben dieselbe Mitte, t ist 0. Genau das erwartet man, wenn es keinen Unterschied gibt.'
       : `Gäbe es in der Bevölkerung keinen Unterschied, wäre ein so großes t ${often(s.p)} Stichproben zu erwarten (${pText(s.p)}). Mit d ≈ ${num(Math.abs(s.d))} ist der Unterschied nach der Faustregel von Cohen ${size(s.d)}.`,
-    fachlich: `Welch-t-Test, zweiseitig: t ≈ ${num(s.t)} bei ${dfText(s.df)} Freiheitsgraden, ${pText(s.p)}; Cohens d ≈ ${num(s.d)}. Signifikant zum Niveau α = 0,05 heißt hier p < 0,05${s.p < 0.05 ? ', und das ist erfüllt' : ', und das ist nicht erfüllt'}.`,
+    fachlich: `Welch-t-Test, zweiseitig: t ≈ ${num(s.t)} bei ${dfText(exactDf(s))} Freiheitsgraden, ${pText(s.p)}; Cohens d ≈ ${num(s.d)}. Signifikant zum Niveau α = 0,05 heißt hier p < 0,05${s.p < 0.05 ? ', und das ist erfüllt' : ', und das ist nicht erfüllt'}.`,
   }),
   think: {
     question: 'Beide Gruppen haben nur noch ein Hundertstel ihrer Befragten, Mitten und Streuungen bleiben gleich. Was passiert mit t?',
@@ -114,7 +119,7 @@ export const tTestSentence: SentenceTemplate<TValues, TStats> = {
   genau: {
     kurz: 'Diese Formel ist der Welch-t-Test, den mariposa standardmäßig rechnet. Er braucht keine gleichen Streuungen in beiden Gruppen.',
     paragraphs: [
-      `R rechnet mit allen Nachkommastellen und meldet für die ALLBUS-Daten t(2222.7) = 7.128, p < 0.001 und g = 0.258. Mit den gerundeten Werten oben kommt ${num(welchFromSummary(START).t)} heraus; der Unterschied liegt allein an der Rundung.`,
+      `R rechnet mit allen Nachkommastellen und meldet für die ALLBUS-Daten t(2222.7) = 7.128, p < 0.001 und g = 0.258. Mit den gerundeten Werten oben kommt t ≈ ${num(welchFromSummary(START).t)} heraus; der Unterschied liegt allein an der Rundung. Die Freiheitsgrade unter „Was heißt das Ergebnis?“ sind die von R: ${dfText(VERTRAUEN.df)}.`,
       'Welch-t-Test heißt: Jede Gruppe bringt ihre eigene Varianz mit, und die Freiheitsgrade sind meist keine ganze Zahl. Mit var.equal = TRUE rechnet mariposa den Student-t-Test, der eine gemeinsame Varianz beider Gruppen annimmt.',
       'Der Test nimmt unabhängige Befragte an. Die Gruppenmittelwerte sollen annähernd normalverteilt sein; bei großen Gruppen ist das meist erfüllt, als Faustregel ab etwa 30 Personen je Gruppe. Bei kleinen Gruppen brauchen die Werte selbst eine annähernd normale Form.',
       'Die Vertrauensskala wie eine metrische Skala zu behandeln, ist eine Annahme: Gleiche Abstände zwischen den Stufen sollen gleiche Abstände im Vertrauen bedeuten. Der ALLBUS befragt Ostdeutschland überproportional; für den Vergleich der beiden Gruppen ist das unproblematisch, für Aussagen über ganz Deutschland würde man gewichten.',
@@ -133,7 +138,7 @@ export const tTestTabs: ConceptTabs = {
       const w = welchFor(c);
       if (!w) return { kurz: 'In einer der beiden Gruppen streut die Lernzeit nicht. Dann lässt sich kein t-Test rechnen.', fachlich: 'Der Welch-t-Test braucht in beiden Gruppen mindestens zwei verschiedene Werte.' };
       return {
-        kurz: `Ohne Weiterbildung haben die Befragten in den letzten sieben Tagen im Schnitt ${num(w.m0)} Stunden gelernt, mit Weiterbildung ${num(w.m1)} Stunden. Das sind ${num(Math.abs(w.diff))} Stunden Unterschied oder ${num(Math.abs(w.t))} Standardfehler. Gäbe es keinen Unterschied, käme so ein t ${often(w.p)} Stichproben vor (${pText(w.p)}).`,
+        kurz: `Ohne Weiterbildung haben die Befragten in den letzten sieben Tagen im Schnitt ${num(w.m0)} Stunden gelernt, mit Weiterbildung ${num(w.m1)} Stunden. Das sind ${num(Math.abs(w.diff))} Stunden Unterschied oder ${num(Math.abs(w.t))} Standardfehler. Gäbe es keinen Unterschied, käme ein mindestens so großes t ${often(w.p)} Stichproben vor (${pText(w.p)}).`,
         fachlich: `Welch-t-Test, zweiseitig, in der Richtung von R (ohne minus mit Weiterbildung): ${num(w.diff)} h, SE ≈ ${sig3(w.se)} h, t ≈ ${num(w.t)} bei ${dfText(w.df)} Freiheitsgraden, ${pText(w.p)}, Hedges' g ≈ ${num(w.g)}.`,
         zusatz: `${w.n0} Befragte haben in den letzten zwölf Monaten keine Weiterbildung gemacht, ${w.n1} schon.`,
       };
