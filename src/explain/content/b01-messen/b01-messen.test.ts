@@ -7,6 +7,7 @@ import { applyOp } from '../../sample';
 import type { SampleCtx, SampleTab } from '../../types';
 import { FUENF } from './shared';
 import { series, seriesTabs } from './series';
+import { pairs, pairsTabs, R_FUENF } from './pairs';
 
 /*
  * Referenzwerte des Bereichs B1 „Messen und Skalen“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand)
@@ -23,6 +24,14 @@ import { series, seriesTabs } from './series';
  *   min(x); atlas$id[x == min(x)]           # 0, P100
  *   max(x); atlas$id[x == max(x)]           # 18.4, P175
  *   atlas %>% describe(lernzeit, show = c("min", "max"))   # Ausgabe siehe MINMAX unten (Min 0.000, Max 18.400, N 200)
+ *
+ * Wertepaare (pairs):
+ *   cbind(x[1:5], y[1:5])                   # (6, 12) (8.3, 9) (6.3, 14) (10.5, 13) (6.8, 11)
+ *   cor(x[1:5], y[1:5])                     # -0.07140336
+ *   cor(sort(x[1:5]), sort(y[1:5]))         # 0.8806415
+ *   cor(x, y); cor(sort(x), sort(y))        # 0.5391689; 0.9878151
+ *   cor(x + 1, y)                           # 0.5391689 (Verschieben ändert r nicht)
+ *   atlas %>% pearson_cor(lernzeit, wissenstest, use = "listwise", conf.level = .95)   # r = 0.539, p < 0.001 ***, N = 200
  */
 
 const rows = createSurvey();
@@ -61,4 +70,17 @@ test('B1 Datenreihe: Beispielwerte, Sortierung und Reiter wie in R', () => {
   // Leitaufruf „In R“: der Atlas druckt describe(lernzeit, show = c("min", "max")) Zeichen für Zeichen wie R.
   assert.equal(liveOutput({ fn: 'describe', show: ['min', 'max'] }, rows, 'lernzeit').trim(), MINMAX.trim());
   assert.ok(close(Math.min(...col('lernzeit')), 0) && rows[99].id === 'P100' && rows[99].values.lernzeit === 0, 'Minimum bei P100');
+});
+
+test('B1 Wertepaare: r der fünf wie erhoben und getrennt sortiert, die 200 wie in R', () => {
+  assert.ok(close(R_FUENF.erhoben, -0.07140336, 1e-6) && close(R_FUENF.sortiert, 0.8806415, 1e-6), `${R_FUENF.erhoben} ${R_FUENF.sortiert}`);
+  assert.match(pairs.stellDirVor.text, /r ≈ −0,07\. Sortierst du beide Spalten getrennt, kommt r ≈ 0,88 heraus/);
+  assert.match(pairs.regler!.describe(1), /r steigt auf 0,88/);
+  const tab = analysis(pairsTabs.sample), r = tab.result(ctx());
+  assert.match(r.kurz, /200 Wertepaare .* Wer mehr lernt, löst eher mehr Aufgaben: r ≈ 0,54\. Getrennt sortiert käme r ≈ 0,99 heraus/);
+  assert.equal(r.zusatz, 'P002 bildet das Paar (8,3 h; 9 Aufgaben).');
+  assert.ok(close(tab.value!(ctx()) as number, 0.5391689, 1e-6), 'r wie in R');
+  assert.ok(close(tab.value!(ctx(applyOp(rows, 'lernzeit', 'shift', 1))) as number, 0.5391689, 1e-6), 'r nach dem Verschieben wie in R');
+  // Umgepolt (20 − Aufgaben) liest die Deutung die Richtung aus dem Vorzeichen.
+  assert.match(tab.result(ctx(applyOp(rows, 'wissenstest', 'reverse'))).kurz, /löst eher weniger Aufgaben: r ≈ −0,54/);
 });

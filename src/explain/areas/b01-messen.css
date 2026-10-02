@@ -1,0 +1,3 @@
+/* Bereich B1 „Messen und Skalen“: Bilder in src/components/explain/pictures/b01-messen.tsx. */
+.b01-pt{fill:var(--wash);stroke:var(--green);stroke-width:2}
+.b01-pt-fake{fill:var(--paper);stroke:var(--muted);stroke-dasharray:3 2}

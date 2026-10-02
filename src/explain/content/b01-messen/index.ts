@@ -2,12 +2,15 @@
 // Je Begriff eine Datei in diesem Ordner, hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
 import type { AreaIndex } from '../../types';
 import { series, seriesTabs } from './series';
+import { pairs, pairsTabs } from './pairs';
 
 export const b01Messen: AreaIndex = {
   explanations: {
     series: { kind: 'begriff', card: series },
+    pairs: { kind: 'begriff', card: pairs },
   },
   tabs: {
     series: seriesTabs,
+    pairs: pairsTabs,
   },
 };
