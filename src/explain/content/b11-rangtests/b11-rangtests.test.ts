@@ -6,6 +6,7 @@ import { close } from '../../format';
 import { txt, type Ctx, type SampleCtx } from '../../types';
 import { mannWhitney, midRanks } from './rank';
 import { mannWhitneyTabs, mannWhitneyWorkshop as mwW, mwSample, MW_START, MW_TIES } from './mann-whitney';
+import { wilcoxonTabs, wilcoxonWorkshop as wxW, wxSample, WX_START, WX_TIES } from './wilcoxon';
 import { kruskalWallisTabs, kruskalWallisWorkshop as kwW, kwMeanRank, kwSample, KW_EVEN, KW_START, KW_TIES } from './kruskal-wallis';
 
 /*
@@ -175,4 +176,77 @@ test('B11 Kruskal–Wallis: 200 Befragte und In R wie in R', () => {
   const map = Object.fromEntries(kruskalWallisTabs.r!.outputMap.map(o => [o.match, o.explain]));
   assert.match(map['.021'], /in etwa 2 von 100/);
   assert.match(map['Epsilon-squared'], /0,058/);
+});
+
+/*
+ * Wilcoxon, verbunden, Werkstatt (sechs Personen, Wissenstest zweimal):
+ *   wx <- tibble(t1 = c(8, 11, 9, 12, 7, 10), t2 = c(11, 12, 7, 17, 11, 16))
+ *   wx$t2 - wx$t1; rank(abs(wx$t2 - wx$t1))                                  # 3 1 -2 5 4 6; 3 1 2 5 4 6
+ *   wx %>% wilcoxon_test(t1, t2)                                             # V = W+ = 19, W- = 2, Z = -1.782084, p = 0.074735, r = 0.727533
+ *   wilcox.test(wx$t2, wx$t1, paired = TRUE)$p.value                         # 0.09375 (exakt, 6 von 64 Vorzeichenmustern)
+ *   wx2 <- tibble(t1 = c(8, 11, 9, 12, 7, 10), t2 = c(11, 11, 7, 14, 9, 13))
+ *   d2 <- wx2$t2 - wx2$t1; rank(abs(d2[d2 != 0])); rank(abs(d2))             # 3 0 -2 2 2 3; 4.5 2 2 2 4.5; mit der Null 5.5 1 3 3 3 5.5
+ *   wx2 %>% wilcoxon_test(t1, t2)                                            # W+ = 13, W- = 2, Z = -1.518144, p = 0.128978, r = 0.678935
+ *   wx %>% mutate(t2 = replace(t2, 4, 20)) %>% wilcoxon_test(t1, t2)         # W+ = 19
+ *   wx %>% mutate(t2 = t2 + 1) %>% wilcoxon_test(t1, t2); wx2 …              # W+ = 20; 19.5
+ *   wx %>% mutate(t2 = t1) %>% wilcoxon_test(t1, t2)                         # Z = 0, p = 1
+ * Wilcoxon, verbunden, Lehrdatensatz:
+ *   atlas %>% wilcoxon_test(wissenstest, wissenstest_t2) %>% summary()
+ *     # 115 positiv, 53 negativ, 32 gleich; W+ = 10425.5, W- = 3770.5, Z = -5.358338, p = 8.39909e-08, r = 0.413405
+ *   atlas %>% mutate(wissenstest = wissenstest + 1) %>% wilcoxon_test(wissenstest, wissenstest_t2)       # 68 / 85 / 47, Z = -1.8606, p = 0.062801
+ *   atlas %>% mutate(wissenstest_t2 = wissenstest_t2 - 1) %>% wilcoxon_test(wissenstest, wissenstest_t2) # dasselbe
+ *   atlas %>% wilcoxon_test(wissenstest, wissenstest_t2, wissenstest_t3)     # drittes Argument = Gewicht: [Weighted] … N = 2324
+ */
+test('B11 Wilcoxon, verbunden: Werkstatt wie in R', () => {
+  const s = wxW.compute(WX_START);
+  assert.deepEqual([s.d, s.rank, s.Wpos, s.Wneg, s.n], [[3, 1, -2, 5, 4, 6], [3, 1, 2, 5, 4, 6], 19, 2, 6]);
+  assert.ok(near(s.z, -1.782084) && near(s.p, 0.074735) && near(s.r, 0.727533) && near(s.exact!, 0.09375), `z ${s.z}`);
+  const t = wxW.compute(WX_TIES);
+  assert.deepEqual([t.d, t.Wpos, t.Wneg, t.n, t.nZero, t.withZeros], [[3, 0, -2, 2, 2, 3], 13, 2, 5, 1, [5.5, 1, 3, 3, 3, 5.5]]);
+  assert.ok(t.rank.every((r, i) => i === 1 ? Number.isNaN(r) : r === [4.5, 0, 2, 2, 2, 4.5][i]), `${t.rank}`);
+  assert.ok(near(t.z, -1.518144) && near(t.p, 0.128978) && near(t.r, 0.678935) && t.exact === null, `z ${t.z}`);
+  assert.equal(wxW.compute(wxW.think[0].tryIt!.apply(WX_START)).Wpos, 19);
+  assert.equal(wxW.compute(wxW.think[1].tryIt!.apply(WX_START)).Wpos, 20);
+  assert.equal(wxW.compute(wxW.think[1].tryIt!.apply(WX_TIES)).Wpos, 19.5);
+  const same = wxW.compute(wxW.think[2].tryIt!.apply(WX_START));
+  assert.deepEqual([same.z, same.p, same.n], [0, 1, 0]);
+  const c = at(wxW, WX_START, 2), v = wxW.variants.wilcoxon_test;
+  assert.equal(txt(wxW.steps[0].rechnung, c), 'Person C: 7 − 9 = −2, also 2 Aufgaben weniger als beim ersten Mal.');
+  assert.equal(txt(wxW.steps[1].rechnung, c), 'Person C: |−2| = 2. Eine Veränderung ist kleiner, also Rang 2.');
+  assert.equal(txt(wxW.steps[2].rechnung, c), 'W⁺ = 3 + 1 + 5 + 4 + 6 = 19. W⁻ = 2. Zusammen 21 = 6 · 7 / 2.');
+  assert.equal(txt(wxW.steps[3].rechnung, c), 'Erwartung 6 · 7 / 4 = 10,5. z = (2 − 10,5) / 4,77 ≈ −1,78.');
+  assert.equal(v.interpret(c).kurz, '5 von 6 Personen lösen beim zweiten Test mehr Aufgaben, 1 weniger. Die Ränge der Verbesserungen ergeben 19 von 21; ohne Veränderung wäre es etwa die Hälfte.');
+  assert.match(v.interpret(c).fachlich, /z ≈ −1,78, p ≈ 0,07 .*in etwa 7 von 100 .*nicht signifikant; r = \|z\| \/ √n ≈ 0,73 ist nach der Faustregel groß\./);
+  assert.match(v.genau.paragraphs(c)[0], /alle 64 Vorzeichenmuster durch und meldet hier p ≈ 0,09 statt 0,07/);
+  const b = at(wxW, WX_TIES, 1);
+  assert.equal(txt(wxW.steps[1].rechnung, b), 'Person B hat sich nicht verändert und fällt weg. Gerechnet wird mit den übrigen 5.');
+  assert.equal(wxW.steps[1].check.answer(b), 'NA');
+  assert.match(wxW.steps[1].check.diagnose(b, 1)!, /Tippe NA/);
+  assert.match(wxW.steps[1].check.diagnose(at(wxW, WX_TIES, 2), -2)!, /kein Vorzeichen/);
+  assert.match(wxW.steps[1].check.diagnose(at(wxW, WX_TIES, 0), 5.5)!, /Nullen zählen nicht mit/);
+  assert.match(wxW.steps[2].check.diagnose(c, 2)!, /Verschlechterungen/);
+  assert.match(wxW.steps[2].check.diagnose(at(wxW, WX_TIES), 10)!, /Summe der Differenzen/);
+  assert.match(wxW.steps[3].check.diagnose(c, 1.78)!, /Vorzeichen/);
+});
+
+test('B11 Wilcoxon, verbunden: 200 Befragte und In R wie in R', () => {
+  const columns = { x: ['wissenstest'], y: ['wissenstest_t2'] };
+  const t = wxSample(ctx(rows, columns));
+  assert.deepEqual([t.nPos, t.nNeg, t.nZero, t.n, t.Wpos, t.Wneg], [115, 53, 32, 168, 10425.5, 3770.5]);
+  assert.ok(near(t.z, -5.358338) && near(t.p, 8.39909e-8, 1e-12) && near(t.r, 0.413405), `z ${t.z}`);
+  for (const d of [applyOp(rows, 'wissenstest', 'shift', 1), applyOp(rows, 'wissenstest_t2', 'shift', -1)]) {
+    const u = wxSample(ctx(d, columns));
+    assert.ok(u.nPos === 68 && u.nNeg === 85 && u.nZero === 47 && near(u.z, -1.8606, 1e-4) && near(u.p, 0.062801), `verschoben ${u.nPos} ${u.p}`);
+  }
+  const s = wilcoxonTabs.sample!;
+  if (s.kind !== 'analysis') return assert.fail('Auswertung erwartet');
+  const r = s.result(ctx(rows, columns));
+  assert.equal(r.kurz, '115 Befragte lösen beim zweiten Messzeitpunkt mehr Aufgaben, 53 weniger, 32 gleich viele. Die Ränge der Verbesserungen ergeben 10.425,5, die der Verschlechterungen 3.770,5. Gäbe es keine Veränderung, käme ein so ungleiches Verhältnis in weniger als 1 von 1.000 Stichproben vor (p < 0,001).');
+  assert.equal(r.fachlich, 'Wilcoxon-Test für verbundene Stichproben, zweite minus erste Messung: V = W⁺ = 10.425,5, z ≈ −5,36, p < 0,001, r ≈ 0,41. Bei α = 0,05 ist das signifikant; der Effekt ist nach der Faustregel mittel.');
+  assert.equal(r.zusatz, 'Die 32 Befragten mit gleich vielen Aufgaben fallen weg; gerechnet wird mit 168 Paaren.');
+  assert.match(s.think[0].explain, /von unter 0,001 auf etwa 0,06/);
+  assert.match(wxW.variants.wilcoxon_test.genau.paragraphs(at(wxW, WX_START))[2], /32 von 200 Befragten/);
+  const map = Object.fromEntries(wilcoxonTabs.r!.outputMap.map(o => [o.match, o.explain]));
+  assert.match(map.r, /168 Paaren .* 5,36 \/ √168 ≈ 0,41/);
+  assert.ok(near(5.358338 / Math.sqrt(168), 0.413405), 'r = |Z| / √168');
 });

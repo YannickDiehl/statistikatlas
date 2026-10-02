@@ -5,6 +5,8 @@ import type { KeyboardEvent, PointerEvent } from 'react';
 import { num } from '../../../explain/format';
 import { MW_GROUP, type MwStats } from '../../../explain/content/b11-rangtests/mann-whitney';
 import { KW_GROUP, KW_LABELS, type KwStats } from '../../../explain/content/b11-rangtests/kruskal-wallis';
+import type { WxStats } from '../../../explain/content/b11-rangtests/wilcoxon';
+import type { Pairs } from '../../../explain/math';
 import { Axis, clamp, DragPoint, forWorkshop, GridCell, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Ein Punkt einer Zeile: Wert, Beschriftung im Kreis, vorgelesener Name, Index in den Daten. */
@@ -162,7 +164,51 @@ function KruskalWallisPicture({ data, s, step, who, setData, pickWho, names }: {
   </>;
 }
 
+// Wilcoxon, verbunden ------------------------------------------------------------------
+
+/** Zwei waagerechte Balken für die Rangsummen W⁺ und W⁻, ab Schritt 4 mit der Erwartung ohne Veränderung. */
+function RankSumBars({ s, step }: { s: WxStats; step: number }) {
+  const [box, W] = useWidth();
+  const left = 60, right = W - 90, X = linear([0, Math.max(1, s.total)], [left, right]);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={112} viewBox={`0 0 ${W} 112`} role="img"
+        aria-label={`Rangsumme der Verbesserungen W⁺ = ${num(s.Wpos)}, der Verschlechterungen W⁻ = ${num(s.Wneg)}; ohne Veränderung erwartet man je ${num(s.E)}.`}>
+        <text className="xw-t" x={4} y={36}>W⁺</text>
+        <rect className="xw-bar-pos" x={left} y={22} width={Math.max(2, X(s.Wpos) - left)} height={20} />
+        <text className="xw-t" x={X(s.Wpos) + 8} y={37}>+ {num(s.Wpos)}</text>
+        <text className="xw-t" x={4} y={76}>W⁻</text>
+        <rect className="xw-bar-neg" x={left} y={62} width={Math.max(2, X(s.Wneg) - left)} height={20} />
+        <text className="xw-t" x={X(s.Wneg) + 8} y={77}>− {num(s.Wneg)}</text>
+        {step >= 4 && s.n > 0 && <MarkLine x={X(s.E)} from={16} to={92} label="" />}
+        {step >= 4 && s.n > 0 && <text className="xw-t" x={X(s.E)} y={108} textAnchor="middle">Erwartung {num(s.E)}</text>}
+      </svg>
+    </div>
+  );
+}
+
+function WilcoxonPicture({ data, s, step, who, setData, pickWho, names }: { data: Pairs; s: WxStats; step: number; who: number; setData: (d: Pairs) => void; pickWho: (i: number) => void; names: readonly string[] }) {
+  const n = data.x.length;
+  const note = (i: number) => step === 1 ? `d = ${s.d[i] > 0 ? '+' : ''}${num(s.d[i])}` : s.d[i] === 0 ? 'fällt weg'
+    : step === 2 ? `Rang ${num(s.rank[i])}` : `${s.d[i] > 0 ? '+' : '−'} ${num(s.rank[i])}`;
+  const rows: Row[] = data.x.map((x, i) => ({
+    name: names[i], arrow: true, tone: s.d[i] < 0 ? 'neg' : 'pos',
+    points: [
+      { value: x, label: '1', name: `Person ${names[i]}, erster Test, gelöste Aufgaben`, at: i },
+      { value: data.y[i], label: '2', name: `Person ${names[i]}, zweiter Test, gelöste Aufgaben`, at: n + i },
+    ],
+    note: note(i),
+  }));
+  const change = (at: number, v: number) => setData(at < n ? { x: data.x.map((x, k) => k === at ? v : x), y: data.y } : { x: data.x, y: data.y.map((y, k) => k === at - n ? v : y) });
+  return <>
+    <DotRows rows={rows} bounds={{ min: 0, max: 20 }} tickStep={5} axisTitle="gelöste Aufgaben im Wissenstest (von 20)" who={who} onPick={pickWho}
+      onChange={change} label="Zwei Tests der sechs Beispielpersonen, je Zeile eine Person" />
+    {step >= 3 && <RankSumBars s={s} step={step} />}
+  </>;
+}
+
 export const pictures: Record<string, Picture> = {
   'b11-kw': forWorkshop(p => <KruskalWallisPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
+  'b11-wilcoxon': forWorkshop(p => <WilcoxonPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
   'b11-mw': forWorkshop(p => <MannWhitneyPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
 };
