@@ -45,7 +45,7 @@ export const tVerteilung: ConceptCard = {
     },
     {
       title: 'Die geschätzte Streuung einrechnen',
-      was: 'Weil s nur geschätzt ist, schwankt t etwas stärker als ein z-Wert. Große Werte kommen öfter vor: Die Ränder der t-Verteilung sind dicker.',
+      was: 'Weil die Streuung der Befragten (s) nur geschätzt ist, schwankt t etwas stärker als ein z-Wert, der mit der wahren Streuung rechnet. Große Werte kommen öfter vor: Die Ränder der t-Verteilung sind dicker.',
       warum: 'Bei wenigen Befragten kann s zufällig klein ausfallen. Dann kann t groß werden, auch wenn es in Wahrheit keinen Unterschied gibt.',
       acht: 'Die t-Verteilung beschreibt nicht die Daten. Sie zeigt, wie t von Stichprobe zu Stichprobe schwanken würde, wenn es keinen Unterschied gäbe.',
       concept: 'null_distribution',
