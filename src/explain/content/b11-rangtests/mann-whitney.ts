@@ -74,7 +74,6 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
   wofuer: 'Lernen Menschen mit Weiterbildung mehr als Menschen ohne? Acht Personen sagen, wie viele Stunden sie in den letzten sieben Tagen gelernt haben: vier ohne Weiterbildung, vier mit. Eine Person lernt 30 Stunden und zieht den Mittelwert ihrer Gruppe weit nach oben. Der Mann–Whitney-U-Test vergleicht die Gruppen deshalb nicht über Mittelwerte, sondern über Ränge.',
   mut: 'Die Formel sieht nach viel aus. Sie besteht aber nur aus fünf kleinen Schritten: der Reihe nach ordnen, zusammenzählen, abziehen und am Ende teilen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'b11-mw',
-  dataNote: 'Acht Beispielpersonen: A bis D ohne, E bis H mit Weiterbildung. Die Punkte im Bild lassen sich ziehen.',
   names: MW_NAMES,
   bounds: { min: 0, max: 30 },
   presets: [

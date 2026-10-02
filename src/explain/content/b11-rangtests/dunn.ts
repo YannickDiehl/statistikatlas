@@ -47,13 +47,13 @@ export const dunnCard: ConceptCard = {
       was: 'Holm macht kleine p-Werte größer, und zwar das kleinste am stärksten. Danach vergleichst du wie gewohnt mit α.',
       rechnung: 'Das kleinste p mal 10, das zweitkleinste mal 9 und so weiter, nie kleiner als das vorige: 0,006 · 10 ≈ 0,06.',
       warum: 'So bleibt die Wahrscheinlichkeit, irgendwo einen Unterschied zu melden, den es nicht gibt, für alle zehn Vergleiche zusammen höchstens α.',
-      acht: 'Ein signifikanter Gesamttest garantiert kein signifikantes Paar. Hier liegt Kruskal–Wallis unter α, aber nach der Korrektur kein einziges Paar.',
+      acht: 'Ein Gesamttest unter α garantiert kein auffälliges Paar. Hier liegt Kruskal–Wallis unter α = 0,05, aber nach der Korrektur kein einziges Paar.',
       concept: 'multiplicity',
     },
   ],
   ausprobieren: [
     {
-      question: 'Kruskal–Wallis ist signifikant. Muss dann mindestens ein Paar auffällig sein?', options: ['ja', 'nein'], correct: 1, step: 3,
+      question: 'Kruskal–Wallis ist bei α = 0,05 signifikant. Muss dann mindestens ein Paar auffällig sein?', options: ['ja', 'nein'], correct: 1, step: 3,
       explain: 'Hier nicht: H liegt unter α, aber nach der Korrektur kein einzelnes Paar. Der Gesamttest bündelt kleine Unterschiede, die einzeln zu schwach sind.',
       kurz: 'Gesamttest und Paare beantworten verschiedene Fragen.',
     },
@@ -95,7 +95,7 @@ export const dunnCard: ConceptCard = {
       3: 'Fast! Die mittleren Ränge bleiben dieselben. Nur p ist größer geworden, die Hürde also höher.',
     },
   },
-  fuerDich: 'Nach einem signifikanten Gesamttest lohnt der Blick auf die korrigierten Paarvergleiche. Bleibt dort nichts übrig, beschreibst du den Unterschied vorsichtig, als Muster über alle Gruppen.',
+  fuerDich: 'Liegt der Gesamttest unter α, lohnt der Blick auf die korrigierten Paarvergleiche. Bleibt dort nichts übrig, beschreibst du den Unterschied vorsichtig, als Muster über alle Gruppen.',
   genau: {
     kurz: 'Dunn nutzt die gemeinsamen Ränge aller Gruppen und korrigiert für Gleichstände. Welche Korrektur der p-Werte du nimmst, legst du vorher fest.',
     paragraphs: [
@@ -132,7 +132,7 @@ export const dunnTabs: ConceptTabs = {
       if (!ok.length) return { kurz: 'Alle Befragten geben dieselbe Antwort. Dann gibt es nichts zu ordnen und keinen Vergleich.', fachlich: 'Die z-Werte sind nicht definiert.' };
       const top = ok.reduce((a, p) => Math.abs(p.z) > Math.abs(a.z) ? p : a), hits = ok.filter(p => p.pAdj < 0.05).length, raw = ok.filter(p => p.p < 0.05).length;
       return {
-        kurz: `Am deutlichsten unterscheiden sich ${label(d.codes[top.i])} und ${label(d.codes[top.j])}: z ≈ ${num(top.z)}, nach der Holm-Korrektur ${pText(top.pAdj)}. Bei α = 0,05 ${hits === 0 ? 'ist nach der Korrektur kein Paar auffällig' : hits === 1 ? 'ist nach der Korrektur ein Paar auffällig' : `sind nach der Korrektur ${hits} Paare auffällig`}; ohne Korrektur wären es ${raw}.`,
+        kurz: `Am deutlichsten unterscheiden sich ${label(d.codes[top.i])} und ${label(d.codes[top.j])}: mittlerer Rang ${num(d.kw.mean[top.i])} gegen ${num(d.kw.mean[top.j])}, z ≈ ${num(top.z)}, nach der Holm-Korrektur ${pText(top.pAdj)}. Bei α = 0,05 ${hits === 0 ? 'ist nach der Korrektur kein Paar auffällig' : hits === 1 ? 'ist nach der Korrektur ein Paar auffällig' : `sind nach der Korrektur ${hits} Paare auffällig`}; ohne Korrektur wären es ${raw}.`,
         fachlich: `Dunn-Vergleiche nach Kruskal–Wallis mit Holm-Korrektur, ${ok.length} Paare. z in der Richtung von R: erste minus zweite Gruppe, negativ heißt kleinerer mittlerer Rang der ersten.`,
         zusatz: `Kruskal–Wallis über alle Gruppen: H ≈ ${num(d.kw.H)}, ${pText(d.kw.p)}.`,
       };

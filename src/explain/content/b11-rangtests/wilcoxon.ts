@@ -1,9 +1,10 @@
 // Werkstatt „Wilcoxon, verbunden“ (B11): sechs Personen schreiben denselben Wissenstest zweimal; Differenzen, Ränge der
 // Beträge, Rangsumme der Verbesserungen und z wie mariposa::wilcoxon_test(). Ton nach der Streuung.
 // Alle Zahlen sind in R nachgerechnet (b11-rangtests.test.ts).
-import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
+import type { Bridge, BridgeCtx, ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
 import type { Pairs } from '../../math';
-import { close, count, num, signed } from '../../format';
+import { close, count, num, pct, signed } from '../../format';
+import { sumNodes } from '../../sample';
 import { columnsOf, midRanks, signedRank, type SignedRank } from './rank';
 import { pOften, pText, rWord, signif } from './words';
 
@@ -56,12 +57,69 @@ const numeric = (c: C): FNode[] => [
   { part: [c.s.n ? `z = (${num(c.s.small)} − ${num(c.s.E)}) / ${num(c.s.sd)} ≈ ${zText(c)}` : 'z = 0'], m: 4 },
 ];
 
+// Brücke „Mit 200 Befragten“ ----------------------------------------------------------------
+
+type B = BridgeCtx<WxStats>;
+const BP = (c: B) => c.names[c.who];
+const T1 = (c: B) => `„${c.col.title}“`, T2 = (c: B) => `„${c.col2!.title}“`;
+const plusTerm = (c: B, i: number): FNode[] => [c.s.d[i] > 0 ? num(c.s.rank[i]) : '0'];
+const zeros = (k: number) => k === 0 ? 'Keine Differenz ist 0.' : k === 1 ? 'Eine Null fällt weg.' : `${k} Nullen fallen weg.`;
+
+/** Dieselben vier Schritte mit allen 200 Befragten (zweite minus erste Spalte der Spaltenwahl). */
+export const bridgeWilcoxon: Bridge<WxStats> = {
+  data: 'pairs',
+  numeric: (c, last) => {
+    const w: FNode[] = ['W⁺ = ', ...sumNodes(c.values.length, c.who, i => plusTerm(c, i)), ' = ', { part: [num(c.s.Wpos)], m: 3 }];
+    return last >= 4 ? [...w, { br: true }, { part: [c.s.n ? `z = (${num(c.s.small)} − ${num(c.s.E)}) / ${num(c.s.sd)} ≈ ${num(c.s.z)}` : 'z = 0'], m: 4 }] : w;
+  },
+  lines: [
+    {
+      all: c => `Für jede Person ${T2(c)} minus ${T1(c)}: ${c.s.nPos} Plus, ${c.s.nNeg} Minus, ${c.s.nZero} Nullen.`,
+      person: c => `${BP(c)}: ${num(c.values2![c.who])} − ${num(c.values[c.who])} = ${signed(c.s.d[c.who])}.`,
+    },
+    {
+      all: c => c.s.n === 0 ? 'Alle Differenzen sind 0, es bleibt nichts zu ordnen.' : `${zeros(c.s.nZero)} Die übrigen ${c.s.n} Beträge bekommen die Ränge 1 bis ${c.s.n}; gleiche Beträge teilen sich ihren Platz.`,
+      person: c => c.s.d[c.who] === 0 ? `${BP(c)} hat die Differenz 0 und fällt weg.` : `${BP(c)}: |${signed(c.s.d[c.who])}| = ${num(Math.abs(c.s.d[c.who]))}, Rang ${num(c.s.rank[c.who])}.`,
+    },
+    {
+      all: c => c.s.n === 0 ? 'Beide Rangsummen sind 0.' : `W⁺ = ${num(c.s.Wpos)}, W⁻ = ${num(c.s.Wneg)}. Zusammen ${num(c.s.total)} = ${c.s.n} · ${c.s.n + 1} / 2.`,
+      person: c => { const d = c.s.d[c.who]; return d === 0 ? `${BP(c)} steuert nichts bei.` : `${BP(c)} steuert ${num(c.s.rank[c.who])} zu ${d > 0 ? 'W⁺' : 'W⁻'} bei.`; },
+    },
+    {
+      all: c => c.s.n === 0 ? 'Ohne Veränderung meldet R wie SPSS z = 0 und p = 1.' : `Erwartung ${c.s.n} · ${c.s.n + 1} / 4 = ${num(c.s.E)}. z = (${num(c.s.small)} − ${num(c.s.E)}) / ${num(c.s.sd)} ≈ ${num(c.s.z)}.`,
+      person: c => c.s.d[c.who] === 0 ? `${BP(c)} zählt für z nicht mit.` : `Der Rang von ${BP(c)} macht ${pct(c.s.rank[c.who] / c.s.total, 2)} aller Ränge aus.`,
+    },
+  ],
+  metrics: c => [
+    { label: 'Paare ohne Nulldifferenz n', value: String(c.s.n) },
+    { label: 'z', value: num(c.s.z) },
+    { label: 'Rangsumme W⁺', value: num(c.s.Wpos) },
+  ],
+  interpret: c => {
+    const t = c.s;
+    if (t.n === 0) return { kurz: 'Alle haben bei beiden Messungen denselben Wert. Es gibt keine Veränderung, die man ordnen könnte.', fachlich: 'Alle Differenzen sind 0; mariposa meldet wie SPSS z = 0 und p = 1.' };
+    const [more, less] = t.Wpos >= t.Wneg ? ['positiven', 'negativen'] : ['negativen', 'positiven'];
+    return {
+      kurz: `${t.nPos} Befragte haben bei ${T2(c)} einen höheren Wert als bei ${T1(c)}, ${t.nNeg} einen niedrigeren, ${t.nZero} denselben. Die Ränge der ${more} Differenzen ergeben ${num(Math.max(t.Wpos, t.Wneg))}, die der ${less} ${num(Math.min(t.Wpos, t.Wneg))}. Gäbe es keine Veränderung, käme ein so ungleiches Verhältnis ${pOften(t.p)} Stichproben vor (${pText(t.p)}).`,
+      fachlich: `Wilcoxon-Test für verbundene Stichproben, ${T2(c)} minus ${T1(c)}: V = W⁺ = ${num(t.Wpos)}, z ≈ ${num(t.z)}, ${pText(t.p)}, r ≈ ${num(t.r)}. ${signif(t.p)}; der Effekt ist nach der Faustregel ${rWord(t.r)}.`,
+      zusatz: t.nZero === 0 ? `Niemand hat zweimal denselben Wert; gerechnet wird mit allen ${t.n} Paaren.` : `${t.nZero === 1 ? 'Eine Person mit gleichem Wert fällt' : `Die ${t.nZero} Befragten mit gleichem Wert fallen`} weg; gerechnet wird mit ${count(t.n)} Paaren.`,
+    };
+  },
+  voraussetzung: () => 'Beide Spalten messen dasselbe auf derselben Skala, bei denselben Personen. Die Personen sind unabhängig, und die Differenzen lassen sich der Größe nach ordnen.',
+  picture: (c, step) => ({
+    contributions: step === 1 ? { label: 'Differenzen aller Befragten, der Größe nach', values: c.s.d }
+      : step === 2 ? { label: 'Ränge der Beträge, der Größe nach; 0 heißt: fällt weg', values: c.s.rank.map(r => Number.isNaN(r) ? 0 : r) }
+      : { label: 'Ränge mit Vorzeichen, der Größe nach', values: c.s.signed },
+  }),
+  value: c => c.s.Wpos,
+};
+
 export const wilcoxonWorkshop: Workshop<Pairs, WxStats> = {
   id: 'b11-wilcoxon',
+  bridge: bridgeWilcoxon,
   wofuer: 'Wissen Menschen beim zweiten Mal mehr? Sechs Personen lösen denselben Wissenstest mit 20 Aufgaben zweimal. Weil es dieselben Personen sind, vergleichen wir nicht zwei Gruppen, sondern jede Person mit sich selbst. Dafür ordnet der Wilcoxon-Test für verbundene Stichproben die Veränderungen der Größe nach.',
   mut: 'Die Formel sieht nach viel aus. Sie besteht aber nur aus vier kleinen Schritten: abziehen, der Größe nach ordnen, zusammenzählen und teilen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'b11-wilcoxon',
-  dataNote: 'Sechs Beispielpersonen, je Zeile eine Person: 1 ist der erste Test, 2 der zweite. Die Punkte im Bild lassen sich ziehen.',
   names: WX_NAMES,
   bounds: { min: 0, max: 20 },
   presets: [
@@ -258,34 +316,21 @@ export function wxSample(c: SampleCtx) {
 
 export const wilcoxonTabs: ConceptTabs = {
   sample: {
-    kind: 'analysis', columns: { x: 'wissenstest', y: 'wissenstest_t2' },
-    kurz: 'Dieselbe Frage mit allen 200 Befragten: Lösen sie beim zweiten Messzeitpunkt mehr Aufgaben im Wissenstest als beim ersten?',
-    value: c => wxSample(c).p,
-    result: c => {
-      const t = wxSample(c);
-      if (t.n === 0) return { kurz: 'Alle 200 lösen beim zweiten Messzeitpunkt genau so viele Aufgaben wie beim ersten. Dann gibt es keine Veränderung zu ordnen.', fachlich: 'Alle Differenzen sind 0; mariposa meldet wie SPSS z = 0 und p = 1.' };
-      const [more, less] = t.Wpos >= t.Wneg ? ['Verbesserungen', 'Verschlechterungen'] : ['Verschlechterungen', 'Verbesserungen'];
-      return {
-        kurz: `${t.nPos} Befragte lösen beim zweiten Messzeitpunkt mehr Aufgaben, ${t.nNeg} weniger, ${t.nZero} gleich viele. Die Ränge der ${more} ergeben ${num(Math.max(t.Wpos, t.Wneg))}, die der ${less} ${num(Math.min(t.Wpos, t.Wneg))}. Gäbe es keine Veränderung, käme ein so ungleiches Verhältnis ${pOften(t.p)} Stichproben vor (${pText(t.p)}).`,
-        fachlich: `Wilcoxon-Test für verbundene Stichproben, zweite minus erste Messung: V = W⁺ = ${num(t.Wpos)}, z ≈ ${num(t.z)}, ${pText(t.p)}, r ≈ ${num(t.r)}. ${signif(t.p)}; der Effekt ist nach der Faustregel ${rWord(t.r)}.`,
-        zusatz: `Die ${t.nZero} Befragten mit gleich vielen Aufgaben fallen weg; gerechnet wird mit ${count(t.n)} Paaren.`,
-      };
-    },
-    voraussetzung: 'Beide Messungen stammen von denselben Personen, und die Personen sind unabhängig voneinander. Die Veränderungen lassen sich der Größe nach ordnen.',
+    kind: 'bridge', workshop: 'b11-wilcoxon', variant: 'wilcoxon_test', variable: 'wissenstest,wissenstest_t2',
     think: [
       {
-        question: 'Angenommen, beim ersten Test hätten alle eine Aufgabe mehr gelöst. Was passiert mit der Zahl der Befragten, die sich verbessern?', options: ['sinkt', 'bleibt gleich', 'steigt'], correct: 0,
-        explain: 'Jede Veränderung schrumpft um eine Aufgabe. Wer sich um genau eine Aufgabe verbessert hatte, steht jetzt bei 0 und fällt weg. Auch p steigt, von unter 0,001 auf etwa 0,06.',
-        kurz: 'Kleinere Verbesserungen, weniger Verbesserte.',
+        question: 'Angenommen, beim ersten Test hätten alle eine Aufgabe mehr gelöst. Was passiert mit der Rangsumme der Verbesserungen W⁺?', options: ['sinkt', 'bleibt gleich', 'steigt'], correct: 0, step: 3,
+        explain: 'Jede Differenz schrumpft um eine Aufgabe. Verbesserungen werden kleiner oder fallen weg, Verschlechterungen größer: Die Plus-Ränge verlieren Gewicht. Auch p steigt, von unter 0,001 auf etwa 0,06.',
+        kurz: 'Kleinere Verbesserungen, kleinere Plus-Summe.',
         tryIt: { label: 'erster Test eine Aufgabe mehr', op: 'shift', column: 'x', value: 1 },
-        expect: { change: 'down', measure: c => wxSample(c).nPos },
+        expect: { change: 'down' },
       },
       {
-        question: 'Angenommen, beim zweiten Test hätten alle eine Aufgabe weniger gelöst. Was passiert mit der Zahl der Befragten, die sich verschlechtern?', options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 0,
-        explain: 'Wer zweimal gleich viele gelöst hatte, hat jetzt eine weniger und zählt als Verschlechterung. Für den Test zählt nur die Differenz: Ob du den ersten Test anhebst oder den zweiten senkst, ist gleich.',
+        question: 'Angenommen, beim zweiten Test hätten alle eine Aufgabe weniger gelöst. Was passiert mit W⁺?', options: ['sinkt', 'bleibt gleich', 'steigt'], correct: 0, step: 1,
+        explain: 'Für den Test zählt nur die Differenz je Person. Ob der erste Test steigt oder der zweite sinkt, verändert sie genau gleich: Jede Differenz wird um eins kleiner.',
         kurz: 'Es zählt nur die Veränderung je Person.',
         tryIt: { label: 'zweiter Test eine Aufgabe weniger', op: 'shift', column: 'y', value: -1 },
-        expect: { change: 'up', measure: c => wxSample(c).nNeg },
+        expect: { change: 'down' },
       },
     ],
   },

@@ -57,7 +57,6 @@ export const kruskalWallisWorkshop: Workshop<number[], KwStats> = {
   wofuer: 'Unterscheiden sich Menschen mit verschiedenen Schulabschlüssen darin, wie viel sie lernen? Neun Personen sagen, wie viele Stunden sie in den letzten sieben Tagen gelernt haben: je drei mit Hauptschulabschluss, Mittlerem Abschluss und Abitur. Bei drei Gruppen reicht ein einzelner Paarvergleich nicht mehr. Kruskal–Wallis prüft alle Gruppen auf einmal, wieder über Ränge.',
   mut: 'Die Formel sieht nach viel aus. Sie besteht aber nur aus fünf kleinen Schritten: ordnen, Mitte finden, Abstände messen, quadrieren und zusammenzählen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'b11-kw',
-  dataNote: 'Neun Beispielpersonen: A bis C mit Hauptschulabschluss, D bis F mit Mittlerem Abschluss, G bis I mit Abitur. Die Punkte im Bild lassen sich ziehen.',
   names: KW_NAMES,
   bounds: { min: 0, max: 30 },
   presets: [

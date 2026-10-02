@@ -121,7 +121,7 @@ export const pairwiseWilcoxonTabs: ConceptTabs = {
       const ps = pwSample(c), hits = ps.filter(p => p.pAdj < 0.05);
       const weakest = ps.reduce((a, p) => Math.abs(p.z) < Math.abs(a.z) ? p : a);
       return {
-        kurz: `Nach der Holm-Korrektur ${hits.length === 1 ? 'ist 1 der 3 Paare' : `sind ${hits.length} der 3 Paare`} bei α = 0,05 auffällig. Den kleinsten Unterschied gibt es zwischen dem ${ORD[weakest.i]} und dem ${ORD[weakest.j]} Messzeitpunkt (z ≈ ${num(weakest.z)}, ${pText(weakest.pAdj)}).`,
+        kurz: `Nach der Holm-Korrektur ${hits.length === 1 ? 'ist 1 der 3 Paare' : `sind ${hits.length} der 3 Paare`} bei α = 0,05 auffällig. Den kleinsten Unterschied gibt es zwischen dem ${ORD[weakest.i]} und dem ${ORD[weakest.j]} Messzeitpunkt (z ≈ ${num(weakest.z)}, r ≈ ${num(weakest.test.r)}, ${pText(weakest.pAdj)}).`,
         fachlich: `Paarweiser Wilcoxon-Test nach Friedman, Holm-Korrektur, je Paar zweite minus erste Messung: ${ps.map(p => `${p.i + 1} gegen ${p.j + 1} z ≈ ${num(p.z)}, ${pText(p.pAdj)}`).join('; ')}.`,
         zusatz: ps.map(p => `${p.i + 1} gegen ${p.j + 1}: ${p.test.nPos} besser, ${p.test.nNeg} schlechter`).join('; ') + '.',
       };

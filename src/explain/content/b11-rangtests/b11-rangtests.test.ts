@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSurvey } from '../../../domain/survey';
-import { applyOp } from '../../sample';
+import { applyOp, bridgeContext } from '../../sample';
 import { close } from '../../format';
 import { txt, type Ctx, type SampleCtx } from '../../types';
 import { mannWhitney, midRanks } from './rank';
 import { mannWhitneyTabs, mannWhitneyWorkshop as mwW, mwSample, MW_START, MW_TIES } from './mann-whitney';
-import { wilcoxonTabs, wilcoxonWorkshop as wxW, wxSample, WX_START, WX_TIES } from './wilcoxon';
+import { bridgeWilcoxon, wilcoxonTabs, wilcoxonWorkshop as wxW, wxSample, WX_START, WX_TIES } from './wilcoxon';
 import { friedmanTabs, friedmanWorkshop as frW, frSample, FR_START, FR_TIES, FR_SAME_ORDER } from './friedman';
 import { tukeyCard, tukeyCount, tukeyTabs } from './tukey';
 import { hurdlesFor, scheffeCard, scheffeTabs } from './scheffe';
@@ -202,7 +202,9 @@ test('B11 Kruskal–Wallis: 200 Befragte und In R wie in R', () => {
  * Wilcoxon, verbunden, Lehrdatensatz:
  *   atlas %>% wilcoxon_test(wissenstest, wissenstest_t2) %>% summary()
  *     # 115 positiv, 53 negativ, 32 gleich; W+ = 10425.5, W- = 3770.5, Z = -5.358338, p = 8.39909e-08, r = 0.413405
- *   atlas %>% mutate(wissenstest = wissenstest + 1) %>% wilcoxon_test(wissenstest, wissenstest_t2)       # 68 / 85 / 47, Z = -1.8606, p = 0.062801
+ *   d <- t2 - t1 ohne Nullen; sqrt(n(n+1)(2n+1)/24 - sum(t^3 - t)/48)     # n = 168, σ(W) = 620.994766
+ *   atlas %>% mutate(wissenstest = wissenstest + 1) %>% wilcoxon_test(wissenstest, wissenstest_t2)       # 68 / 85 / 47, Z = -1.8606, p = 0.062801, W+ = 4885, W- = 6896
+ *   … mutate(wissenstest = wissenstest + 1, wissenstest_t2 = wissenstest_t2 - 1) …                        # W+ = 2089.5
  *   atlas %>% mutate(wissenstest_t2 = wissenstest_t2 - 1) %>% wilcoxon_test(wissenstest, wissenstest_t2) # dasselbe
  *   atlas %>% wilcoxon_test(wissenstest, wissenstest_t2, wissenstest_t3)     # drittes Argument = Gewicht: [Weighted] … N = 2324
  */
@@ -248,11 +250,20 @@ test('B11 Wilcoxon, verbunden: 200 Befragte und In R wie in R', () => {
     assert.ok(u.nPos === 68 && u.nNeg === 85 && u.nZero === 47 && near(u.z, -1.8606, 1e-4) && near(u.p, 0.062801), `verschoben ${u.nPos} ${u.p}`);
   }
   const s = wilcoxonTabs.sample!;
-  if (s.kind !== 'analysis') return assert.fail('Auswertung erwartet');
-  const r = s.result(ctx(rows, columns));
-  assert.equal(r.kurz, '115 Befragte lösen beim zweiten Messzeitpunkt mehr Aufgaben, 53 weniger, 32 gleich viele. Die Ränge der Verbesserungen ergeben 10.425,5, die der Verschlechterungen 3.770,5. Gäbe es keine Veränderung, käme ein so ungleiches Verhältnis in weniger als 1 von 1.000 Stichproben vor (p < 0,001).');
-  assert.equal(r.fachlich, 'Wilcoxon-Test für verbundene Stichproben, zweite minus erste Messung: V = W⁺ = 10.425,5, z ≈ −5,36, p < 0,001, r ≈ 0,41. Bei α = 0,05 ist das signifikant; der Effekt ist nach der Faustregel mittel.');
-  assert.equal(r.zusatz, 'Die 32 Befragten mit gleich vielen Aufgaben fallen weg; gerechnet wird mit 168 Paaren.');
+  assert.equal(s.kind, 'bridge');
+  const b = bridgeWilcoxon, bc = bridgeContext(wxW.compute, 'pairs', rows, 'wissenstest', 'wissenstest_t2', 1);
+  const r = b.interpret(bc, 'wilcoxon_test');
+  assert.equal(r.kurz, '115 Befragte haben bei „Wissenstest, Zeitpunkt 2“ einen höheren Wert als bei „Wissenstest“, 53 einen niedrigeren, 32 denselben. Die Ränge der positiven Differenzen ergeben 10.425,5, die der negativen 3.770,5. Gäbe es keine Veränderung, käme ein so ungleiches Verhältnis in weniger als 1 von 1.000 Stichproben vor (p < 0,001).');
+  assert.equal(r.fachlich, 'Wilcoxon-Test für verbundene Stichproben, „Wissenstest, Zeitpunkt 2“ minus „Wissenstest“: V = W⁺ = 10.425,5, z ≈ −5,36, p < 0,001, r ≈ 0,41. Bei α = 0,05 ist das signifikant; der Effekt ist nach der Faustregel mittel.');
+  assert.equal(r.zusatz, 'Die 32 Befragten mit gleichem Wert fallen weg; gerechnet wird mit 168 Paaren.');
+  assert.equal(b.lines[0].all(bc), 'Für jede Person „Wissenstest, Zeitpunkt 2“ minus „Wissenstest“: 115 Plus, 53 Minus, 32 Nullen.');
+  assert.equal(b.lines[1].all(bc), '32 Nullen fallen weg. Die übrigen 168 Beträge bekommen die Ränge 1 bis 168; gleiche Beträge teilen sich ihren Platz.');
+  assert.equal(b.lines[3].all(bc), 'Erwartung 168 · 169 / 4 = 7.098. z = (3.770,5 − 7.098) / 620,99 ≈ −5,36.');
+  assert.ok(near(bc.s.sd, 620.994766), `σ(W) ${bc.s.sd}`);
+  assert.equal(b.value(bc, 'wilcoxon_test'), 10425.5);
+  const shifted = b.value(bridgeContext(wxW.compute, 'pairs', applyOp(rows, 'wissenstest', 'shift', 1), 'wissenstest', 'wissenstest_t2', 1), 'wilcoxon_test')!;
+  assert.ok(shifted === 4885 && near(wxSample(ctx(applyOp(rows, 'wissenstest', 'shift', 1), columns)).p, 0.062801), `W⁺ nach dem Verschieben ${shifted}`);
+  assert.equal(wxSample(ctx(applyOp(applyOp(rows, 'wissenstest', 'shift', 1), 'wissenstest_t2', 'shift', -1), columns)).Wpos, 2089.5);
   assert.match(s.think[0].explain, /von unter 0,001 auf etwa 0,06/);
   assert.match(wxW.variants.wilcoxon_test.genau.paragraphs(at(wxW, WX_START))[2], /32 von 200 Befragten/);
   const map = Object.fromEntries(wilcoxonTabs.r!.outputMap.map(o => [o.match, o.explain]));
@@ -433,7 +444,7 @@ test('B11 Dunn-Vergleiche: Lehrdatensatz wie in R', () => {
   const s = dunnTabs.sample!;
   if (s.kind !== 'analysis') return assert.fail('Auswertung erwartet');
   const r = s.result(ctx(rows, columns));
-  assert.equal(r.kurz, 'Am deutlichsten unterscheiden sich Ohne Schulabschluss und Fachhochschulreife: z ≈ −2,75, nach der Holm-Korrektur p ≈ 0,06. Bei α = 0,05 ist nach der Korrektur kein Paar auffällig; ohne Korrektur wären es 2.');
+  assert.equal(r.kurz, 'Am deutlichsten unterscheiden sich Ohne Schulabschluss und Fachhochschulreife: mittlerer Rang 85,43 gegen 119,23, z ≈ −2,75, nach der Holm-Korrektur p ≈ 0,06. Bei α = 0,05 ist nach der Korrektur kein Paar auffällig; ohne Korrektur wären es 2.');
   assert.equal(r.zusatz, 'Kruskal–Wallis über alle Gruppen: H ≈ 11,59, p ≈ 0,02.');
 });
 
@@ -465,7 +476,7 @@ test('B11 Paarweiser Wilcoxon: Lehrdatensatz wie in R', () => {
   const s = pairwiseWilcoxonTabs.sample!;
   if (s.kind !== 'analysis') return assert.fail('Auswertung erwartet');
   const r = s.result(ctx(rows, columns));
-  assert.equal(r.kurz, 'Nach der Holm-Korrektur sind 3 der 3 Paare bei α = 0,05 auffällig. Den kleinsten Unterschied gibt es zwischen dem zweiten und dem dritten Messzeitpunkt (z ≈ −3,76, p < 0,001).');
+  assert.equal(r.kurz, 'Nach der Holm-Korrektur sind 3 der 3 Paare bei α = 0,05 auffällig. Den kleinsten Unterschied gibt es zwischen dem zweiten und dem dritten Messzeitpunkt (z ≈ −3,76, r ≈ 0,29, p < 0,001).');
   assert.equal(r.zusatz, '1 gegen 2: 115 besser, 53 schlechter; 1 gegen 3: 145 besser, 31 schlechter; 2 gegen 3: 108 besser, 65 schlechter.');
   assert.match(s.think[0].explain, /101 statt 145/);
   assert.match(s.think[1].explain, /135 statt 108/);

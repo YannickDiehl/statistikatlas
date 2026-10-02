@@ -53,7 +53,6 @@ export const friedmanWorkshop: Workshop<number[][], FrStats> = {
   wofuer: 'Lösen Menschen über drei Zeitpunkte hinweg mehr Aufgaben? Fünf Personen schreiben denselben Wissenstest mit 20 Aufgaben dreimal. Es sind dieselben Personen, und manche wissen ohnehin mehr als andere. Der Friedman-Test vergleicht die Zeitpunkte deshalb innerhalb jeder Person, über Ränge.',
   mut: 'Die Formel sieht nach viel aus. Sie besteht aber nur aus sechs kleinen Schritten: ordnen, zusammenzählen, abziehen, quadrieren und zweimal teilen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'b11-friedman',
-  dataNote: 'Fünf Beispielpersonen, je Zeile eine Person: 1, 2 und 3 sind die drei Tests. Die Punkte im Bild lassen sich ziehen.',
   names: FR_NAMES,
   bounds: { min: 0, max: 20 },
   presets: [
