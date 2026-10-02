@@ -9,6 +9,7 @@ import { txt, type Ctx } from '../../types';
 import { zstats } from './shared';
 import { zentrieren, bridgeZentrieren } from './zentrieren';
 import { standardisieren, bridgeStandardisieren } from './standardisieren';
+import { ssOf, tabsSs } from './ss';
 
 /*
  * Referenzwerte des Bereichs B4 „Umformen“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -39,6 +40,12 @@ import { standardisieren, bridgeStandardisieren } from './standardisieren';
  *   #   lernzeit 7.752 3.238; lernzeit_z 0.000 1.000
  *   atlas %>% std(lernzeit, method = "z", suffix = "_z")   # Fehler: 'arg' sollte eines von '“sd”, “2sd”, “mad”, “gmd”' sein
  *   atlas %>% center(geschlecht2)                          # Can't select columns that don't exist.
+ * Quadratsumme der Lernzeit:
+ *   q <- (x - mean(x))^2; sum(q); max(q); max(q) / sum(q)                    # 2085.82; 113.3906 (P175, 18.4 h); 0.05436
+ *   sum(sort(q, decreasing = TRUE)[1:20]) / sum(q)                           # 0.4571332
+ *   sum(((2 * x) - mean(2 * x))^2)                                           # 8343.278 = 4 · 2085.82
+ *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; sum((xx - mean(xx))^2) - sum(q) }))   # 924.2424 1034.792
+ *   atlas %>% describe(lernzeit, show = c("mean", "var"))                    # Mean 7.752, Variance 10.482, N 200
  */
 
 const rows = createSurvey();
@@ -101,4 +108,21 @@ test('B4 Zentrieren und Standardisieren: die Zahlen in R finden ihren Platz', ()
   assert.match(center, /lernzeit_zentriert {2}0\.000 {2}3\.238/);
   assert.deepEqual(['1.000', '0.000', 'Mean', 'SD'].map(m => locate(std, m)?.text), ['1.000', '0.000', '7.752', '3.238']);
   assert.match(std, /lernzeit_z {2}0\.000 {2}1\.000/);
+});
+
+test('B4 Quadratsumme: Reiter mit den 200 Befragten wie in R', () => {
+  const c = { rows, columns: { x: ['lernzeit'] } }, s = ssOf(c);
+  assert.ok(close(s.ss, 2085.81955, 1e-5) && close(s.sq[s.big], 113.3906, 1e-4) && close(s.topShare, 0.4571332, 1e-6), 'Quadratsumme wie in R');
+  assert.equal(rows[s.big].id, 'P175');
+  const sample = tabsSs.sample!;
+  assert.equal(sample.kind, 'analysis');
+  if (sample.kind !== 'analysis') return;
+  const r = sample.result(c);
+  assert.equal(r.kurz, 'Die 200 quadrierten Abstände zur Mitte ergeben zusammen 2.085,82 h². Allein P175 mit 18,4 Stunden steuert 113,4 h² bei, 5,4 % der Summe.');
+  assert.equal(r.zusatz, 'Die 20 Befragten mit den größten Abständen liefern zusammen 45,7 % der Quadratsumme, obwohl sie nur ein Zehntel sind.');
+  assert.match(r.fachlich, /Varianz s² ≈ 10,48 h²/);
+  assert.ok(close(sample.value!({ rows: applyOp(rows, 'lernzeit', 'double', 2), columns: c.columns })!, 8343.2782, 1e-4), 'verdoppelt: vierfache Quadratsumme');
+  const deltas = rows.map((_, k) => ssOf({ rows: applyOp(rows, 'lernzeit', 'outlier', 40, k), columns: c.columns }).ss - s.ss);
+  assert.ok(close(Math.min(...deltas), 924.2424, 1e-3) && close(Math.max(...deltas), 1034.792, 1e-3), 'Ausreißer wie in R');
+  assert.match(sample.think[2].explain, /um 924 bis 1\.035 h²/);
 });

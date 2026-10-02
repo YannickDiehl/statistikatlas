@@ -3,13 +3,16 @@
 import type { AreaIndex } from '../../types';
 import { zentrieren, tabsCentering } from './zentrieren';
 import { standardisieren, tabsZ } from './standardisieren';
+import { tabsSs } from './ss';
 
 export const b04Umformen: AreaIndex = {
   explanations: {
     centering: { kind: 'werkstatt', workshop: zentrieren, variant: 'centering' },
     z: { kind: 'werkstatt', workshop: standardisieren, variant: 'z' },
   },
+  // Die Quadratsumme behält ihre Schrittkarte aus der Werkstatt Streuung (Pilot); B4 liefert nur ihre Reiter.
   tabs: {
+    ss: tabsSs,
     centering: tabsCentering,
     z: tabsZ,
   },
