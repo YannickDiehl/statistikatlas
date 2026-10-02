@@ -13,6 +13,7 @@ import { ANTEIL_N, WEITERBILDUNG, anteilText, mittelwerte, samplingDistribution,
 import { HAUSHALT, HAUSHALT_KENNWERTE, HAUSHALT_N, binomial, haushaltMittel, middle95 } from './daten';
 import { GLOCKE_N, centralLimit, centralLimitTabs, einkommenSchiefe, glockeText, schiefeMittel } from './central-limit';
 import { PLANUNG, VERZERRUNG_N, bereichText, bereiche, samplingBias, samplingBiasTabs, verzerrung } from './sampling-bias';
+import { EINKOMMEN, auswahl, auswahlText, moeglich, randomSampling, randomSamplingTabs, seOhne, zehnerPotenz } from './random-sampling';
 import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft } from './law-large-numbers';
 
 /*
@@ -56,6 +57,10 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
  *     print(c(mean(s) + c(-1, 1) * 1.96 * sN(s) / sqrt(n), mean(x) + c(-1, 1) * 1.96 * sN(x) / sqrt(n)))
  *   # n = 10: 6.970 10.371 | 5.750 9.753;  n = 50: 7.910 9.431 | 6.856 8.647;  n = 100: 8.133 9.208 | 7.119 8.384
  *   # n = 5000: 8.594 8.746 | 7.662 7.841
+ *   choose(200, 50); mean(e); sd(e)                           # 4.538584e+47  3154.62  1426.646148
+ *   for (n in c(10, 50, 100, 150, 190, 200)) print(sqrt(1 - n / 200) * sd(e) / sqrt(n))   # 439.72 174.73 100.88 58.24 23.14 0
+ *   sqrt(mean((e - mean(e))^2)) / sqrt(50)                    # 201.2532 (mit Zurücklegen)
+ *   range(sapply(1:200, function(k) { ee <- e; ee[k] <- 30000; sd(ee) - sd(e) }))   # +917.4 bis +948.0: SE steigt immer
  *
  * ALLBUS 2023 (ZA8831_v1-3-0.sav, nur lesen, Pfad in ALLBUS_SAV), nur Aggregate:
  *   d <- haven::read_sav(Sys.getenv("ALLBUS_SAV"))
@@ -236,6 +241,21 @@ test('B8 sampling_bias: die Online-Umfrage der Planenden und die Bereiche im Bil
     assert.match(s.result(ctx()).kurz, /Die 88 Befragten, .* 8,67 Stunden\. Alle 200 lernen 7,75 Stunden\. Die Online-Umfrage läge systematisch 0,92 Stunden zu hoch\./);
     assert.match(s.result(ctx()).fachlich, /≈ \+0,92 h\. Der Standardfehler dieser Teilstichprobe beträgt nur 0,29 h/);
   }
+});
+
+test('B8 random_sampling: Zahl der möglichen Stichproben und der Standardfehler ohne Zurücklegen wie in R', () => {
+  assert.ok(Math.abs(moeglich(200, 50) / 4.538583779e47 - 1) < 1e-9, `C(200, 50) = ${moeglich(200, 50)}`);
+  assert.equal(zehnerPotenz(moeglich(200, 50)), '4,54 · 10⁴⁷');
+  for (const [n, se] of [[10, 439.7218746], [50, 174.7277553], [100, 100.8791166], [150, 58.2425851], [190, 23.14325656], [200, 0]])
+    assert.ok(close(seOhne(n, EINKOMMEN.N, EINKOMMEN.sd), se, 1e-6), `n = ${n}`);
+  const ectx = (data = rows) => ({ rows: data, columns: { x: ['einkommen'] } }), a = auswahl(ectx());
+  assert.ok(close(a.mean, EINKOMMEN.mean, 1e-9) && close(a.sd, EINKOMMEN.sd, 1e-6) && close(a.se, 174.7277553, 1e-6) && close(a.mit, 201.2532055, 1e-6), 'aus den Daten');
+  assert.match(randomSampling.stellDirVor.text, /Wahrscheinlichkeit 50 \/ 200 = 25 % .* rund 4,54 · 10⁴⁷ verschiedene Gruppen .* etwa 175 € neben dem aller 200, das 3\.155 € im Monat beträgt\./);
+  assert.equal(auswahlText(200), 'Jede Person kommt mit der Wahrscheinlichkeit 200 / 200 = 100 % in die Stichprobe. Wer alle zieht, kennt den Mittelwert genau: Der Standardfehler ist 0.');
+  assert.match(auswahlText(10), /= 5 % .* etwa 440 € neben/);
+  assert.match(randomSampling.genau.paragraphs[0], /√\(1 − 50 \/ 200\) · 1\.427 \/ √50 ≈ 175 €\./);
+  const s = randomSamplingTabs.sample!;
+  if (s.kind === 'analysis') assert.match(s.result(ectx()).fachlich, /≈ 175 €\. Mit Zurücklegen wären es σ \/ √50 ≈ 201 €\./);
 });
 
 test('B8: ALLBUS-Aggregate aus der Datei nachgerechnet (nur mit ALLBUS_SAV)', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, () => {
