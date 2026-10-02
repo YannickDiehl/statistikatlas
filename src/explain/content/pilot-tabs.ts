@@ -5,7 +5,7 @@
 import type { Bridge, BridgeCtx, ConceptTabs, FNode, SampleCtx, TokenNote } from '../types';
 import type { PairStats, Series } from '../math';
 import { num, signed, paren, unit } from '../format';
-import { countWithin, eqFrom, sampleColumn, sampleColumnInfo, shownDiff, sumNodes, unitText } from '../sample';
+import { countWithin, eqFrom, sampleColumn, sampleColumnInfo, samplePairs, sampleSeries, shownDiff, sumNodes, unitText } from '../sample';
 import { qt } from '../../tasks/kit/dist';
 import { ref, titleFor } from '../../domain/learning';
 
@@ -268,6 +268,12 @@ function seSentence(c: SampleCtx): string {
   const mean = xs.reduce((a, b) => a + b, 0) / n, s = Math.sqrt(xs.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1));
   return `Wie genau kennt man den Mittelwert? Teile s durch die Wurzel aus n: ${num(s)} / √${n} ≈ ${unitText(sampleColumnInfo(id), s / Math.sqrt(n))}.`;
 }
+
+/** Spalten der Vorhersagen (`expect.measure`) und die Größen der Rechenschritte für die Schrittkarten. */
+const colX = (c: SampleCtx) => c.columns.x?.[0] ?? 'lernzeit', colY = (c: SampleCtx) => c.columns.y?.[0] ?? 'wissenstest';
+const seriesOf = (c: SampleCtx) => sampleSeries(c.rows, colX(c));
+const pairsOf = (c: SampleCtx) => samplePairs(c.rows, colX(c), colY(c));
+const prodSum = (c: SampleCtx) => pairsOf(c).prod.reduce((a, b) => a + b, 0);
 
 export const PILOT_TABS: Record<string, ConceptTabs> = {
   mean: {
@@ -663,6 +669,238 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
         { id: 'conversion', why: 'Codes in Faktoren mit Antworttexten umwandeln.' },
         { id: 'frequency', why: 'Prüft nach dem Umkodieren, wie oft jeder Code vorkommt.' },
       ],
+    },
+  },
+
+  // ---------- Schrittkarten der Pilot-Werkstätten (IB19, Abschluss) ----------
+  // Die Erklärung bleibt die Schrittkarte; „Mit 200 Befragten“ zeigt die Brücke ihrer Werkstatt, gleich bei ihrem
+  // Schritt (`start`). Die Vorhersagen messen die Größe des Schritts selbst (`expect.measure`), nicht das Ergebnis
+  // der Werkstatt. „In R“ gibt es nicht: Der Katalog hat für diese Rechenschritte keinen eigenen Aufruf.
+
+  sum: {
+    sample: {
+      kind: 'bridge', workshop: 'mittel', variant: 'mean', variable: LZ, start: 1,
+      think: [
+        {
+          question: 'Alle lernen eine Stunde mehr. Was macht die Summe?', options: ['bleibt gleich', 'steigt um 1 Stunde', 'steigt um 200 Stunden'], correct: 2, step: 1,
+          explain: 'Jede der 200 Personen bringt eine Stunde mehr mit. Zusammengezählt sind das 200 Stunden mehr (Schritt 1).',
+          kurz: 'Eine Stunde mehr für alle heißt n Stunden mehr in der Summe.',
+          tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
+          expect: { change: 'plus', amount: 200, measure: c => seriesOf(c).sum },
+        },
+        {
+          question: 'Alle lernen doppelt so lange. Was macht die Summe?', options: ['verdoppelt sich', 'steigt um 200 Stunden', 'bleibt gleich'], correct: 0, step: 1,
+          explain: 'Jeder Summand verdoppelt sich, also auch die Summe: 2 · 3 + 2 · 5 = 2 · (3 + 5) (Schritt 1). Der Mittelwert verdoppelt sich mit.',
+          kurz: 'Doppelte Werte, doppelte Summe.',
+          tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 2, measure: c => seriesOf(c).sum },
+        },
+      ],
+    },
+    next: {
+      next: { id: 'mean', why: 'Die Summe geteilt durch die Zahl der Befragten: So viel bekäme jede Person bei gerechter Verteilung.' },
+      before: [
+        { id: 'series', why: 'Die Werte, die zusammengezählt werden.' },
+        { id: 'add', why: 'Das Zusammenzählen selbst, ein Wert nach dem anderen.' },
+      ],
+      after: [{ id: 'item_score', why: 'Die Antworten einer Person auf mehrere Fragen, zusammengezählt oder gemittelt.' }],
+      more: [
+        { id: 'ss', why: 'Auch hier wird zusammengezählt: die quadrierten Abstände zur Mitte.' },
+        { id: 'crossproduct_sum', why: 'Zählt die Abweichungsprodukte aller Personen zusammen.' },
+      ],
+    },
+  },
+
+  deviation: {
+    sample: {
+      kind: 'bridge', workshop: 'streuung', variant: 'sd', variable: LZ, start: 2,
+      think: [
+        {
+          question: 'Alle lernen eine Stunde mehr. Was macht der Abstand jeder Person zur Mitte?', options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 2,
+          explain: 'Die Mitte wandert um eine Stunde mit. Im Abstand hebt sich die Stunde auf: (xᵢ + 1) − (x̄ + 1) = xᵢ − x̄ (Schritt 2).',
+          kurz: 'Verschieben ändert die Lage, nicht die Abstände.',
+          tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
+          expect: { change: 'same', measure: c => seriesOf(c).dev.reduce((a, d) => a + Math.abs(d), 0) },
+        },
+        {
+          question: 'Alle lernen doppelt so lange. Was macht der Abstand jeder Person zur Mitte?', options: ['bleibt gleich', 'verdoppelt sich', 'vervierfacht sich'], correct: 1, step: 2,
+          explain: 'Wert und Mitte verdoppeln sich, also auch ihre Differenz: 2xᵢ − 2x̄ = 2 · (xᵢ − x̄) (Schritt 2).',
+          kurz: 'Doppelte Werte, doppelte Abstände.',
+          tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 2, measure: c => seriesOf(c).dev.reduce((a, d) => a + Math.abs(d), 0) },
+        },
+      ],
+    },
+    next: {
+      next: { id: 'squared_deviation', why: 'Jeder Abstand mit sich selbst malgenommen: So zählt die Seite nicht mehr, nur die Entfernung.' },
+      before: [
+        { id: 'series', why: 'Die Einzelwerte, von denen aus gemessen wird.' },
+        { id: 'mean', why: 'Der Bezugspunkt, der von jedem Wert abgezogen wird.' },
+        { id: 'subtract', why: 'Das Abziehen selbst: Wert minus Mittelwert.' },
+      ],
+      after: [
+        { id: 'crossproduct', why: 'Zwei Abstände derselben Person, malgenommen.' },
+        { id: 'centering', why: 'Dieselbe Rechnung für alle: Jeder Wert wird durch seinen Abstand zur Mitte ersetzt.' },
+      ],
+      more: [
+        { id: 'group_variation', why: 'Abstände zur Mitte der eigenen Gruppe und zur Mitte aller.' },
+        { id: 'shape', why: 'Schiefe und Wölbung beruhen auf Abständen zur Mitte.' },
+      ],
+    },
+  },
+
+  squared_deviation: {
+    sample: {
+      kind: 'bridge', workshop: 'streuung', variant: 'sd', variable: LZ, start: 3,
+      think: [
+        {
+          question: 'Alle lernen doppelt so lange. Was macht das Quadrat jedes Abstands?', options: ['verdoppelt sich', 'vervierfacht sich', 'bleibt gleich'], correct: 1, step: 3,
+          explain: 'Jeder Abstand verdoppelt sich, und das Quadrat macht daraus das Vierfache: (2 · 3)² = 36 = 4 · 9 (Schritt 3).',
+          kurz: 'Doppelte Abstände, vierfache Quadrate.',
+          tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 4, measure: c => seriesOf(c).ss },
+        },
+        {
+          question: 'Alle lernen eine Stunde mehr. Was macht das Quadrat jedes Abstands?', options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 3,
+          explain: 'Die Abstände zur Mitte bleiben gleich (Schritt 2), also auch ihre Quadrate (Schritt 3).',
+          kurz: 'Verschieben ändert keinen Abstand und kein Quadrat.',
+          tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
+          expect: { change: 'same', measure: c => seriesOf(c).ss },
+        },
+      ],
+    },
+    next: {
+      next: { id: 'ss', why: 'Alle Quadrate zusammengezählt: die Quadratsumme.' },
+      before: [
+        { id: 'deviation', why: 'Der Abstand mit Vorzeichen, der quadriert wird.' },
+        { id: 'square', why: 'Das Quadrieren selbst: eine Zahl mit sich selbst malnehmen.' },
+      ],
+      after: [{ id: 'variance', why: 'Die Quadrate, gerecht auf n − 1 verteilt.' }],
+    },
+  },
+
+  df: {
+    sample: {
+      kind: 'bridge', workshop: 'streuung', variant: 'sd', variable: LZ, start: 5,
+      think: [
+        {
+          question: 'Alle lernen doppelt so lange. Was macht n − 1?', options: ['verdoppelt sich', 'bleibt gleich', 'sinkt'], correct: 1, step: 5,
+          explain: 'n − 1 zählt die Befragten, nicht ihre Werte. Bei 200 Befragten bleibt es 199, egal wie lange sie lernen (Schritt 5).',
+          kurz: 'Die Freiheitsgrade hängen nur von der Zahl der Befragten ab.',
+          tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'same', measure: c => c.rows.length - 1 },
+        },
+        {
+          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht n − 1?', options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 1, step: 5,
+          explain: 'Die Person bleibt eine Person. Ihr Wert ändert die Quadratsumme (Schritt 4), aber nicht die Zahl, durch die geteilt wird (Schritt 5).',
+          kurz: 'Ein anderer Wert ist keine weitere Person.',
+          tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
+          expect: { change: 'same', measure: c => c.rows.length - 1 },
+        },
+      ],
+    },
+    next: {
+      next: { id: 'variance', why: 'Die Quadratsumme geteilt durch n − 1.' },
+      before: [
+        { id: 'validn', why: 'n, die Zahl der gültigen Werte.' },
+        { id: 'mean', why: 'Der Mittelwert, der aus denselben Daten geschätzt ist und so einen Freiheitsgrad bindet.' },
+        { id: 'subtract', why: 'Von n wird eins abgezogen.' },
+      ],
+      after: [
+        { id: 'covariance', why: 'Teilt die Summe der Abweichungsprodukte ebenfalls durch n − 1.' },
+        { id: 'general_df', why: 'Freiheitsgrade allgemein: wie viele Werte nach den Schätzungen noch frei sind.' },
+      ],
+    },
+  },
+
+  crossproduct: {
+    sample: {
+      kind: 'bridge', workshop: 'zusammenhang', variant: 'pearson', variable: LZ_WT, start: 3,
+      think: [
+        {
+          question: 'Der Wissenstest wird umgepolt: Aus vielen gelösten Aufgaben werden wenige. Was macht das Abweichungsprodukt jeder Person?', options: ['bleibt gleich', 'wechselt das Vorzeichen', 'wird 0'], correct: 1, step: 3,
+          explain: 'Jeder Abstand im Wissenstest dreht sein Vorzeichen, der Abstand in der Lernzeit nicht. Damit dreht auch jedes Produkt sein Vorzeichen (Schritt 3).',
+          kurz: 'Umpolen dreht die Vorzeichen, nicht die Größen.',
+          tryIt: { label: 'Wissenstest umpolen (20 minus Aufgaben)', op: 'reverse', column: 'y' },
+          expect: { change: 'sign', measure: c => prodSum(c) },
+        },
+        {
+          question: 'Alle lernen eine Stunde mehr. Was macht das Abweichungsprodukt jeder Person?', options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 3,
+          explain: 'Die Mitte der Lernzeit wandert mit, jeder Abstand bleibt gleich (Schritt 2). Also bleibt auch jedes Produkt gleich (Schritt 3).',
+          kurz: 'Verschieben ändert keinen Abstand und kein Produkt.',
+          tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
+          expect: { change: 'same', measure: c => prodSum(c) },
+        },
+      ],
+    },
+    next: {
+      next: { id: 'crossproduct_sum', why: 'Die Produkte aller Personen, zusammengezählt.' },
+      before: [
+        { id: 'pairs', why: 'x und y derselben Person bleiben zusammen.' },
+        { id: 'deviation', why: 'Die beiden Abstände zur Mitte, die malgenommen werden.' },
+        { id: 'multiply', why: 'Das Malnehmen selbst: Gleiche Vorzeichen ergeben Plus, verschiedene Minus.' },
+      ],
+      after: [{ id: 'covariance', why: 'Die Summe der Produkte, geteilt durch n − 1.' }],
+    },
+  },
+
+  crossproduct_sum: {
+    sample: {
+      kind: 'bridge', workshop: 'zusammenhang', variant: 'pearson', variable: LZ_WT, start: 4,
+      think: [
+        {
+          question: 'Alle lernen doppelt so lange. Was macht die Summe der Abweichungsprodukte?', options: ['bleibt gleich', 'verdoppelt sich', 'vervierfacht sich'], correct: 1, step: 4,
+          explain: 'Jeder Abstand in der Lernzeit verdoppelt sich, der im Wissenstest bleibt. So verdoppelt sich jedes Produkt und damit ihre Summe (Schritt 4).',
+          kurz: 'Doppelte Lernzeiten, doppelte Summe.',
+          tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 2, measure: c => prodSum(c) },
+        },
+        {
+          question: 'Der Wissenstest wird umgepolt: Aus vielen gelösten Aufgaben werden wenige. Was macht die Summe der Abweichungsprodukte?', options: ['bleibt gleich', 'wechselt das Vorzeichen', 'wird 0'], correct: 1, step: 4,
+          explain: 'Jedes Produkt dreht sein Vorzeichen (Schritt 3), also auch ihre Summe (Schritt 4). Ihr Betrag bleibt gleich.',
+          kurz: 'Umpolen dreht die Richtung, nicht die Stärke.',
+          tryIt: { label: 'Wissenstest umpolen (20 minus Aufgaben)', op: 'reverse', column: 'y' },
+          expect: { change: 'sign', measure: c => prodSum(c) },
+        },
+      ],
+    },
+    next: {
+      next: { id: 'covariance', why: 'Die Summe geteilt durch n − 1: die Kovarianz.' },
+      before: [
+        { id: 'crossproduct', why: 'Das Produkt der beiden Abstände je Person.' },
+        { id: 'add', why: 'Das Zusammenzählen aller Produkte.' },
+      ],
+      after: [{ id: 'pearson', why: 'Die Kovarianz, geteilt durch sₓ · sᵧ.' }],
+    },
+  },
+
+  sd_product: {
+    sample: {
+      kind: 'bridge', workshop: 'zusammenhang', variant: 'pearson', variable: LZ_WT, start: 6,
+      think: [
+        {
+          question: 'Alle lernen doppelt so lange. Was macht sₓ · sᵧ?', options: ['bleibt gleich', 'verdoppelt sich', 'vervierfacht sich'], correct: 1, step: 6,
+          explain: 'sₓ verdoppelt sich mit den Lernzeiten, sᵧ bleibt. Also verdoppelt sich ihr Produkt (Schritt 6). Die Kovarianz verdoppelt sich genauso, deshalb bleibt r gleich.',
+          kurz: 'Der Nenner wächst mit der Einheit, genau wie die Kovarianz.',
+          tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
+          expect: { change: 'factor', factor: 2, measure: c => { const s = pairsOf(c); return s.sx * s.sy; } },
+        },
+        {
+          question: 'Der Wissenstest wird umgepolt: Aus vielen gelösten Aufgaben werden wenige. Was macht sₓ · sᵧ?', options: ['wechselt das Vorzeichen', 'bleibt gleich', 'wird 0'], correct: 1, step: 6,
+          explain: 'Umpolen spiegelt die Werte, ihre Streuung bleibt: sᵧ ändert sich nicht. Das Produkt bleibt gleich; nur die Kovarianz dreht ihr Vorzeichen (Schritt 6).',
+          kurz: 'Standardabweichungen sind nie negativ.',
+          tryIt: { label: 'Wissenstest umpolen (20 minus Aufgaben)', op: 'reverse', column: 'y' },
+          expect: { change: 'same', measure: c => { const s = pairsOf(c); return s.sx * s.sy; } },
+        },
+      ],
+    },
+    next: {
+      next: { id: 'pearson', why: 'Die Kovarianz geteilt durch sₓ · sᵧ: So wird aus ihr r, ohne Einheiten.' },
+      before: [
+        { id: 'sd', why: 'Die Standardabweichungen von x und y.' },
+        { id: 'multiply', why: 'Das Malnehmen der beiden Streuungen.' },
+      ],
+      after: [{ id: 'correlation_matrix', why: 'Viele Korrelationen auf einmal, jede mit ihrem eigenen Nenner.' }],
     },
   },
 };

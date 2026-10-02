@@ -251,7 +251,7 @@ export const b01Messen: AreaIndex = {
 
 Eine Werkstatt, die mehrere Begriffe erklärt, steht einmal je Begriff im Index (mit derselben `workshop`-Konstante); `variant` ist immer der Begriff selbst, und `workshop.variants` hat einen Eintrag dafür. Ein Begriff darf nur in **einem** Bereich vorkommen.
 
-Eine Schrittkarte (`stepCards[<id>] = { workshop, variant, step }`) zeigt auf eine registrierte Werkstatt, auf einen ihrer Begriffe und auf einen Schritt zwischen 1 und dessen `lastStep`. Der Begriff muss als diese Werkstatt erklärt sein, denn „Werkstatt öffnen“ springt dorthin. Die Rendertests zeigen jede Schrittkarte einmal an. Eine Schrittkarte darf Reiter haben (`tabs[<id>]`, mindestens „Weiter“; Vorbild `STEP_TABS` in `content/b12-kategorial-design/rechenbausteine.ts`). Sie ist in Ausführlich und Kompakt gleich lang, der Rendertest nimmt sie von „Kompakt kürzer“ aus. Ohne Reiter „Mit 200 Befragten“ stehen die bisherigen Teile „Mit deinen Daten“ zugeklappt als „Weitere Übung“ am Ende von „Verstehen“.
+Eine Schrittkarte (`stepCards[<id>] = { workshop, variant, step }`) zeigt auf eine registrierte Werkstatt, auf einen ihrer Begriffe und auf einen Schritt zwischen 1 und dessen `lastStep`. Der Begriff muss als diese Werkstatt erklärt sein, denn „Werkstatt öffnen“ springt dorthin. Die Rendertests zeigen jede Schrittkarte einmal an. Eine Schrittkarte darf Reiter haben (`tabs[<id>]`, mindestens „Weiter“; Vorbild `STEP_TABS` in `content/b12-kategorial-design/rechenbausteine.ts`). Sie ist in Ausführlich und Kompakt gleich lang, der Rendertest nimmt sie von „Kompakt kürzer“ aus. Ohne Reiter „Mit 200 Befragten“ stehen die bisherigen Teile „Mit deinen Daten“ zugeklappt als „Weitere Übung“ am Ende von „Verstehen“. Hat die Werkstatt der Schrittkarte eine Brücke, kann „Mit 200 Befragten“ diese Brücke zeigen, beginnend bei ihrem Schritt (`start`); die Vorhersagen messen dann mit `expect.measure` die Größe des Schritts. Vorbild: die sieben Pilot-Schrittkarten in `content/pilot-tabs.ts` (`sum`, `deviation`, `squared_deviation`, `df`, `crossproduct`, `crossproduct_sum`, `sd_product`). In einer anderen Verwendung (`Ref.use`, etwa `crossproduct` als Produkt der z-Werte im Rechenweg über z-Werte) zeigt die Schrittkarte keine Reiter, sondern die bisherige Ansicht mit dieser Verwendung.
 
 Bisherige Übungen der Karte (FoundationLab: Verteilungs-, Stichproben-, Test-, Modell- und Faktorlabor) stehen unter einer neuen Erklärung zugeklappt als „Weitere Übung“ am Ende von „Verstehen“, nicht mehr direkt unter der Erklärung.
 
@@ -416,7 +416,7 @@ next: {
 
 Zwei Arten:
 
-**`bridge`** (nur für Werkstätten): dieselbe Formel mit allen 200 Befragten, Schritt für Schritt, mit Person, Bild, Deutung und Vorhersagen.
+**`bridge`** (für Werkstätten und ihre Schrittkarten): dieselbe Formel mit allen 200 Befragten, Schritt für Schritt, mit Person, Bild, Deutung und Vorhersagen. Eine Schrittkarte nimmt die Brücke ihrer Werkstatt und beginnt mit `start` bei ihrem Schritt.
 
 ```ts
 sample: { kind: 'bridge', workshop: 'streuung', variant: 'sd', variable: 'lernzeit', think: [ … ] }

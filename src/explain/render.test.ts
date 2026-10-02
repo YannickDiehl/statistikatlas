@@ -296,6 +296,18 @@ test('tabs: four for sd, three for recode, Weiter for every concept with tabs, n
   }
 });
 
+test('tabs: the seven pilot step cards have Verstehen, the bridge of their workshop at their step, and Weiter (IB19)', () => {
+  for (const id of ['sum', 'deviation', 'squared_deviation', 'df', 'crossproduct', 'crossproduct_sum', 'sd_product']) {
+    const html = inspector(id), card = stepCardFor(id)!, title = card.workshop.steps[card.step - 1].title;
+    assert.deepEqual(tabNames(html), ['Verstehen', 'Mit 200 Befragten', 'Weiter'], id);
+    assert.ok(text(panelOf(html, id, 'verstehen')).includes('Werkstatt öffnen'), `${id}: Schrittkarte fehlt`);
+    const sample = panelOf(html, id, 'sample');
+    assert.match(sample, new RegExp(`<h3 class="xw-step-title"[^>]*>${title}</h3>`), `${id}: Brücke beginnt nicht bei Schritt ${card.step} „${title}“`);
+    assert.ok(text(sample).includes(`Schritt ${card.step} für alle 200`), `${id}: Schrittzeile für alle 200 fehlt`);
+    assert.ok(!html.includes('Weitere Übung'), `${id}: die bisherige Rechnung steht nicht mehr doppelt da`);
+  }
+});
+
 test('tabs: the pilot contents in each tab of the standard deviation', () => {
   const html = inspector('sd'), t = (tab: string) => text(panelOf(html, 'sd', tab));
   for (const part of ['Wofür?', 'Die Mitte finden', 'Das Bild dazu', 'Weiter mit 200 Befragten']) assert.ok(t('verstehen').includes(part), `Verstehen: „${part}“ fehlt`);

@@ -116,8 +116,8 @@ function PersonPicker({ names, who, onCase }: { names: readonly string[]; who: n
 function BridgeView(p: SampleProps & { tab: Extract<SampleTabData, { kind: 'bridge' }> }) {
   const { tab } = p, workshop = workshopFor(tab.workshop), bridge = bridgeFor(tab.workshop), v = workshop?.variants[tab.variant];
   const [mode] = useExplainMode(), compact = mode === 'kompakt';
-  const [step, setStepRaw] = useState(1);
   const last = v?.lastStep ?? 1;
+  const [step, setStepRaw] = useState(() => Math.max(1, Math.min(last, tab.start ?? 1)));
   const setStep = (n: number) => setStepRaw(Math.max(1, Math.min(last, n)));
   const cardTitle = useRef<HTMLHeadingElement>(null), thinkBox = useRef<HTMLDivElement>(null), [focusCard, setFocusCard] = useState(0);
   useEffect(() => { if (p.goTo) { setStep(p.goTo.step); setFocusCard(n => n + 1); } }, [p.goTo?.n]);

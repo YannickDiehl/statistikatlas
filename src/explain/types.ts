@@ -309,14 +309,17 @@ export interface TableTool {
 // Reiter (Oberfläche in F3, Typen schon hier) ------------------------------------------
 
 /**
- * Reiter „Mit 200 Befragten“. `bridge` für Werkstätten mit `Workshop.bridge` (Formel mit 200, Schritte, Person, Bild);
+ * Reiter „Mit 200 Befragten“. `bridge` für Werkstätten mit `Workshop.bridge` (Formel mit 200, Schritte, Person, Bild)
+ * und für Schrittkarten, dann mit der Brücke ihrer Werkstatt und `start` = ihr Schritt;
  * `variable` ist die Spalte, für die die Vorhersagefragen geschrieben sind, bei Paaren „x,y“ (etwa „lernzeit,wissenstest“).
  * `analysis` für alle übrigen Begriffe: Kurz gesagt, Ergebnis mit Deutung aus den aktuellen Daten, Voraussetzung,
  * mindestens eine Vorhersagefrage. Ohne `columns` gelten die Spalten der Spaltenwahl (x, y) und der R-Einstellungen
  * (Rollen wie `group`), und oben steht die Spaltenwahl; mit `columns` (Rolle → Spalten-ID) rechnet der Reiter fest damit.
  */
 export type SampleTab =
-  | { kind: 'bridge'; workshop: string; variant: string; variable: string; think: ThinkSample[] }
+  | { kind: 'bridge'; workshop: string; variant: string; variable: string; think: ThinkSample[];
+      /** Schritt, mit dem die Brücke beginnt (ohne Angabe 1). Schrittkarten zeigen so gleich ihren Schritt der Werkstatt. */
+      start?: number }
   | { kind: 'analysis'; kurz: string; result: (c: SampleCtx) => { kurz: string; fachlich: string; zusatz?: string }; voraussetzung?: string; think: ThinkSample[]; columns?: Record<string, string>;
       /** Das Ergebnis als Zahl (zum Beispiel p oder SE), für die Prüfung der Vorhersagen; eine Vorhersage kann mit `expect.measure` eine eigene Zahl nennen. */
       value?: (c: SampleCtx) => number | null };

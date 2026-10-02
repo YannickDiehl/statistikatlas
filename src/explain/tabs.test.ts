@@ -9,7 +9,7 @@ import { neighbors } from '../domain/network';
 import { mapIds, visibleNeighbors } from '../domain/visibleNetwork';
 import { ref } from '../domain/learning';
 import { compatible, createSurvey, defaultSelection, surveyColumns, type SurveyRow } from '../domain/survey';
-import { EXPLANATIONS, TAB_IDS, bridgeFor, explainFor, rKurz, R_TAP, tabsFor, workshopFor } from './registry';
+import { EXPLANATIONS, TAB_IDS, bridgeFor, explainFor, rKurz, R_TAP, stepCardFor, tabsFor, workshopFor } from './registry';
 import { CATALOG_OUTPUT } from './catalogOutput';
 import { applyOp, bridgeContext, fitsColumn, shownDiff } from './sample';
 import { liveCode, liveFits, liveOutput, locate, noteFor, tokenize } from './rRead';
@@ -130,7 +130,11 @@ test('Mit 200 Befragten: bridge texts for every step and person, before and afte
     assert.ok(w && b, `${id}: Werkstatt „${s.workshop}“ ohne Brücke (Workshop.bridge)`);
     const v = w.variants[s.variant];
     assert.ok(v, `${id}: Werkstatt „${s.workshop}“ erklärt „${s.variant}“ nicht`);
-    assert.equal(explainFor(id)?.kind === 'werkstatt' || id === s.variant, true);
+    // Brücken gibt es für Werkstätten und für Schrittkarten, dann die Brücke ihrer eigenen Werkstatt, beginnend bei ihrem Schritt.
+    const card = stepCardFor(id);
+    assert.equal(explainFor(id)?.kind === 'werkstatt' || id === s.variant || card?.workshop.id === s.workshop, true, `${id}: Brücke nur für Werkstätten und ihre Schrittkarten`);
+    if (card) assert.equal(s.start, card.step, `${id}: die Brücke beginnt nicht beim Schritt der Schrittkarte`);
+    if (s.start !== undefined) assert.ok(Number.isInteger(s.start) && s.start >= 1 && s.start <= v.lastStep, `${id}: start ${s.start}`);
     assert.ok(b.lines.length >= v.lastStep, `${id}: Schrittzeilen fehlen`);
     assert.ok(s.think.length >= 2, `${id}: mindestens zwei Vorhersagefragen`);
     assert.ok(b.value, `${id}: Brücke ohne value`);

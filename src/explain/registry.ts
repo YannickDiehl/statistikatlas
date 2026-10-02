@@ -100,7 +100,7 @@ export function mergeAreas(areas: Record<string, AreaIndex>, reserved: { ids: It
   return out;
 }
 
-const merged = mergeAreas(AREAS, { ids: [...Object.keys(PILOT), ...PILOT_STEP_IDS], tabs: Object.keys(PILOT), workshops: PILOT_WORKSHOPS, explanations: PILOT });
+const merged = mergeAreas(AREAS, { ids: [...Object.keys(PILOT), ...PILOT_STEP_IDS], tabs: Object.keys(PILOT_TABS), workshops: PILOT_WORKSHOPS, explanations: PILOT });
 
 /** Alle Begriffe mit Schrittkarte (Pilot und Bereiche), für Tests und Prüfskripte. */
 export const STEP_CARD_IDS: string[] = [...PILOT_STEP_IDS, ...Object.keys(merged.stepCards)];
