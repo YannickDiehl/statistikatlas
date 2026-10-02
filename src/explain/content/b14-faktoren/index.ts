@@ -8,6 +8,7 @@ import { dimensionality, dimensionalityTabs } from './dimensionality';
 import { eigenvalues, eigenvaluesTabs } from './eigenvalues';
 import { loadings, loadingsTabs } from './loadings';
 import { communalityTabs, kommunalitaet } from './communality';
+import { rotation, rotationTabs } from './rotation';
 
 export const b14Faktoren: AreaIndex = {
   explanations: {
@@ -18,6 +19,7 @@ export const b14Faktoren: AreaIndex = {
     eigenvalues: { kind: 'begriff', card: eigenvalues },
     loadings: { kind: 'begriff', card: loadings },
     communality: { kind: 'satz', template: kommunalitaet },
+    rotation: { kind: 'begriff', card: rotation },
   },
   tabs: {
     reliability: reliabilityTabs,
@@ -27,5 +29,6 @@ export const b14Faktoren: AreaIndex = {
     eigenvalues: eigenvaluesTabs,
     loadings: loadingsTabs,
     communality: communalityTabs,
+    rotation: rotationTabs,
   },
 };

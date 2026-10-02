@@ -15,6 +15,7 @@ import { dimensionality, dimensionalityTabs } from './dimensionality';
 import { eigenvalues, eigenvaluesTabs, equalCorrelation } from './eigenvalues';
 import { loadings, loadingsTabs } from './loadings';
 import { communalityTabs, KIRCHE, kommunalitaet, NACHHER, VORHER } from './communality';
+import { rotation, rotationTabs, turn, VARIMAX_DEG } from './rotation';
 import { VERTRAUEN } from './allbus';
 import { corMatrix } from './rechnen';
 
@@ -73,6 +74,11 @@ import { corMatrix } from './rechnen';
  *   # Kommunalitäten 0.832 0.858 0.763 0.865 0.855; Rotation Sums 48.538 % und 34.938 %, zusammen 83.476 %; 3 Iterationen
  *   allbus %>% reliability(pt03, pt12, pt15, pt06, pt07)    # Cronbach's Alpha = 0.817, N = 3333
  *   table(as_factor(pt03, levels = "both"))  # TNZ: SPLIT 1596 (nur einem Teil gestellt)
+ *
+ * Rotation im Lehrdatensatz (zwei erzwungene Komponenten):
+ *   r2 <- atlas %>% efa(methoden1, methoden2, methoden3, methoden4, methoden5, extraction = "pca", n_factors = 2, rotation = "varimax", use = "complete")
+ *   # Variance explained: 79.5%; Extraction Sums 71.2 % und 8.27 %, Rotation Sums 40.0 % und 39.5 %
+ *   unclass(r2$loadings)   # 0.595 0.610 / 0.309 0.881 / 0.842 0.328 / 0.465 0.748 / 0.791 0.397
  */
 
 const rows = createSurvey();
@@ -249,6 +255,24 @@ test('B14 Kommunalität: Formel als Satz und Reiter mit den Zahlen aus R', () =>
   const r = s.result(ctx());
   assert.match(r.kurz, /bei Frage 1 73 % ihrer Streuung, 27 % gehören der Frage allein\. .* zwischen 69 und 73 %\./);
   assert.match(r.fachlich, /Frage 1 0,73, Frage 2 0,71, Frage 3 0,69, Frage 4 0,73, Frage 5 0,71\. .* Eigenwert 3,56\./);
+});
+
+test('B14 Rotation: Drehwinkel, Karte und Reiter mit den Zahlen aus R', () => {
+  assert.equal(VARIMAX_DEG, 33);
+  const reg = turn(VERTRAUEN.unrotated[1], VERTRAUEN.angle), kir = turn(VERTRAUEN.unrotated[3], VERTRAUEN.angle);
+  assert.ok(close(reg[0], VERTRAUEN.rotated[1][0], 1e-4) && close(reg[1], VERTRAUEN.rotated[1][1], 1e-4), 'Drehung trifft Varimax (Regierung)');
+  assert.ok(close(kir[0], VERTRAUEN.rotated[3][0], 1e-4) && close(kir[1], VERTRAUEN.rotated[3][1], 1e-4), 'Drehung trifft Varimax (Kirche)');
+  assert.match(rotation.stellDirVor.text, /mit 0,84 auf der ersten Komponente und mit −0,39 auf der zweiten, die katholische Kirche mit 0,62 und 0,69\. .* 0,92 und 0,13 für die Bundesregierung, 0,14 und 0,92 .* vorher wie nachher 83,5 %/);
+  assert.match(rotation.bausteine[2].rechnung!, /0,84² \+ \(−0,39\)² ≈ 0,86 und 0,92² \+ 0,13² ≈ 0,86\./);
+  assert.match(rotation.bausteine[2].warum, /vorher 58,4 % und 25,0 %, nachher 48,5 % und 34,9 %/);
+  assert.match(rotation.regler!.describe(33), /Bundesregierung mit 0,92 auf Achse 1 und mit 0,13 auf Achse 2, die katholische Kirche mit 0,14 und 0,92\. Etwa hier/);
+  assert.match(rotation.regler!.describe(90), /mit 0,39 auf Achse 1 und mit 0,84 auf Achse 2, die katholische Kirche mit −0,69 und 0,62\.$/);
+  const s = rotationTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = s.result(ctx());
+  assert.match(r.kurz, /zwischen 0,83 und 0,86\. .* vorher wie nachher 79,5 %\./);
+  assert.equal(r.fachlich, 'Ungedreht 71,2 % und 8,3 %, nach Varimax 40,0 % und 39,5 %. Der zweite Eigenwert ist 0,41, also unter 1: Die Aufteilung ist hier ein Kunstprodukt der erzwungenen zweiten Komponente.');
+  assert.equal(r.zusatz, 'Nach der Rotation: Frage 3 und Frage 5 laden vor allem auf der ersten Komponente. Frage 2 und Frage 4 laden vor allem auf der zweiten. Frage 1 lädt auf beiden etwa gleich (0,60 und 0,61).');
 });
 
 const allbusFile = process.env.ALLBUS_SAV;

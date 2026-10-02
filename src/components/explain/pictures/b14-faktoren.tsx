@@ -7,6 +7,7 @@ import { METHODEN_PCA } from '../../../explain/content/b14-faktoren/efa';
 import { VERTRAUEN } from '../../../explain/content/b14-faktoren/allbus';
 import { isMethoden } from '../../../explain/content/b14-faktoren/dimensionality';
 import { equalCorrelation } from '../../../explain/content/b14-faktoren/eigenvalues';
+import { turn } from '../../../explain/content/b14-faktoren/rotation';
 import { Axis, Bar, clamp, DragPoint, forCard, forSentence, forWorkshop, keyStep, linear, MarkLine, useWidth, useDrag, type Picture } from './kit';
 
 const ITEM = { min: 1, max: 7 };
@@ -205,7 +206,44 @@ function CommunalityPicture({ l1, l2 }: { l1: number; l2: number }) {
   );
 }
 
+/**
+ * Rotation: die fünf Vertrauensfragen als Punkte (ungedrehte Ladungen) im Einheitskreis, die alten Achsen gestrichelt,
+ * die um `deg` Grad im Uhrzeigersinn gedrehten Achsen durchgezogen. Darunter die Ladungen der Bundesregierung und der
+ * katholischen Kirche auf den gedrehten Achsen.
+ */
+function RotationPicture({ deg }: { deg: number }) {
+  const [box, W] = useWidth();
+  const side = Math.min(W - 40, 300), cx = 20 + side / 2, cy = 30 + side / 2, k = side / 2 / 1.12;
+  const X = (v: number) => cx + v * k, Y = (v: number) => cy - v * k;
+  const t = deg * Math.PI / 180, u1 = [Math.cos(t), -Math.sin(t)], u2 = [Math.sin(t), Math.cos(t)];
+  const P = VERTRAUEN.unrotated, pol = P.slice(0, 3), kir = P.slice(3);
+  const mid = (pts: readonly (readonly number[])[]) => [pts.reduce((a, p) => a + p[0], 0) / pts.length, pts.reduce((a, p) => a + p[1], 0) / pts.length];
+  const [mp, mk] = [mid(pol), mid(kir)];
+  const [r1, r2] = turn(P[1], deg), [k1, k2] = turn(P[3], deg);
+  const H = 30 + side + 70;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Fünf Vertrauensfragen als Punkte, Achsen um ${Math.round(deg)} Grad gedreht. Bundesregierung auf Achse 1 ${fixed(r1)}, auf Achse 2 ${fixed(r2)}; katholische Kirche ${fixed(k1)} und ${fixed(k2)}.`}>
+        <circle className="b14-circle" cx={cx} cy={cy} r={k} />
+        <line className="b14-old" x1={X(-1)} x2={X(1)} y1={cy} y2={cy} />
+        <line className="b14-old" x1={cx} x2={cx} y1={Y(1)} y2={Y(-1)} />
+        <line className="b14-rot" x1={X(-u1[0])} y1={Y(-u1[1])} x2={X(u1[0])} y2={Y(u1[1])} />
+        <line className="b14-rot" x1={X(-u2[0])} y1={Y(-u2[1])} x2={X(u2[0])} y2={Y(u2[1])} />
+        <text className="xw-t xw-strong" x={X(1.06 * u1[0])} y={Y(1.06 * u1[1]) + 18} textAnchor="end">Achse 1</text>
+        <text className="xw-t xw-strong" x={X(1.06 * u2[0]) + 8} y={Y(1.06 * u2[1]) + 4}>Achse 2</text>
+        {P.map((p, i) => <circle key={i} className={`b14-point ${i < 3 ? 'pol' : 'kir'}`} cx={X(p[0])} cy={Y(p[1])} r={6} />)}
+        <text className="xw-t" x={X(mp[0]) - 14} y={Y(mp[1]) + 30} textAnchor="end">Politik</text>
+        <text className="xw-t" x={X(mk[0]) - 14} y={Y(mk[1]) - 12} textAnchor="end">Kirchen</text>
+        <text className="xw-t" x={16} y={30 + side + 30}>Regierung: {fixed(r1)} und {fixed(r2)}</text>
+        <text className="xw-t" x={16} y={30 + side + 52}>kath. Kirche: {fixed(k1)} und {fixed(k2)}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b14-rotation': forCard(p => <RotationPicture deg={p.value ?? 0} />),
   'b14-kommunalitaet': forSentence(p => <CommunalityPicture l1={p.values['λ₁'] ?? 0} l2={p.values['λ₂'] ?? 0} />),
   'b14-ladungen': forCard(() => <LoadingGrid rows={VERTRAUEN.rotated} names={VERTRAUEN.short} heads={['Politik', 'Kirchen']} title="Ladungen nach Varimax, ALLBUS 2023" />),
   'b14-scree': forCard(p => isMethoden(p.value ?? 0)
