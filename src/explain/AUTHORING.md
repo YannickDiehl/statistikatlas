@@ -1,6 +1,6 @@
 # Erklärungen schreiben: Leitfaden für die Bereiche
 
-Dieser Leitfaden ist die Arbeitsgrundlage für alle, die Begriffe der freien Karte erklären (Bereichsagenten B1 bis B14 und alle, die später nachbessern). Er fasst die verbindliche Spezifikation `docs/superpowers/specs/2026-10-01-freie-karte-ausbau-alle-knoten-design.md` (Abschnitte 2 bis 4) zusammen und sagt, in welche Dateien was gehört.
+Dieser Leitfaden ist die Arbeitsgrundlage für alle, die Begriffe der freien Karte erklären (Bereichsagenten B1 bis B14 und alle, die später nachbessern). Er fasst die verbindliche Spezifikation `docs/entwicklung/spezifikationen/2026-10-01-freie-karte-ausbau-alle-knoten-design.md` (Abschnitte 2 bis 4) zusammen und sagt, in welche Dateien was gehört.
 
 Das Vorbild für Ton und Aufbau ist die Werkstatt **Streuung** (`src/explain/content/streuung.ts`). Der Dozent hat ihren Wortlaut mit „Perfekt! So für alles umsetzen“ gebilligt. Lies sie, bevor du den ersten Begriff schreibst. Die Muster der beiden neuen Vorlagen stehen in `src/explain/content/muster/` (`p-wert.ts` als Begriffskarte, `dummy.ts` als Tabellen-Werkzeug).
 

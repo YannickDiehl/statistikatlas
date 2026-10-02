@@ -8,7 +8,7 @@
 
 **Tech Stack:** React 19, TypeScript strict (tsc 7), Vite 8, node:test mit tsx, `renderToStaticMarkup` für Rendertests, headless Chrome über Playwright, R mit mariposa (Quellstand 0.7.4 per `pkgload::load_all`, installiert ist 0.7.3), haven.
 
-**Spec:** `docs/superpowers/specs/2026-10-01-freie-karte-ausbau-alle-knoten-design.md` (führend), `docs/superpowers/specs/2026-10-01-freie-karte-lehrdatensatz-und-r-pilot-design.md`, `docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt-pilot-design.md`. Gebilligte Beispiele: Tonbeispiel „Standardabweichung, Neu“ (Wortlaut in Aufgabe F1, Schritt 3) und Reiterbeispiel (Lehrdatensatz-Spezifikation, Abschnitt 5).
+**Spec:** `docs/entwicklung/spezifikationen/2026-10-01-freie-karte-ausbau-alle-knoten-design.md` (führend), `docs/entwicklung/spezifikationen/2026-10-01-freie-karte-lehrdatensatz-und-r-pilot-design.md`, `docs/entwicklung/spezifikationen/2026-09-30-freie-karte-formelwerkstatt-pilot-design.md`. Gebilligte Beispiele: Tonbeispiel „Standardabweichung, Neu“ (Wortlaut in Aufgabe F1, Schritt 3) und Reiterbeispiel (Lehrdatensatz-Spezifikation, Abschnitt 5).
 
 ## Global Constraints
 
@@ -283,4 +283,4 @@ Schritte je Bereich:
 - [ ] Bereichszweige nacheinander in `ausbau` mergen (Konflikte sollte es nicht geben; sonst lösen).
 - [ ] Gesamtprüfung: alle Tests mit `ALLBUS_SAV`, `tsc`, Build, Offline-Export, R-Prüfstrecke (110 Beispiele), `verify-sav.R`, `check-explanations.cjs` über **alle** Begriffe und Detailbegriffe bei 1440 und 390 px, die Browser-Prüfungen von Werkstatt und Werkbank.
 - [ ] Abschlussprüfung durch einen frischen Agenten (Stichprobe von 20 Begriffen quer durch alle Bereiche: Ton, Fachlichkeit, Zahlen).
-- [ ] `ausbau` per Fast-Forward nach `main`; README und `UMSETZUNG-Pruefstand.md` aktualisieren; Worktrees und Zweige aufräumen; Offline-Datei neu bauen.
+- [ ] `ausbau` per Fast-Forward nach `main`; README und `docs/PRUEFSTAND.md` aktualisieren; Worktrees und Zweige aufräumen; Offline-Datei neu bauen.

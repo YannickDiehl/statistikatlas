@@ -8,7 +8,7 @@
 
 **Tech Stack:** React 19, TypeScript (strict), Vite 8, node:test mit tsx, `renderToStaticMarkup` für Rendertests, headless Chrome (Playwright) für Browserprüfungen.
 
-**Spec:** `docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt-pilot-design.md` und die Inhaltsdateien `docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt/01–05`.
+**Spec:** `docs/entwicklung/spezifikationen/2026-09-30-freie-karte-formelwerkstatt-pilot-design.md` und die Inhaltsdateien `docs/entwicklung/spezifikationen/2026-09-30-freie-karte-formelwerkstatt/01–05`.
 
 ## Global Constraints
 

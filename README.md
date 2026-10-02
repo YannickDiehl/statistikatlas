@@ -43,5 +43,5 @@ Jeder Push auf `main` testet, baut und veröffentlicht die Webseite (`.github/wo
 ## Mehr
 
 - [Ausführliche Beschreibung](docs/BESCHREIBUNG.md): Karte, Farben, Lehrdatensatz, fachliche Konventionen
-- [Prüfstand](UMSETZUNG-Pruefstand.md): was wann umgesetzt und geprüft wurde
-- Spezifikationen und Pläne: `docs/superpowers/`
+- [Prüfstand](docs/PRUEFSTAND.md): was wann umgesetzt und geprüft wurde
+- [Spezifikationen und Pläne](docs/entwicklung/)

@@ -1,7 +1,7 @@
 /**
  * Inhaltsmodell der Erklärungen in der freien Karte. Grundlage: Spezifikation
- * docs/superpowers/specs/2026-10-01-freie-karte-ausbau-alle-knoten-design.md (führend, Abschnitte 2–4) und
- * docs/superpowers/specs/2026-09-30-freie-karte-formelwerkstatt-pilot-design.md (Abschnitt 8.2).
+ * docs/entwicklung/spezifikationen/2026-10-01-freie-karte-ausbau-alle-knoten-design.md (führend, Abschnitte 2–4) und
+ * docs/entwicklung/spezifikationen/2026-09-30-freie-karte-formelwerkstatt-pilot-design.md (Abschnitt 8.2).
  * Inhalte sind reines TypeScript ohne React, damit sie in Node getestet werden können.
  * Wie man damit schreibt, steht in src/explain/AUTHORING.md.
  */

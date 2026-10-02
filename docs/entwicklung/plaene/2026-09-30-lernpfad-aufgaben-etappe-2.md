@@ -8,7 +8,7 @@
 
 **Tech Stack:** React 19, TypeScript 7, Vite 8, `node --test` mit `tsx`, `react-dom/server` für Rendertests, R 4 mit mariposa 0.7.3 und haven für Testdatei und Skriptprüfung.
 
-**Spec:** `docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md` (Abschnitte 4.4, 4.5, 5–9). Konzepte mit Rollenauftrag, Ablauf und Referenzwerten: `docs/superpowers/specs/2026-09-29-lernpfad-aufgaben/sitzung-04.md`, `sitzung-05.md`.
+**Spec:** `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md` (Abschnitte 4.4, 4.5, 5–9). Konzepte mit Rollenauftrag, Ablauf und Referenzwerten: `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-aufgaben/sitzung-04.md`, `sitzung-05.md`.
 
 **Entstehung:** Der gesamte Code wurde vorab Task für Task in einer Kopie des Repositorys gebaut und geprüft. Jeder Zwischenstand liegt als Git-Tag vor (`plan2-t1` … `plan2-t7` im Zweig `plan2-steps`; Endstand zusätzlich im Zweig `plan2-prototype`). Jeder Stand ist typgeprüft und grün; der Endstand hat 155 Tests bestanden (5 Echtdaten-Tests ohne Datei übersprungen). Außerdem geprüft: Echtdaten-Test mit ZA8831 v1.3.0 (5/5), Lösungsskripte in R auf Testdatei und echter Datei (17/17), Produktions- und Offline-Build, Browserdurchlauf mit echter Datei (allein/zu zweit, 390 px, keine Konsolenfehler). Die Code-Blöcke dieses Plans sind byte-gleich mit den Dateien der Tags; zum Übertragen `git show plan2-tN:<pfad> > <pfad>` verwenden (typografische Anführungszeichen „“ ‚‘ und − bleiben so erhalten).
 
@@ -2678,7 +2678,7 @@ git commit -m "Add session 5 task UI 'Treiber-Rangliste' with ranking in four cu
 ### Task 7: Echtdaten-Test, R-Prüfung der Lösungsskripte, Doku und Build
 
 **Files:**
-- Modify: `src/tasks/allbus.local.test.ts`, `scripts/export-task-scripts.ts`, `README.md`, `UMSETZUNG-Pruefstand.md`, `docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md`
+- Modify: `src/tasks/allbus.local.test.ts`, `scripts/export-task-scripts.ts`, `README.md`, `docs/PRUEFSTAND.md`, `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md`
 
 **Interfaces:**
 - Consumes: Domänenfunktionen der Sitzungen 4 und 5.
@@ -2855,16 +2855,16 @@ Expected: `17 von 17 Skripten laufen fehlerfrei.`
 ```text
 alt:
 Stand: 29. September 2026 · Lernpfad nach dem Sitzungsplan Statistik Ib: jede Sitzung eine eigene Aufgabe auf echten ALLBUS-Daten, dazu die freie Karte zur Orientierung.
-Gebaut sind Sitzung 1 „Schon gefragt?“ (Referent:in in einem fiktiven Abgeordnetenbüro prüft mit `find_var()` und `codebook()`, welche Frageideen der ALLBUS schon beantwortet), Sitzung 2 „Erster Tag in der Datenerfassung“ (drei nachgestellte Papierbögen codieren, Regeln für mehrdeutige Kreuze, Doppelerfassung) und Sitzung 3 „Deutschland in 100 Stühlen“ (die Wahlabsicht als Saal mit 100 Stühlen, die Arbeitsstunden als Stuhlreihe). Sitzung 4 enthält bis zu ihrem Umbau die Mission „Belege es!“ („Wer Politikern misstraut, geht gar nicht mehr wählen“); für die Sitzungen 5–10 folgen die Aufgaben nach der Spezifikation `docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md`. Die `.sav`-Datei wird nur im Browser gelesen und nicht gespeichert; gespeichert werden ausschließlich eigene Entscheidungen und Texte (`statistikatlas.aufgaben.v1`, für die Mission `statistikatlas.missionen.v1`).
+Gebaut sind Sitzung 1 „Schon gefragt?“ (Referent:in in einem fiktiven Abgeordnetenbüro prüft mit `find_var()` und `codebook()`, welche Frageideen der ALLBUS schon beantwortet), Sitzung 2 „Erster Tag in der Datenerfassung“ (drei nachgestellte Papierbögen codieren, Regeln für mehrdeutige Kreuze, Doppelerfassung) und Sitzung 3 „Deutschland in 100 Stühlen“ (die Wahlabsicht als Saal mit 100 Stühlen, die Arbeitsstunden als Stuhlreihe). Sitzung 4 enthält bis zu ihrem Umbau die Mission „Belege es!“ („Wer Politikern misstraut, geht gar nicht mehr wählen“); für die Sitzungen 5–10 folgen die Aufgaben nach der Spezifikation `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md`. Die `.sav`-Datei wird nur im Browser gelesen und nicht gespeichert; gespeichert werden ausschließlich eigene Entscheidungen und Texte (`statistikatlas.aufgaben.v1`, für die Mission `statistikatlas.missionen.v1`).
 Der zweite Reiter **Freie Karte** ergänzt den Lernpfad als Orientierungshilfe. „Zurück zu Sitzung N“ führt in dieselbe Sitzung zurück; der Stand der Aufgabe bleibt erhalten. `?ansicht=karte` öffnet direkt das Netz. Prüfung: `pnpm test` (synthetische Testdateien aus `scripts/make-sandbox-fixture.R`); mit der eigenen Datei `ALLBUS_SAV=/pfad/ZA8831_v1-3-0.sav pnpm test` für die geprüften Referenzwerte; `scripts/export-task-scripts.ts` mit `scripts/verify-task-scripts.R` führt die Lösungsskripte der Aufgaben in R aus, `scripts/export-sandbox-grid.ts` mit `scripts/verify-sandbox-r.R` gleicht den R-Code der Mission ab.
 
 neu:
 Stand: 30. September 2026 · Lernpfad nach dem Sitzungsplan Statistik Ib: jede Sitzung eine eigene Aufgabe auf echten ALLBUS-Daten, dazu die freie Karte zur Orientierung.
-Gebaut sind Sitzung 1 „Schon gefragt?“ (Referent:in in einem fiktiven Abgeordnetenbüro prüft mit `find_var()` und `codebook()`, welche Frageideen der ALLBUS schon beantwortet), Sitzung 2 „Erster Tag in der Datenerfassung“ (drei nachgestellte Papierbögen codieren, Regeln für mehrdeutige Kreuze, Doppelerfassung) Sitzung 3 „Deutschland in 100 Stühlen“ (die Wahlabsicht als Saal mit 100 Stühlen, die Arbeitsstunden als Stuhlreihe), Sitzung 4 „Nenner-Check“ (Faktenchecker:in baut die „87 %“ einer fiktiven Pressemitteilung in R nach, dreht den Nenner und rechnet eine eigene Lesart; der Browser erkennt aus Prozentwert und Zellen-n, wie gerechnet wurde) und Sitzung 5 „Treiber-Rangliste“ (Analyst:in eines fiktiven Beratungsbüros zieht einen von 13 Kandidaten, wählt ein passendes Zusammenhangsmaß, rechnet gewichtet und für West und Ost; danach die Rangliste in vier Währungen). Für die Sitzungen 6–10 folgen die Aufgaben nach der Spezifikation `docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md`. Die `.sav`-Datei wird nur im Browser gelesen und nicht gespeichert; gespeichert werden ausschließlich eigene Entscheidungen und Texte (`statistikatlas.aufgaben.v1`).
+Gebaut sind Sitzung 1 „Schon gefragt?“ (Referent:in in einem fiktiven Abgeordnetenbüro prüft mit `find_var()` und `codebook()`, welche Frageideen der ALLBUS schon beantwortet), Sitzung 2 „Erster Tag in der Datenerfassung“ (drei nachgestellte Papierbögen codieren, Regeln für mehrdeutige Kreuze, Doppelerfassung) Sitzung 3 „Deutschland in 100 Stühlen“ (die Wahlabsicht als Saal mit 100 Stühlen, die Arbeitsstunden als Stuhlreihe), Sitzung 4 „Nenner-Check“ (Faktenchecker:in baut die „87 %“ einer fiktiven Pressemitteilung in R nach, dreht den Nenner und rechnet eine eigene Lesart; der Browser erkennt aus Prozentwert und Zellen-n, wie gerechnet wurde) und Sitzung 5 „Treiber-Rangliste“ (Analyst:in eines fiktiven Beratungsbüros zieht einen von 13 Kandidaten, wählt ein passendes Zusammenhangsmaß, rechnet gewichtet und für West und Ost; danach die Rangliste in vier Währungen). Für die Sitzungen 6–10 folgen die Aufgaben nach der Spezifikation `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md`. Die `.sav`-Datei wird nur im Browser gelesen und nicht gespeichert; gespeichert werden ausschließlich eigene Entscheidungen und Texte (`statistikatlas.aufgaben.v1`).
 Der zweite Reiter **Freie Karte** ergänzt den Lernpfad als Orientierungshilfe. „Zurück zu Sitzung N“ führt in dieselbe Sitzung zurück; der Stand der Aufgabe bleibt erhalten. `?ansicht=karte` öffnet direkt das Netz. Prüfung: `pnpm test` (synthetische Testdateien aus `scripts/make-sandbox-fixture.R`); mit der eigenen Datei `ALLBUS_SAV=/pfad/ZA8831_v1-3-0.sav pnpm test` für die geprüften Referenzwerte; `scripts/export-task-scripts.ts` mit `scripts/verify-task-scripts.R` führt die Lösungsskripte der Aufgaben in R aus.
 ```
 
-`UMSETZUNG-Pruefstand.md`:
+`docs/PRUEFSTAND.md`:
 
 ```text
 neu:
@@ -2880,7 +2880,7 @@ neu:
 
 ```
 
-`docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md`:
+`docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md`:
 
 ```text
 alt:
@@ -2909,7 +2909,7 @@ Expected: `✓ built in …` und `Offline-Prototyp erstellt: … KB, alle Skript
 - [ ] **Step 8: Commit**
 
 ```bash
-git add src/tasks/allbus.local.test.ts scripts/export-task-scripts.ts README.md UMSETZUNG-Pruefstand.md docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md
+git add src/tasks/allbus.local.test.ts scripts/export-task-scripts.ts README.md docs/PRUEFSTAND.md docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md
 git commit -m "Add real-data checks, R script verification and docs for sessions 4 and 5"
 ```
 

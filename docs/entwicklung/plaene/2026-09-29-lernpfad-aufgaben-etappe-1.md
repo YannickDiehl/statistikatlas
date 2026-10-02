@@ -8,7 +8,7 @@
 
 **Tech Stack:** React 19, TypeScript 7, Vite 8, `node --test` mit `tsx`, `react-dom/server` für Rendertests, R 4 mit mariposa 0.7.3 und haven für Testdatei und Skriptprüfung.
 
-**Spec:** `docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md` (Abschnitte 4.1–4.3, 5–9). Konzepte mit Rollenauftrag und Referenzwerten: `docs/superpowers/specs/2026-09-29-lernpfad-aufgaben/sitzung-01.md` … `sitzung-03.md`.
+**Spec:** `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md` (Abschnitte 4.1–4.3, 5–9). Konzepte mit Rollenauftrag und Referenzwerten: `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-aufgaben/sitzung-01.md` … `sitzung-03.md`.
 
 **Entstehung:** Der gesamte Code dieses Plans wurde vorab in einer Kopie des Repositorys Task für Task gebaut und geprüft (153 Tests grün, Typprüfung, Produktions- und Offline-Build, Echtdaten-Test mit ZA8831 v1.3.0, Lösungsskripte in R 3/3, Browserdurchlauf mit echter Datei). Die Code-Blöcke sind der geprüfte Endstand.
 
@@ -3104,7 +3104,7 @@ git commit -m "Add session 3 task UI 'Deutschland in 100 Stühlen' with hall and
 
 **Files:**
 - Create: `src/tasks/allbus.local.test.ts`, `scripts/export-task-scripts.ts`, `scripts/verify-task-scripts.R`
-- Modify: `README.md`, `UMSETZUNG-Pruefstand.md`, `docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md`
+- Modify: `README.md`, `docs/PRUEFSTAND.md`, `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md`
 
 **Interfaces:**
 - Consumes: Prüflogik der Sitzungen 1–3; `SETUP_SCRIPT`, `antraege`, `R_SOLUTION` (Sitzungen 2 und 3).
@@ -3257,7 +3257,7 @@ Stand: 29. September 2026 · Lernpfad nach dem Sitzungsplan Statistik Ib: jede S
 
 Der Reiter **Lernpfad** ist die Startansicht. Zehn Sitzungen folgen dem Sitzungsplan „Statistik im WiSe 24/25“; die dort gestrichene Faktorenanalyse entfällt. Jede Sitzung nennt ihre politische Leitfrage, die Begriffe zur Wiederholung und die neuen Begriffe und bekommt eine eigene Aufgabe (Einzelanfertigung, `src/tasks/`): eine neue Rolle mit echtem Auftrag, eigenes Rechnen in RStudio mit mariposa, eine eigene Entscheidung und ein Ergebnis für das Plenum. Jede Aufgabe ist der Kern einer 30–45-minütigen Arbeitsphase und trägt auch allein; eine gestufte Hilfe führt bis zum vollständigen R-Code, eine Partnervariante verteilt die Rollen.
 
-Gebaut sind Sitzung 1 „Schon gefragt?“ (Referent:in in einem fiktiven Abgeordnetenbüro prüft mit `find_var()` und `codebook()`, welche Frageideen der ALLBUS schon beantwortet), Sitzung 2 „Erster Tag in der Datenerfassung“ (drei nachgestellte Papierbögen codieren, Regeln für mehrdeutige Kreuze, Doppelerfassung) und Sitzung 3 „Deutschland in 100 Stühlen“ (die Wahlabsicht als Saal mit 100 Stühlen, die Arbeitsstunden als Stuhlreihe). Sitzung 4 enthält bis zu ihrem Umbau die Mission „Belege es!“ („Wer Politikern misstraut, geht gar nicht mehr wählen“); für die Sitzungen 5–10 folgen die Aufgaben nach der Spezifikation `docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md`. Die `.sav`-Datei wird nur im Browser gelesen und nicht gespeichert; gespeichert werden ausschließlich eigene Entscheidungen und Texte (`statistikatlas.aufgaben.v1`, für die Mission `statistikatlas.missionen.v1`).
+Gebaut sind Sitzung 1 „Schon gefragt?“ (Referent:in in einem fiktiven Abgeordnetenbüro prüft mit `find_var()` und `codebook()`, welche Frageideen der ALLBUS schon beantwortet), Sitzung 2 „Erster Tag in der Datenerfassung“ (drei nachgestellte Papierbögen codieren, Regeln für mehrdeutige Kreuze, Doppelerfassung) und Sitzung 3 „Deutschland in 100 Stühlen“ (die Wahlabsicht als Saal mit 100 Stühlen, die Arbeitsstunden als Stuhlreihe). Sitzung 4 enthält bis zu ihrem Umbau die Mission „Belege es!“ („Wer Politikern misstraut, geht gar nicht mehr wählen“); für die Sitzungen 5–10 folgen die Aufgaben nach der Spezifikation `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md`. Die `.sav`-Datei wird nur im Browser gelesen und nicht gespeichert; gespeichert werden ausschließlich eigene Entscheidungen und Texte (`statistikatlas.aufgaben.v1`, für die Mission `statistikatlas.missionen.v1`).
 ```
 
 Den Absatz, der mit „Der zweite Reiter **Freie Karte**“ beginnt, ganz ersetzen durch:
@@ -3266,7 +3266,7 @@ Den Absatz, der mit „Der zweite Reiter **Freie Karte**“ beginnt, ganz ersetz
 Der zweite Reiter **Freie Karte** ergänzt den Lernpfad als Orientierungshilfe. „Zurück zu Sitzung N“ führt in dieselbe Sitzung zurück; der Stand der Aufgabe bleibt erhalten. `?ansicht=karte` öffnet direkt das Netz. Prüfung: `pnpm test` (synthetische Testdateien aus `scripts/make-sandbox-fixture.R`); mit der eigenen Datei `ALLBUS_SAV=/pfad/ZA8831_v1-3-0.sav pnpm test` für alle Referenzwerte; `scripts/export-task-scripts.ts` mit `scripts/verify-task-scripts.R` führt die Lösungsskripte der Aufgaben in R aus, `scripts/export-sandbox-grid.ts` mit `scripts/verify-sandbox-r.R` gleicht den R-Code der Mission ab.
 ```
 
-- [ ] **Step 7: Prüfstand und Spezifikation.** In `UMSETZUNG-Pruefstand.md` ganz oben einfügen (gefolgt von einer Leerzeile, `---` und einer Leerzeile):
+- [ ] **Step 7: Prüfstand und Spezifikation.** In `docs/PRUEFSTAND.md` ganz oben einfügen (gefolgt von einer Leerzeile, `---` und einer Leerzeile):
 
 ```markdown
 ## 29. September 2026 – Lernpfad: eigene Aufgaben für die Sitzungen 1–3
@@ -3279,7 +3279,7 @@ Der zweite Reiter **Freie Karte** ergänzt den Lernpfad als Orientierungshilfe. 
 - 153 automatisierte Tests bestanden (4 Echtdaten-Tests ohne Datei übersprungen); mit ZA8831 v1.3.0 stimmen alle Referenzwerte der Konzepte (u. a. 24/0/6 und 638 Zellen −42 in 202 Variablen, Stühle 25/20/19/12/8/6, Median 40, Mittel 37,9, 66 Stühle rechts). Lösungsskripte laufen mit mariposa 0.7.3 auf Testdatei und echter Datei (3/3), R-Abgleich der Mission 120/120. Browserprüfung mit echter Datei ohne Konsolenfehler, 390 px ohne Überlaufen.
 ```
 
-In `docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md` zwei Stellen ersetzen (alt → neu):
+In `docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md` zwei Stellen ersetzen (alt → neu):
 
 ```text
 alt: Kennwerte mit Fallauswahl (Mittel, Median, Quartile Typ 7, Anteil über dem Mittel, Option −10 → 0)
@@ -3302,7 +3302,7 @@ Expected: `✓ built in …` und `Offline-Prototyp erstellt: … KB, alle Skript
 - [ ] **Step 10: Commit**
 
 ```bash
-git add src/tasks/allbus.local.test.ts scripts/export-task-scripts.ts scripts/verify-task-scripts.R README.md UMSETZUNG-Pruefstand.md docs/superpowers/specs/2026-09-29-lernpfad-zehn-aufgaben-design.md
+git add src/tasks/allbus.local.test.ts scripts/export-task-scripts.ts scripts/verify-task-scripts.R README.md docs/PRUEFSTAND.md docs/entwicklung/spezifikationen/2026-09-29-lernpfad-zehn-aufgaben-design.md
 git commit -m "Add real-data checks, R script verification and docs for tasks 1-3"
 ```
 

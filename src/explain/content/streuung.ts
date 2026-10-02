@@ -1,5 +1,5 @@
 // Werkstatt „Streuung“ für Varianz und Standardabweichung. Wortlaut: das gebilligte Tonbeispiel
-// „Standardabweichung, Neu“ (Aufgabe F1, Schritt 3, Plan docs/superpowers/plans/2026-10-01-freie-karte-ausbau-alle-knoten.md).
+// „Standardabweichung, Neu“ (Aufgabe F1, Schritt 3, Plan docs/entwicklung/plaene/2026-10-01-freie-karte-ausbau-alle-knoten.md).
 // Vorbild für alle Werkstätten; siehe src/explain/AUTHORING.md.
 import type { Ctx, FNode, Workshop } from '../types';
 import { series, type Series } from '../math';

@@ -1,7 +1,14 @@
+## 2. Oktober 2026 – Veröffentlichung und Aufräumen
+
+- Öffentlich auf GitHub (https://github.com/YannickDiehl/statistikatlas) mit GitHub Pages (https://yannickdiehl.github.io/statistikatlas/); jeder Push auf `main` testet, baut und veröffentlicht neu.
+- Aufgeräumt: nicht mehr eingebundene Komponenten (LearningGraph, ExamplePanel, ConceptNode/-Edge, theme, readings), alte Prüfskripte `qa-*.mjs`, Konzeptentwurf vom 10. September, Spezifikation und Plan der entfernten Mission „Belege es!“ und die Hosting-Datei von Codex. Dokumentation liegt jetzt in `docs/` (Beschreibung, Prüfstand, Abdeckungslisten), Spezifikationen und Pläne in `docs/entwicklung/`.
+
+---
+
 ## 2. Oktober 2026 – Freie Karte: Erklärungen für alle Knoten
 
 - Alle 159 Punkte der freien Karte haben jetzt eine Erklärung: 145 nach Vorlage (33 Formelwerkstätten, 22 „Formel als Satz“, 9 Tabellenwerkzeuge, 1 Werkzeug, 80 Begriffskarten für Begriffe ohne Formel) und 14 Schrittkarten. Inhalte in 14 Bereichen (`src/explain/content/b01-messen` … `b14-faktoren`), Vorlagen in `muster/`, Leitfaden in `src/explain/AUTHORING.md`.
-- Sprachleitfaden für mathematikängstliche Studierende (Spezifikation `docs/superpowers/specs/2026-10-01-freie-karte-ausbau-alle-knoten-design.md`, Abschnitt 2): erst die Handlung, dann der Name; Fachbegriff mit „In der Fachsprache“ in Worten, ohne Formelzeichen; „Kurz gesagt“ höchstens zwei Sätze; ermutigende Rückmeldungen („Fast!“, „Noch nicht ganz.“); Ergebnisse über Menschen; Genauigkeit unter „Genau genommen“. `style.ts` prüft verbotene Wörter, Satzlängen, Trenner und Minuszeichen in jedem Text.
+- Sprachleitfaden für mathematikängstliche Studierende (Spezifikation `docs/entwicklung/spezifikationen/2026-10-01-freie-karte-ausbau-alle-knoten-design.md`, Abschnitt 2): erst die Handlung, dann der Name; Fachbegriff mit „In der Fachsprache“ in Worten, ohne Formelzeichen; „Kurz gesagt“ höchstens zwei Sätze; ermutigende Rückmeldungen („Fast!“, „Noch nicht ganz.“); Ergebnisse über Menschen; Genauigkeit unter „Genau genommen“. `style.ts` prüft verbotene Wörter, Satzlängen, Trenner und Minuszeichen in jedem Text.
 - Reiter für alle 159 Punkte: „Verstehen“, „Mit 200 Befragten“ (147, Brücke vom Fünf-Personen-Beispiel zum Lehrdatensatz mit Vorhersage vor dem Ausprobieren), „In R“ (118, Code mit `read_spss()` und mariposa, antippbare Zeichen, festgehaltene R-Ausgabe; der Leitaufruf zeigt immer genau den festgehaltenen Aufruf) und „Weiter“. Lehrdatensatz als `.sav` (Statistikatlas-200-Befragte.sav) und R-Skript zum Herunterladen.
 - Oberfläche (1. Oktober): Schrift in der ganzen App größer (mindestens 13 px), angedockte, in der Breite verstellbare Werkbank für die Formelwerkstatt (`statistikatlas.werkbank.v1`). Begriffstitel mit „ · “ umbenannt (etwa „Teststärke (Power)“), Rundung kaufmännisch (bei exakten Hälften anders als R).
 - Prüfung: 646 automatisierte Tests bestanden (mit ZA8831 v1.3.0 auch die Echtdaten-Tests); TypeScript, Produktions- und Offline-Build erfolgreich; R-Abgleich 118 Aufrufe mit mariposa 0.7.4 ausgeführt, 2 nur geparst. Browserprüfung (`scripts/check-explanations.cjs`) über alle 159 Punkte bei 1440 und 390 px in beiden Ansichten: Reiterleiste, Tastatur, Fokus unter klebenden Elementen, Schriftgröße, Überlauf, abgeschnittene Bildbeschriftungen, Konsolenfehler; nach den letzten Korrekturen ohne Befund. Je Bereich Prüfung und Nachprüfung, abschließend Gesamtprüfung mit Nachrechnen von rund 120 Werten in R; alle Befunde eingearbeitet.
@@ -143,7 +150,7 @@
 
 # Aktueller Prüfstand · Grundlagen und Ergebnisdeutung
 
-10. September 2026: 55 neue Grundlagen mit verknüpften Formeln, Quellen und interaktiven Experimenten. Insgesamt 159 Bausteine, 486 Verbindungen und zwölf transparente Themenbereiche. Alle 80 öffentlichen mariposa-Exporte bleiben erschlossen. Vollständige neue Abdeckung: [GRUNDLAGEN-ABDECKUNG.md](GRUNDLAGEN-ABDECKUNG.md).
+10. September 2026: 55 neue Grundlagen mit verknüpften Formeln, Quellen und interaktiven Experimenten. Insgesamt 159 Bausteine, 486 Verbindungen und zwölf transparente Themenbereiche. Alle 80 öffentlichen mariposa-Exporte bleiben erschlossen. Vollständige neue Abdeckung: [ABDECKUNG-GRUNDLAGEN.md](ABDECKUNG-GRUNDLAGEN.md).
 
 143 direkte Einordnungsverbindungen verbinden Verfahren mit der Deutung ihrer Ergebnisse. Sie bleiben außerhalb der rekursiven Rechenvoraussetzungen. Fisher-p-Werte sind als Ergebnis, nicht als Recheneingang verknüpft. Effektgrößen, Intervalle und Varianten folgen den tatsächlich berichteten mariposa-Ausgaben. Beim Ausflug in eine Grundlage bleiben Spalten, Rangbasis, Route und die gewählte Verfahrensvariante für die Rückkehr erhalten; Hover verwendet dieselbe erinnerte Variante.
 
@@ -167,7 +174,7 @@ Der folgende Prüfstand dokumentiert die vorausgehende mariposa-Erweiterung:
 
 # Aktueller Prüfstand · mariposa-Erweiterung
 
-10. September 2026: 80 öffentliche Funktionen, 104 Bausteine, acht Kartenbereiche, 200 synthetische Befragte mit 28 Variablen. Vollständige Zuordnung und Prüfergebnisse: [MARIPOSA-ABDECKUNG.md](MARIPOSA-ABDECKUNG.md).
+10. September 2026: 80 öffentliche Funktionen, 104 Bausteine, acht Kartenbereiche, 200 synthetische Befragte mit 28 Variablen. Vollständige Zuordnung und Prüfergebnisse: [ABDECKUNG-MARIPOSA.md](ABDECKUNG-MARIPOSA.md).
 
 55 Tests bestehen; TypeScript und Produktions-/Offline-Build bestehen. 110 auswählbare R-Varianten plus zusätzlicher Rangkontext wurden geprüft: 109 erfolgreich ausgeführt, zwei externe Importaufrufe syntaktisch geprüft. Keine Browser-Interaktionsprüfung. Optionale WebMCP-Verträge im Testkontext geprüft; reale Browserunterstützung nicht geprüft.
 

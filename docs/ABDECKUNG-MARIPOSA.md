@@ -4,7 +4,7 @@ Stand: 1. Oktober 2026, Referenzversion **mariposa 0.7.4** (lokaler Paketquellst
 
 Alle **80 öffentlichen Exporte** sind genau einem fachlichen Kartenknoten zugeordnet. 0.7.4 exportiert zusätzlich den Pipe-Operator `%>%` (Re-Export aus dplyr) und die Ersetzungsform `var_label<-`; beide zählen nicht als eigene Funktionen (`scripts/mariposa-public-api.json`). Der Atlas enthält **159 Bausteine** und **486 kanonische Verbindungen** in zwölf räumlichen Bereichen. Ein Alias oder Dateiformat benötigt keine eigene isolierte Verfahrenskarte. Varianten ergänzen die Formel- und Aufrufauswahl innerhalb einer Karte.
 
-55 neue Grundlagen und 143 direkte Einordnungsverbindungen ergänzen die Verfahren. Der aktuelle Gesamtprüfstand umfasst 71 Tests. Details: [GRUNDLAGEN-ABDECKUNG.md](GRUNDLAGEN-ABDECKUNG.md). Die 80 Exporte und ihre 110 Aufrufvarianten bleiben unverändert.
+55 neue Grundlagen und 143 direkte Einordnungsverbindungen ergänzen die Verfahren. Der aktuelle Gesamtprüfstand umfasst 71 Tests. Details: [ABDECKUNG-GRUNDLAGEN.md](ABDECKUNG-GRUNDLAGEN.md). Die 80 Exporte und ihre 110 Aufrufvarianten bleiben unverändert.
 
 ## Abdeckungsmatrix
 
