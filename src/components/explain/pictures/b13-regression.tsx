@@ -9,6 +9,7 @@ import { llWb } from '../../../explain/content/b13-regression/likelihood';
 import { pBestanden } from '../../../explain/content/b13-regression/logistisch-kit';
 import { P175, withScore } from '../../../explain/content/b13-regression/outliers';
 import { fitLine } from '../../../explain/content/b13-regression/fit';
+import { vifOf } from '../../../explain/content/b13-regression/multicollinearity';
 import { baseSurvey, sampleColumn } from '../../../explain/sample';
 import { Axis, clamp, Curve, DragPoint, forCard, forSentence, forWorkshop, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
@@ -255,7 +256,27 @@ function Influence({ score }: { score: number }) {
   );
 }
 
+/** Wie stark der Standardfehler wächst (√VIF), je enger zwei Prädiktoren zusammenhängen; markiert beim Wert des Reglers. */
+function VifCurve({ r }: { r: number }) {
+  const [box, W] = useWidth();
+  const L = 50, R = W - 16, T = 24, B = T + 180, H = B + 52;
+  const X = linear([0, 1], [L, R]), Y = linear([1, 7.5], [B, T]), f = (v: number) => Math.sqrt(vifOf(v));
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Faktor des Standardfehlers nach der Korrelation zweier Prädiktoren; bei r = ${num(r)} das ${num(f(r))}-Fache`}>
+        <MarkLine y={Y(Math.sqrt(10))} from={L} to={R} label="Faustregel VIF = 10" />
+        <Curve f={f} from={0} to={0.99} x={X} y={Y} />
+        <circle className="b13-mark" cx={X(r)} cy={Y(f(r))} r={6} />
+        <text className="xw-t xw-strong" x={X(r) + (r > 0.6 ? -10 : 10)} y={Y(f(r)) - 10} textAnchor={r > 0.6 ? 'end' : 'start'}>{num(f(r))}-fach</text>
+        <Axis scale={X} ticks={[0, 0.25, 0.5, 0.75, 1]} at={B} from={L} to={R} labelGap={20} format={pTicks} title="Korrelation r der Prädiktoren" />
+        <Axis scale={Y} ticks={[1, 3, 5, 7]} at={L} from={B} to={T} orient="left" title="Standardfehler" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b13-vif': forCard(p => <VifCurve r={p.value ?? 0.03} />),
   'b13-einfluss': forCard(p => <Influence score={p.value ?? 17} />),
   'b13-logistisch': forCard(p => <SCurve hours={p.value ?? 8} />),
   'b13-likelihood': forCard(p => <LikelihoodCurve p={p.value ?? 0.41} />),

@@ -11,6 +11,7 @@ import { likelihoodKarte, likelihoodTabs } from './likelihood';
 import { logistischeRegression, logistischeRegressionTabs } from './logistic-regression';
 import { marginaleEffekte, marginaleEffekteTabs } from './marginal-effects';
 import { ausreisser, ausreisserTabs } from './outliers';
+import { multikollinearitaet, multikollinearitaetTabs } from './multicollinearity';
 
 export const b13Regression: AreaIndex = {
   explanations: {
@@ -24,6 +25,7 @@ export const b13Regression: AreaIndex = {
     logistic_regression: { kind: 'begriff', card: logistischeRegression },
     marginal_effects: { kind: 'satz', template: marginaleEffekte },
     outliers_influence: { kind: 'begriff', card: ausreisser },
+    multicollinearity: { kind: 'begriff', card: multikollinearitaet },
   },
   tabs: {
     linear_regression: linearRegressionTabs,
@@ -36,5 +38,6 @@ export const b13Regression: AreaIndex = {
     logistic_regression: logistischeRegressionTabs,
     marginal_effects: marginaleEffekteTabs,
     outliers_influence: ausreisserTabs,
+    multicollinearity: multikollinearitaetTabs,
   },
 };

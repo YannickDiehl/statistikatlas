@@ -1,6 +1,6 @@
 // Begriffskarte „Interaktion“ (Bereich B13) mit Reitern. Beispiel: wissenstest ~ lernzeit * weiterbildung, wie der
 // Katalogaufruf linear_regression (Variante 1). Referenzwerte aus R in b13-regression.test.ts.
-import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
+import type { ConceptCard, ConceptTabs, SampleCtx, TokenNote } from '../../types';
 import { num, unit } from '../../format';
 import { sampleColumn } from '../../sample';
 import { ref, titleFor } from '../../../domain/learning';
@@ -22,6 +22,9 @@ export function interactionFor(c: SampleCtx) {
 }
 /** Steigung in Worten: „0,48 Aufgaben mehr“, „0,2 Aufgaben weniger“. */
 const perHour = (b: number) => `${tasks(Math.abs(b))} ${b < 0 ? 'weniger' : 'mehr'}`;
+
+/** Codelegende zum Sternchen in lernzeit * weiterbildung (geprüft in R: nur lernzeit:weiterbildung zeigt keine Haupteffekte). */
+export const STAR_TOKEN: TokenNote = { sym: '*', term: titleFor(ref('interaction')), kurz: 'lernzeit * weiterbildung nimmt beide Variablen und ihr Produkt ins Modell. R schreibt das Produkt als lernzeit:weiterbildung.', fehler: 'Mit lernzeit:weiterbildung statt mit dem Sternchen fehlen die beiden Haupteffekte. R rechnet trotzdem, zeigt aber nur die Zeile lernzeit:weiterbildung, und ihre Zahl bedeutet dann etwas anderes.' };
 
 export const interaktion: ConceptCard = {
   concept: 'interaction',
@@ -158,7 +161,7 @@ export const interaktionTabs: ConceptTabs = {
     entry: 'linear_regression', variant: 1,
     tokens: {
       linear_regression: LINEAR_REGRESSION_TOKEN, modell: MODELL,
-      '*': { sym: '*', term: titleFor(ref('interaction')), kurz: 'lernzeit * weiterbildung nimmt beide Variablen und ihr Produkt ins Modell. R schreibt das Produkt als lernzeit:weiterbildung.', fehler: 'Mit lernzeit:weiterbildung statt mit dem Sternchen fehlen die beiden Haupteffekte. R rechnet trotzdem, zeigt aber nur die Zeile lernzeit:weiterbildung, und ihre Zahl bedeutet dann etwas anderes.' },
+      '*': STAR_TOKEN,
     },
     outputMap: [
       { match: '0.090', atlas: 'b₃', step: 2, explain: 'B in der Zeile lernzeit:weiterbildung ist der Unterschied der Steigungen: mit Weiterbildung 0,09 Aufgaben je Stunde mehr.' },

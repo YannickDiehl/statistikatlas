@@ -15,6 +15,7 @@ import { logistic } from './fit';
 import { logistischeRegression, logistischeRegressionTabs } from './logistic-regression';
 import { marginaleEffekte, marginaleEffekteTabs } from './marginal-effects';
 import { ausreisser, ausreisserTabs, influence, P175, P008, withScore } from './outliers';
+import { multikollinearitaet, multikollinearitaetTabs, vifFor, vifOf } from './multicollinearity';
 
 /*
  * Referenzwerte des Bereichs B13 „Regression“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -97,6 +98,13 @@ import { ausreisser, ausreisserTabs, influence, P175, P008, withScore } from './
  *   # v = 0: 0.432103 / 0.891998;  v = 10: 0.483154 / 0.130249;  v = 17: 0.518891 / 0.008829;  v = 20: 0.534206 / 0.083342
  *   yy <- y; yy[8] <- 0; coef(lm(yy ~ x))[2]           # P008 (7.8 h, 13 Aufgaben) auf 0: 0.5185885
  *   coef(lm(y[-175] ~ x[-175]))[2]                     # 0.511566
+ *
+ * Multikollinearität:
+ *   r <- cor(x, alter); c(r, r^2, 1 / (1 - r^2), sqrt(1 / (1 - r^2)))   # 0.02962693 0.0008777552 1.000879 1.000439 (R: VIF 1.001)
+ *   vif <- function(X) sapply(1:ncol(X), function(j) 1 / (1 - summary(lm(X[, j] ~ X[, -j]))$r.squared))
+ *   vif(cbind(x, w, x * w))                          # 1.674551 6.774332 7.404867 (R² des Produkts 0.8649537)
+ *   xc <- x - mean(x); vif(cbind(xc, w, xc * w))     # 1.674551 1.000141 1.674523
+ *   1 / (1 - .81); sqrt(1 / (1 - .81))               # 5.263158 2.294157
  */
 
 const rows = createSurvey();
@@ -295,4 +303,20 @@ test('B13 Ausreißer und Einfluss: Hebel, Cooks Distanz und Steigungen wie in R'
     assert.match(r.fachlich, /Dᵢ ≈ 0,084\. Nach der Faustregel 4 \/ n = 0,02 sind 9 von 200/);
     assert.match(r.zusatz!, /P175 mit 18,4 Stunden Lernzeit: hᵢ ≈ 0,059/);
   }
+});
+
+test('B13 Multikollinearität: VIF wie in R', () => {
+  const v = vifFor({ rows, columns: {} })!;
+  assert.ok(close(v.r, 0.02962693, 1e-7) && close(v.vif, 1.000879, 1e-6), `r ${v.r}, VIF ${v.vif}`);
+  const W = sampleColumn(rows, 'weiterbildung'), P = X.map((x, i) => x * W[i]);
+  const vifCol = (cols: number[][], j: number) => 1 / (1 - ols(cols.filter((_, k) => k !== j), cols[j])!.r2);
+  ([[0, 1.674551], [1, 6.774332], [2, 7.404867]] as const).forEach(([j, val]) => assert.ok(close(vifCol([X, W, P], j), val, 1e-5), `VIF ${j}`));
+  assert.ok(close(1 - 1 / vifCol([X, W, P], 2), 0.8649537, 1e-6), 'R² des Produkts');
+  const mx = X.reduce((a, b) => a + b, 0) / 200, Xc = X.map(x => x - mx), Pc = Xc.map((x, i) => x * W[i]);
+  ([[1, 1.000141], [2, 1.674523]] as const).forEach(([j, val]) => assert.ok(close(vifCol([Xc, W, Pc], j), val, 1e-5), `zentriert VIF ${j}`));
+  assert.ok(close(vifOf(0.9), 5.263158, 1e-6) && close(Math.sqrt(vifOf(0.9)), 2.294157, 1e-6), 'r = 0,9');
+  assert.ok(close(1 / (1 - 0.865), 7.4, 0.05) && close(Math.sqrt(7.4), 2.7, 0.03), 'Rechnung mit sichtbaren Zahlen');
+  assert.match(multikollinearitaet.regler!.describe(0.9), /VIF 5,26\. Der Standardfehler jedes der beiden Koeffizienten ist dann 2,29-mal so groß/);
+  const t = multikollinearitaetTabs.sample!;
+  if (t.kind === 'analysis') assert.match(t.result({ rows, columns: { x: ['lernzeit'], y: ['alter'] } }).kurz, /r = 0,03\. Beide bekommen den VIF 1,001: Ihre Beiträge lassen sich sauber trennen/);
 });
