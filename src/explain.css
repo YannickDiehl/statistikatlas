@@ -73,6 +73,9 @@
 .xw-legend small{font-size:13px;color:var(--muted)}
 .xw-legend strong{font-size:14px}
 .xw-legend span:not(.xw-legend-head):not(.xw-sym){font-size:14px;color:var(--muted);line-height:1.45}
+/* Lange Fachwörter („Gegenwahrscheinlichkeit“, „Erfolgswahrscheinlichkeit“) trennt der Browser deutsch (lang="de" an <html>); fehlt ihm das Wörterbuch, bricht overflow-wrap das Wort, statt es über den Knopf laufen zu lassen. */
+.xw-legend>button,.xw-legend-item{min-width:0}
+.xw-legend>button>*,.xw-legend-item>*,.xw-legend-head>*{max-width:100%;hyphens:auto;hyphenate-limit-chars:12 5 5;overflow-wrap:anywhere}
 
 .xw-steps{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;margin:6px 0 10px}
 .xw .xw-steps button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);border-radius:4px;background:var(--paper);padding:4px 8px;min-width:0}
