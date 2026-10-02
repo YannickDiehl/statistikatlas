@@ -65,7 +65,7 @@ export const efa: ConceptCard = {
       title: 'Entscheiden, wie viele es braucht',
       was: `Eine zweite Komponente käme nur noch auf einen Eigenwert von ${num(M.eigen[1])}. Sie fasst weniger zusammen als eine einzelne Frage.`,
       warum: 'Eine Komponente lohnt sich nur, wenn sie mehr bündelt als eine Frage allein. Hier reicht deshalb eine.',
-      acht: 'Die Regel „Eigenwert über 1“ ist eine Faustregel. Mit entscheiden der Inhalt der Fragen und ob sich die Lösung deuten lässt.',
+      acht: 'Die Regel „Eigenwert über 1“ ist eine Faustregel. Ebenso zählen der Inhalt der Fragen und ob sich die Lösung deuten lässt.',
       concept: 'dimensionality',
     },
     {
@@ -100,7 +100,7 @@ export const efa: ConceptCard = {
     question: 'Was macht eine Faktorenanalyse?',
     options: [
       'Sie fasst eng zusammenhängende Fragen zu wenigen gemeinsamen Größen zusammen.',
-      'Sie prüft, ob sich zwei Gruppen signifikant unterscheiden.',
+      'Sie prüft, ob sich zwei Gruppen im Mittel unterscheiden.',
       'Sie beweist, was die Fragen messen.',
       'Sie macht aus jeder Frage eine eigene Größe.',
     ],

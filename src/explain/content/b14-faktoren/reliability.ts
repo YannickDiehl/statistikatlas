@@ -107,7 +107,7 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
     },
     {
       button: 'sₓ²', title: 'Die Streuung der Summenwerte messen', sym: 'sₓ²', say: 's x Quadrat', concept: 'variance', perPerson: true,
-      was: 'Wie bei jeder Varianz: Abstände der Summenwerte zur Mitte quadrieren, zusammenzählen und durch n − 1 = 4 teilen.',
+      was: 'Wie bei jeder Varianz: Wir quadrieren die Abstände der Summenwerte zur Mitte, zählen sie zusammen und teilen durch n − 1 = 4.',
       rechnung: c => `Mitte: ${num(c.s.sumX)} / 5 = ${num(c.s.meanX)}. Person ${P(c)}: (${c.s.X[c.who]} − ${num(c.s.meanX)})² = ${num(c.s.sqX[c.who])}. Alle zusammen ${num(c.s.ssX)}, geteilt durch 4: sₓ² = ${num(c.s.varX)}.`,
       fach: 'sₓ² ist die korrigierte Stichprobenvarianz der Summenwerte Xᵢ, also ihre Quadratsumme geteilt durch n − 1.',
       warum: 'Passen die Fragen zusammen, landen manche Personen überall oben und andere überall unten. Dann liegen die Summenwerte weit auseinander.',
@@ -306,7 +306,7 @@ export const reliabilityTabs: ConceptTabs = {
       const std = Number.isFinite(a.alphaStd) ? ` Aus den Korrelationen gerechnet (standardisiert) ergibt sich ${fixed(a.alphaStd)}.` : ' Ein standardisiertes Alpha gibt es hier nicht, weil eine Frage nicht streut.';
       return {
         kurz,
-        fachlich: `k = 5 Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = 5/4 · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${std}`,
+        fachlich: `k = 5 Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = 5/4 · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${std} Als Faustregel gilt eine Skala ab etwa 0,7 als ausreichend stimmig.`,
         zusatz: a.sumItemVar > 1e-12 ? `Die Summenwerte streuen ${num(a.totalVar / a.sumItemVar)}-mal so stark wie die fünf Fragen einzeln zusammen.` : undefined,
       };
     },
