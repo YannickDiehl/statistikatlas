@@ -6,6 +6,7 @@ import { close } from '../../format';
 import { txt, type Ctx, type SampleCtx } from '../../types';
 import { cronbach, itemColumns, methodenPca, methodenR, mlOneFactor, pca, varimax, SPALTEN } from './rechnen';
 import { alphaStats, alphaWerkstatt, KAUM, reliabilityTabs, shiftAll, ZUSAMMEN, type AlphaStats } from './reliability';
+import { efa, efaTabs, METHODEN_PCA } from './efa';
 
 /*
  * Referenzwerte des Bereichs B14, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -35,6 +36,13 @@ import { alphaStats, alphaWerkstatt, KAUM, reliabilityTabs, shiftAll, ZUSAMMEN, 
  *   Mr <- M; Mr$methoden1 <- 8 - Mr$methoden1; alpha(Mr)                   # 0.4064987
  *   Mc <- M; Mc$methoden2 <- 4; alpha(Mc)                                  # 0.8221579
  *   Mrc <- Mr; Mrc$methoden2 <- 4; alpha(Mrc)                              # -0.03941032
+ *
+ * Hauptkomponenten (efa, eigenvalues, loadings, communality):
+ *   R <- cor(M); range(R[upper.tri(R)])                                    # 0.607512729 0.676334515; mean 0.639935668
+ *   eigen(R)$values                                                        # 3.5601784 0.4135994 0.3741370 0.3370853 0.3149998
+ *   atlas %>% efa(methoden1, methoden2, methoden3, methoden4, methoden5, extraction = "pca", n_factors = 1, rotation = "none", use = "complete")
+ *   # KMO = 0.891, Variance explained: 71.2%; summary(): Ladungen 0.852 0.840 0.829 0.857 0.841, Kommunalitäten 0.726 0.705 0.687 0.734 0.708
+ *   e <- eigen(cor(Mr)); e$values; e$vectors[, 1] * sqrt(e$values[1])     # dieselben Eigenwerte; Ladung von methoden1 −0.852
  */
 
 const rows = createSurvey();
@@ -115,4 +123,24 @@ test('B14 Rechnungen: Hauptkomponenten, Varimax und ML-Faktor wie mariposa::efa'
   [0.8126905, 0.7954346, 0.7761573, 0.8202676, 0.7954613].forEach((v, i) => assert.ok(close(ml.loadings[i], v, 1e-5), `ML-Ladung ${i + 1}`));
   assert.ok(close(ml.share, 0.64024, 1e-4), 'ML: 64,0 %');
   assert.ok(methodenPca(rows), 'PCA aus den Daten');
+});
+
+test('B14 Komponenten- & Faktorenanalyse: die Zahlen der Karte und der Reiter wie in R', () => {
+  const R = methodenR(rows)!, off = R.flatMap((row, i) => row.filter((_, j) => j > i));
+  assert.ok(close(Math.min(...off), METHODEN_PCA.rMin, 1e-6) && close(Math.max(...off), METHODEN_PCA.rMax, 1e-6), 'Spanne der Korrelationen');
+  const p = pca(R, 1);
+  METHODEN_PCA.eigen.forEach((v, i) => assert.ok(close(p.values[i], v, 1e-6), `Eigenwert ${i + 1}`));
+  METHODEN_PCA.loadings.forEach((v, i) => assert.ok(close(p.loadings[i][0], v, 1e-6), `Ladung ${i + 1}`));
+  assert.match(efa.stellDirVor.text, /zwischen 0,61 und 0,68\. .* 71,2 % .* zwischen 0,83 und 0,86\./);
+  assert.match(efa.bausteine[1].rechnung!, /3,56 \/ 5 ≈ 71,2 %/);
+  assert.match(efa.bausteine[2].was, /Eigenwert von 0,41/);
+  const s = efaTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = s.result(ctx());
+  assert.match(r.kurz, /^Eine Komponente bündelt 71,2 % der Streuung aller fünf Fragen\. Alle fünf Fragen laden stark auf ihr, zwischen 0,83 und 0,86\./);
+  assert.match(r.fachlich, /erster Eigenwert 3,56 von 5, also 71,2 %\. Der zweite Eigenwert ist 0,41; nur eine Komponente liegt über 1\./);
+  const rev = applyOp(rows, 'methoden1', 'reverse');
+  assert.match(s.result(ctx(rev)).kurz, /Frage 1 \(−0,85\) lädt negativ/);
+  assert.ok(close(s.value!(ctx(rev))!, s.value!(ctx())!, 1e-12), 'umgepolt: gleicher Anteil');
+  assert.equal(s.result(ctx(applyOp(rows, 'methoden2', 'constant', 4))).kurz.startsWith('Mindestens eine Frage streut nicht'), true);
 });

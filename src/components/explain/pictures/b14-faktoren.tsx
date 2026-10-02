@@ -7,10 +7,14 @@ import { clamp, DragPoint, forWorkshop, keyStep, linear, useDrag, useWidth, type
 
 const ITEM = { min: 1, max: 7 };
 
-/** Seitliche Verschiebung gleicher Werte auf einer Achse, damit Punkte nebeneinander statt übereinander liegen. */
-export function spread(values: readonly number[], spacing: number): number[] {
+/**
+ * Seitliche Verschiebung gleicher Werte auf einer Achse, damit Punkte nebeneinander statt übereinander liegen:
+ * Abstand 22 px, bei vielen gleichen Werten enger, damit die Gruppe in `room` Pixel passt.
+ */
+export function spread(values: readonly number[], room: number): number[] {
   return values.map((v, i) => {
     const same = values.map((w, k) => w === v ? k : -1).filter(k => k >= 0);
+    const spacing = Math.min(22, room / Math.max(1, same.length - 1));
     return (same.indexOf(i) - (same.length - 1) / 2) * spacing;
   });
 }
@@ -27,16 +31,15 @@ function AlphaProfile({ data, s, step, who, names, onChange, onWho }: {
   const top = 44, bottom = 216, first = 66, sumAt = W - 64, gap = (sumAt - first) / 3;
   const axis = (j: number) => first + j * gap;
   const y = linear([ITEM.min, ITEM.max], [bottom, top]), ySum = linear([3, 21], [bottom, top]);
-  const room = (k: number) => Math.min(22, (gap - 26) / Math.max(1, k - 1));
-  const offs = [0, 1, 2].map(j => spread(data.map(r => r[j]), room(data.length)));
-  const sumOff = spread(s.X, 22);
+  const offs = [0, 1, 2].map(j => spread(data.map(r => r[j]), gap - 26));
+  const sumOff = spread(s.X, 44);
   const at = (i: number, j: number) => axis(j) + offs[j][i];
   const set = (i: number, j: number, v: number) => { if (v !== data[i][j]) onChange(data.map((r, a) => a === i ? r.map((x, b) => b === j ? v : x) : r)); };
   const { svg, start, handlers } = useDrag((k, p) => set(Math.floor(k / 3), k % 3, clamp(y.invert(p.y), ITEM)));
   // Balken unten: gemeinsame Skala für sₓ² und Σsⱼ².
   const L = 24, R = W - 24, max = Math.max(s.varX, s.sumItemVar, 1e-9), bw = (v: number) => Math.max(0, v) / max * (R - L);
-  const rowA = bottom + 66, rowB = rowA + 64;
-  const H = step >= 6 ? rowB + 98 : step >= 5 ? rowB + 76 : step >= 3 ? rowB + 52 : step >= 2 ? rowA + 34 : bottom + 26;
+  const rowA = bottom + 88, rowB = rowA + 64;
+  const H = step >= 6 ? rowB + 98 : step >= 5 ? rowB + 76 : step >= 3 ? rowB + 52 : step >= 2 ? rowA + 34 : bottom + 52;
   const stacked = step >= 4, third = (R - L) / 3;
   let run = L;
   const segments = s.itemVar.map((v, j) => {
@@ -81,7 +84,7 @@ function AlphaProfile({ data, s, step, who, names, onChange, onWho }: {
               if (next !== null) { e.preventDefault(); onWho(i); set(i, j, next); }
             }}>{v}</DragPoint>
         )))}
-        <text className="xw-t" x={first - 36} y={bottom + 42}>Summenwerte: {s.X.map((x, i) => `${names[i]} ${x}`).join(', ')}</text>
+        <text className="xw-t" x={first - 44} y={bottom + 40}>Summenwerte: {s.X.map((x, i) => `${names[i]} ${x}`).join(', ')}</text>
         {step >= 2 && <g>
           <text className="xw-t xw-strong" x={L} y={rowA - 8}>Streuung der Summenwerte sₓ² = {num(s.varX)}</text>
           <rect className="b14-total" x={L} y={rowA} width={Math.max(1, bw(s.varX))} height={22} />
