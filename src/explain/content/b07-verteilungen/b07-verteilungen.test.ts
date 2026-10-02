@@ -240,3 +240,38 @@ test('B7 Binomialverteilung: Reihenfolgen, Wahrscheinlichkeit und Binomialtest w
     assert.match(r.zusatz!, /2,55 Standardabweichungen/);
   }
 });
+
+/*
+ * Hypergeometrische Verteilung: 10 aus 200, 82 mit Weiterbildung
+ *   dhyper(0:10, 82, 118, 10); which.max(dhyper(0:10, 82, 118, 10)) - 1      # Modus 4, P = 0.2567104
+ *   dbinom(4, 10, 0.41); 10 * 82 / 200                                         # 0.2503034 4.1
+ *   sqrt(10 * .41 * .59 * 190 / 199); sqrt(10 * .41 * .59); sqrt(200 * .41 * .59)   # 1.519736 1.555313 6.955573
+ *   choose(4, 1) * choose(6, 2); choose(10, 3); dhyper(1, 4, 6, 3); dbinom(1, 3, 0.4)   # 60 120 0.5 0.432
+ *   dhyper(2, 2, 4, 2); 190 / 199                                               # 0.06666667 (1 / 15); 0.9547739
+ *   tab <- table(wb, as.numeric(atlas$erwerbstaetig)); tab                      # 40 78 / 23 59
+ *   fisher.test(tab)$p.value; 82 * 137 / 200                                    # 0.4400504 56.17
+ *   fisher.test(table(1 - wb, as.numeric(atlas$erwerbstaetig)))$p.value         # 0.4400504 (umgepolt gleich)
+ *   atlas %>% fisher_test(row = weiterbildung, col = erwerbstaetig)            # p = 0.440, OR = 1.315 [0.712, 2.432], N = 200
+ *   atlas %>% fisher_test(row = weiterbildung)          # Fehler: Argument `col` is missing, with no default.
+ */
+test('B7 Hypergeometrische Verteilung: 10 aus 200 und der Test von Fisher wie in R', async () => {
+  const { HYPER, fisherFit, hypergeometrisch, hyperTabs, spread } = await import('./hypergeometric');
+  const { dhyper, dbinom, choose } = await import('./dist');
+  const probs = Array.from({ length: 11 }, (_, k) => dhyper(k, 82, 200, 10));
+  assert.equal(probs.indexOf(Math.max(...probs)), 4); ok(probs[4], 0.2567104, 'dhyper(4)'); ok(HYPER.p4, probs[4], 'HYPER.p4'); ok(dbinom(4, 10, 0.41), HYPER.b4, 'dbinom(4)');
+  ok(probs.reduce((a, b) => a + b, 0), 1, 'Summe 1');
+  ok(spread(10).without, 1.519736, 'SD ohne'); ok(spread(10).with, 1.555313, 'SD mit'); ok(spread(200).with, 6.955573, 'SD mit, 200'); ok(spread(200).without, 0, 'SD ohne, 200');
+  assert.deepEqual([choose(4, 1) * choose(6, 2), choose(10, 3)], [60, 120]); ok(dhyper(1, 4, 10, 3), 0.5, 'kleine Gruppe'); ok(dbinom(1, 3, 0.4), 0.432, 'mit Zurücklegen');
+  ok(dhyper(2, 2, 6, 2), 1 / 15, 'Kontrollfrage');
+  const f = fisherFit({ rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } });
+  assert.deepEqual([f.a, f.b, f.c, f.d, f.row1], [59, 23, 78, 40, 82]); ok(f.expected, 56.17, 'erwartet'); ok(f.p, 0.4400504, 'Fisher p');
+  ok(fisherFit({ rows: applyOp(rows, 'weiterbildung', 'reverse'), columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }).p, 0.4400504, 'umgepolt');
+  assert.equal(fisherFit({ rows: applyOp(rows, 'weiterbildung', 'constant', 1), columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }).p, 1, 'nur eine Zeile');
+  assert.match(hypergeometrisch.stellDirVor.text, /Am wahrscheinlichsten sind 4 mit Weiterbildung dabei, mit P ≈ 0,26\. Im Schnitt erwartest du 10 · 82 \/ 200 = 4,1\./);
+  assert.match(hypergeometrisch.bausteine[2].rechnung!, /≈ 0,43 statt 0,5\. .* P\(X = 4\) ≈ 0,25 statt 0,26\./);
+  assert.match(hypergeometrisch.bausteine[3].rechnung!, /59 erwerbstätig, zu erwarten wären 56,17\. .* in etwa 44 von 100 Stichproben/);
+  assert.match(hypergeometrisch.ausprobieren[1].explain, /1,52, mit Zurücklegen 1,56/);
+  assert.match(hypergeometrisch.regler!.describe(200), /sicher: genau 82 .* 6,96\./);
+  assert.match(hypergeometrisch.genau.paragraphs[1], /≈ 0,95\./); assert.match(hypergeometrisch.genau.paragraphs[3], /, 0,26\.$/);
+  if (hyperTabs.sample?.kind === 'analysis') assert.match(hyperTabs.sample.result({ rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }).kurz, /Von den 82 .* sind 59 erwerbstätig; .* 56,17 zu erwarten\. .* in etwa 44 von 100 Stichproben vor\./);
+});

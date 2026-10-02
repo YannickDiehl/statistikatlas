@@ -3,7 +3,7 @@
 // Eigene Stile in src/explain/areas/b07-verteilungen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { num, pct } from '../../../explain/format';
 import { baseSurvey } from '../../../explain/sample';
-import { columnStats, dbinom, dchisq, dF, dnorm, dt, prob, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
+import { columnStats, dbinom, dchisq, dF, dhyper, dnorm, dt, prob, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
 import { inside } from '../../../explain/content/b07-verteilungen/normal';
 import { areaText, type ZStats } from '../../../explain/content/b07-verteilungen/standard-normal';
 import { SCHLAF_T, tCrit } from '../../../explain/content/b07-verteilungen/t';
@@ -11,6 +11,7 @@ import { CHI } from '../../../explain/content/b07-verteilungen/chi-square';
 import { ANOVA, fTail, pText } from '../../../explain/content/b07-verteilungen/f';
 import type { BernStats } from '../../../explain/content/b07-verteilungen/bernoulli';
 import type { BinStats } from '../../../explain/content/b07-verteilungen/binomial';
+import { HYPER } from '../../../explain/content/b07-verteilungen/hypergeometric';
 import { AreaUnder, Axis, Bar, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Histogramm der Schlafdauer (halbe Stunden) mit der Normalverteilung x̄, s; markiert ist x̄ ± k · s. */
@@ -178,6 +179,30 @@ function BinomialBars({ s }: { s: BinStats }) {
     </div>
   );
 }
+/** n aus 200 ohne Zurücklegen (Balken, hypergeometrisch) neben mit Zurücklegen (Kreise, Binomialverteilung). */
+function HyperBars({ n }: { n: number }) {
+  const [box, W] = useWidth();
+  const draws = Math.max(1, Math.min(HYPER.N, Math.round(n))), p = HYPER.K / HYPER.N;
+  const ks = Array.from({ length: draws + 1 }, (_, k) => k).filter(k => dhyper(k, HYPER.K, HYPER.N, draws) >= 0.001 || dbinom(k, draws, p) >= 0.001);
+  const lo = ks[0], hi = ks[ks.length - 1], base = 200, top = 84, left = 28, right = W - 16;
+  const X = linear([lo - 0.5, hi + 0.5], [left, right]);
+  const peak = Math.max(...ks.map(k => Math.max(dhyper(k, HYPER.K, HYPER.N, draws), dbinom(k, draws, p))));
+  const Y = linear([0, peak * 1.08], [base, top]), bw = Math.max(2, (X(1) - X(0)) * 0.7);
+  const every = Math.max(1, Math.ceil((hi - lo + 1) / 6)), ticks = ks.filter(k => (k - lo) % every === 0);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={250} viewBox={`0 0 ${W} 250`} role="img"
+        aria-label={`${draws} von 200 Befragten gezogen. Balken: Zahl der Treffer mit Weiterbildung ohne Zurücklegen, hypergeometrisch. Kreise: mit Zurücklegen, binomialverteilt. Treffer von ${lo} bis ${hi}.`}>
+        {ks.map(k => { const q = dhyper(k, HYPER.K, HYPER.N, draws); return q > 0 && <Bar key={`b${k}`} x={X(k) - bw / 2} y={Y(q)} width={bw} height={base - Y(q)} tone="pos" />; })}
+        {ks.map(k => <circle key={`c${k}`} className="b07-dot" cx={X(k)} cy={Y(dbinom(k, draws, p))} r={Math.min(5, Math.max(2.5, bw / 3))} />)}
+        <Axis scale={X} ticks={ticks} at={base} from={left} to={right} labelGap={20} title="Treffer mit Weiterbildung" />
+        <text className="xw-t xw-strong" x={left} y={16}>{draws} von 200 gezogen</text>
+        <text className="xw-t" x={left} y={36}>Balken: ohne Zurücklegen</text>
+        <text className="xw-t" x={left} y={56}>Kreise: mit Zurücklegen</text>
+      </svg>
+    </div>
+  );
+}
 const fgText = (df: number) => `${num(df)} ${num(df) === '1' ? 'Freiheitsgrad' : 'Freiheitsgrade'}`;
 
 export const pictures: Record<string, Picture> = {
@@ -188,4 +213,5 @@ export const pictures: Record<string, Picture> = {
   'b07-f': forCard(p => <FTail value={p.value ?? ANOVA.f} />),
   'b07-bernoulli': forSentence(p => <BernoulliBars s={p.s as BernStats} />),
   'b07-binomial': forSentence(p => <BinomialBars s={p.s as BinStats} />),
+  'b07-hyper': forCard(p => <HyperBars n={p.value ?? HYPER.n} />),
 };

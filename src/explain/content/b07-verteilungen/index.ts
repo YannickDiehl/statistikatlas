@@ -8,6 +8,7 @@ import { chiQuadratVerteilung, chiTabs } from './chi-square';
 import { fVerteilung, fTabs } from './f';
 import { bernoulli, bernoulliTabs } from './bernoulli';
 import { binomial, binomialTabs } from './binomial';
+import { hypergeometrisch, hyperTabs } from './hypergeometric';
 
 export const b07Verteilungen: AreaIndex = {
   explanations: {
@@ -18,6 +19,7 @@ export const b07Verteilungen: AreaIndex = {
     f_distribution: { kind: 'begriff', card: fVerteilung },
     bernoulli_distribution: { kind: 'satz', template: bernoulli },
     binomial_distribution: { kind: 'satz', template: binomial },
+    hypergeometric_distribution: { kind: 'begriff', card: hypergeometrisch },
   },
   tabs: {
     normal_distribution: normalTabs,
@@ -27,5 +29,6 @@ export const b07Verteilungen: AreaIndex = {
     f_distribution: fTabs,
     bernoulli_distribution: bernoulliTabs,
     binomial_distribution: binomialTabs,
+    hypergeometric_distribution: hyperTabs,
   },
 };
