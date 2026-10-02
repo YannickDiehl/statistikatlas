@@ -9,6 +9,7 @@ import { probability, probabilityTabs } from './probability';
 import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
 import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic_independence';
 import { randomVariable, randomVariableTabs } from './random_variable';
+import { empiricalDistribution, empiricalDistributionTabs } from './empirical_distribution';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -129,4 +130,24 @@ test('B6 random_variable: P(X = 11) = 0,16, P002 mit 9 Aufgaben, Auswertung wie 
   assert.equal(r.kurz, 'Möglich sind 0 bis 20 gelöste Aufgaben; bei den 200 Befragten kommen 17 verschiedene Werte vor. Am wahrscheinlichsten zieht man jemanden mit 11 Aufgaben: 32 von 200, also 16 %.');
   assert.match(r.fachlich, /von 0 bis 18\./);
   assert.equal(tab.value!(ctxFor(tab)), 0.16);
+});
+
+/*
+ *   prop.table(table(s)); cumsum(prop.table(table(s)))   # 0.21 0.2 0.185 0.205 0.2; kumuliert 0.21 0.41 0.595 0.8 1
+ *   44 / 202                                             # 0.2178218
+ *   atlas %>% frequency(schulabschluss, show_unused = TRUE)   # Cum. %: 21.00 41.00 59.50 80.00 100.00
+ */
+test('B6 empirical_distribution: Anteile und kumulierte Anteile des Schulabschlusses wie in R', () => {
+  const card = empiricalDistribution;
+  assert.match(card.stellDirVor.text, /Als Anteile sind das 21 %, 20 %, 18,5 %, 20,5 % und 20 %\./);
+  assert.equal(card.bausteine[0].rechnung, '42 Befragte ohne Schulabschluss: 42 · 0,5 % = 21 %.');
+  assert.equal(card.bausteine[1].rechnung, 'Fₙ(mittlerer Abschluss) = (42 + 40 + 37) / 200 = 119 / 200 = 59,5 %.');
+  assert.deepEqual(card.ausprobieren[0].options, ['20,5 %', '80 %', '100 %']);
+  assert.match(card.ausprobieren[2].explain, /44 \/ 202 ≈ 21,8 %/);
+  const tab = empiricalDistributionTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, 'Die Anteile der fünf Abschlüsse von ohne bis Abitur: 21 %, 20 %, 18,5 %, 20,5 %, 20 %. Höchstens einen mittleren Abschluss haben 59,5 %.');
+  assert.match(r.fachlich, /Fₙ = 21 %, 41 %, 59,5 %, 80 %, 100 % für die Codes 0 bis 4/);
+  assert.ok(close(tab.value!(ctxFor(tab))!, 0.595, 1e-12));
 });
