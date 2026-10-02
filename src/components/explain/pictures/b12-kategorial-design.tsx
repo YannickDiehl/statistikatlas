@@ -92,11 +92,15 @@ export function Tails({ from, to, prob, marked, obs, expected, p, ticks, title, 
   const left = 16, right = W - 16, base = 176, top = 44, ks = Array.from({ length: to - from + 1 }, (_, i) => from + i);
   const peak = Math.max(...ks.map(prob)), X = linear([from - 0.5, to + 0.5], [left, right]), Y = linear([0, peak * 1.08], [base, top]);
   const bw = Math.max(1, (right - left) / ks.length - 1), seen = Math.min(to, Math.max(from, obs));
+  // Zusammenhängende markierte Bereiche als Band hinter den Balken: Die Ränder sind oft sehr niedrig und sonst kaum zu sehen.
+  const runs: [number, number][] = [];
+  for (const k of ks) if (marked(k)) { const last = runs.at(-1); if (last && last[1] === k - 1) last[1] = k; else runs.push([k, k]); }
   return (
     <div ref={box}>
       <svg className="xw-svg" width={W} height={238} viewBox={`0 0 ${W} 238`} role="img"
         aria-label={`${title}. Markiert sind alle Ergebnisse, die mindestens so ungewöhnlich sind wie ${obs} ${what}; zusammen ergeben sie ${pText(p)}.`}>
         <text className="xw-t xw-strong" x={left} y={16}>Markierte Balken zusammen: {pText(p)}</text>
+        {runs.map(([a, b]) => <rect key={`band${a}`} className="b12-band" x={X(a - 0.5)} y={top} width={X(b + 0.5) - X(a - 0.5)} height={base - top} />)}
         {ks.map(k => <Bar key={k} x={X(k) - bw / 2} y={Y(prob(k))} width={bw} height={base - Y(prob(k))} tone={marked(k) ? 'neg' : 'plain'} />)}
         <MarkLine x={X(seen)} from={top - 6} to={base} />
         <text className="xw-t" x={X(seen)} y={top - 12} textAnchor={X(seen) < W / 3 ? 'start' : X(seen) > 2 * W / 3 ? 'end' : 'middle'}>beobachtet: {obs}</text>
