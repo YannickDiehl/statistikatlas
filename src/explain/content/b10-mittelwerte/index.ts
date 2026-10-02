@@ -8,6 +8,7 @@ import { anovaWerkstatt, groupVariationTabs, onewayAnovaTabs } from './anova';
 import { factorialAnova, factorialAnovaTabs } from './factorial-anova';
 import { ancova, ancovaTabs } from './ancova';
 import { varianceAssumption, varianceAssumptionTabs } from './variance-assumption';
+import { levene, leveneTabs } from './levene';
 
 export const b10Mittelwerte: AreaIndex = {
   explanations: {
@@ -19,6 +20,7 @@ export const b10Mittelwerte: AreaIndex = {
     factorial_anova: { kind: 'begriff', card: factorialAnova },
     ancova: { kind: 'begriff', card: ancova },
     variance_assumption: { kind: 'begriff', card: varianceAssumption },
+    levene_test: { kind: 'begriff', card: levene },
   },
   tabs: {
     t_test: tTestTabs,
@@ -29,5 +31,6 @@ export const b10Mittelwerte: AreaIndex = {
     factorial_anova: factorialAnovaTabs,
     ancova: ancovaTabs,
     variance_assumption: varianceAssumptionTabs,
+    levene_test: leveneTabs,
   },
 };

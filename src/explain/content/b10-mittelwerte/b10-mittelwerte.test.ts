@@ -27,6 +27,8 @@ import { anovaFor, factorialFor, groupsFor } from './stats';
 import { factorialAnova, TERME, ZELLEN } from './factorial-anova';
 import { ancova, BEREINIGT } from './ancova';
 import { sdRatio, STREUUNGEN, varianceAssumption } from './variance-assumption';
+import { levene } from './levene';
+import { leveneFor } from './stats';
 import { ancovaFor } from './stats';
 import { pairedFor } from './stats';
 import { txt } from '../../types';
@@ -343,6 +345,32 @@ test('Gleiche Fehlervarianz: Streuungen je Gruppe wie in R', () => {
     const r = sample.result(c);
     assert.match(r.kurz, /zwischen 2,53 Stunden \(Hauptschulabschluss\) und 3,36 Stunden \(Abitur\)\. Die größte Standardabweichung ist 1,33-mal so groß/);
     assert.match(r.fachlich, /F\(4, 195\) ≈ 8,64; Welch-ANOVA ohne gleiche Varianzen F ≈ 8,25 bei 4 und 96,7 Freiheitsgraden\. Brown–Forsythe-Test: F ≈ 0,8, p ≈ 0,53\./);
+  }
+});
+
+/*
+ * Levene & Brown–Forsythe (Begriffskarte), Lernzeit nach Schulabschluss:
+ *   atlas %>% levene_test(lernzeit, group = schulabschluss, center = "median")   # F(4, 195) = 0.799, p = 0.527
+ *   atlas %>% levene_test(lernzeit, group = schulabschluss, center = "mean")     # F(4, 195) = 0.835, p = 0.504
+ *   lev <- function(x, center) { z <- abs(x - ave(x, s, FUN = center)); anova(lm(z ~ s)) }   # s = factor(schulabschluss)
+ *   # Median: F 0.7991511, p 0.5270522; Mittelwert: F 0.8352782, p 0.5042350; mit 2 * lernzeit und 60 - lernzeit wie Median
+ *   tapply(lernzeit, s, median)                                       # 5.7 7.3 8.0 8.6 8.9
+ *   tapply(abs(lernzeit - ave(lernzeit, s, FUN = median)), s, mean)   # 2.397619 1.925 2.464865 2.102439 2.585
+ */
+test('Levene & Brown–Forsythe: Abstände zum Median und F wie in R', () => {
+  const c = ctx({ x: 'lernzeit', group: 'schulabschluss' }), l = leveneFor(c), m = leveneFor(c, 'mean');
+  near(l.F, 0.7991511057, 1e-9, 'F Median'); near(l.p, 0.5270521718, 1e-9, 'p Median'); near(m.F, 0.8352781688, 1e-9, 'F Mittelwert'); near(m.p, 0.5042350458, 1e-9, 'p Mittelwert');
+  [5.7, 7.3, 8, 8.6, 8.9].forEach((v, k) => near(l.parts[k].center, v, 1e-9, `Median ${k}`));
+  [2.397619048, 1.925, 2.464864865, 2.102439024, 2.585].forEach((v, k) => near(l.parts[k].distance, v, 1e-8, `Abstand ${k}`));
+  near(leveneFor(ctx({ x: 'lernzeit', group: 'schulabschluss' }, applyOp(rows, 'lernzeit', 'double'))).F, 0.7991511057, 1e-9, 'doppelt');
+  near(leveneFor(ctx({ x: 'lernzeit', group: 'schulabschluss' }, applyOp(rows, 'lernzeit', 'reverse'))).F, 0.7991511057, 1e-9, 'umgepolt');
+  assert.match(levene.stellDirVor.text, /etwa 2,6 Stunden .* etwa 1,9 Stunden\. .* R meldet F\(4, 195\) = 0\.799, p = 0\.527\./);
+  assert.match(levene.bausteine[2].rechnung!, /2,4; 1,9; 2,5; 2,1 und 2,6 Stunden\. F\(4, 195\) ≈ 0,8, p ≈ 0,53\./);
+  const sample = b10Mittelwerte.tabs.levene_test.sample!;
+  if (sample.kind === 'analysis') {
+    const r = sample.result(c);
+    assert.match(r.kurz, /Im Mittel liegen die Befragten 1,9 Stunden \(Hauptschulabschluss\) bis 2,6 Stunden \(Abitur\) vom Median ihrer Gruppe entfernt\. .* in etwa 53 von 100 Stichproben zu erwarten \(p ≈ 0,53\)/);
+    assert.match(r.fachlich, /F\(4, 195\) ≈ 0,8, p ≈ 0,53\. Mit dem Mittelwert als Zentrum: F ≈ 0,84, p ≈ 0,5\./);
   }
 });
 
