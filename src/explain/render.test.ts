@@ -150,7 +150,10 @@ test('Tabellen-Werkzeug (Dummy) renders before, steps, after and the R call', ()
     assert.ok(t.includes(part), `dummy: „${part}“ fehlt`);
   assert.ok(!/\bohne\s+=\s+rec/.test(t), 'die Vergleichsgruppe bekommt keine eigene Spalte');
   assert.ok(full.includes('<th scope="col" class="on">haupt</th>'), 'neue Spalten sind hervorgehoben');
-  assert.ok(t.includes('Deine Wahl: Ohne Schulabschluss. Neue Spalten: haupt, mittel, fhr, abitur.'), 'Zusammenfassung der Wahl fehlt');
+  assert.ok(t.includes('Deine Wahl: Ohne Schulabschluss. Neue Spalten: haupt, mittel, fhr, abitur. Neue Spalten sind hervorgehoben.'), 'Zusammenfassung der Wahl fehlt');
+  // M4: Ohne neue Spalte steht kein Satz über hervorgehobene Spalten da.
+  const missingTools = text(renderToStaticMarkup(createElement(TabellenWerkzeug, { tool: (explainFor('missing_tools') as { tool: typeof dummy }).tool, onConcept: noop })));
+  assert.ok(missingTools.includes('Keine neuen Spalten.') && !missingTools.includes('Neue Spalten sind hervorgehoben'), 'missing_tools: widersprüchlicher Satz');
   assert.ok(!/aria-live="polite"><div class="xw-table-wrap"/.test(full), 'die Tabelle selbst wird nicht vorgelesen');
   const first = t.slice(t.indexOf('Eine Vergleichsgruppe wählen'), t.indexOf('Für jede andere Gruppe'));
   assert.ok(first.includes('In der Fachsprache') && !first.includes('Das nennt man'), 'ohne Begriff und Zeichen kein „Das nennt man“');

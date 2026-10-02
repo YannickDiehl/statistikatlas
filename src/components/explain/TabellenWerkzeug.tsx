@@ -69,7 +69,7 @@ export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onCo
         ))}
       </Section>
       <Section title="Nachher">
-        <p className="xw-note" aria-live="polite">{summary} Neue Spalten sind hervorgehoben.</p>
+        <p className="xw-note" aria-live="polite">{summary}{fresh.size > 0 && ' Neue Spalten sind hervorgehoben.'}</p>
         <DataTable columns={after.columns} rows={after.rows} fresh={fresh} caption={`Die Daten nachher, Wahl: ${chosen}`} />
       </Section>
       {draw && <Section title="Das Bild dazu">{draw({ tool: t, option, before: { columns: t.columns, rows: t.rows }, after })}</Section>}
