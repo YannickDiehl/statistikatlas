@@ -60,7 +60,7 @@ export const causality: ConceptCard = {
       kurz: 'Von jeder Person sieht man nur eine der beiden Welten.',
     },
     {
-      question: `Befragte mit Weiterbildung lernen ${num(L.mitWb)} Stunden, die ohne ${num(L.ohneWb)}. Zeigt das, dass eine Weiterbildung nichts an der Lernzeit ändert?`,
+      question: `Befragte mit Weiterbildung lernen im Schnitt ${num(L.mitWb)} Stunden, die ohne ${num(L.ohneWb)}. Zeigt das, dass eine Weiterbildung nichts an der Lernzeit ändert?`,
       options: ['ja', 'nein'], correct: 1, step: 3,
       explain: 'Wer eine Weiterbildung macht, hat sie selbst gewählt. Die Gruppen können sich in vielem unterscheiden, das auch mit der Lernzeit zusammenhängt; eine Wirkung könnte dadurch verdeckt sein.',
       kurz: 'Kein Unterschied ist noch kein Beleg für keine Wirkung.',

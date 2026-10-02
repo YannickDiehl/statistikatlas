@@ -2,8 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSurvey } from '../../../domain/survey';
 import { close } from '../../format';
-import { txt, type SampleCtx } from '../../types';
-import { binomTestHalf, counts, dbinom, fisher2x2, fourfold, mcnemar, oddsRatio, pbinom, pText } from './rechnen';
+import { txt, type ConceptTabs, type SampleCtx, type Workshop } from '../../types';
+import { binomTestHalf, counts, dbinom, fisher2x2, fourfold, mcnemar, often, oddsRatio, pbinom, pText } from './rechnen';
 import { anpassung, gofSample, gofStats, gofTabs, LEHR, SCHULE } from './chisq-gof';
 import { ALTER_EW, chiSquareTabs, crossChi, fourStats, unabhaengigkeit, WB_EW } from './chi-square';
 import { binomialTabs, binomialTest, pBinom, WEITERBILDUNG } from './binomial-test';
@@ -19,6 +19,8 @@ import { LERNZEIT, spalteSd, streuen } from './positive-sd';
 import { stepCardFor } from '../../registry';
 import { conceptById } from '../../../domain/concepts';
 import { styleProblems } from '../../style';
+import { fine, fineSigned } from './chi-gemeinsam';
+import { wer } from './rechnen';
 
 /*
  * Referenzwerte des Bereichs B12, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -97,7 +99,8 @@ test('B12 Unabhängigkeit: Vierfeldertafeln, erwartete Zahlen, χ², Yates und C
   const c = { s: w, who: 0, names: unabhaengigkeit.names };
   assert.equal(txt(unabhaengigkeit.steps[0].rechnung, c), 'Zelle a (ohne Weiterbildung, nicht erwerbstätig): 118 · 63 / 200 = 7.434 / 200 = 37,17.');
   assert.equal(txt(unabhaengigkeit.steps[4].rechnung, c), '0,22 + 0,099 + 0,31 + 0,14 ≈ 0,77. Zelle a steuert 0,22 bei, das sind 28 % von χ².');
-  assert.match(txt(unabhaengigkeit.steps[1].rechnung, { ...c, s: a, who: 2 }), /29 − 9,1[34] ≈ \+19,87/);
+  assert.equal(txt(unabhaengigkeit.steps[1].rechnung, { ...c, s: a, who: 2 }), 'Zelle c (ab 66 Jahren, nicht erwerbstätig): 29 − 9,135 = +19,865, also 19,865 mehr als erwartet.');
+  assert.equal(txt(unabhaengigkeit.steps[2].rechnung, { ...c, s: a, who: 0 }), 'Zelle a (bis 65 Jahre, nicht erwerbstätig): (−19,865) · (−19,865) ≈ 394,62. Minus mal Minus ergibt Plus.');
   const i = unabhaengigkeit.variants.chi_square.interpret(c);
   assert.match(i.kurz, /mit Weiterbildung sind 72 % erwerbstätig, von denen ohne Weiterbildung 66,1 %\. .*0,77 in etwa 38 von 100/);
   assert.match(i.fachlich, /χ² = 0,77 bei 1 Freiheitsgrad, p ≈ 0,38; Cramér-V ≈ 0,06\. Die kleinste erwartete Zellhäufigkeit ist 25,83/);
@@ -348,4 +351,89 @@ test('B12 Rechenbausteine: Zahlen der Begriffskarten, Schrittkarten in die Pilot
       assert.deepEqual(styleProblems(item.why as string, { maxWords: 25, maxSentences: 2 }), [], `${id} → ${item.id}`);
     }
   }
+});
+
+/** Deutsche Zahl aus einem Text zurück in eine Zahl („−19,865“ → −19.865). */
+const zahl = (t: string) => Number(t.replace(/\./g, '').replace(',', '.').replace('−', '-').replace('+', ''));
+
+/*
+ * Rechnungen mit den sichtbaren Zahlen (Review C2): Erwartete Zahlen und Abweichungen stehen mit bis zu drei
+ * Nachkommastellen da (53,865; −19,865). Wer die angezeigte Abweichung quadriert, trifft die Kontrollfrage, in jeder
+ * Voreinstellung, für jede Zelle und nach jedem Ausprobieren. R: 19.865^2 = 394.618225, 19.87^2 = 394.8169.
+ */
+test('B12 χ²-Werkstätten: Wer die angezeigten Zahlen weiterrechnet, liegt richtig', () => {
+  for (const w of [anpassung, unabhaengigkeit] as Workshop<any, any>[]) {
+    const states = w.presets.flatMap(p => [p.data, ...w.think.filter(t => t.tryIt).map(t => t.tryIt!.apply(p.data)), ...w.think.filter(t => t.tryIt).map(t => t.tryIt!.apply(t.tryIt!.apply(p.data)))]);
+    if (w === anpassung) states.push({ o: [42, 40, 40, 40, 40], pct: [20, 20, 20, 20, 20] }, { o: [100, 1, 37, 41, 40], pct: [10, 20, 30, 20, 20] }, { o: [7, 3, 1, 1, 2], pct: [10, 20, 30, 20, 20] });
+    for (const d of states) {
+      const s = w.compute(d);
+      for (let who = 0; who < w.names.length; who++) {
+        const c = { s, who, names: w.names }, e = zahl(fine(s.e[who])), dev = zahl(fineSigned(s.dev[who]));
+        assert.ok(Math.abs(s.o[who] - e - dev) < 1e-9, `${w.id} ${JSON.stringify(d.o)} ${w.names[who]}: O − E geht mit den sichtbaren Zahlen nicht auf`);
+        assert.ok(close(dev * dev, s.sq[who]), `${w.id} ${w.names[who]}: Quadrat der angezeigten Abweichung ${dev * dev} ≠ ${s.sq[who]}`);
+        assert.equal(w.steps[2].check.diagnose(c, dev * dev), null);
+        assert.ok(close(dev * dev, w.steps[2].check.answer(c) as number), `${w.id} ${JSON.stringify(d.o)} ${w.names[who]}: Kontrollfrage lehnt das Quadrat der angezeigten Zahl ab`);
+        assert.ok(close(e, s.e[who], 1e-9) || Math.abs(e - s.e[who]) < 0.0006, 'höchstens drei Nachkommastellen Rundung');
+      }
+    }
+  }
+});
+
+/*
+ * Sätze zum p-Wert in allen erreichbaren Zuständen (Review I1): ganze Wendung „in … Stichproben“, „p ≈ 1“ statt „1,00“,
+ * Einzahl bei einer Person, höchstens 25 Wörter je Satz.
+ *   2 * pnorm(-0.8121040 / 0.4578538)                     # 0.07610963636 (Münzwurf 4: mindestens 0,81 h Unterschied)
+ */
+test('B12 p-Wert-Sätze: grammatisch in jedem erreichbaren Zustand', () => {
+  const texts: string[] = [];
+  const bad = (t: string) => /praktisch immer|Stichproben Stichproben|p ≈ 1,00|(^|[\s;,])1 Befragte|(^|[\s;,])0 Befragte|lägen in/.test(t);
+  for (const w of [anpassung, unabhaengigkeit] as Workshop<any, any>[]) {
+    const states = w.presets.flatMap(p => [p.data, ...w.think.filter(t => t.tryIt).map(t => t.tryIt!.apply(p.data))]);
+    if (w === anpassung) states.push({ o: [42, 40, 40, 40, 40], pct: [20, 20, 20, 20, 20] }, { o: [40, 40, 40, 40, 40], pct: [20, 20, 20, 20, 20] });
+    for (const d of states) {
+      const s = w.compute(d), c = { s, who: 0, names: w.names }, v = Object.values(w.variants)[0];
+      texts.push(txt(w.steps[5].rechnung, c), v.interpret(c).kurz, v.interpret(c).fachlich);
+    }
+  }
+  for (const b of [0, 1, 2, 9, 46, 100, 200]) for (const c of [0, 1, 2, 9, 46, 200]) {
+    const s = mcStats({ b, c });
+    texts.push(mcnemarTest.interpret(s).kurz, ...mcnemarTest.worked(s).map(x => x.text), mcnemarTest.compare(s));
+  }
+  for (let v = 60; v <= 140; v++) texts.push(binomialTest.regler!.describe(v));
+  for (let v = 40; v <= 72; v++) texts.push(fisherTest.regler!.describe(v));
+  for (const [tabs, cols] of [[binomialTabs, { x: ['weiterbildung'] }], [fisherTabs, { x: ['weiterbildung'], y: ['erwerbstaetig'] }], [mcnemarTabs, { x: ['kurs_vor'], y: ['kurs_nach'] }]] as [ConceptTabs, Record<string, string[]>][]) {
+    const s = tabs.sample!;
+    if (s.kind !== 'analysis') continue;
+    const ids = Object.values(cols).map(v => v[0]);
+    for (const t of s.think) for (const data of [rows, applyOp(rows, ids[t.tryIt.column === 'x' ? 0 : 1], t.tryIt.op, t.tryIt.value)]) texts.push(s.result({ rows: data, columns: cols }).kurz);
+  }
+  for (const t of texts) {
+    assert.ok(!bad(t), `ungrammatisch: ${t}`);
+    assert.deepEqual(styleProblems(t, { maxWords: 25 }), [], t);
+  }
+  assert.deepEqual([often(1), often(0.998), often(0.44), often(0.013), often(0.0004), pText(0.998), pText(1)], ['in allen Stichproben', 'in praktisch allen Stichproben', 'in etwa 44 von 100 Stichproben', 'in etwa 13 von 1.000 Stichproben', 'in weniger als 1 von 1.000 Stichproben', 'p ≈ 1', 'p = 1']);
+  assert.deepEqual([wer(0, 'wechselt', 'wechseln'), wer(1, 'wechselt', 'wechseln'), wer(46, 'wechselt', 'wechseln')], ['Niemand wechselt', 'Eine Person wechselt', '46 Befragte wechseln']);
+  assert.match(mcnemarTest.interpret(mcStats({ b: 1, c: 0 })).kurz, /^Eine Person wechselt von Nein zu Ja, niemand von Ja zu Nein\./);
+  // Kurzbefehl „alle Wechsel mal 4“: aus 46 und 9 werden 184 und 36 (R: (abs(184 - 36) - 1)^2 / 220 = 98.22272727).
+  const mal4 = mcnemarTest.quick.find(q => q.label === 'alle Wechsel mal 4')!.apply({ b: 46, c: 9 });
+  assert.deepEqual(mal4, { b: 184, c: 36 }); assert.ok(close(mcStats(mal4).chi2, 98.22272727, 1e-6));
+  assert.match(randomAssignment.ausprobieren[0].explain, /etwa 8 von 100 Losungen/);
+  assert.ok(close(TYPISCH.p081, 0.07610963636, 1e-9));
+});
+
+/*
+ * Confounding (Review C1, I2): Die Lernzeit steht im Lehrdatensatz vor Planung und Wissenstest; in der unteren Hälfte
+ * lernen Planer noch mehr, deshalb bleibt dort ein Rest:
+ *   tapply(lern, list(planer, viel), mean)                 # untere Hälfte: Planer 5.93125, andere 4.956521739
+ *   coef(lm(wiss ~ planer + lern))["planTRUE"]             # 0.0008309 (bei fester Lernzeit kein Unterschied)
+ */
+test('B12 Confounding: gemeinsame Ursache statt Mediator, Kontrollfrage trennt beides', () => {
+  const plan = rows.map(r => r.values.lernplanung5 >= 4), lern = rows.map(r => r.values.lernzeit);
+  const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  assert.ok(near(avg(lern.filter((v, i) => plan[i] && v <= 7.6)), PLANUNG.wenig.lernPlaner) && near(avg(lern.filter((v, i) => !plan[i] && v <= 7.6)), PLANUNG.wenig.lernAndere));
+  assert.match(confounding.bausteine[2].rechnung!, /In der unteren Hälfte lernen Planer immer noch 5,93 statt 4,96 Stunden\./);
+  assert.doesNotMatch(`${confounding.wofuer} ${confounding.bausteine[1].warum}`, /Wer plant, lernt mehr/);
+  const mediator = confounding.check.options.findIndex(o => /Die Planung erhöht die Lernzeit/.test(o));
+  assert.ok(mediator >= 0 && mediator !== confounding.check.correct && /Mediator/.test(confounding.check.diagnose[mediator]!));
+  assert.match(confounding.check.options[confounding.check.correct], /Die Lernzeit beeinflusst die Planung und den Wissenstest/);
 });

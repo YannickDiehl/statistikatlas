@@ -1,6 +1,6 @@
 // Gemeinsame Rechnung der beiden χ²-Werkstätten (Anpassung und Unabhängigkeit): beobachtet O, erwartet E,
 // Abweichung, Quadrat, Beitrag (O − E)² / E, Summe χ², Freiheitsgrade und p (χ²-Verteilung, wie chisq.test in R).
-import { num } from '../../format';
+import { num, paren, signed } from '../../format';
 import { pchisq } from '../../../tasks/kit/dist';
 
 export interface ChiParts {
@@ -33,5 +33,17 @@ export function partSum(c: ChiParts): { terms: string; sign: string; line: strin
   return { terms, sign, line: `${terms} ${sign} ${num(c.chi2)}`, note };
 }
 
-/** Prozentanteil eines Beitrags an χ², ohne Nachkommastellen. */
-export const shareOf = (part: number, chi2: number) => chi2 > 0 ? `${Math.round(part / chi2 * 100)} %` : '0 %';
+/** Prozentanteil eines Beitrags an χ², ohne Nachkommastellen; kleine Anteile als „unter 1 %“. */
+export const shareOf = (part: number, chi2: number) => {
+  const share = chi2 > 0 ? part / chi2 * 100 : 0;
+  return share > 0 && share < 0.5 ? 'unter 1 %' : `${Math.round(share)} %`;
+};
+
+/**
+ * Erwartete Zahlen und Abweichungen mit so vielen Nachkommastellen, wie sie haben, höchstens drei: 37,17 und 53,865.
+ * So gehen die Rechnungen mit den sichtbaren Zahlen auf, und wer die angezeigte Abweichung quadriert, trifft die Kontrollfrage.
+ */
+const places = (v: number) => Math.abs(v * 100 - Math.round(v * 100)) > 1e-7 ? 3 : 2;
+export const fine = (v: number) => num(v, places(v));
+export const fineSigned = (v: number) => signed(v, places(v));
+export const fineParen = (v: number) => paren(v, places(v));

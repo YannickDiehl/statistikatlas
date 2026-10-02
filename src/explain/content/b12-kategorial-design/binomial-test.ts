@@ -27,7 +27,7 @@ export const binomialTest: ConceptCard = {
   },
   heisst: {
     sym: 'p₀', say: 'p null',
-    fach: 'Ein exakter Test für einen Anteil: Unter der Nullhypothese, dass der wahre Anteil p₀ beträgt, ist die Zahl K der Ja-Antworten binomialverteilt mit n und p₀. Der p-Wert summiert die Wahrscheinlichkeiten aller Ergebnisse, die mindestens so weit von n · p₀ entfernt liegen wie das beobachtete.',
+    fach: 'Ein exakter Test für einen Anteil: Unter der Nullhypothese, dass der wahre Anteil p₀ beträgt, ist die Zahl K der Ja-Antworten binomialverteilt mit n und p₀. Bei p₀ = 0,5 summiert der zweiseitige p-Wert die Wahrscheinlichkeiten aller Ergebnisse, die mindestens so weit von n · p₀ entfernt liegen wie das beobachtete.',
   },
   bausteine: [
     {
@@ -49,7 +49,7 @@ export const binomialTest: ConceptCard = {
     {
       title: 'Nachsehen, wie oft der Zufall so weit danebenliegt',
       was: 'Die Binomialverteilung sagt, wie wahrscheinlich jede Zahl von Ja-Antworten bei 50 % wäre. Wir zählen alle Ergebnisse zusammen, die mindestens 18 von 100 entfernt liegen.',
-      rechnung: `P(K ≤ ${W.ja}) + P(K ≥ ${W.n - W.ja}) ≈ 0,0066 + 0,0066 ≈ 0,013. Wäre der Anteil in Wahrheit 50 %, läge die Zahl ${often(W.p)} Stichproben so weit daneben.`,
+      rechnung: `P(K ≤ ${W.ja}) + P(K ≥ ${W.n - W.ja}) ≈ 0,0066 + 0,0066 ≈ 0,013. Wäre der Anteil in Wahrheit 50 %, läge die Zahl der Ja-Antworten ${often(W.p)} mindestens so weit daneben.`,
       warum: 'Genau dieser Anteil ist der p-Wert. Er zählt beide Richtungen, weil vorher nicht feststand, ob es mehr oder weniger sein würden.',
       acht: 'p ist nicht die Wahrscheinlichkeit, dass der Anteil 50 % beträgt. Er rechnet unter der Annahme, dass er es tut.',
       concept: 'binomial_distribution',
@@ -83,14 +83,14 @@ export const binomialTest: ConceptCard = {
       if (v === 100) return 'Genau 100 Ja-Antworten: Das ist, was die Annahme vorhersagt. p ist dann 1.';
       const p = pBinom(v);
       const verdict = p >= 0.2 ? 'Das wäre gar nicht überraschend.' : p >= 0.05 ? 'Das wäre etwas überraschend, kommt aber oft genug vor.' : p >= 0.01 ? 'Das wäre überraschend.' : 'Das wäre sehr überraschend.';
-      return `Wäre der Anteil in Wahrheit 50 %, lägen ${often(p)} Stichproben mindestens so weit von 100 entfernt wie ${v} (${pText(p)}). ${verdict}`;
+      return `${v} Ja-Antworten liegen ${Math.abs(v - 100)} ${v < 100 ? 'unter' : 'über'} den erwarteten 100. Wäre der Anteil genau 50 %, läge die Zahl der Ja-Antworten ${often(p)} mindestens so weit weg (${pText(p)}). ${verdict}`;
     },
   },
   check: {
     question: 'R meldet für die Weiterbildung p = 0.013. Was heißt das?',
     options: [
       'Mit 1,3 % Wahrscheinlichkeit beträgt der Anteil 50 %.',
-      'Wäre der Anteil in Wahrheit 50 %, läge die Zahl der Ja-Antworten nur in etwa 13 von 1.000 Stichproben so weit von 100 entfernt.',
+      'Wäre der Anteil in Wahrheit 50 %, läge die Zahl der Ja-Antworten nur in etwa 13 von 1.000 Stichproben mindestens so weit von 100 entfernt.',
       '41 % der Befragten haben eine Weiterbildung gemacht.',
       'Der Anteil liegt sicher unter 50 %.',
     ],
@@ -98,7 +98,7 @@ export const binomialTest: ConceptCard = {
     right: 'Genau. p rechnet unter der Annahme von 50 % und fragt, wie selten so ein Ergebnis dann wäre.',
     diagnose: {
       0: 'Fast! Das ist der häufigste Fehler. p rechnet unter der Annahme, dass der Anteil 50 % beträgt. Wie wahrscheinlich die Annahme selbst ist, sagt p nicht.',
-      2: 'Noch nicht ganz. Das stimmt zwar, ist aber der Anteil in der Stichprobe. p sagt, wie überraschend dieser Anteil wäre, wenn es in Wahrheit 50 % wären.',
+      2: 'Fast! Das stimmt zwar, ist aber der Anteil in der Stichprobe. p sagt, wie überraschend dieser Anteil wäre, wenn es in Wahrheit 50 % wären.',
       3: 'Fast! Ein kleiner p-Wert macht 50 % unplausibel, aber nicht unmöglich. Sicherheit gibt es mit einer Stichprobe nie.',
     },
   },
@@ -129,7 +129,7 @@ export const binomialTabs: ConceptTabs = {
         fachlich: 'binomial_test() meldet: `weiterbildung` has 1 observed category; the binomial test needs exactly 2 categories.',
       };
       return {
-        kurz: `${k} von ${n} Befragten haben in den letzten zwölf Monaten eine Weiterbildung gemacht, das sind ${pct(k / n)}. Wäre der Anteil in Wahrheit 50 %, lägen ${often(p)} Stichproben mindestens so weit von ${n / 2} entfernt (${pText(p)}).`,
+        kurz: `${k} von ${n} Befragten haben in den letzten zwölf Monaten eine Weiterbildung gemacht, das sind ${pct(k / n)}. Wäre der Anteil genau 50 %, läge die Zahl der Ja-Antworten ${often(p)} mindestens so weit von ${n / 2} entfernt (${pText(p)}).`,
         fachlich: `Exakter Binomialtest gegen p₀ = 0,5, zweiseitig: k = ${k}, n = ${n}, ${pText(p)}.`,
         zusatz: `Erwartet wären ${n / 2} Ja-Antworten; beobachtet sind ${k}, also ${Math.abs(d)} ${d >= 0 ? 'mehr' : 'weniger'}.`,
       };
@@ -144,7 +144,7 @@ export const binomialTabs: ConceptTabs = {
         expect: { change: 'same' },
       },
       {
-        question: 'Angenommen, niemand hätte eine Weiterbildung gemacht. Wie viele Ja-Antworten zählt der Test?', options: ['keine', '82', '100'], correct: 0,
+        question: 'Angenommen, niemand hätte eine Weiterbildung gemacht. Wie viele Ja-Antworten gibt es dann?', options: ['keine', '82', '100'], correct: 0,
         explain: 'Alle 200 sagen jetzt Nein. Mit nur einer Antwort rechnet mariposa den Test gar nicht: Er braucht beide Antworten in den Daten.',
         kurz: 'Ein Anteil lässt sich nur prüfen, wenn es beide Antworten gibt.',
         tryIt: { label: 'alle auf Nein (Code 0)', op: 'constant', column: 'x', value: 0 },
@@ -160,7 +160,7 @@ export const binomialTabs: ConceptTabs = {
     },
     outputMap: [
       { match: 'prop', atlas: 'Anteil mit Ja', step: 1, explain: 'prop heißt proportion, auf Deutsch Anteil: 82 von 200 sind 0,41. Dahinter steht der geprüfte Wert 0,5.' },
-      { match: 'p', atlas: 'p-Wert', step: 3, explain: 'Wäre der Anteil in Wahrheit 50 %, läge die Zahl der Ja-Antworten in etwa 13 von 1.000 Stichproben so weit von 100 entfernt.' },
+      { match: 'p', atlas: 'p-Wert', step: 3, explain: 'Wäre der Anteil in Wahrheit 50 %, läge die Zahl der Ja-Antworten in etwa 13 von 1.000 Stichproben mindestens so weit von 100 entfernt.' },
       { match: 'Group 1', atlas: 'Gruppe 1', explain: 'Die Antwort, deren Anteil R meldet. mariposa nimmt die Antwort der ersten Person, hier Ja.' },
       { match: 'N', atlas: 'n', explain: 'N zählt alle Befragten mit gültiger Antwort.' },
     ],

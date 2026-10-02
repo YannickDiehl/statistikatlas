@@ -2,9 +2,9 @@
 // Ton nach der Streuung (src/explain/content/streuung.ts). Zahlen in R nachgerechnet: b12-kategorial-design.test.ts.
 import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
 import { num, signed, paren, close, pct, count } from '../../format';
-import { chiParts, eqFor, partSum, partText, shareOf, type ChiParts } from './chi-gemeinsam';
+import { chiParts, eqFor, fine, fineParen, fineSigned, partSum, partText, shareOf, type ChiParts } from './chi-gemeinsam';
 import { often, pText } from './rechnen';
-import { crosstab } from '../../../tasks/kit/stats';
+import { chiSquare, cramersV, crosstab } from '../../../tasks/kit/stats';
 import { columnById } from '../../../domain/survey';
 import { pchisq } from '../../../tasks/kit/dist';
 
@@ -36,17 +36,17 @@ export function fourStats(d: FourData): FourStats {
 type C = Ctx<FourStats>;
 const cell = (s: FourStats, i: number) => `Zelle ${'abcd'[i]} (${s.rows[i >> 1]}, ${s.cols[i & 1]})`;
 const Z = (c: C) => cell(c.s, c.who);
-const versus = (d: number) => Math.abs(d) < 1e-9 ? 'genau wie erwartet' : `${num(Math.abs(d))} ${d > 0 ? 'mehr' : 'weniger'} als erwartet`;
+const versus = (d: number) => Math.abs(d) < 1e-9 ? 'genau wie erwartet' : `${fine(Math.abs(d))} ${d > 0 ? 'mehr' : 'weniger'} als erwartet`;
 
 const terms = (c: C): FNode[] => c.s.o.flatMap((x, i): FNode[] => [
   ...(i ? [' ', { part: ['+'], m: 5 }, ' '] as FNode[] : []),
-  { part: ['('], m: 3 }, { part: [`${x} −`], m: 2 }, ' ', { part: [num(c.s.e[i])], m: 1 }, { part: [')²'], m: 3 }, ' ', { part: [`/ ${num(c.s.e[i])}`], m: 4 },
+  { part: ['('], m: 3 }, { part: [`${x} −`], m: 2 }, ' ', { part: [fine(c.s.e[i])], m: 1 }, { part: [')²'], m: 3 }, ' ', { part: [`/ ${fine(c.s.e[i])}`], m: 4 },
 ]);
 
 export const unabhaengigkeit: Workshop<FourData, FourStats> = {
   id: 'b12-unabhaengigkeit',
   wofuer: 'Sind Befragte mit Weiterbildung häufiger erwerbstätig als die ohne? Im Lehrdatensatz sind es 72 % gegen 66 %. Ist das mehr, als der Zufall allein liefern würde? Der Chi-Quadrat-Test vergleicht die Kreuztabelle mit der Tabelle, die du ohne jeden Zusammenhang erwarten würdest.',
-  mut: 'Die Formel sieht nach viel aus. Sie besteht aber aus sechs kleinen Schritten, die du alle schon kannst: malnehmen, teilen, abziehen, quadrieren, zusammenzählen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
+  mut: 'Die Formel sieht nach viel aus. Sie besteht aber aus kleinen Schritten, die du alle schon kannst: malnehmen, teilen, abziehen, quadrieren, zusammenzählen. Den Vergleich mit dem Zufall im letzten Schritt übernimmt R. Hier geht es ums Verstehen.',
   picture: 'b12-unabhaengigkeit',
   dataNote: 'Vier Zellen einer Kreuztabelle aus dem Lehrdatensatz, a bis d. Wähle eine Zelle in der Rechentabelle.',
   names: ['a', 'b', 'c', 'd'],
@@ -69,7 +69,7 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
       button: 'Eⱼₖ', title: 'Erwarten, was ohne Zusammenhang käme', sym: 'Eⱼₖ', say: 'E j k', concept: 'expected', perPerson: false,
       links: [{ id: 'crosstab', label: 'Kreuztabelle' }, { id: 'stochastic_independence', label: 'Stochastische Unabhängigkeit' }],
       was: 'Wir tun so, als hätten die beiden Merkmale nichts miteinander zu tun. Dann bekommt jede Zelle ihren Anteil: Zeilensumme mal Spaltensumme, geteilt durch n.',
-      rechnung: c => `${Z(c)}: ${c.s.rowSum[c.who >> 1]} · ${c.s.colSum[c.who & 1]} / ${c.s.n} = ${count(c.s.prod[c.who])} / ${c.s.n} ${eqFor(num(c.s.e[c.who]), c.s.e[c.who])} ${num(c.s.e[c.who])}.`,
+      rechnung: c => `${Z(c)}: ${c.s.rowSum[c.who >> 1]} · ${c.s.colSum[c.who & 1]} / ${c.s.n} = ${count(c.s.prod[c.who])} / ${c.s.n} ${eqFor(fine(c.s.e[c.who]), c.s.e[c.who])} ${fine(c.s.e[c.who])}.`,
       fach: 'Die erwartete Zellhäufigkeit Eⱼₖ = Zeilensumme mal Spaltensumme / n gilt, wenn beide Merkmale stochastisch unabhängig sind.',
       warum: c => `Ohne Zusammenhang wären in beiden Zeilen gleich viele ${c.s.cols[1]}: ${pct(c.s.overall)} wie unter allen ${c.s.n}. Genau das rechnet die Formel aus.`,
       acht: 'Erwartete Zahlen müssen keine ganzen Zahlen sein. Ein Bruchteil einer Person kommt nicht vor, als Maßstab ist die Zahl trotzdem richtig.',
@@ -87,7 +87,7 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
       button: 'Oⱼₖ − Eⱼₖ', title: 'Abweichungen messen', sym: 'Oⱼₖ − Eⱼₖ', say: 'O j k minus E j k', concept: 'subtract', perPerson: false,
       links: [{ id: 'crosstab', label: 'Beobachtete Zellhäufigkeiten' }],
       was: 'Für jede Zelle rechnen wir: beobachtet minus erwartet. Das Vorzeichen zeigt, ob mehr oder weniger Befragte darin stehen als erwartet.',
-      rechnung: c => `${Z(c)}: ${c.s.o[c.who]} − ${num(c.s.e[c.who])} ${eqFor(num(c.s.e[c.who]), c.s.e[c.who])} ${signed(c.s.dev[c.who])}, also ${versus(c.s.dev[c.who])}.`,
+      rechnung: c => `${Z(c)}: ${c.s.o[c.who]} − ${fine(c.s.e[c.who])} ${eqFor(fine(c.s.e[c.who]), c.s.e[c.who])} ${fineSigned(c.s.dev[c.who])}, also ${versus(c.s.dev[c.who])}.`,
       fach: 'Oⱼₖ ist die beobachtete Häufigkeit in Zeile j und Spalte k. Die Differenz Oⱼₖ − Eⱼₖ zeigt die Abweichung dieser Zelle von der Unabhängigkeit.',
       warum: 'Der Test fragt: Wie weit ist die Tabelle von einer Tabelle ohne Zusammenhang weg? Genau das messen wir hier, Zelle für Zelle.',
       acht: 'In einer Vierfeldertafel sind alle vier Abweichungen gleich groß, nur die Vorzeichen wechseln. Zusammen ergeben sie immer 0.',
@@ -103,18 +103,18 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
     {
       button: '( )²', title: 'Abweichungen quadrieren', sym: '(Oⱼₖ − Eⱼₖ)²', say: 'O j k minus E j k, zum Quadrat', concept: 'square', perPerson: false,
       was: 'Jede Abweichung nehmen wir mit sich selbst mal. Danach sind alle Zahlen positiv.',
-      rechnung: c => `${Z(c)}: ${paren(c.s.dev[c.who])} · ${paren(c.s.dev[c.who])} ${eqFor(num(c.s.sq[c.who]), c.s.sq[c.who])} ${num(c.s.sq[c.who])}${c.s.dev[c.who] < -1e-9 ? '. Minus mal Minus ergibt Plus.' : '.'}`,
+      rechnung: c => `${Z(c)}: ${fineParen(c.s.dev[c.who])} · ${fineParen(c.s.dev[c.who])} ${eqFor(num(c.s.sq[c.who]), c.s.sq[c.who])} ${num(c.s.sq[c.who])}${c.s.dev[c.who] < -1e-9 ? '. Minus mal Minus ergibt Plus.' : '.'}`,
       fach: 'Die quadrierte Abweichung (Oⱼₖ − Eⱼₖ)² ist nie negativ. Große Abweichungen zählen dadurch stärker als kleine.',
       warum: 'Sonst heben sich Plus und Minus auf, denn zusammen ergeben die Abweichungen immer 0. Und große Abweichungen sollen stärker zählen.',
       acht: 'Im Taschenrechner Klammern setzen: (−2,83)² ≈ 8,01. Ohne Klammern zeigt er eine negative Zahl. Ein Quadrat ist nie negativ.',
       check: {
-        question: c => `Was kommt heraus, wenn du ${paren(c.s.dev[c.who])} mit sich selbst malnimmst?`,
+        question: c => `Was kommt heraus, wenn du ${fineParen(c.s.dev[c.who])} mit sich selbst malnimmst?`,
         answer: c => c.s.sq[c.who],
         diagnose: (c, v) => {
           const d = c.s.dev[c.who], q = c.s.sq[c.who];
           if (v === 'NA') return null;
           if (q > 1e-9 && close(v, -q)) return 'Fast! Das Minus ist zu viel: Minus mal Minus ergibt Plus. Ein Quadrat ist nie negativ.';
-          if (Math.abs(d) > 1e-9 && close(v, 2 * Math.abs(d)) && !close(v, q)) return `Fast! Das ist mal 2. Mit sich selbst malnehmen heißt: ${paren(d)} · ${paren(d)}.`;
+          if (Math.abs(d) > 1e-9 && close(v, 2 * Math.abs(d)) && !close(v, q)) return `Fast! Das ist mal 2. Mit sich selbst malnehmen heißt: ${fineParen(d)} · ${fineParen(d)}.`;
           return null;
         },
       },
@@ -122,19 +122,19 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
     {
       button: '÷ Eⱼₖ', title: 'An der Erwartung messen', sym: '(Oⱼₖ − Eⱼₖ)² / Eⱼₖ', say: 'O j k minus E j k zum Quadrat, geteilt durch E j k', concept: 'divide', perPerson: false,
       was: 'Jedes Quadrat teilen wir durch die erwartete Zahl seiner Zelle. So wird jede Abweichung an ihrer Erwartung gemessen.',
-      rechnung: c => { const t = partText(c.s.part[c.who]); return `${Z(c)}: ${num(c.s.sq[c.who])} / ${num(c.s.e[c.who])} ${eqFor(t, c.s.part[c.who])} ${t}.`; },
+      rechnung: c => { const t = partText(c.s.part[c.who]); return `${Z(c)}: ${num(c.s.sq[c.who])} / ${fine(c.s.e[c.who])} ${eqFor(t, c.s.part[c.who])} ${t}.`; },
       fach: 'Der Quotient (Oⱼₖ − Eⱼₖ)² / Eⱼₖ ist der Beitrag der Zelle zur Prüfgröße χ².',
       warum: 'Dieselbe Abweichung wiegt in einer kleinen Zelle schwerer als in einer großen. 3 zu viel bei 10 Erwarteten sind viel, bei 1.000 kaum etwas.',
       acht: 'Geteilt wird durch die erwartete Zahl Eⱼₖ, nicht durch die beobachtete und nicht durch n.',
       check: {
-        question: c => `Was kommt heraus, wenn du ${num(c.s.sq[c.who])} durch ${num(c.s.e[c.who])} teilst?`,
+        question: c => `Was kommt heraus, wenn du ${num(c.s.sq[c.who])} durch ${fine(c.s.e[c.who])} teilst?`,
         answer: c => c.s.part[c.who],
         diagnose: (c, v) => {
           const q = c.s.sq[c.who], o = c.s.o[c.who], part = c.s.part[c.who];
           if (v === 'NA' || q < 1e-9) return null;
-          if (close(v, q)) return `Fast! Das ist noch das Quadrat. Jetzt noch durch ${num(c.s.e[c.who])} teilen.`;
-          if (o > 0 && !close(q / o, part) && close(v, q / o)) return `Fast! Du hast durch die beobachtete Zahl geteilt. Geteilt wird durch die erwartete, hier ${num(c.s.e[c.who])}.`;
-          if (!close(q / c.s.n, part) && close(v, q / c.s.n)) return `Fast! Du hast durch alle ${c.s.n} geteilt. Geteilt wird durch die erwartete Zahl, hier ${num(c.s.e[c.who])}.`;
+          if (close(v, q)) return `Fast! Das ist noch das Quadrat. Jetzt noch durch ${fine(c.s.e[c.who])} teilen.`;
+          if (o > 0 && !close(q / o, part) && close(v, q / o)) return `Fast! Du hast durch die beobachtete Zahl geteilt. Geteilt wird durch die erwartete, hier ${fine(c.s.e[c.who])}.`;
+          if (!close(q / c.s.n, part) && close(v, q / c.s.n)) return `Fast! Du hast durch alle ${c.s.n} geteilt. Geteilt wird durch die erwartete Zahl, hier ${fine(c.s.e[c.who])}.`;
           return null;
         },
       },
@@ -159,7 +159,7 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
       button: 'df, p', title: 'Mit dem Zufall vergleichen', sym: 'df = (r − 1) · (c − 1)', say: 'd f gleich r minus 1 mal c minus 1', concept: 'chi_square_distribution', perPerson: false,
       links: [{ id: 'general_df', label: 'Freiheitsgrade im Modell' }, { id: 'p_value', label: 'p-Wert' }],
       was: 'Wir zählen die Freiheitsgrade: Zeilen minus eins mal Spalten minus eins. Damit sagt die χ²-Verteilung, wie oft der Zufall allein so ein χ² liefert.',
-      rechnung: c => `df = (2 − 1) · (2 − 1) = 1. Gäbe es keinen Zusammenhang, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} Stichproben vor (${pText(c.s.p)}).`,
+      rechnung: c => `df = (2 − 1) · (2 − 1) = 1. Gäbe es keinen Zusammenhang, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} vor (${pText(c.s.p)}).`,
       fach: 'Unter der Nullhypothese der Unabhängigkeit folgt χ² näherungsweise einer χ²-Verteilung mit (r − 1)(c − 1) Freiheitsgraden; r und c zählen Zeilen und Spalten.',
       warum: 'Stehen alle Zeilen- und Spaltensummen fest, legt eine Zelle die anderen drei fest. Frei wählbar ist bei vier Feldern also nur eine Zahl.',
       acht: 'χ² und p sagen nicht, wie stark der Zusammenhang ist. Bei sehr vielen Befragten wird auch ein winziger Unterschied überraschend.',
@@ -181,8 +181,8 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
   table: {
     columns: [
       { head: 'Oⱼₖ', from: 1, active: [1, 2], cell: (c, i) => String(c.s.o[i]), sum: c => String(c.s.n), sumFrom: 1 },
-      { head: 'Eⱼₖ', from: 1, active: [1], cell: (c, i) => num(c.s.e[i]), sum: c => num(c.s.n), sumFrom: 1 },
-      { head: 'Oⱼₖ − Eⱼₖ', from: 2, active: [2], cell: (c, i) => signed(c.s.dev[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer', tone: (c, i) => c.s.dev[i] > 1e-9 ? 'pos' : c.s.dev[i] < -1e-9 ? 'neg' : undefined },
+      { head: 'Eⱼₖ', from: 1, active: [1], cell: (c, i) => fine(c.s.e[i]), sum: c => num(c.s.n), sumFrom: 1 },
+      { head: 'Oⱼₖ − Eⱼₖ', from: 2, active: [2], cell: (c, i) => fineSigned(c.s.dev[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer', tone: (c, i) => c.s.dev[i] > 1e-9 ? 'pos' : c.s.dev[i] < -1e-9 ? 'neg' : undefined },
       { head: '(Oⱼₖ − Eⱼₖ)²', from: 3, active: [3], cell: (c, i) => num(c.s.sq[i]) },
       { head: '(Oⱼₖ − Eⱼₖ)² / Eⱼₖ', from: 4, active: [4, 5], cell: (c, i) => partText(c.s.part[i]), sum: c => num(c.s.chi2), sumFrom: 5 },
     ],
@@ -213,7 +213,8 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
       options: ['bleibt gleich', 'verdoppelt sich', 'vervierfacht sich'], correct: 1, step: 4,
       explain: 'Jede Abweichung verdoppelt sich, ihr Quadrat vervierfacht sich. Die erwartete Zahl verdoppelt sich nur. Viermal geteilt durch zweimal: χ² verdoppelt sich.',
       kurz: 'Mehr Befragte mit denselben Anteilen machen χ² größer.',
-      tryIt: { label: 'alle Zahlen verdoppeln', apply: d => ({ ...d, o: d.o.map(x => Math.min(400, x * 2)) }) },
+      // Verdoppelt nur, solange jede Zahl danach höchstens 400 ist; sonst stimmte das Verhältnis nicht mehr.
+      tryIt: { label: 'alle Zahlen verdoppeln (bis 400 je Zelle)', apply: d => d.o.every(x => x * 2 <= 400) ? { ...d, o: d.o.map(x => x * 2) } : d },
     },
     {
       question: 'Du vertauschst die beiden Zeilen. Was macht χ²?',
@@ -235,11 +236,11 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
       interpret: c => ({
         kurz: `Von den Befragten ${c.s.rows[1]} sind ${pct(c.s.shares[1])} ${c.s.cols[1]}, von denen ${c.s.rows[0]} ${pct(c.s.shares[0])}. ${c.s.chi2 < 1e-9
           ? 'Die Anteile sind gleich, χ² ist 0: Die Tabelle zeigt keinen Zusammenhang.'
-          : `Gäbe es keinen Zusammenhang, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} Stichproben vor. ${c.s.p >= 0.05 ? 'Die Daten sprechen also nicht gegen die Unabhängigkeit.' : 'So ein Ergebnis wäre ohne Zusammenhang sehr überraschend.'}`}`,
-        fachlich: `χ² = ${num(c.s.chi2)} bei 1 Freiheitsgrad, ${pText(c.s.p)}; Cramér-V ≈ ${num(c.s.v)}. Die kleinste erwartete Zellhäufigkeit ist ${num(c.s.minE)}${c.s.minE >= 5 ? '; die Faustregel „mindestens 5“ ist erfüllt.' : '. Das liegt unter der Faustregel 5; nimm dann den exakten Test nach Fisher.'}`,
+          : `Gäbe es keinen Zusammenhang, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} vor. ${c.s.p >= 0.05 ? 'Die Daten sprechen also nicht deutlich gegen die Unabhängigkeit.' : 'Bei α = 0,05 sprechen die Daten gegen die Unabhängigkeit.'}`}`,
+        fachlich: `χ² = ${num(c.s.chi2)} bei 1 Freiheitsgrad, ${pText(c.s.p)}; Cramér-V ≈ ${num(c.s.v)}. Die kleinste erwartete Zellhäufigkeit ist ${fine(c.s.minE)}${c.s.minE >= 5 ? '; die Faustregel „mindestens 5“ ist erfüllt.' : '. Das liegt unter der Faustregel 5; nimm dann den exakten Test nach Fisher.'}`,
       }),
       genau: {
-        kurz: 'Die χ²-Verteilung ist eine Näherung für große Tabellen. χ² sagt, ob die Merkmale zusammenhängen, nicht wie stark und in welche Richtung.',
+        kurz: 'Die χ²-Verteilung ist eine Näherung, die gut passt, wenn in jeder Zelle genug Befragte erwartet werden. χ² sagt, ob die Merkmale zusammenhängen, nicht wie stark und in welche Richtung.',
         paragraphs: c => [
           `Bei Vierfeldertafeln gibt es eine Kontinuitätskorrektur nach Yates: Von jedem Abstand |Oⱼₖ − Eⱼₖ| wird 0,5 abgezogen. mariposa rechnet sie mit correct = TRUE; hier ergäbe das χ² ≈ ${num(c.s.yates)} statt ${num(c.s.chi2)}.`,
           'Die Faustregel verlangt in jeder Zelle eine erwartete Häufigkeit von mindestens 5. Bei kleineren Zahlen ist der p-Wert aus der χ²-Verteilung ungenau; der exakte Test nach Fisher kommt ohne diese Näherung aus.',
@@ -257,14 +258,12 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
  */
 export function crossChi(c: SampleCtx) {
   const x = c.columns.x?.[0] ?? 'schulabschluss', y = c.columns.y?.[0] ?? 'weiterbildung';
-  const t = crosstab(c.rows.map(r => r.values[x]), c.rows.map(r => r.values[y]));
+  const xs = c.rows.map(r => r.values[x]), ys = c.rows.map(r => r.values[y]), t = crosstab(xs, ys);
   if (t.rows.length < 2 || t.cols.length < 2) return null;
   const rowSum = t.cells.map(r => r.reduce((a, b) => a + b, 0)), colSum = t.cols.map((_, j) => t.cells.reduce((a, r) => a + r[j], 0));
-  let chi2 = 0, minE = Infinity;
-  t.cells.forEach((row, i) => row.forEach((o, j) => { const e = rowSum[i] * colSum[j] / t.n; minE = Math.min(minE, e); chi2 += (o - e) ** 2 / e; }));
-  const df = (t.rows.length - 1) * (t.cols.length - 1), last = t.cols.length - 1;
+  const { chi2, df } = chiSquare(t.cells), minE = Math.min(...rowSum.flatMap(r => colSum.map(c2 => r * c2 / t.n))), last = t.cols.length - 1;
   const share = t.rows.map((r, i) => ({ code: r, share: t.cells[i][last] / rowSum[i] }));
-  return { x, y, t, chi2, df, p: pchisq(chi2, df, false), v: Math.sqrt(chi2 / (t.n * Math.min(t.rows.length - 1, t.cols.length - 1))), minE, share };
+  return { x, y, t, chi2, df, p: pchisq(chi2, df, false), v: cramersV(xs, ys), minE, share };
 }
 const label = (id: string, code: number) => columnById[id]?.categories?.find(k => k.value === code)?.label ?? String(code);
 
@@ -278,7 +277,7 @@ export const chiSquareTabs: ConceptTabs = {
       if (!r) return { kurz: 'Eine der beiden Spalten hat nur noch eine Antwort. Dann gibt es nichts zu vergleichen, und mariposa rechnet den Test nicht.', fachlich: 'chi_square() rechnet dann nicht und warnt, dass eine Spalte nur eine beobachtete Kategorie hat.' };
       const lo = r.share.reduce((a, b) => b.share < a.share ? b : a), hi = r.share.reduce((a, b) => b.share > a.share ? b : a);
       return {
-        kurz: `Der Anteil mit Weiterbildung reicht je nach Schulabschluss von ${pct(lo.share)} (${label(r.x, lo.code)}) bis ${pct(hi.share)} (${label(r.x, hi.code)}). Gäbe es keinen Zusammenhang, käme ein χ² von mindestens ${num(r.chi2)} ${often(r.p)} Stichproben vor.`,
+        kurz: `Der Anteil mit Weiterbildung reicht je nach Schulabschluss von ${pct(lo.share)} (${label(r.x, lo.code)}) bis ${pct(hi.share)} (${label(r.x, hi.code)}). Gäbe es keinen Zusammenhang, käme ein χ² von mindestens ${num(r.chi2)} ${often(r.p)} vor.`,
         fachlich: `χ² = ${num(r.chi2)} bei ${r.df} Freiheitsgraden, ${pText(r.p)}; Cramér-V ≈ ${num(r.v)}.`,
         zusatz: `Die kleinste erwartete Zellhäufigkeit ist ${num(r.minE)}; die Faustregel „mindestens 5“ ist ${r.minE >= 5 ? 'erfüllt' : 'verletzt'}.`,
       };
@@ -310,7 +309,7 @@ export const chiSquareTabs: ConceptTabs = {
     outputMap: [
       { match: 'chi2', atlas: 'χ²', step: 5, explain: 'Die Prüfgröße aus Schritt 5. In Klammern stehen die Freiheitsgrade: (5 − 1) · (2 − 1) = 4.' },
       { match: 'p', atlas: 'p-Wert', step: 6, explain: 'Gäbe es keinen Zusammenhang, käme ein χ² von mindestens 3,08 in etwa 54 von 100 Stichproben vor.' },
-      { match: 'V', atlas: 'Cramér-V', explain: 'Cramér-V misst die Stärke des Zusammenhangs zwischen 0 und 1. In Klammern steht die englische Einordnung; small heißt klein.' },
+      { match: 'V', atlas: 'Cramér-V', explain: 'Cramér-V misst die Stärke des Zusammenhangs zwischen 0 und 1. In Klammern steht eine Faustregel-Einordnung nach Cohen (ab 0,1 klein, ab 0,3 mittel); small heißt klein.' },
       { match: 'N', atlas: 'n', explain: 'N zählt alle Befragten mit Angaben in beiden Spalten.' },
     ],
     check: {

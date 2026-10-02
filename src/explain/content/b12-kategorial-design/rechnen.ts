@@ -82,7 +82,6 @@ export function coin(seed: number, n = 200): number[] {
 
 /** Werte einer Spalte des Lehrdatensatzes. */
 export const column = (rows: readonly SurveyRow[], id: string) => rows.map(r => r.values[id]);
-export const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
 /** Vierfeldertafel zweier 0/1-Spalten: [[x=0,y=0], [x=0,y=1]], [[x=1,y=0], [x=1,y=1]]. */
 export function fourfold(rows: readonly SurveyRow[], x: string, y: string): number[][] {
@@ -94,19 +93,26 @@ export function fourfold(rows: readonly SurveyRow[], x: string, y: string): numb
 /** Häufigkeiten der Codes `codes` in einer Spalte. */
 export const counts = (rows: readonly SurveyRow[], id: string, codes: readonly number[]) => codes.map(k => rows.filter(r => r.values[id] === k).length);
 
-/** p als Text: „p ≈ 0,013“ (zwei gültige Ziffern), „p < 0,001“, „p = 1“. */
+/** p als Text: „p ≈ 0,013“ (zwei gültige Ziffern), „p < 0,001“, „p ≈ 1“ (ab 0,995), „p = 1“. */
 export function pText(p: number): string {
-  if (p >= 0.9995) return 'p = 1';
+  if (p >= 1 - 1e-9) return 'p = 1';
+  if (p >= 0.995) return 'p ≈ 1';
   if (p < 0.001) return 'p < 0,001';
-  const digits = p >= 0.1 ? 2 : p >= 0.01 ? 3 : 4;
+  const digits = p >= 0.0995 ? 2 : p >= 0.00995 ? 3 : 4;
   return `p ≈ ${p.toLocaleString('de-DE', { maximumFractionDigits: digits, minimumFractionDigits: digits })}`;
 }
 
-/** „in etwa 13 von 1.000“ oder „in etwa 44 von 100“: Häufigkeit zu einem p-Wert, mit dem Nenner, der zwei Ziffern zeigt. */
+/**
+ * Wie oft der Zufall allein so etwas liefert, als ganze Wendung: „in etwa 44 von 100 Stichproben“, „in etwa 13 von
+ * 1.000 Stichproben“, „in weniger als 1 von 1.000 Stichproben“, „in praktisch allen Stichproben“, „in allen Stichproben“.
+ */
 export function often(p: number): string {
-  if (p >= 0.995) return 'praktisch immer';
-  if (p >= 0.1) return `in etwa ${Math.round(p * 100)} von 100`;
-  if (p >= 0.01) return `in etwa ${Math.round(p * 1000)} von 1.000`;
-  if (p >= 0.001) return 'in weniger als 1 von 100';
-  return 'in weniger als 1 von 1.000';
+  if (p >= 1 - 1e-9) return 'in allen Stichproben';
+  if (p >= 0.995) return 'in praktisch allen Stichproben';
+  if (p >= 0.095) return `in etwa ${Math.round(p * 100)} von 100 Stichproben`;
+  if (p >= 0.0005) return `in etwa ${Math.round(p * 1000)} von 1.000 Stichproben`;
+  return 'in weniger als 1 von 1.000 Stichproben';
 }
+
+/** „Niemand“, „Eine Person“, „46 Befragte“ mit passendem Verb: `wer(1, 'wechselt', 'wechseln')` → „Eine Person wechselt“. */
+export const wer = (k: number, one: string, many: string) => k === 0 ? `Niemand ${one}` : k === 1 ? `Eine Person ${one}` : `${k} Befragte ${many}`;

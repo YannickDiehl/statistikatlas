@@ -18,7 +18,7 @@ export const dFisher = (k: number) => dhyper(k, F.erwerbstaetig, F.nicht, F.mit)
 export const fisherTest: ConceptCard = {
   concept: 'fisher_test',
   picture: 'b12-fisher',
-  wofuer: 'Sind Befragte mit Weiterbildung häufiger erwerbstätig als die ohne? Der Chi-Quadrat-Test beantwortet das mit einer Näherung. Der exakte Test nach Fisher rechnet genau nach, auch wenn die Tabelle klein ist.',
+  wofuer: 'Sind Befragte mit Weiterbildung häufiger erwerbstätig als die ohne? Der Chi-Quadrat-Test beantwortet das mit einer Näherung. Der exakte Test nach Fisher rechnet genau nach, auch wenn in manchen Zellen nur wenige Befragte erwartet werden.',
   kurz: 'Der exakte Test nach Fisher prüft, ob zwei Merkmale einer Kreuztabelle zusammenhängen. Er geht alle Tabellen mit denselben Randsummen durch und braucht keine Näherung.',
   stellDirVor: {
     text: `Von den ${F.mit} Befragten mit Weiterbildung sind ${F.k} erwerbstätig, von den ${F.ohne} ohne Weiterbildung 78. Insgesamt sind ${F.erwerbstaetig} von ${F.n} erwerbstätig. Ohne Zusammenhang erwartest du unter den ${F.mit} etwa ${num(F.expected)} Erwerbstätige. Fisher meldet in R p = 0.440, der Chi-Quadrat-Test p = 0.381.`,
@@ -52,7 +52,7 @@ export const fisherTest: ConceptCard = {
     {
       title: 'Die ungewöhnlichen Tabellen zusammenzählen',
       was: 'Wir zählen alle Tabellen zusammen, die höchstens so wahrscheinlich sind wie die beobachtete. Das ergibt den p-Wert.',
-      rechnung: `${pText(F.p)}: Gäbe es keinen Zusammenhang, käme eine so ungewöhnliche Tabelle ${often(F.p)} Stichproben vor.`,
+      rechnung: `${pText(F.p)}: Gäbe es keinen Zusammenhang, käme eine mindestens so ungewöhnliche Tabelle ${often(F.p)} vor.`,
       warum: 'Ungewöhnlich heißt hier: selten, wenn es keinen Zusammenhang gibt. Gezählt werden Abweichungen in beide Richtungen.',
       acht: 'Exakt heißt nicht, dass Fisher mehr sagt. Auch er sagt nur, wie überraschend die Tabelle ohne Zusammenhang wäre, nicht wie stark der Zusammenhang ist.',
       concept: 'p_value',
@@ -67,8 +67,8 @@ export const fisherTest: ConceptCard = {
     },
     {
       question: 'Wann lohnt sich Fisher statt Chi-Quadrat besonders?',
-      options: ['bei großen Tabellen mit vielen Befragten', 'wenn erwartete Zellhäufigkeiten unter 5 liegen', 'nie, beide liefern immer dasselbe'], correct: 1, step: 3,
-      explain: 'Die χ²-Verteilung ist eine Näherung, die bei kleinen erwarteten Zahlen ungenau wird. Fisher rechnet exakt und passt deshalb gerade zu kleinen Tabellen.',
+      options: ['wenn in jeder Zelle sehr viele Befragte stehen', 'wenn erwartete Zellhäufigkeiten unter 5 liegen', 'nie, beide liefern immer dasselbe'], correct: 1, step: 3,
+      explain: 'Die χ²-Verteilung ist eine Näherung, die bei kleinen erwarteten Zahlen ungenau wird. Fisher rechnet exakt und passt deshalb gerade dann, wenn in einer Zelle nur wenige Befragte erwartet werden.',
       kurz: 'Kleine Zellen: Fisher.',
     },
     {
@@ -85,14 +85,14 @@ export const fisherTest: ConceptCard = {
     describe: v => {
       const p = pFisher(v), lead = `Dann wären von den Befragten mit Weiterbildung ${pct(v / F.mit)} erwerbstätig, von denen ohne ${pct((F.erwerbstaetig - v) / F.ohne)}.`;
       if (p >= 0.995) return `${lead} Das ist fast genau, was ohne Zusammenhang zu erwarten wäre (p = 1).`;
-      return `${lead} Gäbe es keinen Zusammenhang, käme eine so ungewöhnliche Tabelle ${often(p)} Stichproben vor (${pText(p)}).`;
+      return `${lead} Gäbe es keinen Zusammenhang, käme eine mindestens so ungewöhnliche Tabelle ${often(p)} vor (${pText(p)}).`;
     },
   },
   check: {
     question: 'Fisher meldet für Weiterbildung und Erwerbstätigkeit p = 0.440. Was heißt das?',
     options: [
       'Die beiden Merkmale hängen mit 44 % Wahrscheinlichkeit zusammen.',
-      'Gäbe es keinen Zusammenhang, käme eine so ungewöhnliche Tabelle in etwa 44 von 100 Stichproben vor.',
+      'Gäbe es keinen Zusammenhang, käme eine mindestens so ungewöhnliche Tabelle in etwa 44 von 100 Stichproben vor.',
       'Es gibt sicher keinen Zusammenhang.',
       'Der Zusammenhang ist mittelstark.',
     ],
@@ -104,13 +104,13 @@ export const fisherTest: ConceptCard = {
       3: 'Fast! p sagt nichts über die Stärke. Die zeigt das Odds Ratio, hier 1,32.',
     },
   },
-  fuerDich: 'Wenn eine Kreuztabelle kleine Zellen hat, etwa bei seltenen Gruppen in einer Befragung, nimm den exakten Test nach Fisher. R rechnet ihn in Sekunden, auch dort, wo der Chi-Quadrat-Test warnt.',
+  fuerDich: 'Wenn in einer Kreuztabelle in manchen Zellen nur wenige Befragte erwartet werden, etwa bei seltenen Gruppen, nimm den exakten Test nach Fisher. R rechnet ihn in Sekunden, auch dort, wo der Chi-Quadrat-Test warnt.',
   genau: {
     kurz: 'Fisher hält die Randsummen fest und rechnet exakt. Das Odds Ratio meldet mariposa für die Tabelle selbst.',
     paragraphs: [
       'Bei festen Rändern folgt die Zelle „mit Weiterbildung und erwerbstätig“ der hypergeometrischen Verteilung mit 137 Erwerbstätigen, 63 Nicht-Erwerbstätigen und 82 Gezogenen. Zweiseitig zählt R alle Tabellen, deren Wahrscheinlichkeit höchstens so groß ist wie die der beobachteten.',
       `mariposa meldet das Odds Ratio der Tabelle, (40 · 59) / (78 · 23) ≈ ${num(F.or)}, mit einem 95-%-Intervall von ${num(F.orLo)} bis ${num(F.orHi)}. fisher.test() in R schätzt es anders und kommt auf 1,31.`,
-      'Für große Tabellen mit mehr als zwei Zeilen und Spalten kann die exakte Rechnung zu aufwendig werden. mariposa wechselt dann zu einer Simulation.',
+      'Für Tabellen mit vielen Zeilen und Spalten kann die exakte Rechnung zu aufwendig werden. mariposa wechselt dann zu einer Simulation.',
       'Der Test zählt Personen. Gewichtete Zellzahlen rundet mariposa deshalb auf ganze Zahlen.',
     ],
   },
@@ -134,7 +134,7 @@ export const fisherTabs: ConceptTabs = {
       const f = fisherSample(c);
       if (!f) return { kurz: 'Eine der beiden Spalten hat nur noch eine Antwort. Dann gibt es nichts zu vergleichen, und mariposa rechnet den Test nicht.', fachlich: 'fisher_test() meldet dann, dass eine Spalte weniger als zwei beobachtete Kategorien hat.' };
       return {
-        kurz: `Von den ${f.r[1]} Befragten mit Weiterbildung sind ${pct(f.t[1][1] / f.r[1])} erwerbstätig, von den ${f.r[0]} ohne ${pct(f.t[0][1] / f.r[0])}. Gäbe es keinen Zusammenhang, käme eine so ungewöhnliche Tabelle ${often(f.p)} Stichproben vor (${pText(f.p)}).`,
+        kurz: `Von den ${f.r[1]} Befragten mit Weiterbildung sind ${pct(f.t[1][1] / f.r[1])} erwerbstätig, von den ${f.r[0]} ohne ${pct(f.t[0][1] / f.r[0])}. Gäbe es keinen Zusammenhang, käme eine mindestens so ungewöhnliche Tabelle ${often(f.p)} vor (${pText(f.p)}).`,
         fachlich: `Exakter Test nach Fisher, zweiseitig: ${pText(f.p)}; Odds Ratio ${f.or === null ? 'nicht definiert' : `≈ ${num(f.or)}`}.`,
         zusatz: `Zum Vergleich: Der Chi-Quadrat-Test ohne Korrektur kommt auf ${pText(f.pChi)}.`,
       };
@@ -165,7 +165,7 @@ export const fisherTabs: ConceptTabs = {
       col: { sym: 'col =', term: 'Spalten der Kreuztabelle', kurz: 'Die Spalte, deren Antworten die Spalten der Tafel bilden, hier die Erwerbstätigkeit.', fehler: 'Ohne col meldet mariposa: Argument `col` is missing, with no default.' },
     },
     outputMap: [
-      { match: 'p', atlas: 'p-Wert', step: 3, explain: 'Gäbe es keinen Zusammenhang, käme eine so ungewöhnliche Tabelle in etwa 44 von 100 Stichproben vor.' },
+      { match: 'p', atlas: 'p-Wert', step: 3, explain: 'Gäbe es keinen Zusammenhang, käme eine mindestens so ungewöhnliche Tabelle in etwa 44 von 100 Stichproben vor.' },
       { match: 'OR', atlas: 'Odds Ratio', explain: 'OR heißt odds ratio, auf Deutsch Chancenverhältnis: (40 · 59) / (78 · 23) ≈ 1,32. In eckigen Klammern steht das 95-%-Intervall.' },
       { match: 'N', atlas: 'n', explain: 'N zählt alle Befragten mit Angaben in beiden Spalten.' },
     ],
@@ -179,7 +179,7 @@ export const fisherTabs: ConceptTabs = {
     before: [
       { id: 'crosstab', why: 'Die Tabelle, deren Randsummen der Test festhält.' },
       { id: 'hypergeometric_distribution', why: 'Sagt, wie wahrscheinlich jede Tabelle mit diesen Rändern ist.' },
-      { id: 'chi_square', why: 'Die Näherung, die Fisher bei kleinen Zahlen ersetzt.' },
+      { id: 'chi_square', why: 'Die Näherung, die Fisher ersetzt, wenn in manchen Zellen nur wenige Befragte erwartet werden.' },
     ],
     after: [{ id: 'exact_asymptotic', why: 'Wann exakte Tests und wann Näherungen passen.' }],
     more: [

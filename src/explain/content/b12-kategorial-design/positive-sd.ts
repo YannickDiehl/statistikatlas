@@ -2,16 +2,14 @@
 // Zahlen aus dem Lehrdatensatz, in R nachgerechnet: b12-kategorial-design.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num } from '../../format';
-import { sampleColumnInfo, unitText } from '../../sample';
+import { sampleColumnInfo, sampleSeries, unitText } from '../../sample';
 
-/** Standardabweichung einer Spalte der Auswertung (Rolle x oder y). */
+/** Standardabweichung einer Spalte der Auswertung (Rolle x oder y), wie sampleSeries; konstante Spalten genau 0. */
 export function spalteSd(c: SampleCtx, role: 'x' | 'y') {
-  const id = c.columns[role]?.[0] ?? (role === 'x' ? 'lernzeit' : 'wissenstest'), v = c.rows.map(r => r.values[id]);
-  const m = v.reduce((a, b) => a + b, 0) / v.length, sd = Math.sqrt(v.reduce((a, x) => a + (x - m) ** 2, 0) / (v.length - 1));
+  const id = c.columns[role]?.[0] ?? (role === 'x' ? 'lernzeit' : 'wissenstest'), sd = sampleSeries(c.rows, id).sd;
   return { id, sd: sd < 1e-12 ? 0 : sd };
 }
 
-/** Lehrdatensatz: Lernzeit (h), Mittelwert, Standardabweichung, Spannweite; P002; Befragte ab 66 Jahren (alle nicht erwerbstätig). */
 export const LERNZEIT = { mean: 7.7515, sd: 3.237515294, min: 0, max: 18.4, p002: 8.3, z002: 0.1694200491, ab66: 29 } as const;
 const Z = LERNZEIT;
 

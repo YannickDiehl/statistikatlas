@@ -4,7 +4,8 @@
 import type { ConceptCard, ConceptTabs } from '../../types';
 import { num, pct, unit } from '../../format';
 import { baseSurvey } from '../../sample';
-import { coin, mean } from './rechnen';
+import { mean } from '../../../tasks/kit/means';
+import { coin } from './rechnen';
 import { PLANUNG } from './confounding';
 
 /** Gruppen eines Münzwurfs (Startwert `seed`): Größe, mittlere Lernzeit, mittleres Alter, Anteil mit Abitur. */
@@ -17,8 +18,8 @@ export function coinGroups(seed: number) {
   return { a: part(1), b: part(0) };
 }
 
-/** Typischer Zufallsunterschied der mittleren Lernzeit bei 100 bzw. 1.000 Personen je Gruppe: s · √(2 / n). */
-export const TYPISCH = { sd: 3.237515294, n100: 0.4578538037, n1000: 0.1447860855 } as const;
+/** Typischer Zufallsunterschied der mittleren Lernzeit bei 100 bzw. 1.000 Personen je Gruppe: s · √(2 / n); `p081`: Anteil der Losungen mit mindestens 0,81 h Unterschied (Normalnäherung). */
+export const TYPISCH = { sd: 3.237515294, n100: 0.4578538037, n1000: 0.1447860855, p081: 0.07610963636 } as const;
 
 const first = coinGroups(1);
 
@@ -68,7 +69,7 @@ export const randomAssignment: ConceptCard = {
     {
       question: 'Beim vierten Münzwurf lernt Gruppe B 0,81 Stunden mehr als Gruppe A. Ist die Zuweisung misslungen?',
       options: ['ja', 'nein'], correct: 1, step: 2,
-      explain: `Auch Zufall erzeugt Unterschiede. Sie sind aber zufällig, nicht systematisch: Bei 100 Personen je Gruppe sind etwa ${num(TYPISCH.n100)} Stunden typisch, und ein Test rechnet damit.`,
+      explain: `Auch Zufall erzeugt Unterschiede. Bei 100 Personen je Gruppe sind etwa ${num(TYPISCH.n100)} Stunden typisch; 0,81 ist knapp das Doppelte. Ein mindestens so großer Unterschied käme bei etwa ${Math.round(TYPISCH.p081 * 100)} von 100 Losungen vor, und ein Test rechnet damit.`,
       kurz: 'Zufällige Unterschiede gehören dazu.',
     },
     {

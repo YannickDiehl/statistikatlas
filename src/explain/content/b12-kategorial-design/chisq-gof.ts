@@ -4,7 +4,7 @@
 import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
 import { num, signed, paren, close, unit } from '../../format';
 import { columnById } from '../../../domain/survey';
-import { chiParts, eqFor, partSum, partText, shareOf, type ChiParts } from './chi-gemeinsam';
+import { chiParts, eqFor, fine, fineParen, fineSigned, partSum, partText, shareOf, type ChiParts } from './chi-gemeinsam';
 import { counts, often, pText } from './rechnen';
 
 /** Beobachtete Zahlen je Abschluss und die Annahme in Prozent (ganze Zahlen, damit beides auf der Skala des Bildes liegt). */
@@ -34,13 +34,13 @@ const biggest = (s: GofStats) => s.part.indexOf(Math.max(...s.part));
 
 const terms = (c: C): FNode[] => c.s.o.flatMap((x, i): FNode[] => [
   ...(i ? [' ', { part: ['+'], m: 5 }, ' '] as FNode[] : []),
-  { part: ['('], m: 3 }, { part: [`${x} −`], m: 2 }, ' ', { part: [num(c.s.e[i])], m: 1 }, { part: [')²'], m: 3 }, ' ', { part: [`/ ${num(c.s.e[i])}`], m: 4 },
+  { part: ['('], m: 3 }, { part: [`${x} −`], m: 2 }, ' ', { part: [fine(c.s.e[i])], m: 1 }, { part: [')²'], m: 3 }, ' ', { part: [`/ ${fine(c.s.e[i])}`], m: 4 },
 ]);
 
 export const anpassung: Workshop<GofData, GofStats> = {
   id: 'b12-anpassung',
   wofuer: 'Im Lehrdatensatz haben 42 Befragte keinen Schulabschluss, 40 einen Hauptschulabschluss, 37 einen mittleren Abschluss, 41 die Fachhochschulreife und 40 das Abitur. Sind die fünf Abschlüsse gleich häufig, mit ein bisschen Zufall? Der Anpassungstest vergleicht beobachtete Zahlen mit einer Verteilung, die du vorher festlegst.',
-  mut: 'Die Formel sieht nach viel aus. Sie besteht aber aus sechs kleinen Schritten, die du alle schon kannst: malnehmen, abziehen, quadrieren, teilen, zusammenzählen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
+  mut: 'Die Formel sieht nach viel aus. Sie besteht aber aus kleinen Schritten, die du alle schon kannst: malnehmen, abziehen, quadrieren, teilen, zusammenzählen. Den Vergleich mit dem Zufall im letzten Schritt übernimmt R. Hier geht es ums Verstehen.',
   picture: 'b12-anpassung',
   dataNote: 'Die 200 Befragten des Lehrdatensatzes, nach Schulabschluss gezählt. Die Balken im Bild lassen sich ziehen, auch mit den Pfeiltasten.',
   names: ['Ohne', 'Haupt', 'Mittlerer', 'FH-Reife', 'Abitur'],
@@ -65,7 +65,7 @@ export const anpassung: Workshop<GofData, GofStats> = {
       button: 'Eⱼ', title: 'Erwarten, was die Annahme sagt', sym: 'Eⱼ = n · p₀ⱼ', say: 'E j gleich n mal p null j', concept: 'expected', perPerson: false,
       links: [{ id: 'hypothesis', label: 'Nullhypothese' }],
       was: 'Wir zählen alle Befragten zusammen und verteilen sie so, wie die Annahme es sagt. So bekommt jeder Abschluss eine erwartete Zahl.',
-      rechnung: c => `n = ${c.s.o.join(' + ')} = ${c.s.n}. ${L(c)}: ${c.s.n} · ${num(c.s.p0[c.who])} ${eqFor(num(c.s.e[c.who]), c.s.e[c.who])} ${num(c.s.e[c.who])}.`,
+      rechnung: c => `n = ${c.s.o.join(' + ')} = ${c.s.n}. ${L(c)}: ${c.s.n} · ${num(c.s.p0[c.who])} ${eqFor(fine(c.s.e[c.who]), c.s.e[c.who])} ${fine(c.s.e[c.who])}.`,
       fach: 'Die erwartete Häufigkeit Eⱼ ist die Fallzahl n mal dem Anteil p₀ⱼ, den die Nullhypothese für Kategorie j festlegt.',
       warum: 'Ein Test braucht einen Maßstab. Die erwarteten Zahlen zeigen, was herauskäme, wenn die Annahme genau stimmte.',
       acht: c => c.s.uniform
@@ -84,7 +84,7 @@ export const anpassung: Workshop<GofData, GofStats> = {
       button: 'Oⱼ − Eⱼ', title: 'Abweichungen messen', sym: 'Oⱼ − Eⱼ', say: 'O j minus E j', concept: 'subtract', perPerson: false,
       links: [{ id: 'frequency', label: 'Beobachtete Häufigkeiten' }],
       was: 'Für jeden Abschluss rechnen wir: beobachtet minus erwartet. Das Vorzeichen zeigt, ob es mehr oder weniger sind als erwartet.',
-      rechnung: c => `${L(c)}: ${c.s.o[c.who]} − ${num(c.s.e[c.who])} ${eqFor(num(c.s.e[c.who]), c.s.e[c.who])} ${signed(c.s.dev[c.who])}, also ${versus(c.s.dev[c.who])}.`,
+      rechnung: c => `${L(c)}: ${c.s.o[c.who]} − ${fine(c.s.e[c.who])} ${eqFor(fine(c.s.e[c.who]), c.s.e[c.who])} ${fineSigned(c.s.dev[c.who])}, also ${versus(c.s.dev[c.who])}.`,
       fach: 'Oⱼ ist die beobachtete Häufigkeit der Kategorie j. Die Differenz Oⱼ − Eⱼ zeigt, wie weit die Daten in dieser Kategorie von der Annahme abweichen.',
       warum: 'Der Test fragt: Wie weit liegen die Daten von der Annahme weg? Genau das messen wir hier, Abschluss für Abschluss.',
       acht: 'Alle Abweichungen zusammen ergeben immer 0, denn beobachtet und erwartet sind gleich viele Befragte. Was bei einem Abschluss fehlt, ist bei einem anderen zu viel.',
@@ -100,18 +100,18 @@ export const anpassung: Workshop<GofData, GofStats> = {
     {
       button: '( )²', title: 'Abweichungen quadrieren', sym: '(Oⱼ − Eⱼ)²', say: 'O j minus E j, zum Quadrat', concept: 'square', perPerson: false,
       was: 'Jede Abweichung nehmen wir mit sich selbst mal. Danach sind alle Zahlen positiv.',
-      rechnung: c => `${L(c)}: ${paren(c.s.dev[c.who])} · ${paren(c.s.dev[c.who])} = ${num(c.s.sq[c.who])}${c.s.dev[c.who] < -1e-9 ? '. Minus mal Minus ergibt Plus.' : '.'}`,
+      rechnung: c => `${L(c)}: ${fineParen(c.s.dev[c.who])} · ${fineParen(c.s.dev[c.who])} = ${num(c.s.sq[c.who])}${c.s.dev[c.who] < -1e-9 ? '. Minus mal Minus ergibt Plus.' : '.'}`,
       fach: 'Die quadrierte Abweichung (Oⱼ − Eⱼ)² ist nie negativ. Große Abweichungen zählen dadurch stärker als kleine.',
       warum: 'Sonst heben sich Plus und Minus auf, denn zusammen ergeben die Abweichungen immer 0. Und wer weit danebenliegt, soll stärker zählen.',
       acht: 'Im Taschenrechner Klammern setzen: (−3)² = 9. Ohne Klammern zeigt er −9. Ein Quadrat ist nie negativ.',
       check: {
-        question: c => `Was kommt heraus, wenn du ${paren(c.s.dev[c.who])} mit sich selbst malnimmst?`,
+        question: c => `Was kommt heraus, wenn du ${fineParen(c.s.dev[c.who])} mit sich selbst malnimmst?`,
         answer: c => c.s.sq[c.who],
         diagnose: (c, v) => {
           const d = c.s.dev[c.who], q = c.s.sq[c.who];
           if (v === 'NA') return null;
           if (q > 1e-9 && close(v, -q)) return 'Fast! Das Minus ist zu viel: Minus mal Minus ergibt Plus. Ein Quadrat ist nie negativ.';
-          if (Math.abs(d) > 1e-9 && close(v, 2 * Math.abs(d)) && !close(v, q)) return `Fast! Das ist mal 2. Mit sich selbst malnehmen heißt: ${paren(d)} · ${paren(d)}.`;
+          if (Math.abs(d) > 1e-9 && close(v, 2 * Math.abs(d)) && !close(v, q)) return `Fast! Das ist mal 2. Mit sich selbst malnehmen heißt: ${fineParen(d)} · ${fineParen(d)}.`;
           return null;
         },
       },
@@ -119,19 +119,19 @@ export const anpassung: Workshop<GofData, GofStats> = {
     {
       button: '÷ Eⱼ', title: 'An der Erwartung messen', sym: '(Oⱼ − Eⱼ)² / Eⱼ', say: 'O j minus E j zum Quadrat, geteilt durch E j', concept: 'divide', perPerson: false,
       was: 'Jedes Quadrat teilen wir durch die erwartete Zahl seines Abschlusses. So wird jede Abweichung an ihrer Erwartung gemessen.',
-      rechnung: c => { const t = partText(c.s.part[c.who]); return `${L(c)}: ${num(c.s.sq[c.who])} / ${num(c.s.e[c.who])} ${eqFor(t, c.s.part[c.who])} ${t}.`; },
+      rechnung: c => { const t = partText(c.s.part[c.who]); return `${L(c)}: ${num(c.s.sq[c.who])} / ${fine(c.s.e[c.who])} ${eqFor(t, c.s.part[c.who])} ${t}.`; },
       fach: 'Der Quotient (Oⱼ − Eⱼ)² / Eⱼ ist der Beitrag der Kategorie j zur Prüfgröße χ².',
       warum: '3 Befragte zu wenig sind viel, wenn du 10 erwartest. Erwartest du 1.000, fallen sie kaum auf.',
       acht: 'Geteilt wird durch die erwartete Zahl Eⱼ, nicht durch die beobachtete und nicht durch n.',
       check: {
-        question: c => `Was kommt heraus, wenn du ${num(c.s.sq[c.who])} durch ${num(c.s.e[c.who])} teilst?`,
+        question: c => `Was kommt heraus, wenn du ${num(c.s.sq[c.who])} durch ${fine(c.s.e[c.who])} teilst?`,
         answer: c => c.s.part[c.who],
         diagnose: (c, v) => {
           const q = c.s.sq[c.who], o = c.s.o[c.who], part = c.s.part[c.who];
           if (v === 'NA' || q < 1e-9) return null;
-          if (close(v, q)) return `Fast! Das ist noch das Quadrat. Jetzt noch durch ${num(c.s.e[c.who])} teilen.`;
-          if (o > 0 && !close(q / o, part) && close(v, q / o)) return `Fast! Du hast durch die beobachtete Zahl geteilt. Geteilt wird durch die erwartete, hier ${num(c.s.e[c.who])}.`;
-          if (!close(q / c.s.n, part) && close(v, q / c.s.n)) return `Fast! Du hast durch alle ${c.s.n} geteilt. Geteilt wird durch die erwartete Zahl, hier ${num(c.s.e[c.who])}.`;
+          if (close(v, q)) return `Fast! Das ist noch das Quadrat. Jetzt noch durch ${fine(c.s.e[c.who])} teilen.`;
+          if (o > 0 && !close(q / o, part) && close(v, q / o)) return `Fast! Du hast durch die beobachtete Zahl geteilt. Geteilt wird durch die erwartete, hier ${fine(c.s.e[c.who])}.`;
+          if (!close(q / c.s.n, part) && close(v, q / c.s.n)) return `Fast! Du hast durch alle ${c.s.n} geteilt. Geteilt wird durch die erwartete Zahl, hier ${fine(c.s.e[c.who])}.`;
           return null;
         },
       },
@@ -156,7 +156,7 @@ export const anpassung: Workshop<GofData, GofStats> = {
       button: 'df, p', title: 'Mit dem Zufall vergleichen', sym: 'df = k − 1', say: 'd f gleich k minus 1', concept: 'chi_square_distribution', perPerson: false,
       links: [{ id: 'general_df', label: 'Freiheitsgrade im Modell' }, { id: 'p_value', label: 'p-Wert' }],
       was: 'Wir zählen die Freiheitsgrade: Kategorien minus eins. Damit sagt die χ²-Verteilung, wie oft der Zufall allein so ein χ² liefert.',
-      rechnung: c => `df = ${c.s.k} − 1 = ${c.s.df}. Stimmte die Annahme, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} Stichproben vor (${pText(c.s.p)}).`,
+      rechnung: c => `df = ${c.s.k} − 1 = ${c.s.df}. Stimmte die Annahme, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} vor (${pText(c.s.p)}).`,
       fach: 'Unter der Nullhypothese folgt χ² näherungsweise einer χ²-Verteilung mit k − 1 Freiheitsgraden. Der p-Wert ist ihre Fläche ab dem beobachteten χ².',
       warum: 'Kennst du n und vier der fünf Zahlen, steht die fünfte fest. Deshalb zählen nur k − 1 frei wählbare Abweichungen.',
       acht: 'Ein großer p-Wert beweist nicht, dass die Annahme stimmt. Er heißt nur: Die Daten widersprechen ihr nicht deutlich.',
@@ -178,8 +178,8 @@ export const anpassung: Workshop<GofData, GofStats> = {
   table: {
     columns: [
       { head: 'Oⱼ', from: 1, active: [1, 2], cell: (c, i) => String(c.s.o[i]), sum: c => String(c.s.n), sumFrom: 1 },
-      { head: 'Eⱼ', from: 1, active: [1], cell: (c, i) => num(c.s.e[i]), sum: c => num(c.s.n), sumFrom: 1 },
-      { head: 'Oⱼ − Eⱼ', from: 2, active: [2], cell: (c, i) => signed(c.s.dev[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer', tone: (c, i) => c.s.dev[i] > 1e-9 ? 'pos' : c.s.dev[i] < -1e-9 ? 'neg' : undefined },
+      { head: 'Eⱼ', from: 1, active: [1], cell: (c, i) => fine(c.s.e[i]), sum: c => num(c.s.n), sumFrom: 1 },
+      { head: 'Oⱼ − Eⱼ', from: 2, active: [2], cell: (c, i) => fineSigned(c.s.dev[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer', tone: (c, i) => c.s.dev[i] > 1e-9 ? 'pos' : c.s.dev[i] < -1e-9 ? 'neg' : undefined },
       { head: '(Oⱼ − Eⱼ)²', from: 3, active: [3], cell: (c, i) => num(c.s.sq[i]) },
       { head: '(Oⱼ − Eⱼ)² / Eⱼ', from: 4, active: [4, 5], cell: (c, i) => partText(c.s.part[i]), sum: c => num(c.s.chi2), sumFrom: 5 },
     ],
@@ -210,7 +210,8 @@ export const anpassung: Workshop<GofData, GofStats> = {
       options: ['bleibt gleich', 'verdoppelt sich', 'halbiert sich'], correct: 1, step: 4,
       explain: 'Jede Abweichung verdoppelt sich, ihr Quadrat vervierfacht sich. Die erwartete Zahl verdoppelt sich nur. Viermal geteilt durch zweimal ergibt: χ² verdoppelt sich.',
       kurz: 'Mit mehr Befragten fallen dieselben Anteile stärker ins Gewicht.',
-      tryIt: { label: 'alle Zahlen verdoppeln', apply: d => ({ ...d, o: d.o.map(x => Math.min(100, x * 2)) }) },
+      // Verdoppelt nur, solange jeder Balken danach auf die Skala passt (höchstens 100); sonst stimmte das Verhältnis nicht mehr.
+      tryIt: { label: 'alle Zahlen verdoppeln (bis 100 je Balken)', apply: d => d.o.every(x => x * 2 <= 100) ? { ...d, o: d.o.map(x => x * 2) } : d },
     },
     {
       question: 'Die Daten bleiben gleich, aber die Annahme lautet jetzt 10, 20, 30, 20, 20 %. Was macht χ²?',
@@ -244,9 +245,9 @@ export const anpassung: Workshop<GofData, GofStats> = {
           kurz: c.s.chi2 < 1e-9
             ? 'Jeder Abschluss kommt genau so oft vor, wie die Annahme sagt. χ² ist 0, die Daten passen genau.'
             : c.s.p >= 0.05
-              ? `Die beobachteten Zahlen liegen nah an den erwarteten; die größte Abweichung beträgt ${unit(Math.max(...c.s.dev.map(Math.abs)), 'Person', 'Personen')}. Stimmte die Annahme, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} Stichproben vor. Die Daten widersprechen der Annahme nicht.`
-              : `Die Zahlen weichen deutlich von der Annahme ab, am stärksten bei „${c.s.labels[b]}“: ${c.s.o[b]} statt ${num(c.s.e[b])}. Stimmte die Annahme, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} Stichproben vor. Die Daten passen also schlecht zur Annahme.`,
-          fachlich: `χ² = ${num(c.s.chi2)} bei ${c.s.df} Freiheitsgraden, ${pText(c.s.p)}. Die kleinste erwartete Häufigkeit ist ${num(c.s.minE)}${c.s.minE >= 5 ? '; die Faustregel „mindestens 5“ ist erfüllt.' : '. Das liegt unter der Faustregel 5, der p-Wert ist dann nur grob.'}`,
+              ? `Die größte Abweichung von der Erwartung beträgt ${unit(Math.max(...c.s.dev.map(Math.abs)), 'Person', 'Personen')}. Stimmte die Annahme, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} vor. Die Daten widersprechen der Annahme nicht deutlich.`
+              : `Die Zahlen weichen von der Annahme ab, am stärksten bei „${c.s.labels[b]}“: ${c.s.o[b]} statt ${fine(c.s.e[b])}. Stimmte die Annahme, käme ein χ² von mindestens ${num(c.s.chi2)} ${often(c.s.p)} vor. Bei α = 0,05 sprechen die Daten gegen die Annahme.`,
+          fachlich: `χ² = ${num(c.s.chi2)} bei ${c.s.df} Freiheitsgraden, ${pText(c.s.p)}. Die kleinste erwartete Häufigkeit ist ${fine(c.s.minE)}${c.s.minE >= 5 ? '; die Faustregel „mindestens 5“ ist erfüllt.' : '. Das liegt unter der Faustregel 5, der p-Wert ist dann nur grob.'}`,
         };
       },
       genau: {
@@ -286,7 +287,7 @@ export const gofTabs: ConceptTabs = {
       const s = gofSample(c);
       if (!s) return { kurz: 'Alle Befragten haben jetzt denselben Abschluss. Dann gibt es nichts zu vergleichen, und mariposa rechnet den Test nicht.', fachlich: 'chisq_gof() meldet: `schulabschluss` has 1 observed category; at least 2 are needed.' };
       return {
-        kurz: `Die Abschlüsse kommen ${Math.min(...s.o)}- bis ${Math.max(...s.o)}-mal vor; gleich häufig wären je ${num(s.e[0])}. Wären sie in Wahrheit gleich häufig, käme ein χ² von mindestens ${num(s.chi2)} ${often(s.p)} Stichproben vor.`,
+        kurz: `Die Abschlüsse kommen ${Math.min(...s.o)}- bis ${Math.max(...s.o)}-mal vor; gleich häufig wären je ${num(s.e[0])}. Wären sie in Wahrheit gleich häufig, käme ein χ² von mindestens ${num(s.chi2)} ${often(s.p)} vor.`,
         fachlich: `χ² = ${num(s.chi2)} bei ${s.df} Freiheitsgraden, ${pText(s.p)}; erwartet je Abschluss ${num(s.e[0])}.`,
         zusatz: `Gezählt: ${s.all.map((o, i) => `${KURZNAME[i]} ${o}`).join(', ')}.`,
       };

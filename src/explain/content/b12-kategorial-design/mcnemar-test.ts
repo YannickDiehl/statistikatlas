@@ -2,7 +2,10 @@
 // wie mariposa::mcnemar_test(kurs_vor, kurs_nach, correct = TRUE) 0.7.4. R-Referenzwerte: b12-kategorial-design.test.ts.
 import type { ConceptTabs, SampleCtx, SentenceTemplate } from '../../types';
 import { num, paren, close, count } from '../../format';
-import { binomTestHalf, fourfold, mcnemar, often, pText } from './rechnen';
+import { binomTestHalf, fourfold, mcnemar, often, pText, wer } from './rechnen';
+
+/** Gegenrichtung im Satz: „9 andersherum“, „niemand andersherum“. */
+const andere = (k: number) => k === 0 ? 'niemand' : String(k);
 
 /** Lehrdatensatz: 46 wechseln von Nein zu Ja, 9 von Ja zu Nein; vorher 83 Ja, nachher 120 (R: table(kurs_vor, kurs_nach)). */
 export const KURS = { b: 46, c: 9, vorher: 83, nachher: 120, chi2: 23.56363636, chi2Raw: 24.89090909, p: 1.208499116e-06, exact: 4.336383137e-07 } as const;
@@ -40,20 +43,21 @@ export const mcnemarTest: SentenceTemplate<McValues, McStats> = {
   worked: s => s.total === 0
     ? [{ title: 'Die Wechsel zählen', text: 'Niemand wechselt seine Antwort. Dann gibt es nichts zu prüfen; mariposa meldet den exakten p-Wert 1.' }]
     : [
-      { title: 'Die Wechsel zählen', text: `${s.b} Befragte sagen vorher Nein und nachher Ja, ${s.c} andersherum. Wer seine Antwort behält, zählt nicht.` },
+      { title: 'Die Wechsel zählen', text: `${wer(s.b, 'sagt vorher Nein und nachher Ja', 'sagen vorher Nein und nachher Ja')}, ${andere(s.c)} andersherum. Wer seine Antwort behält, zählt nicht.` },
       { title: 'Den Unterschied bilden und 1 abziehen', text: `|${s.b} − ${s.c}| = ${s.diff}, minus 1 ergibt ${num(s.corr)}.` },
       { title: 'Quadrieren und durch alle Wechsel teilen', text: `${paren(s.corr)}² = ${count(s.sq)}, geteilt durch ${s.b} + ${s.c} = ${s.total} ergibt χ² ≈ ${num(s.chi2)}.` },
-      { title: 'Mit dem Zufall vergleichen', text: `Bei einem Freiheitsgrad gilt: Gäbe es in Wahrheit keine Veränderung, käme ein χ² von mindestens ${num(s.chi2)} ${often(s.p)} Stichproben vor (${pText(s.p)}).` },
+      { title: 'Mit dem Zufall vergleichen', text: `Gäbe es keine Veränderung, käme bei einem Freiheitsgrad ein χ² von mindestens ${num(s.chi2)} ${often(s.p)} vor (${pText(s.p)}).` },
     ],
   fehler: 'Vergleiche nicht die Ja-Antworten vorher und nachher als zwei Gruppen. Es sind dieselben Personen; wer zweimal Ja sagt, zählt sonst doppelt und sagt nichts über eine Veränderung.',
   sliders: [
-    { key: 'b', label: 'Wechsel von Nein zu Ja', min: 0, max: 100, step: 1, format: v => String(v) },
-    { key: 'c', label: 'Wechsel von Ja zu Nein', min: 0, max: 100, step: 1, format: v => String(v) },
+    { key: 'b', label: 'Wechsel von Nein zu Ja', min: 0, max: 200, step: 1, format: v => String(v) },
+    { key: 'c', label: 'Wechsel von Ja zu Nein', min: 0, max: 200, step: 1, format: v => String(v) },
   ],
   quick: [
     { label: 'Lehrdatensatz: 46 und 9', mark: 'b', apply: () => ({ b: KURS.b, c: KURS.c }) },
     { label: 'gleich viele Wechsel', mark: 'c', apply: v => ({ ...v, c: v.b }) },
-    { label: 'alle Wechsel mal 4', mark: 'b', apply: v => ({ b: Math.min(100, v.b * 4), c: Math.min(100, v.c * 4) }) },
+    // Nur wenn beide Zahlen danach noch auf den Regler passen; sonst bliebe das Verhältnis nicht gleich.
+    { label: 'alle Wechsel mal 4', mark: 'b', apply: v => v.b * 4 <= 200 && v.c * 4 <= 200 ? { b: v.b * 4, c: v.c * 4 } : v },
   ],
   compare: s => s.total === 0 ? 'Ohne Wechsel gibt es keine Prüfgröße.' : `Ohne Korrektur wäre χ² = ${num(s.raw)}, mit Korrektur ${num(s.chi2)}. Bei vielen Wechseln macht die Korrektur wenig aus.`,
   check: {
@@ -69,7 +73,7 @@ export const mcnemarTest: SentenceTemplate<McValues, McStats> = {
   interpret: s => s.total === 0
     ? { kurz: 'Niemand wechselt seine Antwort. Es gibt keine Veränderung, und mariposa meldet den exakten p-Wert 1.', fachlich: 'Ohne diskordante Paare ist χ² nicht definiert; der exakte Binomialtest ergibt p = 1.' }
     : {
-      kurz: `${s.b} Befragte wechseln von Nein zu Ja, ${s.c} von Ja zu Nein. Gäbe es in Wahrheit keine Veränderung, wären beide Richtungen gleich häufig. Ein so großer Unterschied käme dann ${often(s.p)} Stichproben vor.`,
+      kurz: `${wer(s.b, 'wechselt', 'wechseln')} von Nein zu Ja, ${andere(s.c)} von Ja zu Nein. Gäbe es in Wahrheit keine Veränderung, wären beide Richtungen gleich häufig. Ein mindestens so großer Unterschied käme dann ${often(s.p)} vor.`,
       fachlich: `χ² = ${num(s.chi2)} mit Korrektur, 1 Freiheitsgrad, ${pText(s.p)}; exakter Binomialtest für ${s.b} von ${s.total} Wechseln: ${pText(s.exact)}.`,
     },
   think: {
@@ -105,7 +109,7 @@ export const mcnemarTabs: ConceptTabs = {
       const s = mcSample(c);
       if (s.total === 0) return { kurz: 'Niemand wechselt seine Antwort. Es gibt keine Veränderung, und mariposa meldet den exakten p-Wert 1.', fachlich: 'Ohne diskordante Paare meldet mariposa kein χ², nur den exakten p-Wert 1.' };
       return {
-        kurz: `${s.b} Befragte trauen sich die Auswertung nachher zu, vorher nicht; ${s.c} andersherum. Gäbe es in Wahrheit keine Veränderung, käme ein so großer Unterschied ${often(s.p)} Stichproben vor (${pText(s.p)}).`,
+        kurz: `${wer(s.b, 'traut sich die Auswertung nachher zu', 'trauen sich die Auswertung nachher zu')}, vorher nicht; ${andere(s.c)} andersherum. Gäbe es in Wahrheit keine Veränderung, käme ein mindestens so großer Unterschied ${often(s.p)} vor (${pText(s.p)}).`,
         fachlich: `McNemar mit Korrektur: χ² = ${num(s.chi2)}, 1 Freiheitsgrad, ${pText(s.p)}; exakt ${pText(s.exact)}.`,
         zusatz: `Vorher sagen ${s.vorher} von ${c.rows.length} Ja, nachher ${s.nachher}.`,
       };
@@ -136,7 +140,7 @@ export const mcnemarTabs: ConceptTabs = {
     },
     outputMap: [
       { match: 'chi2', atlas: 'χ²', explain: '(|46 − 9| − 1)² / 55 ≈ 23,56. (cc) heißt: mit Kontinuitätskorrektur.' },
-      { match: 'p', atlas: 'p-Wert', explain: 'Der erste p-Wert kommt aus der χ²-Verteilung. Gäbe es keine Veränderung, käme so ein Unterschied in weniger als 1 von 1.000 Stichproben vor.' },
+      { match: 'p', atlas: 'p-Wert', explain: 'Der erste p-Wert kommt aus der χ²-Verteilung. Gäbe es keine Veränderung, käme ein mindestens so großer Unterschied in weniger als 1 von 1.000 Stichproben vor.' },
       { match: 'exact', atlas: 'exakter p-Wert', explain: 'Der zweite p-Wert kommt aus einem Binomialtest: 46 von 55 Wechseln gehen zu Ja, verglichen mit 50 %.' },
       { match: 'N', atlas: 'n', explain: 'N zählt alle Befragten mit Antworten zu beiden Zeitpunkten.' },
     ],
