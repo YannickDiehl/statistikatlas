@@ -54,7 +54,7 @@ export const range: ConceptCard = {
       was: 'Du ziehst den kleinsten Wert vom größten ab. Das Ergebnis hat die Einheit der Daten, hier Stunden.',
       rechnung: `${num(L.max)} − ${num(L.min)} = ${h(L.max - L.min)}.`,
       warum: 'Eine einzige Zahl sagt, wie breit der ganze Bereich der Antworten ist.',
-      acht: 'R zeigt in describe() Min, Max und Range nebeneinander. Range ist schon die Differenz; zieh nicht noch einmal ab.',
+      acht: 'Mit show = c("min", "max", "range") zeigt describe() Min, Max und Range nebeneinander. Range ist schon die Differenz; zieh nicht noch einmal ab.',
       concept: 'subtract',
     },
     {
@@ -107,11 +107,11 @@ export const range: ConceptCard = {
       3: 'Fast! 12 ist der größte Wert. Zieh noch den kleinsten ab: 12 − 3.',
     },
   },
-  fuerDich: 'Liest du „Befragte zwischen 18 und 75 Jahren“, ist das eine Spannweite: Sie sagt, wer dabei war. Wie die meisten verteilt sind, sagt sie nicht; dafür brauchst du Median und Interquartilsabstand.',
+  fuerDich: 'Liest du „Befragte zwischen 18 und 75 Jahren“, stecken darin der kleinste und der größte Wert; die Spannweite ist 75 − 18 = 57 Jahre. Wie die meisten verteilt sind, sagt sie nicht; dafür brauchst du Median und Interquartilsabstand.',
   genau: {
     kurz: 'Die Spannweite nutzt nur zwei Werte. Sie wächst im Schnitt mit der Zahl der Befragten und reagiert stark auf Ausreißer.',
     paragraphs: [
-      'In R liefern w_range() und describe() die Spannweite; describe() zeigt dazu Min und Max. Gewichte ändern sie nicht, denn sie ändern nicht, welche Werte beobachtet wurden.',
+      'In R liefern w_range() und describe() die Spannweite; mit show = c("min", "max", "range") zeigt describe() dazu Min und Max. Gewichte ändern sie nicht, denn sie ändern nicht, welche Werte beobachtet wurden.',
       `Robuster sind der Interquartilsabstand, die Breite der mittleren Hälfte (Begriff „${T('quantile')}“), und die Standardabweichung, die alle Werte nutzt.`,
       'Bei geordneten Kategorien, etwa Schulabschlüssen mit den Codes 0 bis 4, lässt sich die Spannweite der Codes kaum deuten: Die Abstände zwischen den Codes sind keine Mengen.',
     ],
@@ -128,7 +128,7 @@ const people = (ids: string[]) => ids.length === 1 ? ids[0] : ids.length <= 3 ? 
 
 export const rangeTabs: ConceptTabs = {
   sample: {
-    kind: 'analysis',
+    kind: 'analysis', columns: { x: 'lernzeit' },
     kurz: 'Dieselbe Frage mit allen 200 Befragten: Wie weit liegen der kleinste und der größte Wert auseinander?',
     value: c => rangeOf(c).range,
     result: c => {
@@ -185,7 +185,7 @@ export const rangeTabs: ConceptTabs = {
       wrong: {
         Max: 'Fast! Das ist der größte Wert. Die Spannweite ist Max minus Min und steht unter Range.',
         Min: 'Fast! Das ist der kleinste Wert. Die Spannweite steht unter Range.',
-        N: 'Fast! N ist die Zahl der Befragten. Die Spannweite steht unter Range.',
+        N: 'Fast! N ist die Zahl der gültigen Werte. Die Spannweite steht unter Range.',
       },
     },
   },

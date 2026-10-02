@@ -116,7 +116,7 @@ export const haeufigkeiten: Workshop<number[], Haeufigkeit> = {
       rechnung: c => { const v = c.s.xs[c.who], f = c.s.ownFrac[c.who]; return `h${sub(v)} = n${sub(v)} / n = ${c.s.own[c.who]} / 8 ${eq(f)} ${num(f)}, also ${pct(f)}. So viele der acht haben denselben Abschluss wie ${P(c)}.`; },
       fach: 'Die relative Häufigkeit hⱼ = nⱼ / n ist der Anteil der Fälle mit Ausprägung j. Alle hⱼ zusammen ergeben 1, also 100 %.',
       warum: 'Anteile lassen sich vergleichen, auch wenn Gruppen verschieden groß sind. 3 von 8 und 75 von 200 sind beide 37,5 %.',
-      acht: 'Prozent von wem? Hier von allen gültigen Antworten. Fehlen Werte, zeigt R zwei Spalten: Raw % für alle Fälle und Valid % für die gültigen.',
+      acht: 'Prozent von wem? Hier von allen gültigen Antworten. R zeigt zwei Spalten: Raw % für alle Fälle und Valid % für die gültigen; fehlen Werte, unterscheiden sie sich.',
       check: {
         question: c => `Wie viel Prozent haben denselben Abschluss wie Person ${P(c)}?`,
         answer: c => c.s.ownShare[c.who],
@@ -194,8 +194,8 @@ export const haeufigkeiten: Workshop<number[], Haeufigkeit> = {
     },
     {
       question: 'Darf man die Codes der acht zusammenzählen und durch 8 teilen?', options: ['das ergibt eine Zahl, aber keinen sinnvollen Abschluss', 'ja, das ist der typische Abschluss'], correct: 0, step: 1,
-      explain: 'Code 4 ist nicht doppelt so viel Bildung wie Code 2. Für geordnete Kategorien beschreiben Häufigkeiten, Modus und Median die Verteilung, ein Mittelwert der Codes nicht.',
-      kurz: 'Codes sind Namen, keine Mengen.',
+      explain: 'Der Schritt von Code 0 zu Code 1 ist inhaltlich nicht derselbe wie von Code 3 zu Code 4. Ohne gleiche Abstände ergibt der Durchschnitt der Codes keinen Abschluss, den man deuten kann. Für geordnete Kategorien beschreiben Häufigkeiten, Modus und Median die Verteilung.',
+      kurz: 'Codes haben keine festen Abstände.',
     },
   ],
   variants: {
@@ -289,7 +289,7 @@ export const bridgeHaeufigkeit: Bridge<Haeufigkeit> = {
       person: c => `${PB(c)}: ${c.s.own[c.who]} / ${N(c)} = ${share(c, c.s.own[c.who])} haben dieselbe Antwort.`,
     },
     {
-      all: c => ordered(c) ? `Von der kleinsten Antwort an aufsummiert, erreichst du bei ${vt(c, half(c.s))} erstmals mindestens 50 %.`
+      all: c => ordered(c) ? `Von der kleinsten Antwort an aufsummiert, ist beim Wert ${vt(c, half(c.s))} erstmals die Hälfte erreicht.`
         : `Bei „${c.col.title}“ haben die Codes keine Reihenfolge; aufsummieren ergibt hier keinen Sinn.`,
       person: c => ordered(c) ? `${pct(c.s.ownCum[c.who] / 100)} der Befragten haben höchstens den Wert von ${PB(c)}, ${vt(c, c.values[c.who])}.`
         : `${PB(c)} hat ${vt(c, c.values[c.who])}; ein Anteil „bis hierhin“ wäre ohne Bedeutung.`,
@@ -302,13 +302,13 @@ export const bridgeHaeufigkeit: Bridge<Haeufigkeit> = {
     const s = c.s, n = N(c), t = c.col.title;
     const rest = s.values.map((v, i) => ({ v, k: s.counts[i] })).filter(x => !s.modes.includes(x.v)).sort((a, b) => b.k - a.k || a.v - b.v);
     if (variant === 'mode') return {
-      kurz: s.modes.length === 1 ? `Am häufigsten antworten die ${n} Befragten bei „${t}“ mit ${vt(c, s.mode)}: ${s.max} von ${n}.`
+      kurz: s.modes.length === 1 ? `Am häufigsten haben die ${n} Befragten bei „${t}“ den Wert ${vt(c, s.mode)}: ${s.max} von ${n}.`
         : `Bei „${t}“ sind ${modesText(c)} gleich häufig, mit je ${s.max} von ${n} Befragten.`,
       fachlich: `Der Modus von „${t}“ ist ${num(s.mode)} mit nⱼ = ${s.max} bei n = ${n}${s.modes.length > 1 ? '; bei Gleichstand meldet w_modus() den kleinsten Wert' : ''}.`,
       zusatz: rest.length ? `Danach folgt ${vt(c, rest[0].v)} mit ${rest[0].k} Befragten.` : 'Alle haben dieselbe Antwort.',
     };
     return {
-      kurz: `${s.modes.length === 1 ? `${share(c, s.max)} der ${n} Befragten antworten bei „${t}“ mit ${vt(c, s.mode)}; das ist die häufigste Antwort.` : `Je ${share(c, s.max)} der ${n} Befragten antworten bei „${t}“ mit ${modesText(c)}; das sind die häufigsten Antworten.`} Alle Anteile zusammen ergeben 100 %.`,
+      kurz: `${s.modes.length === 1 ? `${share(c, s.max)} der ${n} Befragten haben bei „${t}“ den Wert ${vt(c, s.mode)}; das ist die häufigste Antwort.` : `Je ${share(c, s.max)} der ${n} Befragten haben bei „${t}“ die Werte ${modesText(c)}; das sind die häufigsten Antworten.`} Alle Anteile zusammen ergeben 100 %.`,
       fachlich: `Häufigkeiten von „${t}“ bei n = ${n}: ${s.k} verschiedene Werte; der häufigste hat nⱼ = ${s.max}, also hⱼ = ${share(c, s.max)}.`,
       zusatz: s.k <= 8 ? `Je Wert: ${s.values.map((v, i) => `${num(v)}: ${s.counts[i]}`).join(', ')}.` : `Bei ${s.k} verschiedenen Werten wird die Tabelle lang; Klassen fassen sie zusammen.`,
     };
@@ -354,7 +354,7 @@ export const modeTabs: ConceptTabs = {
     check: {
       question: 'Welche Zahl in der Ausgabe ist der Modus? Tippe sie an.', correct: 'Mode',
       wrong: {
-        N: 'Fast! N ist die Zahl der Befragten. Der Modus steht unter Mode.',
+        N: 'Fast! N ist die Zahl der gültigen Werte. Der Modus steht unter Mode.',
         Missing: 'Fast! Missing zählt fehlende Antworten. Der Modus steht unter Mode.',
       },
     },
@@ -399,15 +399,15 @@ export const frequencyTabs: ConceptTabs = {
       show_unused: { sym: 'show_unused =', term: 'leere Kategorien zeigen', kurz: 'Mit TRUE zeigt frequency() auch Codes mit Wertelabel, die niemand gewählt hat, mit N = 0.', fehler: 'Ohne show_unused = TRUE fehlt ein Abschluss, den niemand hat, in der Tabelle. Dann übersiehst du leicht, dass eine Kategorie leer ist.' },
     },
     outputMap: [
-      { match: 'N', atlas: 'nⱼ', step: 1, explain: 'In der Spalte N stehen die absoluten Häufigkeiten, ganz oben 42 Befragte ohne Schulabschluss.' },
+      { match: '42', atlas: 'nⱼ', step: 1, explain: 'In der Spalte N stehen die absoluten Häufigkeiten, ganz oben 42 Befragte ohne Schulabschluss.' },
       { match: 'valid N', atlas: 'n', step: 3, explain: 'valid N zählt alle gültigen Antworten: den Nenner der Prozente.' },
       { match: 'Raw %', atlas: 'hⱼ in Prozent', step: 4, explain: 'Raw % teilt durch alle Fälle, Valid % nur durch die gültigen. Ohne fehlende Werte sind beide gleich.' },
-      { match: 'Cum. %', atlas: 'Fⱼ', step: 5, explain: 'Cum. % summiert die gültigen Prozente von oben nach unten auf: 59,5 % haben höchstens einen mittleren Abschluss.' },
+      { match: '59.50', atlas: 'Fⱼ', step: 5, explain: 'Cum. % summiert die gültigen Prozente von oben nach unten auf: 59,5 % haben höchstens einen mittleren Abschluss.' },
     ],
     check: {
-      question: 'Welche Zahl sagt, wie viele Befragte keinen Schulabschluss haben? Tippe sie an.', correct: 'N',
+      question: 'Welche Zahl sagt, wie viele Befragte keinen Schulabschluss haben? Tippe sie an.', correct: '42',
       wrong: {
-        'Raw %': 'Fast! Das ist ihr Anteil in Prozent. Die Zahl der Personen steht unter N.',
+        'Raw %': 'Fast! Das ist ihr Anteil in Prozent. Die Zahl der Personen steht in ihrer Zeile unter N.',
         'valid N': 'Fast! Das sind alle gültigen Antworten zusammen. Die Zahl für einen Abschluss steht in seiner Zeile unter N.',
       },
     },
@@ -422,7 +422,7 @@ export const frequencyTabs: ConceptTabs = {
     after: [
       { id: 'mode', why: 'Die Antwort mit der größten Häufigkeit.' },
       { id: 'multiple_response', why: 'Häufigkeiten, wenn eine Person mehrere Antworten geben darf.' },
-      { id: 'empirical_distribution', why: 'Die kumulierten Anteile bilden die empirische Verteilung.' },
+      { id: 'empirical_distribution', why: 'Die Anteile aller Werte zusammen zeigen die ganze beobachtete Form.' },
     ],
     more: [
       { id: 'chisq_gof', why: 'Prüft, ob beobachtete Häufigkeiten zu erwarteten passen.' },

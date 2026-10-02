@@ -29,7 +29,7 @@ export const shape: ConceptCard = {
   concept: 'shape',
   picture: 'b03-schiefe',
   wofuer: `Beim Haushaltseinkommen der 200 Befragten liegt der Mittelwert bei ${eur(E.mean)} im Monat, der Median nur bei ${eur(E.median)}. Einige wenige Haushalte haben sehr viel Geld und ziehen den Mittelwert nach oben. Die Schiefe fasst diese Asymmetrie in eine Zahl, die Kurtosis beschreibt die Ränder.`,
-  kurz: 'Die Schiefe sagt, ob eine Verteilung zu einer Seite ausläuft: Positiv heißt ein langer Ausläufer zu großen Werten, negativ zu kleinen. Die Kurtosis sagt, wie stark die Ränder besetzt sind, verglichen mit einer Normalverteilung.',
+  kurz: 'Die Schiefe sagt, ob eine Verteilung zu einer Seite ausläuft: Positiv heißt ein langer Ausläufer zu großen Werten, negativ zu kleinen. Die Kurtosis sagt, wie stark die Ränder besetzt sind, verglichen mit der Glockenkurve einer Normalverteilung.',
   stellDirVor: {
     text: `Im Lehrdatensatz hat das Haushaltseinkommen eine Schiefe von ${num(E.skew)}: Die mittlere Hälfte der Haushalte hat zwischen ${eur(E.q1)} und ${eur(E.q3)}, einzelne bis zu ${eur(E.max)}. Die Lernzeit ist mit einer Schiefe von ${num(Z.skew)} fast symmetrisch; ihr Mittelwert ${num(Z.mean)} h liegt nah am Median ${num(Z.median)} h. Die Kurtosis (als Exzess) beträgt beim Einkommen ${num(E.kurt)}, bei der Lernzeit ${num(Z.kurt)}.`,
     figures: [
@@ -53,8 +53,8 @@ export const shape: ConceptCard = {
       concept: 'deviation',
     },
     {
-      title: 'Durch s³ teilen',
-      was: 'Den Durchschnitt dieser Würfelzahlen teilst du durch die Standardabweichung hoch drei. So hat die Schiefe keine Einheit mehr.',
+      title: 'Die Einheit herausteilen',
+      was: 'Den Durchschnitt dieser Hoch-drei-Werte teilst du durch die Standardabweichung hoch drei. So hat die Schiefe keine Einheit mehr.',
       warum: 'Ob in Euro oder in Cent gemessen, die Form bleibt dieselbe. Deshalb lassen sich Schiefen verschiedener Variablen vergleichen.',
       acht: 'Eine Schiefe nahe 0 heißt nur: Keine Seite überwiegt. Die Verteilung kann trotzdem zwei Gipfel haben; schau dir immer auch das Bild an.',
       concept: 'sd',
@@ -69,7 +69,7 @@ export const shape: ConceptCard = {
   ],
   regler: {
     label: 'Wie viel Geld hat der Haushalt mit dem höchsten Einkommen im Monat?',
-    min: E.max, max: 30000, step: 100, initial: E.max,
+    min: E.max, max: 30000, step: 1, initial: E.max,
     format: v => eur(v),
     describe: v => {
       const f = formWithTop(v);
@@ -133,7 +133,7 @@ export function formWords(skew: number): string {
 
 export const shapeTabs: ConceptTabs = {
   sample: {
-    kind: 'analysis',
+    kind: 'analysis', columns: { x: 'lernzeit' },
     kurz: 'Dieselbe Frage mit allen 200 Befragten: Läuft die Verteilung einer Spalte zu einer Seite aus?',
     value: c => { const s = formOf(c).skew; return Number.isFinite(s) ? s : null; },
     result: c => {
@@ -181,7 +181,7 @@ export const shapeTabs: ConceptTabs = {
     check: {
       question: 'Welche Zahl in der Ausgabe ist die Schiefe? Tippe sie an.', correct: 'Skewness',
       wrong: {
-        N: 'Fast! N ist die Zahl der Befragten. Die Schiefe steht unter Skewness.',
+        N: 'Fast! N ist die Zahl der gültigen Werte. Die Schiefe steht unter Skewness.',
         Missing: 'Fast! Missing zählt fehlende Antworten. Die Schiefe steht unter Skewness.',
       },
     },

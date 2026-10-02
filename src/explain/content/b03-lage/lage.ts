@@ -6,6 +6,7 @@ import { ref, titleFor } from '../../../domain/learning';
 import { columnById } from '../../../domain/survey';
 import { sampleColumn, sampleColumnInfo, unitText } from '../../sample';
 import { num } from '../../format';
+import { describe } from '../../math';
 
 /** Fachbegriff wie in der Karte (Regel 2). */
 export const T = (id: string) => titleFor(ref(id));
@@ -25,11 +26,9 @@ export function quantile6(xs: readonly number[], p: number): number {
   return s[j - 1] + g * (s[j] - s[j - 1]);
 }
 export const median = (xs: readonly number[]) => quantile6(xs, 0.5);
-export const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
-export function sdOf(xs: readonly number[]): number {
-  const m = mean(xs);
-  return Math.sqrt(xs.reduce((a, v) => a + (v - m) ** 2, 0) / (xs.length - 1));
-}
+/** Mittelwert und Standardabweichung (n − 1) aus describe() in src/explain/math.ts. */
+export const mean = (xs: readonly number[]) => describe(xs).mean;
+export const sdOf = (xs: readonly number[]) => describe(xs).sd;
 
 /** Schiefe G₁ wie mariposa::w_skew() (Stichprobenkorrektur wie SPSS). */
 export function skewness(xs: readonly number[]): number {

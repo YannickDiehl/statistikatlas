@@ -114,7 +114,7 @@ export const mehrfachantworten: Workshop<number[][], Mehrfach> = {
       rechnung: c => `${c.s.casePct.map(p2).join(' + ')} = ${p2(c.s.caseSum)}.`,
       fach: 'Die Fallprozente summieren sich auf 100 · Σnⱼ / n. Das ist mehr als 100 %, sobald Personen im Schnitt mehr als eine Option wählen.',
       warum: c => `Die Summe zeigt, wie viele Quellen eine Person im Schnitt nutzt: ${p2(c.s.caseSum)} heißt ${unit(c.s.caseSum / 100, 'Quelle', 'Quellen')} je Person.`,
-      acht: 'Eine Summe über 100 % ist hier kein Rechenfehler. Sie entsteht, weil eine Person in mehreren Zeilen zählt.',
+      acht: 'Eine Summe über 100 % ist hier kein Rechenfehler. Sie entsteht, weil eine Person bei mehreren Lernquellen mitzählt.',
       check: {
         question: 'Wie viel Prozent ergeben die Prozente der Fälle zusammen?',
         answer: c => c.s.caseSum,
@@ -154,8 +154,8 @@ export const mehrfachantworten: Workshop<number[][], Mehrfach> = {
       tryIt: { label: 'Jede Person ein Kreuz', apply: () => [[1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1], [1, 0, 0]] },
     },
     {
-      question: 'Person E hat kein Kreuz gesetzt. Gehört sie in die Zahl der Fälle?', options: ['ja', 'nein'], correct: 0, step: 4,
-      explain: 'Keine Quelle genutzt ist eine gültige Antwort. Fehlend wäre E nur, wenn alle drei Angaben fehlen.',
+      question: 'Eine Person hat kein Kreuz gesetzt. Gehört sie in die Zahl der Fälle?', options: ['ja', 'nein'], correct: 0, step: 4,
+      explain: 'Keine Quelle genutzt ist eine gültige Antwort. Fehlend wäre die Person nur, wenn alle drei Angaben fehlen.',
       kurz: 'Kein Kreuz heißt nicht fehlend.',
     },
     {

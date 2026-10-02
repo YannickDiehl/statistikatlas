@@ -16,8 +16,8 @@ const eur = (v: number) => `${num(v)} €`;
 
 export const describeCard: ConceptCard = {
   concept: 'describe',
-  wofuer: 'Du bekommst einen Datensatz und willst wissen, was in einer Spalte steckt: Wo liegt die Mitte? Wie weit streuen die Werte? Gibt es Ausreißer? describe() aus mariposa beantwortet das für mehrere Spalten in einer Tabelle.',
-  kurz: 'Ein deskriptiver Überblick stellt die wichtigsten Kennzahlen einer Spalte nebeneinander: Mitte, Streuung, Form und Fallzahl. Erst der Vergleich dieser Zahlen erzählt, wie die Werte verteilt sind.',
+  wofuer: 'Du bekommst einen Datensatz und willst wissen, was in einer Spalte steckt: Wo liegen die Werte? Wie weit streuen die Werte? Gibt es Ausreißer? describe() aus mariposa beantwortet das für mehrere Spalten in einer Tabelle.',
+  kurz: 'Ein deskriptiver Überblick stellt die wichtigsten Kennzahlen einer Spalte nebeneinander: Lage, Streuung, Form und Fallzahl. Erst der Vergleich dieser Zahlen erzählt, wie die Werte verteilt sind.',
   stellDirVor: {
     text: `In R liefert describe(lernzeit, einkommen, show = "all") für die 200 Befragten 16 Kennzahlen je Spalte. Bei der Lernzeit liegen Mittelwert (${num(Z.mean)} h) und Median (${num(Z.median)} h) fast gleich auf. Beim Haushaltseinkommen liegt der Mittelwert mit ${eur(E.mean)} deutlich über dem Median von ${eur(E.median)}: Einige hohe Einkommen ziehen ihn nach oben.`,
     figures: [
@@ -32,10 +32,10 @@ export const describeCard: ConceptCard = {
   },
   bausteine: [
     {
-      title: 'Die Mitte lesen',
+      title: 'Die Lage lesen',
       was: 'Vergleiche Mean und Median. Liegen sie nah beieinander, ist die Verteilung eher symmetrisch.',
       rechnung: `Einkommen: ${eur(E.mean)} gegen ${eur(E.median)}, also ${eur(E.mean - E.median)} Unterschied.`,
-      warum: 'Der Mittelwert reagiert auf jeden einzelnen Wert, der Median nur auf die Reihenfolge. Ihr Abstand verrät einen Ausläufer.',
+      warum: 'Der Mittelwert reagiert auf jeden einzelnen Wert, der Median nur auf die Werte in der Mitte der Reihe. Ihr Abstand verrät einen Ausläufer.',
       acht: `Mode ist der häufigste Wert. Beim Einkommen kommen ${E.distinct} verschiedene Werte vor; der Modus ${eur(E.mode)} steht nur für zwei Haushalte und sagt deshalb wenig.`,
       concept: 'median',
     },
@@ -67,34 +67,34 @@ export const describeCard: ConceptCard = {
     {
       question: 'Beim Einkommen liegt der Mittelwert über dem Median. Was schließt du daraus?',
       options: ['Einige hohe Einkommen ziehen den Mittelwert nach oben.', `Die meisten Haushalte haben mehr als ${eur(E.mean)}.`, 'Der Median ist falsch berechnet.'], correct: 0, step: 1,
-      explain: `Ein Ausläufer zu großen Werten zieht den Mittelwert, den Median nicht. Passend dazu ist die Schiefe positiv (${num(E.skew)}).`,
+      explain: `Ein Ausläufer zu großen Werten zieht den Mittelwert nach oben, den Median kaum. Passend dazu ist die Schiefe positiv (${num(E.skew)}).`,
       kurz: 'Mittelwert über Median: Ausläufer nach oben.',
     },
     {
-      question: `Beim Einkommen ist die Spannweite ${eur(E.range)}, der IQR nur ${eur(E.iqr)}. Was zeigt der Unterschied?`,
-      options: ['Die mittlere Hälfte liegt eng, die Ränder reichen weit.', 'Die Daten enthalten einen Fehler.', 'Die Standardabweichung ist falsch.'], correct: 0, step: 2,
-      explain: `Die mittlere Hälfte der Haushalte hat zwischen ${eur(E.q1)} und ${eur(E.q3)}. Bis zu den äußersten Haushalten ist es viel weiter: von ${eur(E.min)} bis ${eur(E.max)}.`,
-      kurz: 'Range zeigt die Ränder, IQR die Mitte.',
+      question: `Beim Einkommen liegt Q₃ ${eur(E.q3 - E.median)} über dem Median, Q₁ nur ${eur(E.median - E.q1)} darunter. Was zeigt das?`,
+      options: ['Die oberen Einkommen liegen weiter auseinander: ein Ausläufer nach oben.', 'Die Daten enthalten einen Fehler.', 'Die Standardabweichung ist falsch.'], correct: 0, step: 3,
+      explain: `Über dem Median ist die Verteilung breiter als darunter. Ganz außen ist es genauso: Von Q₃ bis zum größten Wert sind es ${eur(E.max - E.q3)}, vom kleinsten Wert bis Q₁ nur ${eur(E.q1 - E.min)}. Passend dazu ist die Schiefe positiv (${num(E.skew)}).`,
+      kurz: 'Ungleiche Hälften zeigen einen Ausläufer.',
     },
     {
-      question: `describe() meldet für den Schulabschluss (Codes 0 bis 4) Mean ${UEBERBLICK.schulabschlussMean}. Was sagt dir diese Zahl?`,
+      question: `describe() meldet für den Schulabschluss (Codes 0 bis 4) Mean ${UEBERBLICK.schulabschlussMean}, also knapp 2. Was sagt dir diese Zahl?`,
       options: ['wenig, denn die Codes haben keine gleichen Abstände', 'die meisten haben einen Hauptschulabschluss', 'der typische Abschluss ist der mittlere Abschluss'], correct: 0, step: 1,
-      explain: 'Abitur (Code 4) ist nicht doppelt so viel wie ein mittlerer Abschluss (Code 2). Für geordnete Kategorien lies Median und Häufigkeiten.',
-      kurz: 'Codes sind keine Mengen.',
+      explain: 'Ein Mittelwert setzt gleiche Abstände voraus: Der Schritt vom Hauptschulabschluss (1) zum mittleren Abschluss (2) müsste so groß sein wie der von der Fachhochschulreife (3) zum Abitur (4). Das sagen die Codes nicht. Für geordnete Kategorien lies Median und Häufigkeiten.',
+      kurz: 'Codes haben keine festen Abstände.',
     },
   ],
   check: {
     question: 'Der Haushalt mit dem höchsten Einkommen hätte plötzlich 30.000 € im Monat. Welche Kennzahl aus describe() ändert sich dabei nicht?',
     options: ['Median', 'Mean', 'SD', 'Range'],
     correct: 0,
-    right: 'Genau. Der Median hängt nur an der Reihenfolge, und der höchste Wert bleibt der höchste.',
+    right: 'Genau. Der höchste Wert bleibt der höchste, die Mitte der Reihe ändert sich nicht. Also bleibt der Median.',
     diagnose: {
       1: `Fast! Der Mittelwert steigt, denn der neue Wert geht in die Summe ein: von ${eur(E.mean)} auf 3.261,44 €.`,
       2: 'Fast! Die Standardabweichung wächst, denn der Abstand dieses Haushalts zur Mitte wird viel größer.',
       3: 'Fast! Die Spannweite wächst sogar am stärksten: Das Maximum ist einer ihrer beiden Werte.',
     },
   },
-  fuerDich: 'Bevor du einen Test rechnest oder ein Ergebnis berichtest, schau dir describe() an. Liegen Mittelwert und Median weit auseinander oder reicht die Spannweite weit über den IQR hinaus, sieh dir die Verteilung genauer an.',
+  fuerDich: 'Bevor du einen Test rechnest oder ein Ergebnis berichtest, schau dir describe() an. Liegen Mittelwert und Median weit auseinander oder liegt Q₃ viel weiter über dem Median als Q₁ darunter, sieh dir die Verteilung genauer an.',
   genau: {
     kurz: 'Ohne show zeigt describe() eine kurze Auswahl: Mean, Median, SD, Range, IQR und Skewness. show = "all" zeigt alle Kennzahlen.',
     paragraphs: [
@@ -114,8 +114,8 @@ export function overviewOf(c: SampleCtx) {
 
 export const describeTabs: ConceptTabs = {
   sample: {
-    kind: 'analysis',
-    kurz: 'Dieselbe Übersicht mit allen 200 Befragten: Mitte, Streuung und Form der gewählten Spalte auf einen Blick.',
+    kind: 'analysis', columns: { x: 'lernzeit' },
+    kurz: 'Dieselbe Übersicht mit allen 200 Befragten: Lage, Streuung und Form der Lernzeit auf einen Blick.',
     value: c => overviewOf(c).mean,
     result: c => {
       const o = overviewOf(c), u = o.col.u, t = o.col.info.title, h = (v: number) => unit(v, 'Stunde', 'Stunden');
@@ -132,7 +132,7 @@ export const describeTabs: ConceptTabs = {
       {
         question: 'Eine Person hat plötzlich gar nicht gelernt (0 Stunden). Was passiert mit dem Median?', options: ['bleibt gleich', 'sinkt deutlich', 'steigt'], correct: 0,
         explain: 'Wer vorher über dem Median lag, rutscht ans untere Ende. Auf den mittleren Plätzen der Reihe stehen hier aber mehrere Befragte mit genau 7,6 Stunden, deshalb bleibt der Median. Der Mittelwert sinkt dagegen um bis zu 0,09 Stunden.',
-        kurz: 'Der Median hängt an der Reihenfolge, nicht an der Größe.',
+        kurz: 'Wechselt ein Wert die Seite, rückt der Median höchstens um einen Platz. Hier stehen dort gleiche Werte.',
         tryIt: { label: 'die gewählte Person auf 0 Stunden', op: 'outlier', column: 'x', value: 0 },
         expect: { change: 'same', measure: c => overviewOf(c).median },
       },
@@ -183,9 +183,9 @@ export const describeTabs: ConceptTabs = {
       { id: 'quantile', why: 'Q25, Q75 und die Breite der mittleren Hälfte.' },
     ],
     after: [
-      { id: 'shape', why: 'Schiefe und Kurtosis aus der Tabelle genauer erklärt.' },
+      { id: 'shape', why: 'Was die beiden Formzahlen der Tabelle bedeuten.' },
       { id: 't_test', why: 'Vergleicht Mittelwerte zweier Gruppen; vorher lohnt der Blick in die Übersicht.' },
     ],
-    more: [{ id: 'weights', why: 'Mit Gewichten rechnet describe() gewichtete Kennwerte.' }],
+    more: [{ id: 'weights', why: 'Mit weights = … rechnet describe() für die Bevölkerung.' }],
   },
 };

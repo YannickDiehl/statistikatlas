@@ -126,7 +126,7 @@ function ReihePicture({ values, s, step, who, names, bounds, onChange, onWho }: 
           <polygon className="xw-fulcrum" points={`${PX(hp)},${my - 12} ${PX(hp) - 7},${my} ${PX(hp) + 7},${my}`} />
           <text className="xw-t" x={PX(hp)} y={my + 18} textAnchor="middle">{step >= 5 ? `${k ? 'Q₃' : 'Q₁'} = ${num(k ? s.q3 : s.q1)}` : `Platz ${num(hp)}`}</text>
         </g>)}
-        {step === 2 && <text className="xw-t" x={PX(s.mid)} y={my + 4} textAnchor="middle">Mitte: Platz {num(s.mid)}</text>}
+        {step === 2 && <text className="xw-t" x={PX(s.mid)} y={my + 4} textAnchor="middle">mittlerer Platz: {num(s.mid)}</text>}
         {step === 3 && <text className="xw-t" x={PX(s.mid)} y={my + 4} textAnchor="middle">x̃ = {num(s.median)}</text>}
         {step >= 6 && <g className="b03-bracket b03-range">
           <line x1={PX(s.h1)} x2={PX(s.h3)} y1={my + 40} y2={my + 40} />

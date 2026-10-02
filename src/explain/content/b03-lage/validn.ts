@@ -10,6 +10,8 @@ export const ALLBUS_N = {
   total: 5246,
   /** Links-rechts-Selbsteinstufung pa01 */
   lr: 4997, lrMissing: 249,
+  /** N von describe(pa01, weights = wghtpew): Summe der Gewichte der gültigen Fälle, 4.991,75 */
+  lrWeighted: 4992,
   /** Vertrauen in den Bundestag pt03: 1.596 nicht gefragt (Split), 58 ohne gültige Antwort */
   bt: 3592, btMissing: 1654, btSplit: 1596,
   /** beide gültig bzw. bei beiden fehlend */
@@ -91,13 +93,13 @@ export const validn: ConceptCard = {
       3: 'Fast! 1.000 sind alle Befragten. Wer bei einer der beiden Fragen fehlt, gehört nicht zu den vollständigen Paaren.',
     },
   },
-  fuerDich: 'Schau in jeder R-Ausgabe zuerst auf N: Mit wie vielen Personen wurde gerechnet? Fehlt viel, frag dich, wer fehlt und ob das Ergebnis dadurch schief werden könnte.',
+  fuerDich: 'Schau in jeder R-Ausgabe zuerst auf N: Mit wie vielen Personen wurde gerechnet? Fehlt viel, frag dich, wer fehlt und ob das Ergebnis dadurch verzerrt sein könnte.',
   genau: {
-    kurz: 'Hier fällt eine Person aus der ganzen Rechnung, sobald ihr ein Wert fehlt. Wer fehlt, fehlt selten zufällig.',
+    kurz: 'Hier fällt eine Person aus der ganzen Rechnung, sobald ihr ein Wert fehlt. Fehlt eine Frage nach Plan, verzerrt das nichts; wer verweigert, fehlt oft nicht zufällig.',
     paragraphs: [
       'Nimmt man nur Personen, die in allen Variablen der Rechnung gültig sind, heißt das fallweiser (listenweiser) Ausschluss. Beim paarweisen Ausschluss beruht dagegen jede Korrelation einer Korrelationsmatrix auf ihrem eigenen n.',
-      `Die ${c(A.btSplit)} Befragten ohne Frage zum Vertrauen fehlen nach Plan: Der ALLBUS stellt manche Fragen nur einem zufällig gewählten Teil der Befragten (Split). Solche Lücken verzerren wenig. Wer dagegen eine Antwort verweigert, unterscheidet sich oft von den anderen (Begriff „${T('missing_mechanisms')}“).`,
-      `Die Zahlen hier sind ungewichtet. Mit Gewichten zählt nicht jede Person gleich viel (Begriff „${T('weights')}“); N bleibt die Zahl der Personen.`,
+      `Die ${c(A.btSplit)} Befragten ohne Frage zum Vertrauen fehlen nach Plan: Der ALLBUS stellt manche Fragen nur einem zufällig gewählten Teil der Befragten (Split). Solche Lücken verzerren nicht, sie kosten nur Fallzahl. Wer dagegen eine Antwort verweigert, unterscheidet sich oft von den anderen (Begriff „${T('missing_mechanisms')}“).`,
+      `Die Zahlen hier sind ungewichtet. Mit Gewichten zählt nicht jede Person gleich viel (Begriff „${T('weights')}“). describe() meldet dann als N die Summe der Gewichte, wie SPSS, und nicht mehr die Zahl der Personen: Mit dem ALLBUS-Gewicht wghtpew steht bei der Links-rechts-Einstufung N = ${count(A.lrWeighted)} statt ${count(A.lr)}.`,
       'Im Lehrdatensatz mit 200 Befragten fehlt niemand. Dort ist n für jede Rechnung 200.',
     ],
   },
@@ -112,7 +114,7 @@ export function validCounts(c: SampleCtx) {
 
 export const validnTabs: ConceptTabs = {
   sample: {
-    kind: 'analysis',
+    kind: 'analysis', columns: { x: 'lernzeit', y: 'wissenstest' },
     kurz: 'Dieselbe Frage mit den 200 Befragten des Lehrdatensatzes: Wie viele vollständige Paare gehen in eine Rechnung ein?',
     value: c => validCounts(c).nxy,
     result: c => {
@@ -175,8 +177,8 @@ export const validnTabs: ConceptTabs = {
       { id: 'frequency', why: 'Prozente beziehen sich auf n.' },
     ],
     more: [
-      { id: 'missing_mechanisms', why: 'Wer fehlt, fehlt selten zufällig.' },
-      { id: 'weights', why: 'Mit Gewichten zählt nicht jede Person gleich viel.' },
+      { id: 'missing_mechanisms', why: 'Wer eine Antwort verweigert, fehlt oft nicht zufällig.' },
+      { id: 'weights', why: 'Manche Befragte zählen mehr, andere weniger.' },
     ],
   },
 };

@@ -3,8 +3,6 @@
 // Beispielpersonen mit ihrer Lernzeit; die Brücke rechnet dasselbe mit allen 200 Befragten. Referenzwerte: b03-lage.test.ts.
 import type { Bridge, BridgeCtx, ConceptTabs, Ctx, FNode, Workshop } from '../../types';
 import { num, unit } from '../../format';
-/** Breite in der Einheit der Spalte, ohne Einheit in Skalenpunkten. */
-const breadth = (c: BridgeCtx<Reihe>, v: number) => c.col.unit ? c.u(v) : unit(v, 'Skalenpunkt', 'Skalenpunkte');
 import { countWithin } from '../../sample';
 import { quantile6, valueText } from './lage';
 
@@ -53,7 +51,6 @@ function between(s: Reihe, hp: number, u: (v: number) => string): string {
   return g < 1e-9 ? `${at(j)} = ${u(a)}` : `${num(a)} + ${num(g)} · (${num(b)} − ${num(a)}) ${Math.abs(Math.round(v * 100) / 100 - v) > 1e-9 ? '≈' : '='} ${u(v)}`;
 }
 
-
 export const derReiheNach: Workshop<number[], Reihe> = {
   id: 'b03-reihe',
   wofuer: 'Fünf Personen sagen, wie viele Stunden sie in den letzten sieben Tagen gelernt haben. Welcher Wert liegt in der Mitte, wenn man sie der Reihe nach aufstellt? Und wie breit ist der Bereich, in dem die mittlere Hälfte liegt?',
@@ -93,16 +90,16 @@ export const derReiheNach: Workshop<number[], Reihe> = {
       },
     },
     {
-      button: 'n', title: 'Abzählen und die Mitte suchen', sym: 'n', say: 'n', concept: 'validn', perPerson: false,
-      was: 'Wir zählen die Werte: n = 5. Die Mitte liegt auf Platz (n + 1) / 2, hier also auf Platz 3.',
+      button: 'n', title: 'Abzählen und den mittleren Platz suchen', sym: 'n', say: 'n', concept: 'validn', perPerson: false,
+      was: 'Wir zählen die Werte: n = 5. Der mittlere Platz ist (n + 1) / 2, hier Platz 3.',
       rechnung: '(5 + 1) / 2 = 3. Zwei Werte stehen davor, zwei dahinter.',
-      fach: 'Bei n Werten liegt die Mitte der geordneten Reihe auf Platz (n + 1) / 2.',
-      warum: 'Mit dem Plus eins landet die Mitte so, dass davor und dahinter gleich viele Werte stehen.',
-      acht: 'Nicht n / 2 rechnen, das ergäbe 2,5. Bei einer geraden Zahl, etwa sechs, liegt die Mitte bei 3,5: zwischen dem dritten und dem vierten Wert.',
+      fach: 'Bei n Werten ist der mittlere Platz der geordneten Reihe (n + 1) / 2.',
+      warum: 'Mit dem Plus eins liegt der mittlere Platz so, dass davor und dahinter gleich viele Werte stehen.',
+      acht: 'Nicht n / 2 rechnen, das ergäbe 2,5. Bei einer geraden Zahl, etwa sechs, ist der mittlere Platz 3,5: zwischen dem dritten und dem vierten Wert.',
       check: {
-        question: 'Auf welchem Platz liegt die Mitte bei fünf Personen?',
+        question: 'Welcher Platz ist bei fünf Personen der mittlere?',
         answer: c => c.s.mid,
-        diagnose: (c, v) => v !== 'NA' && Math.abs(v - c.s.n / 2) < 1e-9 ? 'Fast! Das ist n / 2. Für die Mitte rechnest du (n + 1) / 2 = 3: zwei Werte davor, zwei dahinter.' : null,
+        diagnose: (c, v) => v !== 'NA' && Math.abs(v - c.s.n / 2) < 1e-9 ? 'Fast! Das ist n / 2. Für den mittleren Platz rechnest du (n + 1) / 2 = 3: zwei Werte davor, zwei dahinter.' : null,
       },
     },
     {
@@ -110,7 +107,7 @@ export const derReiheNach: Workshop<number[], Reihe> = {
       was: 'Wir lesen den Wert auf Platz 3 ab. Das ist der Median.',
       rechnung: c => `x̃ = ${at(3)} = ${h(c.s.median)}. Person ${P(c)} liegt mit ${h(c.s.xs[c.who])} ${toMedian(c.s.xs[c.who], c.s.median, h)}.`,
       fach: 'Der Median x̃ ist der Wert in der Mitte der geordneten Reihe. Mindestens die Hälfte der Werte ist kleiner oder gleich, mindestens die Hälfte größer oder gleich.',
-      warum: 'Der Median hängt nur an der Reihenfolge. Ein einzelner sehr großer Wert verschiebt ihn deshalb nicht.',
+      warum: 'Der Median hängt nur an den Werten in der Mitte der Reihe. Wird der größte Wert noch größer, bleibt der Median gleich.',
       acht: c => Math.abs(c.s.mean - c.s.median) < 0.005
         ? `Der Median ist nicht der Mittelwert, auch wenn hier beide bei ${num(c.s.median)} liegen. Zieh einen Punkt weit nach rechts, dann trennen sie sich.`
         : `Der Median ist nicht der Mittelwert. Hier ist der Mittelwert x̄ = ${num(c.s.mean)}, der Median ${num(c.s.median)}.`,
@@ -187,7 +184,7 @@ export const derReiheNach: Workshop<number[], Reihe> = {
     ],
     lines: [
       { from: 1, step: 1, text: c => `Der Reihe nach: ${c.s.sorted.join(' ≤ ')}` },
-      { from: 2, step: 2, text: () => 'Mitte: Platz (5 + 1) / 2 = 3' },
+      { from: 2, step: 2, text: () => 'Mittlerer Platz: (5 + 1) / 2 = 3' },
       { from: 3, step: 3, text: c => `x̃ = ${at(3)} = ${num(c.s.median)}` },
       { from: 4, step: 4, text: () => 'Viertel-Plätze: (5 + 1) · 0,25 = 1,5 und (5 + 1) · 0,75 = 4,5' },
       { from: 5, step: 5, text: c => `Q₁ = ${num(c.s.q1)}, Q₃ = ${num(c.s.q3)}` },
@@ -196,7 +193,7 @@ export const derReiheNach: Workshop<number[], Reihe> = {
   },
   captions: {
     1: 'Oben die fünf Lernzeiten, unten dieselben Werte der Reihe nach. Du kannst die Punkte ziehen.',
-    2: 'Die Mitte der Reihe ist Platz 3.',
+    2: 'Der mittlere Platz der Reihe ist Platz 3.',
     3: 'Der Wert auf Platz 3 ist der Median, oben als grüne Linie.',
     4: 'Die Viertel-Plätze 1,5 und 4,5 liegen zwischen zwei Plätzen.',
     5: 'Q₁ und Q₃ liegen jeweils in der Mitte zwischen zwei Nachbarn, oben gestrichelt.',
@@ -212,7 +209,7 @@ export const derReiheNach: Workshop<number[], Reihe> = {
       tryIt: { label: 'größten Wert auf 20 Stunden', apply: d => { const i = d.indexOf(Math.max(...d)); return d.map((x, k) => k === i ? 20 : x); } },
     },
     {
-      question: 'Bei sechs statt fünf Personen: Auf welchem Platz liegt die Mitte?', options: ['3,5', '3', '4'], correct: 0, step: 2,
+      question: 'Bei sechs statt fünf Personen: Auf welchem Platz liegt die Mitte der Reihe?', options: ['3,5', '3', '4'], correct: 0, step: 2,
       explain: '(6 + 1) / 2 = 3,5: zwischen dem dritten und dem vierten Wert. Der Median ist dann die Mitte zwischen diesen beiden.',
       kurz: 'Gerade Zahl: zwei Werte in der Mitte.',
     },
@@ -235,14 +232,14 @@ export const derReiheNach: Workshop<number[], Reihe> = {
         const pull = s.mean - s.median > 1 ? ` Der Mittelwert liegt mit ${h(s.mean)} darüber: Ein großer Wert zieht ihn nach oben, den Median nicht.` : '';
         return {
           kurz: `Der mittlere Wert der Reihe nach ist ${h(s.median)}. ${who(s.below)} weniger gelernt, ${s.above} mehr.${pull}`,
-          fachlich: `x̃ = ${num(s.median)} h, x̄ = ${num(s.mean)} h. Der Median nutzt nur die Reihenfolge; wie weit der größte Wert entfernt ist, spielt keine Rolle.`,
+          fachlich: `x̃ = ${num(s.median)} h, x̄ = ${num(s.mean)} h. Der Median hängt nur am Wert auf dem mittleren Platz; wie weit der größte Wert entfernt ist, spielt keine Rolle.`,
         };
       },
       next: { id: 'quantile', label: 'Weiter zu den Quartilen' },
       genau: {
         kurz: 'Bei gerader Fallzahl gibt es zwei mittlere Werte; der Median ist dann ihr Mittel. Bei geordneten Kategorien nennt man besser beide.',
         paragraphs: () => [
-          'Bei sechs Personen liegt die Mitte auf Platz (6 + 1) / 2 = 3,5, also zwischen dem dritten und dem vierten Wert. Für Zahlen nimmt man die Mitte zwischen beiden; median() und w_median() in R rechnen genauso.',
+          'Bei sechs Personen ist der mittlere Platz (6 + 1) / 2 = 3,5, also zwischen dem dritten und dem vierten Wert. Für Zahlen nimmt man die Mitte zwischen beiden; median() und w_median() in R rechnen genauso.',
           'Bei geordneten Kategorien wie dem Schulabschluss sind die Codes keine Mengen. Liegen die beiden mittleren Antworten in verschiedenen Kategorien, nennt man besser beide, statt ihre Codes zu mitteln.',
           'Der Median ist der Wert, für den die Summe der Abstände (ohne Quadrat) am kleinsten ist. Der Mittelwert macht die Summe der quadrierten Abstände am kleinsten; deshalb reagiert er stärker auf Ausreißer.',
         ],
@@ -311,12 +308,12 @@ export const bridgeReihe: Bridge<Reihe> = {
   },
   lines: [
     {
-      all: c => `Alle ${N(c)} Werte von „${c.col.title}“ der Reihe nach: von ${c.u(c.s.sorted[0])} auf Platz 1 bis ${c.u(c.s.sorted[N(c) - 1])} auf Platz ${N(c)}.`,
+      all: c => `Alle ${N(c)} Werte von „${c.col.title}“ der Reihe nach: Platz 1 hat ${c.u(c.s.sorted[0])}, Platz ${N(c)} hat ${c.u(c.s.sorted[N(c) - 1])}.`,
       person: c => `${PB(c)} hat ${c.u(c.values[c.who])} und steht der Reihe nach auf ${placeOf(c)}.`,
     },
     {
-      all: c => `(${N(c)} + 1) / 2 = ${num(c.s.mid)}: Die Mitte liegt ${Number.isInteger(c.s.mid) ? `auf Platz ${c.s.mid}` : `zwischen Platz ${Math.floor(c.s.mid)} und Platz ${Math.floor(c.s.mid) + 1}`}.`,
-      person: c => `${PB(c)} steht auf ${placeOf(c)}, von der Mitte aus gesehen ${sideOf(c, c.s.mid)}.`,
+      all: c => `(${N(c)} + 1) / 2 = ${num(c.s.mid)}: Der mittlere Platz ${Number.isInteger(c.s.mid) ? `ist Platz ${c.s.mid}` : `liegt zwischen Platz ${Math.floor(c.s.mid)} und Platz ${Math.floor(c.s.mid) + 1}`}.`,
+      person: c => `${PB(c)} steht auf ${placeOf(c)}, vom mittleren Platz aus gesehen ${sideOf(c, c.s.mid)}.`,
     },
     {
       all: c => {
@@ -324,7 +321,7 @@ export const bridgeReihe: Bridge<Reihe> = {
         return Number.isInteger(s.mid) ? `Auf Platz ${a} steht ${c.u(s.median)}: x̃ = ${c.u(s.median)}.`
           : `Auf Platz ${a} und ${a + 1} stehen ${c.u(s.sorted[a - 1])} und ${c.u(s.sorted[a])}; die Mitte dazwischen ist x̃ ${eq(s.median)} ${c.u(s.median)}.`;
       },
-      person: c => `${PB(c)} liegt mit ${c.u(c.values[c.who])} ${toMedian(c.values[c.who], c.s.median, c.u)}.`,
+      person: c => `${PB(c)} hat ${c.u(c.values[c.who])} und liegt damit ${toMedian(c.values[c.who], c.s.median, c.u)}.`,
     },
     {
       all: c => `(${N(c)} + 1) · 0,25 = ${num(c.s.h1)} und (${N(c)} + 1) · 0,75 = ${num(c.s.h3)}: die Plätze der beiden Quartile.`,
@@ -335,11 +332,15 @@ export const bridgeReihe: Bridge<Reihe> = {
     },
     {
       all: c => `Q₁ = ${between(c.s, c.s.h1, c.u)}. Q₃ = ${between(c.s, c.s.h3, c.u)}.`,
-      person: c => `${PB(c)} liegt mit ${c.u(c.values[c.who])} ${quarter(c.values[c.who], c.s)}.`,
+      person: c => `${PB(c)} hat ${c.u(c.values[c.who])} und liegt damit ${quarter(c.values[c.who], c.s)}.`,
     },
     {
       all: c => `IQR = ${num(c.s.q3)} − ${num(c.s.q1)} ${eq(c.s.iqr)} ${c.u(c.s.iqr)}: So breit ist die mittlere Hälfte.`,
-      person: c => `${PB(c)} liegt ${quarter(c.values[c.who], c.s)}; dazu gehören ${countWithin(c.values, c.s.q1, c.s.q3)} von ${N(c)} Befragten.`,
+      person: c => {
+        const v = c.values[c.who], q = quarter(v, c.s);
+        const k = v < c.s.q1 - 1e-9 ? c.values.filter(x => x < c.s.q1 - 1e-9).length : v > c.s.q3 + 1e-9 ? c.values.filter(x => x > c.s.q3 + 1e-9).length : countWithin(c.values, c.s.q1, c.s.q3);
+        return `${PB(c)} liegt ${q}; dort liegen ${k} von ${N(c)} Befragten.`;
+      },
     },
   ],
   metrics: (c, variant) => variant === 'quantile'
@@ -350,14 +351,15 @@ export const bridgeReihe: Bridge<Reihe> = {
     if (variant === 'quantile') return {
       kurz: lernzeit(c)
         ? `Die mittlere Hälfte der ${n} Befragten hat in den letzten sieben Tagen zwischen ${num(s.q1)} und ${h(s.q3)} gelernt. Diese Spanne ist ${h(s.iqr)} breit.`
-        : `Die mittlere Hälfte der ${n} Befragten liegt bei „${c.col.title}“ zwischen ${c.u(s.q1)} und ${c.u(s.q3)}. Diese Spanne ist ${breadth(c, s.iqr)} breit.`,
+        : c.col.likert ? `Bei „${c.col.title}“ reicht die mittlere Hälfte der ${n} Befragten von ${valueText(c.col.id, s.q1)} bis ${valueText(c.col.id, s.q3)}.`
+        : `Bei „${c.col.title}“ reicht die mittlere Hälfte der ${n} Befragten von Q₁ = ${c.u(s.q1)} bis Q₃ = ${c.u(s.q3)}. ${c.col.unit ? `Diese Spanne ist ${c.u(s.iqr)} breit.` : `Der IQR beträgt ${num(s.iqr)}.`}`,
       fachlich: `Q₁ ${eq(s.q1)} ${c.u(s.q1)}, x̃ ${eq(s.median)} ${c.u(s.median)}, Q₃ ${eq(s.q3)} ${c.u(s.q3)}; IQR = Q₃ − Q₁ ${eq(s.iqr)} ${c.u(s.iqr)} bei n = ${n}, gerechnet nach Type 6 wie in mariposa.`,
       zusatz: `${countWithin(c.values, s.q1, s.q3)} von ${n} Befragten liegen zwischen Q₁ und Q₃, die Grenzen eingeschlossen.`,
     };
     return {
       kurz: lernzeit(c)
         ? `Der mittlere Wert der ${n} Befragten der Reihe nach liegt bei ${h(s.median)} Lernzeit in den letzten sieben Tagen. Im Durchschnitt sind es ${h(s.mean)}.`
-        : `Bei „${c.col.title}“ liegt der mittlere Wert der ${n} Befragten der Reihe nach ${medianText(c).startsWith('zwischen') ? '' : 'bei '}${medianText(c)}.`,
+        : `Bei „${c.col.title}“ ${medianText(c).startsWith('zwischen') ? 'liegt' : 'ist'} der mittlere Wert der ${n} Befragten der Reihe nach ${medianText(c)}.`,
       fachlich: `Der Median von „${c.col.title}“ beträgt x̃ ${eq(s.median)} ${c.u(s.median)} bei n = ${n}; der Mittelwert x̄ ${eq(s.mean)} ${c.u(s.mean)}.`,
       zusatz: `${s.below} von ${n} Befragten liegen unter dem Median, ${s.above} darüber und ${s.same} genau darauf.`,
     };
@@ -380,7 +382,7 @@ export const medianTabs: ConceptTabs = {
       {
         question: 'Eine Person hat plötzlich gar nicht gelernt (0 Stunden). Was passiert mit dem Median?', options: ['bleibt gleich', 'sinkt deutlich', 'steigt'], correct: 0, step: 3,
         explain: 'Wer vorher über dem Median lag, rutscht ans untere Ende. Auf den mittleren Plätzen der Reihe stehen hier aber mehrere Befragte mit genau 7,6 Stunden, deshalb bleibt der Median. Der Mittelwert sinkt dagegen um bis zu 0,09 Stunden.',
-        kurz: 'Der Median hängt an der Reihenfolge, nicht an der Größe.',
+        kurz: 'Wechselt ein Wert die Seite, rückt der Median höchstens um einen Platz. Hier stehen dort gleiche Werte.',
         tryIt: { label: 'die gewählte Person auf 0 Stunden', op: 'outlier', column: 'x', value: 0 },
         expect: { change: 'same' },
       },
@@ -404,13 +406,13 @@ export const medianTabs: ConceptTabs = {
     entry: 'median', variant: 0,
     outputMap: [
       { match: 'Median', atlas: 'x̃', step: 3, explain: 'Der mittlere Wert der Reihe nach, bei 200 Befragten die Mitte zwischen Platz 100 und Platz 101.' },
-      { match: 'N', atlas: 'n', step: 2, explain: 'N zählt die gültigen Werte. Aus N folgt der Platz der Mitte, (N + 1) / 2.' },
+      { match: 'N', atlas: 'n', step: 2, explain: 'N zählt die gültigen Werte. Aus N folgt der mittlere Platz, (N + 1) / 2.' },
       { match: 'Missing', atlas: 'fehlende Werte', explain: 'Missing zählt Befragte ohne Antwort. Sie gehen nicht in die Reihe ein.' },
     ],
     check: {
       question: 'Welche Zahl in der Ausgabe ist der Median? Tippe sie an.', correct: 'Median',
       wrong: {
-        N: 'Fast! N ist die Zahl der Befragten. Der Median steht unter Median.',
+        N: 'Fast! N ist die Zahl der gültigen Werte. Der Median steht unter Median.',
         Missing: 'Fast! Missing zählt fehlende Antworten. Der Median steht unter Median.',
       },
     },
@@ -418,9 +420,9 @@ export const medianTabs: ConceptTabs = {
   next: {
     next: { id: 'quantile', why: 'Dieselbe Idee für andere Plätze: Viertel statt Hälften.' },
     before: [
-      { id: 'sorting', why: 'Erst ordnen, dann die Mitte suchen.' },
+      { id: 'sorting', why: 'Erst ordnen, dann den mittleren Platz suchen.' },
       { id: 'ordinal', why: 'Für den Median reicht eine Reihenfolge; gleiche Abstände braucht er nicht.' },
-      { id: 'validn', why: 'n bestimmt, auf welchem Platz die Mitte liegt.' },
+      { id: 'validn', why: 'n bestimmt, welcher Platz der mittlere ist.' },
     ],
     after: [
       { id: 'mann_whitney', why: 'Vergleicht zwei Gruppen nach der Reihenfolge statt nach Mittelwerten.' },
@@ -479,7 +481,7 @@ export const quantileTabs: ConceptTabs = {
     ],
     after: [
       { id: 'theoretical_quantile', why: 'Quantile einer Modellverteilung, etwa der Normalverteilung.' },
-      { id: 'critical_value', why: 'Ein kritischer Wert ist ein Quantil der Verteilung, die ohne Effekt gälte.' },
+      { id: 'critical_value', why: 'Die Grenze für einen Test ist ein Quantil der Verteilung, die ohne Effekt gälte.' },
     ],
     more: [
       { id: 'range', why: 'Misst die ganze Breite statt der mittleren Hälfte.' },

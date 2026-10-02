@@ -4,20 +4,18 @@ import { readFileSync } from 'node:fs';
 import { createSurvey } from '../../../domain/survey';
 import { readSav, isMissingCode } from '../../../sandbox/readSav';
 import { close } from '../../format';
+import { applyOp, bridgeContext } from '../../sample';
+import { liveOutput, locate } from '../../rRead';
+import { CATALOG_OUTPUT } from '../../catalogOutput';
+import { txt, type ConceptTabs } from '../../types';
+import { excessKurtosis, mean, median, quantile6, sdOf, skewness } from './lage';
 import { ALLBUS_N, validn, validnTabs, validCounts } from './validn';
-import { liveOutput } from '../../rRead';
 import { LERNZEIT, range, rangeOf, rangeTabs, rangeWithTop } from './range';
-import { applyOp } from '../../sample';
-import { excessKurtosis, mean, median, quantile6, skewness } from './lage';
 import { FORM, formOf, formWithTop, shape, shapeTabs } from './shape';
 import { UEBERBLICK, describeCard, describeTabs, overviewOf } from './describe';
-import { CATALOG_OUTPUT } from '../../catalogOutput';
-import { sdOf } from './lage';
-import { bridgeReihe, derReiheNach, reihe } from './reihe';
-import { bridgeHaeufigkeit, haeufigkeit, haeufigkeiten } from './haeufigkeit';
+import { bridgeReihe, derReiheNach, medianTabs, quantileTabs, reihe } from './reihe';
+import { bridgeHaeufigkeit, frequencyTabs, haeufigkeit, haeufigkeiten, modeTabs } from './haeufigkeit';
 import { mehrfach, mehrfachOf, multipleResponseTabs } from './mehrfach';
-import { txt } from '../../types';
-import { bridgeContext } from '../../sample';
 
 /*
  * Referenzwerte des Bereichs B3, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -33,6 +31,9 @@ import { bridgeContext } from '../../sample';
  *   nrow(a); sum(!is.na(lr)); sum(!is.na(bt)); sum(!is.na(lr) & !is.na(bt))      # 5246 4997 3592 3436
  *   sum(is.na(lr)); sum(is.na(bt)); sum(is.na(lr) & is.na(bt))                     # 249 1654 93
  *   sum(as.numeric(haven::read_sav(Sys.getenv("ALLBUS_SAV"), user_na = TRUE)$pt03) == -11)   # 1596 (Split, nicht gefragt)
+ *   a <- read_spss(Sys.getenv("ALLBUS_SAV"))
+ *   a %>% describe(pa01, show = "mean"); a %>% describe(pa01, show = "mean", weights = wghtpew)   # N 4997 / Missing 249; gewichtet N 4992 / Missing 254
+ *   sum(as.numeric(a$wghtpew)[!is.na(as.numeric(a$pa01))])                         # 4991.751 (N gewichtet = Summe der Gewichte)
  *   atlas %>% describe(lernzeit, show = "mean")                                      # Mean 7.752, N 200, Missing 0
  *
  * Spannweite (range), x <- as.numeric(atlas$lernzeit), q <- function(v, p) unname(quantile(v, p, type = 6)):
@@ -60,6 +61,7 @@ import { bridgeContext } from '../../sample';
  *   atlas %>% describe(lernzeit, einkommen)                          # ohne show: Mean Median SD Range IQR Skewness N Missing
  *   length(unique(inc)); sort(table(inc), decreasing = TRUE)[1:3]    # 197; 3070, 4549, 4917 je zweimal (Mode: kleinster)
  *   mean(as.numeric(atlas$schulabschluss))                           # 1.985
+ *   md <- median(inc); q3 <- q(inc, .75); q1 <- q(inc, .25); q3 - md; md - q1; max(inc) - q3; q1 - min(inc)   # 1315.75 549 4548.25 1616
  *   sapply(1:200, function(k) { xx <- x; xx[k] <- 0; median(xx) })  # immer 7.6 (auch nach x + 1 bzw. 2 * x: 8.6 bzw. 15.2)
  *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 0; mean(xx) - mean(x) }))   # -0.092 0
  *
@@ -70,6 +72,8 @@ import { bridgeContext } from '../../sample';
  *   atlas %>% w_quantile(lernzeit, probs = c(.25, .5, .75))            # 5.800 7.600 9.750
  *   sort(x)[c(50, 51, 100, 101, 150, 151)]                             # 5.8 5.8 7.6 7.6 9.6 9.8
  *   sum(x < 7.6); sum(x > 7.6); sum(x == 7.6); sum(x >= 5.8 & x <= 9.75)   # 97 99 4 103
+ *   sum(x < 5.8); sum(x > 9.75)                                        # 47 50 (unteres und oberes Viertel)
+ *   median(c(20, 12, 5, 8, 6))                                         # 8: ein Wert, der die Seite wechselt, verschiebt den Median
  *   rank(x, ties.method = "min")[atlas$id == "P002"]; rank(x, ties.method = "max")[atlas$id == "P002"]   # 113 114
  *   q(x, .25, 7); q(x, .75, 7)                                         # 5.8 9.65 (Type 7, nah an Type 6)
  *   q(x + 1, .75) - q(x + 1, .25); q(2 * x, .75) - q(2 * x, .25)       # 3.95 7.9
@@ -127,6 +131,10 @@ test('B3 Anzahl: die Aggregate stimmen mit der ALLBUS-Datei überein (nur mit AL
   }
   assert.deepEqual([sav.nCases, nlr, nbt, both, none, split], [ALLBUS_N.total, ALLBUS_N.lr, ALLBUS_N.bt, ALLBUS_N.both, ALLBUS_N.bothMissing, ALLBUS_N.btSplit]);
   assert.ok(close(nlr / sav.nCases, 0.9525, 0.001), 'Anteil gültig bei Links-rechts');
+  const w = sav.byName.get('wghtpew')!;
+  let wsum = 0;
+  for (let i = 0; i < sav.nCases; i++) if (ok(lr, i)) wsum += w.values[i];
+  assert.ok(close(wsum, 4991.751, 0.001) && Math.round(wsum) === ALLBUS_N.lrWeighted, `gewichtetes N ${wsum}`);
 });
 
 test('B3 Spannweite: Lernzeit, Regler und Auswertung wie in R', () => {
@@ -234,7 +242,7 @@ test('B3 Häufigkeiten: Modus, Anteile und kumulierte Anteile der acht und der 2
   const c = bridgeContext(haeufigkeit, 'series', rows, 'schulabschluss', '', 1), s = c.s;
   assert.deepEqual([s.values, s.counts, s.mode, s.maxShare], [[0, 1, 2, 3, 4], [42, 40, 37, 41, 40], 0, 21]);
   assert.equal(s.ownCum[1], 80, 'P002 hat Code 3: 80 % höchstens');
-  assert.equal(bridgeHaeufigkeit.lines[4].all(c), 'Von der kleinsten Antwort an aufsummiert, erreichst du bei 2 („Mittlerer Abschluss“) erstmals mindestens 50 %.');
+  assert.equal(bridgeHaeufigkeit.lines[4].all(c), 'Von der kleinsten Antwort an aufsummiert, ist beim Wert 2 („Mittlerer Abschluss“) erstmals die Hälfte erreicht.');
   assert.equal(bridgeHaeufigkeit.interpret(c, 'mode').zusatz, 'Danach folgt 3 („Fachhochschulreife“) mit 41 Befragten.');
   const rev = bridgeContext(haeufigkeit, 'series', applyOp(rows, 'schulabschluss', 'reverse'), 'schulabschluss', '', 1);
   assert.deepEqual([rev.s.counts, rev.s.mode, rev.s.max], [[40, 41, 37, 40, 42], 4, 42]);
@@ -263,4 +271,47 @@ test('B3 Mehrfachantworten: Nennungen und beide Prozente der fünf und der 200 w
   assert.deepEqual([allBook.casePct[0], allBook.total], [100, 416]);
   assert.ok(close(allBook.respPct[0], 48.08, 0.01) && t.think[0].explain.includes('200 von 416, also 48,1 %'));
   assert.match(CATALOG_OUTPUT['multiple_response:0'].output, /Lernquelle Buch {11}121 {9}35\.9 {8}60\.5/);
+});
+
+test('B3 Fix-Runde 1: Gewichte, Viertel, ungleiche Hälften, feste Spalten der Auswertungen', () => {
+  assert.match(validn.genau.paragraphs[2], /als N die Summe der Gewichte, wie SPSS.*N = 4\.992 statt 4\.997/);
+  const c = bridgeContext(reihe, 'series', rows, 'lernzeit', '', 0), s = c.s;
+  const lower = rows.findIndex(r => r.values.lernzeit < s.q1), upper = rows.findIndex(r => r.values.lernzeit > s.q3), inner = rows.findIndex(r => r.values.lernzeit >= s.q1 && r.values.lernzeit <= s.q3);
+  const line = (who: number) => bridgeReihe.lines[5].person(bridgeContext(reihe, 'series', rows, 'lernzeit', '', who));
+  assert.match(line(lower), /im unteren Viertel; dort liegen 47 von 200 Befragten\./);
+  assert.match(line(upper), /im oberen Viertel; dort liegen 50 von 200 Befragten\./);
+  assert.match(line(inner), /in der mittleren Hälfte; dort liegen 103 von 200 Befragten\./);
+  assert.equal(reihe([20, 12, 5, 8, 6]).median, 8, 'Wechselt ein Wert die Seite, verschiebt er den Median');
+  const E = UEBERBLICK.einkommen;
+  assert.deepEqual([E.q3 - E.median, E.median - E.q1, E.max - E.q3, E.q1 - E.min], [1315.75, 549, 4548.25, 1616]);
+  assert.match(describeCard.ausprobieren[1].question, /Q₃ 1\.315,75 € über dem Median, Q₁ nur 549 € darunter/);
+  assert.match(describeCard.ausprobieren[1].explain, /4\.548,25 €.*1\.616 €/);
+  for (const [id, t, cols] of [['validn', validnTabs, { x: 'lernzeit', y: 'wissenstest' }], ['range', rangeTabs, { x: 'lernzeit' }], ['shape', shapeTabs, { x: 'lernzeit' }], ['describe', describeTabs, { x: 'lernzeit' }]] as const) {
+    const sample = (t as ConceptTabs).sample;
+    assert.ok(sample?.kind === 'analysis' && JSON.stringify(sample.columns) === JSON.stringify(cols), `${id}: feste Spalten der Auswertung`);
+  }
+  assert.equal(shape.regler!.step, 1, 'Regler erreicht 30.000 €');
+  assert.ok((30000 - shape.regler!.min) % shape.regler!.step === 0);
+});
+
+/** Welche Zahl jede Zuordnung in „In R“ trifft (Leitaufruf mit den Ausgangsdaten). */
+test('B3 In R: jede Zuordnung trifft die gemeinte Zahl', () => {
+  const expected: [string, ConceptTabs, Record<string, string>][] = [
+    ['validn', validnTabs, { N: '200', Missing: '0', Mean: '7.752' }],
+    ['range', rangeTabs, { Min: '0.000', Max: '18.400', Range: '18.400', N: '200' }],
+    ['shape', shapeTabs, { Skewness: '0.196', N: '200', Missing: '0' }],
+    ['describe', describeTabs, { Mean: '7.752', Median: '7.600', SD: '3.238', IQR: '3.950', Skewness: '0.196', N: '200', Mode: '7.300', Q25: '5.800' }],
+    ['median', medianTabs, { Median: '7.600', N: '200', Missing: '0' }],
+    ['quantile', quantileTabs, { '5.800': '5.800', '7.600': '7.600', '9.750': '9.750' }],
+    ['mode', modeTabs, { Mode: '0.000', N: '200', Missing: '0' }],
+    ['frequency', frequencyTabs, { '42': '42', 'valid N': '200', 'Raw %': '21.00', '59.50': '59.50' }],
+    ['multiple_response', multipleResponseTabs, { 'Responses n': '121', 'Responses %': '35.9', '% of Cases': '60.5' }],
+  ];
+  for (const [id, tabs, spots] of expected) {
+    const r = tabs.r!, out = r.live ? liveOutput(r.live, rows, 'lernzeit') : CATALOG_OUTPUT[`${r.entry}:${r.variant}`].output;
+    for (const key of [...r.outputMap.map(m => m.match), ...Object.keys(r.check.wrong)]) assert.equal(locate(out, key)?.text, spots[key], `${id}: „${key}“`);
+  }
+  const f = CATALOG_OUTPUT['frequency:0'].output, cell = locate(f, '42')!, cum = locate(f, '59.50')!;
+  assert.match(f.slice(f.lastIndexOf('\n', cell.start), cell.end), /\|\s+0 \| Ohne Schulabschluss\s+\|\s+42$/, '42 steht in der Spalte N der Zeile 0');
+  assert.match(f.slice(f.lastIndexOf('\n', cum.start), cum.end), /\|\s+2 \| Mittlerer Abschluss .*59\.50$/, '59.50 ist Cum. % beim mittleren Abschluss');
 });
