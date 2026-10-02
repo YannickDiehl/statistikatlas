@@ -10,7 +10,7 @@ import type { SampleCtx } from '../../types';
 import { ALLBUS, FUENF } from './daten';
 import { LABELS_MITTEL, labels, labelsTabs } from './labels';
 import { CONVERSION_MITTEL, conversion, conversionTabs } from './conversion';
-import { EINKOMMEN, missingMittel, missingTools, missingToolsTabs, mitCode } from './missing-tools';
+import { EINKOMMEN, einkommenMitCode, missingMittel, missingTools, missingToolsTabs } from './missing-tools';
 import { FORMATE, dataExport } from './data-export';
 import { paare, positionP002, reihe, sorting, sortingTabs } from './sorting';
 import { codebook, codebookTabs, eintrag } from './codebook';
@@ -73,8 +73,8 @@ test('Labels: Tabelle nachher, Mittelwert und Häufigkeiten wie in R', () => {
   assert.equal(s.kind, 'analysis');
   if (s.kind !== 'analysis') return;
   const r = s.result(ctx(rows, 'erwerbstaetig'));
-  assert.match(r.kurz, /^137 Befragte tragen das Label „Ja“, 63 das Label „Nein“\..*Mittelwert 0,69 .* 68,5 %/);
-  assert.match(r.fachlich, /Häufigkeiten 63 und 137, Mittelwert der Codes 0,69/);
+  assert.match(r.kurz, /^137 Befragte tragen das Label „Ja“, 63 das Label „Nein“\..*Anteil der Erwerbstätigen, 137 \/ 200 = 0,685, also 68,5 %\.$/);
+  assert.match(r.fachlich, /Häufigkeiten 63 und 137, Mittelwert der Codes 0,685/);
   // Codes getauscht: 63 Ja, 137 Nein; alle auf 1: niemand mit Nein.
   assert.equal(s.value!(ctx(applyOp(rows, 'erwerbstaetig', 'reverse'), 'erwerbstaetig')), 63);
   assert.equal(s.think[1].expect.measure!(ctx(applyOp(rows, 'erwerbstaetig', 'constant', 1), 'erwerbstaetig')), 0);
@@ -111,8 +111,8 @@ test('Datentypen umwandeln: Tabelle nachher und Mittelwerte wie in R', () => {
   const s = conversionTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const r = s.result(ctx(rows, 'erwerbstaetig'));
-  assert.match(r.kurz, /Mittelwert 0,69: 68,5 % der Befragten .* 137-mal „Ja“ und 63-mal „Nein“/);
-  assert.match(r.fachlich, /Mittelwert 0,69\. .*Mittelwert 1,69\.$/);
+  assert.match(r.kurz, /Mittelwert 137 \/ 200 = 0,685: 68,5 % der Befragten .* 137-mal „Ja“ und 63-mal „Nein“/);
+  assert.match(r.fachlich, /Mittelwert 0,685\. .*Mittelwert 1,685\.$/);
   assert.ok(close(s.value!(ctx(applyOp(rows, 'erwerbstaetig', 'reverse'), 'erwerbstaetig'))!, 0.315, 1e-12), 'getauscht: 63 / 200');
   const out = CATALOG_OUTPUT['conversion:0'].output;
   assert.match(out, /\| Nein\s+\|\s+63 \|\s+31\.50 \|/);
@@ -133,8 +133,8 @@ test('Datentypen umwandeln: Tabelle nachher und Mittelwerte wie in R', () => {
  *     describe(einkommen, show = c("mean", "sd"))                # Mean 3147.613, SD 1426.790, N 199, Missing 1
  *   mean(replace(atlas$einkommen, 1, -9))                        # 3131.83 (ohne set_na), Unterschied 15.783065
  *   mean(replace(atlas$einkommen + 100, 1, -9)) - 3131.83        # 99.5: ohne set_na() wächst der Code nicht mit
- *   Codezeilen des Werkzeugs auf atlas (P001 = -9, P004 = -8): ohne set_na Mean 3108.770 (N 200), nur -9 3124.437 (199, 1),
- *   beide 3140.258 (198, 2)
+ *   R-Code des Werkzeugs (filter auf P001 bis P005, dann P001 = -9, P004 = -8): ohne set_na Mean 1692.600 (N 5, Missing 0),
+ *   nur -9 2118.000 (4, 1), beide 2826.667 (3, 2), also dieselben Zahlen wie die Kontrollfrage
  *   d <- atlas %>% mutate(alter = replace(alter, id == "P002", -9), einkommen = replace(einkommen, id == "P001", -9)) %>% set_na(-9)
  *   sum(is.na(d$alter)); sum(is.na(d$einkommen))                 # 1 1: ohne Spaltennamen gilt der Code für alle Zahlenspalten
  *   Fehlermeldungen: set_na(einkommen = "-9")                    → Missing values for `einkommen` must be numeric.
@@ -151,10 +151,10 @@ test('Missing-Codes: Mittelwerte der fünf und der 200 wie in R', () => {
   assert.match(missingTools.check.diagnose('beide', 2120)!, /8\.480 \/ 3 ≈ 2\.826,67\./);
   assert.match(missingTools.check.diagnose('keine', 8463 / 4)!, /8\.463 \/ 5 = 1\.692,6\./);
   assert.match(missingTools.wofuer, /1\.654 von 5\.246 Befragten .* bei −0,76 statt bei 3,95\./);
-  assert.match(missingTools.rCode('beide'), /set_na\(einkommen = c\(-9, -8\)\)/);
-  const m = mitCode(ctx(rows, 'einkommen'));
+  assert.match(missingTools.rCode('beide'), /atlas %>%\n  filter\(id %in% c\("P001", "P002", "P003", "P004", "P005"\)\) %>%\n[\s\S]*set_na\(einkommen = c\(-9, -8\)\) %>%\n  describe\(einkommen, show = "mean"\)$/);
+  const m = einkommenMitCode(ctx(rows, 'einkommen'));
   assert.ok(close(m.ohne, 3147.613065, 1e-6) && close(m.mit, 3131.83, 1e-9), 'mit und ohne Code wie in R');
-  const shifted = mitCode(ctx(applyOp(rows, 'einkommen', 'shift', 100), 'einkommen'));
+  const shifted = einkommenMitCode(ctx(applyOp(rows, 'einkommen', 'shift', 100), 'einkommen'));
   assert.ok(close(shifted.mit - m.mit, 99.5, 1e-9) && close(shifted.ohne - m.ohne, 100, 1e-9), 'um 100 € verschoben');
   const s = missingToolsTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
@@ -178,13 +178,17 @@ test('Missing-Codes: Mittelwerte der fünf und der 200 wie in R', () => {
  *   Eine vorhandene atlas.sav oder atlas.xlsx wird ohne Rückfrage überschrieben.
  *   atlas %>% describe(lernzeit, show = mean)                    # `show` must be a character vector of statistic names.
  *   atlas %>% frequency(erwerbstaetig) %>% write_xlsx("haeufigkeit.xlsx")   # geht
+ *   R-Code des Werkzeugs (P001 = -9 mit set_na() markiert, schreiben, wieder einlesen), je Format
+ *   zurueck %>% describe(einkommen, show = "mean")              # Mean 3147.613, N 199, Missing 1 in SAV, DTA, XPT und XLSX
+ *   na_frequencies(zurueck$einkommen)                            # Code -9 (SAV, XLSX) bzw. .a (DTA, XPT)
  */
 test('Weitergeben: was nach dem Wiedereinlesen ankommt, wie in R', () => {
   assert.deepEqual(Object.entries(FORMATE).map(([k, f]) => [k, f.wertelabels, f.code]), [['sav', true, '−9'], ['dta', true, '.a'], ['xpt', false, '.a'], ['xlsx', true, '−9']]);
   assert.deepEqual(dataExport.options.map(o => dataExport.check.answer(o.id)), [5, 5, 0, 5]);
   assert.deepEqual(dataExport.apply(dataExport.rows, 'xpt').rows.map(r => [r.erwerbstaetig, r.einkommen]), [[1, 'NA (.a)'], [1, 3850], [0, 2762], [1, 4604], [1, 1868]]);
   assert.deepEqual(dataExport.apply(dataExport.rows, 'sav').rows.map(r => r.erwerbstaetig), ['1 [Ja]', '1 [Ja]', '0 [Nein]', '1 [Ja]', '1 [Ja]']);
-  assert.match(dataExport.rCode('xpt'), /write_xpt\("atlas\.xpt", version = 8, name = "atlas"\)/);
+  assert.match(dataExport.rCode('xpt'), /set_na\(einkommen = -9\) %>%\n  write_xpt\("atlas\.xpt", version = 8, name = "atlas"\)/);
+  assert.match(dataExport.rCode('dta'), /zurueck %>%\n  describe\(einkommen, show = "mean"\)$/);
 });
 
 /*
@@ -213,11 +217,15 @@ test('Sortieren: Reihenfolge, Positionen und die 200 wie in R', () => {
   const s = sortingTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const res = s.result(ctx(rows, 'lernzeit'));
-  assert.match(res.kurz, /x₍₁₎ = 0 h und endet bei x₍₂₀₀₎ = 18,4 h\. Der Median, der mittlere Wert der Reihe nach, ist der Durchschnitt der Werte an den Positionen 100 und 101: 7,6 h\./);
-  assert.match(res.zusatz!, /^Nur 99 der 200 Lernzeiten/);
+  assert.equal(res.kurz, 'Am wenigsten hat jemand mit 0 h gelernt (x₍₁₎), am meisten jemand mit 18,4 h (x₍₂₀₀₎). Der Median, der mittlere Wert der Reihe nach, liegt bei 7,6 h: Die eine Hälfte lernt höchstens so lange, die andere mindestens so lange.');
+  assert.match(res.fachlich, /Positionen 100 und 101, 7,6 h und 7,6 h\.$/);
+  assert.match(res.zusatz!, /^Unter den 200 Lernzeiten gibt es nur 99 verschiedene Werte/);
+  // „steigt deutlich, auf 40“: Für jede der 200 Personen und auch nach dem Verschieben ist x₍₂₀₀₎ danach genau 40 (R: max(replace(x, k, 40))).
+  for (const data of [rows, applyOp(rows, 'lernzeit', 'shift', 1)]) for (let k = 0; k < data.length; k++)
+    assert.equal(reihe(applyOp(data, 'lernzeit', 'outlier', 40, k).map(x => x.values.lernzeit)).max, 40, `Person ${k + 1}`);
   assert.equal(s.value!(ctx(applyOp(rows, 'lernzeit', 'shift', 1), 'lernzeit')), 1);
   const next = sortingTabs.next.next.why;
-  assert.equal(typeof next === 'function' ? next(ctx(rows, 'lernzeit')) : next, 'Der mittlere Wert der Reihe nach: Bei den 200 Befragten liegt er bei 7,6 h, an den Positionen 100 und 101.');
+  assert.equal(typeof next === 'function' ? next(ctx(rows, 'lernzeit')) : next, 'Der mittlere Wert der Reihe nach: Bei den 200 Befragten liegt er bei 7,6 h, dem Durchschnitt der Werte an den Positionen 100 und 101.');
   assert.equal(liveOutput({ fn: 'describe', show: ['min', 'max'] }, applyOp(rows, 'lernzeit', 'shift', 1), 'lernzeit').split('\n')[7], '  lernzeit  1.000  19.400  200        0');
 });
 
@@ -249,6 +257,8 @@ test('Codebuch: Zahlen der Karte, der Suche und des Eintrags wie in R', () => {
   assert.equal(s.result(ctx(rows, 'lernzeit')).kurz, 'Die Spalte lernzeit trägt das Label „Wie viele Stunden haben Sie in den letzten sieben Tagen selbstständig gelernt?“ Die Antworten reichen von 0 bis 18,4 h, mit 99 verschiedenen Werten. Es fehlt keine Angabe.');
   assert.match(s.result(ctx(rows, 'geschlecht')).kurz, /verteilen sich auf 4 von 4 Antworten; am häufigsten ist „Weiblich“ mit 103\./);
   assert.match(s.result(ctx(rows, 'quelle_buch')).kurz, /trägt das Label „Lernquelle Buch“\. Die 200/);
+  assert.match(s.result(ctx(rows, 'alter')).kurz, /von 18 bis 75 Jahren, mit 55 verschiedenen Werten/);
+  assert.equal(s.result(ctx(rows, 'alter')).zusatz, 'Im Atlas kannst du Werte von 18 bis 90 Jahren eintragen; ein Wert weit außerhalb wäre eher ein Code oder ein Tippfehler.');
   assert.equal(s.value!(ctx(applyOp(rows, 'lernzeit', 'reverse'), 'lernzeit')), 99);
   const out = CATALOG_OUTPUT['codebook:0'].output;
   assert.match(out, /29 variables \| 200 observations \| 29 labelled/);

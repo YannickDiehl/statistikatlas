@@ -23,7 +23,6 @@ export const FRAGE_ERWERBSTAETIG = 'Sind Sie gegenwärtig erwerbstätig?';
 export const ALLBUS = {
   befragte: 5246,
   spalten: 579,
-  mitWertelabels: 576,
   pt03: {
     gueltig: 3592,
     fehlend: 1654,

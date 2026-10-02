@@ -114,18 +114,18 @@ export const labels: TableTool = {
 };
 
 /** Befragte mit dem Code `code` in der Spalte des Reiters (erwerbstaetig). */
-const mitCode = (c: SampleCtx, code: number) => spalte(c, 'erwerbstaetig').values.filter(v => v === code).length;
+const anzahlMitCode = (c: SampleCtx, code: number) => spalte(c, 'erwerbstaetig').values.filter(v => v === code).length;
 
 export const labelsTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { x: 'erwerbstaetig' },
     kurz: 'Dieselben Labels bei allen 200 Befragten: Wie viele tragen den Antworttext Ja, wie viele Nein?',
-    value: c => mitCode(c, 1),
+    value: c => anzahlMitCode(c, 1),
     result: c => {
-      const ja = mitCode(c, 1), nein = mitCode(c, 0), n = c.rows.length, mittel = ja / n;
+      const ja = anzahlMitCode(c, 1), nein = anzahlMitCode(c, 0), n = c.rows.length, mittel = ja / n;
       return {
-        kurz: `${ja} Befragte tragen das Label „Ja“, ${nein} das Label „Nein“. R rechnet trotzdem mit den Codes: Ihr Mittelwert ${num(mittel)} ist der Anteil der Erwerbstätigen, ${pct(mittel)}.`,
-        fachlich: `erwerbstaetig mit dem Variablenlabel „${FRAGE_ERWERBSTAETIG}“ und den Wertelabels 0 = Nein und 1 = Ja; Häufigkeiten ${nein} und ${ja}, Mittelwert der Codes ${num(mittel)}.`,
+        kurz: `${ja} Befragte tragen das Label „Ja“, ${nein} das Label „Nein“. R rechnet trotzdem mit den Codes: Ihr Mittelwert ist der Anteil der Erwerbstätigen, ${ja} / ${n} = ${num(mittel, 3)}, also ${pct(mittel)}.`,
+        fachlich: `erwerbstaetig mit dem Variablenlabel „${FRAGE_ERWERBSTAETIG}“ und den Wertelabels 0 = Nein und 1 = Ja; Häufigkeiten ${nein} und ${ja}, Mittelwert der Codes ${num(mittel, 3)}.`,
         zusatz: 'Die Labels hängen an den Codes, nicht an den Personen: Wer einen anderen Code bekommt, trägt auch ein anderes Label.',
       };
     },
@@ -145,7 +145,7 @@ export const labelsTabs: ConceptTabs = {
         explain: 'Das Label Nein gehört zum Code 0. Hat niemand mehr den Code 0, trägt auch niemand dieses Label. In R steht es trotzdem weiter in der Liste der Wertelabels.',
         kurz: 'Ohne den Code taucht sein Label in den Daten nicht auf.',
         tryIt: { label: 'alle erwerbstätig (Code 1)', op: 'constant', column: 'x', value: 1 },
-        expect: { change: 'equals', value: 0, measure: c => mitCode(c, 0) },
+        expect: { change: 'equals', value: 0, measure: c => anzahlMitCode(c, 0) },
       },
     ],
   },

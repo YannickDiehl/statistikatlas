@@ -4,6 +4,7 @@
 import type { ConceptTabs, SampleCtx, TableTool } from '../../types';
 import { num } from '../../format';
 import { sampleColumn } from '../../sample';
+import { middleValues } from '../../../domain/descriptive';
 import { FUENF, tief } from './daten';
 
 type Zeile = (typeof FUENF)[number];
@@ -36,7 +37,7 @@ export const sorting: TableTool = {
   concept: 'sorting',
   picture: 'b02-sortieren-paare',
   wofuer: 'Wer von den ersten fünf Befragten hat in den letzten sieben Tagen am wenigsten gelernt, wer am meisten, und welcher Wert ist der Reihe nach der mittlere? Sortierst du sie nach ihrer Lernzeit, kannst du es ablesen.',
-  kurz: 'Sortieren stellt die Werte der Größe nach in eine Reihe. Den Wert an Position i schreibt man x₍ᵢ₎: x₍₁₎ ist der kleinste, x₍ₙ₎ der größte.',
+  kurz: 'Sortieren stellt die Werte der Größe nach in eine Reihe, vom kleinsten bis zum größten. Dann liest du ab, welcher Wert vorne steht, welcher hinten und welcher der Reihe nach der mittlere ist.',
   mut: 'Hier rechnest du nichts. Du stellst nur fünf Zahlen der Größe nach auf, wie Menschen in einer Schlange.',
   columns: [{ key: 'person', label: 'Person' }, { key: 'lernzeit', label: 'lernzeit (h)' }, { key: 'wissenstest', label: 'wissenstest' }],
   rows: FUENF.map(r => ({ person: r.person, lernzeit: num(r.lernzeit), wissenstest: r.wissenstest })),
@@ -65,7 +66,7 @@ export const sorting: TableTool = {
     {
       title: 'Ränder und mittleren Wert ablesen',
       was: `Bei fünf Werten steht der mittlere Wert der Reihe nach an Position 3: x₍₃₎ = ${num(nachLernzeit[2].lernzeit)} h. Das ist der Median.`,
-      warum: 'Median, Quartile und Spannweite lesen alle an Positionen der sortierten Reihe ab.',
+      warum: 'Median, Quartile und Spannweite liest du alle an Positionen der sortierten Reihe ab.',
       acht: `Sortieren behält die Werte. Ränge ersetzen sie durch ihre Positionen: Aus ${num(nachLernzeit[2].lernzeit)} h würde die 3.`,
       fach: 'Ordnungsstatistiken sind die Grundlage für Median, Quantile und den Shapiro-Wilk-Test.',
       concept: 'median',
@@ -125,32 +126,34 @@ export const sorting: TableTool = {
     paragraphs: [
       'Bei gleichen Werten (Bindungen) ist die Reihenfolge innerhalb der Gleichen egal: x₍ᵢ₎ bleibt eindeutig, weil gleiche Werte dieselbe Zahl sind. Ränge brauchen dafür eine Regel, meist den Durchschnitt der Positionen.',
       'In R sortiert arrange() ganze Zeilen, arrange(desc()) absteigend. sort() sortiert nur einen einzelnen Vektor; in einem Datensatz trennt es Werte von ihren Personen.',
-      'Bei ungeradem n steht der Median an Position (n + 1) / 2. Bei geradem n ist er der Durchschnitt der Werte an den Positionen n / 2 und n / 2 + 1. Quantile und der Interquartilsabstand lesen ebenfalls an Positionen der sortierten Reihe ab.',
+      'Bei ungeradem n steht der Median an Position (n + 1) / 2. Bei geradem n ist er der Durchschnitt der Werte an den Positionen n / 2 und n / 2 + 1. Auch Quantile und den Interquartilsabstand liest du an Positionen der sortierten Reihe ab.',
       'Sortieren braucht eine Rangfolge. Für Kategorien ohne Rangfolge, etwa den Geschlechtseintrag, ergibt eine sortierte Reihe keinen Sinn, auch wenn R ihre Codes sortieren kann.',
     ],
   },
 };
 
-/** Die sortierte Lernzeit der 200 (oder der aktuellen Daten) mit Rändern, Mitte und Zahl verschiedener Werte. */
+/** Die sortierte Reihe mit Rändern, den beiden mittleren Werten (middleValues), Median und Zahl verschiedener Werte. */
 export function reihe(values: readonly number[]) {
-  const s = [...values].sort((a, b) => a - b), n = s.length, unten = s[Math.ceil(n / 2) - 1], oben = s[Math.floor(n / 2)];
-  return { n, min: s[0], max: s[n - 1], unten, oben, median: (unten + oben) / 2, verschieden: new Set(s).size };
+  const [unten, oben] = middleValues([...values])!;
+  return { n: values.length, min: Math.min(...values), max: Math.max(...values), unten, oben, median: (unten + oben) / 2, verschieden: new Set(values).size };
 }
 const lernzeit = (c: SampleCtx) => reihe(sampleColumn(c.rows, 'lernzeit'));
-/** „100 und 101“ bei geradem n, „100“ bei ungeradem. */
-const mittePositionen = (n: number) => n % 2 === 0 ? `den Positionen ${n / 2} und ${n / 2 + 1}` : `Position ${(n + 1) / 2}`;
+/** Wo der Median steht: „dem Durchschnitt der Werte an den Positionen 100 und 101“ bei geradem n, „dem Wert an Position 3“ bei ungeradem. */
+const medianStelle = (n: number) => n % 2 === 0 ? `dem Durchschnitt der Werte an den Positionen ${n / 2} und ${n / 2 + 1}` : `dem Wert an Position ${(n + 1) / 2}`;
 
 export const sortingTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { x: 'lernzeit' },
-    kurz: 'Dieselbe Reihe mit allen 200 Befragten: Sortiert stehen ihre Lernzeiten von x₍₁₎ bis x₍₂₀₀₎ hintereinander.',
+    kurz: 'Dieselbe Reihe mit allen 200 Befragten: Sortiert stehen ihre Lernzeiten vom kleinsten bis zum größten Wert hintereinander.',
     value: c => lernzeit(c).min,
     result: c => {
       const r = lernzeit(c);
       return {
-        kurz: `Sortiert beginnt die Reihe bei x₍₁₎ = ${num(r.min)} h und endet bei x₍${tief(r.n)}₎ = ${num(r.max)} h. Der Median, der mittlere Wert der Reihe nach, ${r.n % 2 === 0 ? `ist der Durchschnitt der Werte an ${mittePositionen(r.n)}` : `steht an ${mittePositionen(r.n)}`}: ${num(r.median)} h.`,
-        fachlich: `Ordnungsstatistiken der Lernzeit: Minimum x₍₁₎ = ${num(r.min)} h, Maximum x₍${tief(r.n)}₎ = ${num(r.max)} h; der Median ist der Durchschnitt der Werte an ${mittePositionen(r.n)}, ${num(r.unten)} h und ${num(r.oben)} h.`,
-        zusatz: `Nur ${r.verschieden} der ${r.n} Lernzeiten sind verschieden: Gleiche Werte stehen in der sortierten Reihe direkt hintereinander.`,
+        kurz: `Am wenigsten hat jemand mit ${num(r.min)} h gelernt (x₍₁₎), am meisten jemand mit ${num(r.max)} h (x₍${tief(r.n)}₎). Der Median, der mittlere Wert der Reihe nach, liegt bei ${num(r.median)} h: Die eine Hälfte lernt höchstens so lange, die andere mindestens so lange.`,
+        fachlich: r.n % 2 === 0
+          ? `Ordnungsstatistiken der Lernzeit: Minimum x₍₁₎ = ${num(r.min)} h, Maximum x₍${tief(r.n)}₎ = ${num(r.max)} h; der Median ist der Durchschnitt der Werte an den Positionen ${r.n / 2} und ${r.n / 2 + 1}, ${num(r.unten)} h und ${num(r.oben)} h.`
+          : `Ordnungsstatistiken der Lernzeit: Minimum x₍₁₎ = ${num(r.min)} h, Maximum x₍${tief(r.n)}₎ = ${num(r.max)} h; der Median ist der Wert an Position ${(r.n + 1) / 2}, ${num(r.median)} h.`,
+        zusatz: `Unter den ${r.n} Lernzeiten gibt es nur ${r.verschieden} verschiedene Werte: Gleiche Werte stehen in der sortierten Reihe direkt hintereinander.`,
       };
     },
     voraussetzung: 'Sortieren braucht eine Rangfolge der Werte. Die Lernzeit hat sie; Kategorien ohne Rangfolge hätten keine.',
@@ -194,7 +197,7 @@ export const sortingTabs: ConceptTabs = {
     },
   },
   next: {
-    next: { id: 'median', why: c => { const r = lernzeit(c); return `Der mittlere Wert der Reihe nach: Bei den ${r.n} Befragten liegt er bei ${num(r.median)} h, an ${mittePositionen(r.n)}.`; } },
+    next: { id: 'median', why: c => { const r = lernzeit(c); return `Der mittlere Wert der Reihe nach: Bei den ${r.n} Befragten liegt er bei ${num(r.median)} h, ${medianStelle(r.n)}.`; } },
     before: [
       { id: 'ordinal', why: 'Sortieren braucht eine Rangfolge der Werte.' },
       { id: 'series', why: 'Die Werte einer Spalte, die sortiert eine Reihe ergeben.' },

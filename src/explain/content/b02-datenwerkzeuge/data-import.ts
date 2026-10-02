@@ -65,7 +65,7 @@ export const dataImport: ConceptCard = {
     diagnose: {
       0: 'Fast! Das passiert nur, wenn die Datei −9 nicht als fehlend festlegt, etwa bei einer Excel- oder CSV-Datei.',
       2: 'Fast! Die Person bleibt im Datensatz. Nur ihr Wert in dieser Spalte fehlt.',
-      3: 'Noch nicht ganz. 0 wäre ein echter Wert und verfälschte jede Rechnung. Fehlend heißt in R NA.',
+      3: 'Fast! Fehlend heißt nicht null. Eine 0 wäre ein echter Wert und verfälschte jede Rechnung; R schreibt NA.',
     },
   },
   fuerDich: 'Wenn du für eine Hausarbeit den ALLBUS herunterlädst, nimm die SPSS- oder die Stata-Datei und lies sie mit read_spss() oder read_stata() ein. Prüf danach mit frequency(), ob die fehlenden Angaben als fehlend erscheinen.',
@@ -74,7 +74,7 @@ export const dataImport: ConceptCard = {
     paragraphs: [
       'SAV-, POR-, DTA-, SAS- und XPT-Dateien liest mariposa über das Paket haven, Excel-Dateien über openxlsx2. read_xlsx() stellt Labels nur wieder her, wenn die Datei ein Labelblatt von write_xlsx() enthält.',
       'na_frequencies() zählt die Arten fehlender Werte, untag_na() holt die ursprünglichen Codes zurück. So bleibt sichtbar, ob jemand keine Angabe machen wollte oder die Frage gar nicht bekam.',
-      'Die Beispiele im Reiter „In R“ schreiben den Lehrdatensatz erst in ein Format und lesen ihn dann wieder ein. So laufen sie ohne fremde Datei. POR- und native SAS-Dateien kann mariposa nicht schreiben; dafür brauchst du eine Datei aus einer anderen Quelle.',
+      'Die Beispiele unter „Anderer Aufruf“ im Reiter „In R“ schreiben den Lehrdatensatz erst in ein Format und lesen ihn dann wieder ein. So laufen sie ohne fremde Datei. POR- und native SAS-Dateien kann mariposa nicht schreiben; dafür brauchst du eine Datei aus einer anderen Quelle.',
       'Eine CSV-Datei enthält nur Zahlen und Text, ohne Labels und ohne festgelegte fehlende Werte. Codes wie −9 kommen dann als gewöhnliche Zahlen an.',
     ],
   },

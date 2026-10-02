@@ -3,6 +3,7 @@
 // In R nachgerechnet, siehe ./b02-datenwerkzeuge.test.ts. ALLBUS-Zahlen nur als Aggregat (./daten.ts).
 import type { ConceptTabs, SampleCtx, TableTool } from '../../types';
 import { close, count, num } from '../../format';
+import { mean } from '../../../tasks/kit/means';
 import { ALLBUS, FUENF, spalte } from './daten';
 
 /** Einkommen der fünf mit den beiden Übungscodes. */
@@ -15,8 +16,7 @@ const zeigen = (v: number) => v < 0 ? `−${-v}` : v;
 /** Was describe() nach der Wahl rechnet: Summe und Zahl der gültigen Werte, Mittelwert. */
 export function missingMittel(option: string) {
   const gueltig = EINKOMMEN.filter(v => !MARKIERT[option].includes(v));
-  const summe = gueltig.reduce((a, b) => a + b, 0);
-  return { summe, n: gueltig.length, mittel: summe / gueltig.length };
+  return { summe: gueltig.reduce((a, b) => a + b, 0), n: gueltig.length, mittel: mean(gueltig) };
 }
 const rechnung = (option: string) => { const m = missingMittel(option); return `${count(m.summe)} / ${m.n} ${Math.abs(m.mittel * 100 - Math.round(m.mittel * 100)) < 1e-9 ? '=' : '≈'} ${num(m.mittel)}`; };
 
@@ -27,7 +27,7 @@ const P = ALLBUS.pt03;
 
 export const missingTools: TableTool = {
   concept: 'missing_tools',
-  wofuer: `Im ALLBUS 2023 steht beim Vertrauen in den Bundestag bei ${count(P.fehlend)} von ${count(ALLBUS.befragte)} Befragten keine Antwort von 1 bis 7 (ungewichtet). Dort steht ein Code, etwa −9 für keine Angabe. Rechnet R diese Codes als Zahlen mit, liegt das mittlere Vertrauen bei ${num(P.mittelMitCodes)} statt bei ${num(P.mittel)}. Hier übst du an fünf Befragten, solche Codes als fehlend zu markieren.`,
+  wofuer: `Im ALLBUS 2023 steht beim Vertrauen in den Bundestag bei ${count(P.fehlend)} von ${count(ALLBUS.befragte)} Befragten keine Antwort von 1 bis 7 (ungewichtet). Dort steht ein Code, etwa −9 für keine Angabe. Rechnet R diese Codes als Zahlen mit, liegt das Vertrauen im Durchschnitt bei ${num(P.mittelMitCodes)} statt bei ${num(P.mittel)}. Hier übst du an fünf Befragten, solche Codes als fehlend zu markieren.`,
   kurz: 'Missing-Codes sind Zahlen, die eigentlich „keine Antwort“ bedeuten. Markierst du sie als fehlend, lässt R sie beim Rechnen weg und merkt sich den Grund.',
   mut: 'Du rechnest nur einen Durchschnitt. Der Rest ist Aufräumen: Welche Zahl ist keine echte Antwort?',
   columns: [{ key: 'person', label: 'Person' }, { key: 'einkommen', label: 'einkommen' }],
@@ -69,6 +69,7 @@ export const missingTools: TableTool = {
   rCode: option => [
     ...START,
     'atlas %>%',
+    '  filter(id %in% c("P001", "P002", "P003", "P004", "P005")) %>%',
     '  # zum Üben zwei Codes einsetzen; atlas selbst bleibt unverändert',
     '  mutate(',
     '    einkommen = replace(einkommen, id == "P001", -9),',
@@ -80,7 +81,7 @@ export const missingTools: TableTool = {
   check: {
     question: 'Welchen Mittelwert meldet describe() nachher für die fünf Einkommen?',
     answer: option => missingMittel(option).mittel,
-    right: 'Genau. Nur echte Einkommen gehören in den Durchschnitt, Codes nicht.',
+    right: 'Genau. describe() rechnet mit allem, was nicht als fehlend markiert ist.',
     diagnose: (option, v) => {
       const m = missingMittel(option);
       if (v === 'NA') return 'Fast! describe() lässt fehlende Werte weg und rechnet mit den übrigen. Einen Mittelwert gibt es also.';
@@ -122,9 +123,8 @@ export const missingTools: TableTool = {
 };
 
 /** Einkommen mit −9 bei P001 (wie im Katalogaufruf): Mittelwert mit dem Code und ohne ihn. */
-export function mitCode(c: SampleCtx) {
+export function einkommenMitCode(c: SampleCtx) {
   const v = spalte(c, 'einkommen').values, at = c.rows.findIndex(r => r.id === 'P001');
-  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
   return { n: v.length, mit: mean(v.map((x, i) => i === at ? -9 : x)), ohne: mean(v.filter((_, i) => i !== at)) };
 }
 
@@ -132,11 +132,11 @@ export const missingToolsTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { x: 'einkommen' },
     kurz: 'Dasselbe mit allen 200 Befragten: Zum Üben steht bei P001 der Code −9. Wie verändert er den Durchschnitt, mit und ohne set_na()?',
-    value: c => mitCode(c).ohne,
+    value: c => einkommenMitCode(c).ohne,
     result: c => {
-      const m = mitCode(c);
+      const m = einkommenMitCode(c);
       return {
-        kurz: `Bleibt −9 stehen, liegt das mittlere Haushaltseinkommen bei ${num(m.mit)} €. Als fehlend markiert sind es ${num(m.ohne)} €, berechnet aus ${m.n - 1} gültigen Angaben.`,
+        kurz: `Bleibt −9 stehen, liegt das Haushaltseinkommen im Durchschnitt bei ${num(m.mit)} €. Als fehlend markiert sind es ${num(m.ohne)} €, berechnet aus ${m.n - 1} gültigen Angaben.`,
         fachlich: `Nach set_na(einkommen = −9) meldet describe() N = ${m.n - 1} und Missing = 1. Ohne set_na() zählt −9 als Einkommen, und N ist ${m.n}.`,
         zusatz: `Der eine Code drückt den Mittelwert hier um ${num(m.ohne - m.mit)} € nach unten.`,
       };

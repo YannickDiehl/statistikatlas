@@ -68,10 +68,15 @@ export const dataExport: TableTool = {
     const f = FORMATE[option];
     return [
       'library(dplyr)', 'library(mariposa)', '', 'atlas <- read_spss("Statistikatlas-200-Befragte.sav")', '',
-      'atlas %>%', `  ${f.schreiben}`, '',
+      'atlas %>%',
+      '  # zum Üben: bei P001 den Code -9 einsetzen und als fehlend markieren',
+      '  mutate(einkommen = replace(einkommen, id == "P001", -9)) %>%',
+      '  set_na(einkommen = -9) %>%',
+      `  ${f.schreiben}`, '',
       '# Gegenprobe: wieder einlesen und nachsehen',
       `zurueck <- ${f.lesen}`, '',
-      'zurueck %>%', '  frequency(erwerbstaetig)',
+      'zurueck %>%', '  frequency(erwerbstaetig)', '',
+      'zurueck %>%', '  describe(einkommen, show = "mean")',
     ].join('\n');
   },
   check: {
@@ -104,7 +109,7 @@ export const dataExport: TableTool = {
     },
   ],
   genau: {
-    kurz: 'Jedes Format bewahrt andere Metadaten. SPSS und Excel über mariposa behalten Antworttexte und Missing-Codes, SAS Transport keine Antworttexte.',
+    kurz: 'Jedes Format bewahrt andere Metadaten. SPSS und Excel über mariposa behalten alles; Stata behält die Antworttexte, schreibt den Missing-Code aber als .a; SAS Transport verliert zudem die Antworttexte.',
     paragraphs: [
       'Die R-Aufrufe schreiben Dateien in dein Arbeitsverzeichnis. Der Atlas zeigt den Code nur; das heruntergeladene R-Skript schreibt erst, wenn du es in R ausführst.',
       'SAS Transport braucht version = 8. Version 5 erlaubt nur Spaltennamen mit höchstens acht Zeichen, und mariposa bricht ab, weil aus methoden1 bis methoden5 fünfmal methoden würde.',
@@ -119,7 +124,7 @@ export const dataExportTabs: ConceptTabs = {
     entry: 'data_export', variant: 0, live: { fn: 'describe', show: ['mean'] },
     tokens: {
       describe: { sym: 'describe()', term: 'Deskriptiver Überblick', kurz: 'Zeigt Kennwerte einer Spalte. Vor dem Weitergeben und nach dem Wiedereinlesen müssen dieselben Zahlen herauskommen.', fehler: 'Bei einem Tippfehler im Spaltennamen meldet mariposa: Can\'t select columns that don\'t exist.' },
-      '"mean"': { sym: '"mean"', term: 'Arithmetisches Mittel', kurz: 'Fordert den Mittelwert an. N und Missing druckt describe() immer dazu.', fehler: 'Ohne Anführungszeichen meldet mariposa: `show` must be a character vector of statistic names.' },
+      '"mean"': { sym: '"mean"', term: 'Mittelwert', kurz: 'Fordert den Mittelwert an. N und Missing druckt describe() immer dazu.', fehler: 'Ohne Anführungszeichen meldet mariposa: `show` must be a character vector of statistic names.' },
     },
     outputMap: [
       { match: 'Mean', atlas: 'Mittelwert', explain: 'Nach dem Wiedereinlesen muss derselbe Mittelwert herauskommen. Weicht er ab, ist beim Schreiben oder Lesen etwas verloren gegangen.' },

@@ -38,8 +38,8 @@ export const codebook: ConceptCard = {
       title: 'Die Codes übersetzen',
       was: 'Das Codebuch nennt zu jedem Code seinen Antworttext. Bei finanzlage heißt 1 „Sehr schwer“ und 5 „Sehr leicht“.',
       warum: 'Erst mit den Antworttexten weißt du, in welche Richtung eine Skala läuft.',
-      acht: 'Codes sind nicht immer Mengen. Beim Schulabschluss ist Code 4 nicht doppelt so viel Bildung wie Code 2.',
-      concept: 'nominal',
+      acht: 'Codes sind nicht immer Mengen. Beim Schulabschluss ist Code 4 nicht doppelt so viel Bildung wie Code 2; die Codes geben nur die Reihenfolge an.',
+      concept: 'ordinal',
     },
     {
       title: 'Nachsehen, welche Werte vorkommen',
@@ -58,7 +58,7 @@ export const codebook: ConceptCard = {
   ausprobieren: [
     {
       question: `In pt03 steht bei ${count(minus11.n)} Befragten der Code −11. Was heißt das?`,
-      options: ['sehr wenig Vertrauen', 'die Frage wurde ihnen nicht gestellt', 'ein Tippfehler'], correct: 1, step: 3,
+      options: ['sehr wenig Vertrauen', 'die Frage wurde ihnen nicht gestellt', 'ein Tippfehler'], correct: 1, step: 2,
       explain: 'Das Codebuch nennt −11 „TNZ: SPLIT“: trifft nicht zu, weil diese Befragten eine andere Fassung des Fragebogens bekamen. Wer −11 als Zahl mitrechnet, verfälscht den Durchschnitt.',
       kurz: 'Negative Codes sind im ALLBUS fehlende Angaben, jede mit eigenem Grund.',
     },
@@ -82,7 +82,7 @@ export const codebook: ConceptCard = {
     diagnose: {
       0: 'Fast! 99 kann ein Sondercode sein, etwa für weiß nicht. Dann verfälscht er jede Rechnung.',
       2: 'Fast! Ohne Codebuch weißt du nicht, ob 99 eine echte Antwort ist. Vielleicht ist jemand 99 Jahre alt.',
-      3: 'Noch nicht ganz. Erst klärst du, was 99 bedeutet. Werte zu ersetzen ist eine eigene, heikle Entscheidung.',
+      3: 'Fast! Erst klärst du, was 99 bedeutet. Werte durch den Mittelwert zu ersetzen ist eine eigene, heikle Entscheidung.',
     },
   },
   fuerDich: 'Bevor du eine Spalte auswertest, schlag sie im Codebuch nach: Fragetext, Codes, fehlende Angaben. Das kostet eine Minute und bewahrt dich vor den häufigsten Fehlern in Hausarbeiten.',
@@ -125,11 +125,12 @@ export const codebookTabs: ConceptTabs = {
           zusatz: `Code ${first.value} heißt „${first.label}“, Code ${last.value} heißt „${last.label}“.`,
         };
       }
-      const u = e.col.unit ? ` ${e.col.unit}` : '';
+      // Einheit nach „bis“ im Dativ: „bis 75 Jahren“ (die übrigen Einheiten bleiben gleich).
+      const u = e.col.unit ? ` ${e.col.unit === 'Jahre' ? 'Jahren' : e.col.unit}` : '';
       return {
         kurz: `Die Spalte ${e.id} trägt das Label ${satz(e.label)} Die Antworten reichen von ${num(e.min)} bis ${num(e.max)}${u}, mit ${e.verschieden} verschiedenen Werten. ${fehlt}`,
         fachlich: `Variable ${e.id}, ${SKALA[e.col.scale]}, Typ dbl ohne Wertelabels; ${e.n} gültige Werte, ${e.verschieden} verschiedene, kleinster ${num(e.min)}, größter ${num(e.max)}.`,
-        zusatz: `Erlaubt sind Werte von ${num(e.col.min)} bis ${num(e.col.max)}${u}; alles außerhalb wäre ein Code oder ein Tippfehler.`,
+        zusatz: `Im Atlas kannst du Werte von ${num(e.col.min)} bis ${num(e.col.max)}${u} eintragen; ein Wert weit außerhalb wäre eher ein Code oder ein Tippfehler.`,
       };
     },
     voraussetzung: 'Das Codebuch beschreibt die Daten, wie sie gerade sind. Nach Änderungen zeigt es die neuen Werte.',
