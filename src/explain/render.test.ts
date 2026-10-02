@@ -152,6 +152,15 @@ test('Tabellen-Werkzeug (Dummy) renders before, steps, after and the R call', ()
   for (const part of ['Probier es selbst', 'Mitdenken', 'Genau genommen']) assert.ok(!c.includes(part), `dummy kompakt: „${part}“ sollte fehlen`);
 });
 
+test('Tabellen-Werkzeug: numbers in the data tables are German (comma, true minus), texts stay as written (IB8)', () => {
+  const tool = { ...dummy, columns: [{ key: 'person', label: 'Person' }, { key: 'zeit', label: 'Lernzeit' }, { key: 'code', label: 'Code' }],
+    rows: [{ person: 'P001', zeit: 8.3, code: -9 }, { person: 'P002', zeit: 6, code: 'NA(a)' }, { person: 'P003', zeit: 3850, code: null }, { person: 'P004', zeit: 12345.5, code: 1 }, { person: 'P005', zeit: 0.25, code: 2 }],
+    apply: (rows: typeof dummy.rows) => ({ columns: [{ key: 'person', label: 'Person' }, { key: 'zeit', label: 'Lernzeit' }], rows }) };
+  const cells = [...renderToStaticMarkup(createElement(TabellenWerkzeug, { tool, onConcept: noop })).matchAll(/<t[dh][^>]*>([^<]*)<\/t[dh]>/g)].map(m => m[1]);
+  for (const part of ['8,3', '−9', 'NA(a)', 'NA', '3850', '12.345,5', '0,25']) assert.ok(cells.includes(part), `Zelle „${part}“ fehlt`);
+  assert.ok(!cells.some(c => /^-|\d\.\d/.test(c) && c !== '12.345,5'), `Dezimalpunkt oder Bindestrich-Minus in einer Zelle: ${cells.join(' | ')}`);
+});
+
 test('every registered explanation renders through Explanation in Ausführlich and Kompakt without broken values', () => {
   for (const [id, explain] of Object.entries(EXPLANATIONS)) {
     const { full, compact } = both(() => renderToStaticMarkup(createElement(Explanation, { id, explain, onConcept: noop })));

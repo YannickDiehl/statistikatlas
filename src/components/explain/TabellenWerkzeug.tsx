@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { TableTool } from '../../explain/types';
-import { close } from '../../explain/format';
+import { cell, close } from '../../explain/format';
 import { Genau, MutBox, Section, TopKurz, useExplainMode, useStepJump } from './basics';
 import { CheckQuestion, NameBox, ThinkQuestions } from './pieces';
 import { pictureFor } from './pictures/register';
@@ -8,7 +8,10 @@ import { pictureFor } from './pictures/register';
 type Columns = TableTool['columns'];
 type Rows = TableTool['rows'];
 
-/** Kleine Datentabelle; neue Spalten (`fresh`) sind hervorgehoben. Fehlende Werte stehen als „NA“ da. */
+/**
+ * Kleine Datentabelle; neue Spalten (`fresh`) sind hervorgehoben. Fehlende Werte stehen als „NA“ da, Zahlen deutsch
+ * mit Komma und echtem Minus („8,3“, „−9“), Texte so, wie sie im Werkzeug stehen.
+ */
 function DataTable({ columns, rows, fresh = new Set<string>(), caption }: { columns: Columns; rows: Rows; fresh?: Set<string>; caption: string }) {
   return (
     <div className="xw-table-wrap">
@@ -16,7 +19,7 @@ function DataTable({ columns, rows, fresh = new Set<string>(), caption }: { colu
         <caption className="sr-only">{caption}</caption>
         <thead><tr>{columns.map(c => <th scope="col" key={c.key} className={fresh.has(c.key) ? 'on' : undefined}>{c.label}</th>)}</tr></thead>
         <tbody>{rows.map((r, i) => <tr key={i}>{columns.map((c, k) => {
-          const v = r[c.key], text = v === null || v === undefined ? 'NA' : String(v);
+          const v = r[c.key], text = v === null || v === undefined ? 'NA' : typeof v === 'number' ? cell(v) : v;
           return k === 0 ? <th scope="row" key={c.key}>{text}</th> : <td key={c.key} className={fresh.has(c.key) ? 'on' : undefined}>{text}</td>;
         })}</tr>)}</tbody>
       </table>

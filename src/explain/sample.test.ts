@@ -114,6 +114,13 @@ test('bridge context: workshop math on all 200, units of the column, abbreviated
   assert.equal(c.u(c.s.variance, { squared: true }), '10,48 h²');
   assert.equal(unitText({ id: 'einkommen', title: 'Einkommen', unit: '€/Monat', question: '', scale: 'metric', likert: false }, 4, { squared: true }), '4 (€/Monat)²');
   assert.equal(unitText({ id: 'lernplanung5', title: 'Lernplanung', unit: '', question: '', scale: 'ordinal', likert: true }, 3.256), '3,26');
+  // IB34: Einzahl bei genau 1 („1 Jahr“), sonst Mehrzahl; Abkürzungen bleiben.
+  const col = (id: string, unit: string) => ({ id, title: id, unit, question: '', scale: 'metric' as const, likert: false });
+  assert.equal(unitText(col('alter', 'Jahre'), 1), '1 Jahr'); assert.equal(unitText(col('alter', 'Jahre'), -1), '−1 Jahr');
+  assert.equal(unitText(col('alter', 'Jahre'), 1.004), '1 Jahr', 'gerundet 1'); assert.equal(unitText(col('alter', 'Jahre'), 1.5), '1,5 Jahre');
+  assert.equal(unitText(col('alter', 'Jahre'), 0), '0 Jahre'); assert.equal(unitText(col('haushaltsgroesse', 'Personen'), 1), '1 Person');
+  assert.equal(unitText(col('wissenstest', 'Aufgaben'), 1), '1 Aufgabe'); assert.equal(unitText(col('lernzeit', 'h'), 1), '1 h');
+  assert.equal(unitText(col('alter', 'Jahre'), 1, { squared: true }), '1 Jahr²');
   const p = bridgeContext(pairStats, 'pairs', rows, 'lernzeit', 'wissenstest', 0);
   near(p.s.r!, 0.539, 0.0005, 'r');
   assert.equal(p.col2?.title, 'Wissenstest');

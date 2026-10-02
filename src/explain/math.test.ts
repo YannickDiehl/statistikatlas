@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { describe, relate, standardError } from './math';
 import { calculateStatistics } from '../domain/statistics';
-import { num, signed, paren, pct, count, parseAnswer, close } from './format';
+import { num, signed, paren, pct, count, parseAnswer, close, round, fixed, unit, cell } from './format';
 
 const near = (a: number | null, b: number, tol = 1e-9) => assert.ok(a !== null && Math.abs(a - b) <= tol, `${a} != ${b}`);
 
@@ -43,4 +43,28 @@ test('format helpers write German numbers with a true minus sign', () => {
   assert.deepEqual(parseAnswer('+2'), [2]); assert.deepEqual(parseAnswer('3.162'), [3.162, 3162]); assert.deepEqual(parseAnswer('0.5'), [0.5]);
   assert.equal(parseAnswer(''), null); assert.equal(parseAnswer('abc'), null);
   assert.ok(close(3.16, 3.1623)); assert.ok(!close(3.1, 3.1623));
+});
+
+/*
+ * Halbe Stellen runden vom Betrag her auf (IB9), auch bei negativen Zahlen; binäres Rauschen zählt nicht.
+ * R (Lehrdatensatz, read_spss): mean(atlas$wissenstest) = 10.125, also 9 − 10.125 = −1.125 genau; im Atlas
+ * steht „9 − 10,13 = −1,13“, nicht „−1,12“. 19.865 (B12, Alter) ist im Rechner 19.864999…, als Dezimalzahl aber
+ * genau die Hälfte: sprintf("%.15g", 19.865) = "19.865".
+ */
+test('format helpers round halves away from zero, for negative numbers too, and ignore binary noise', () => {
+  assert.equal(num(1.125), '1,13', '1,125'); assert.equal(num(-1.125), '−1,13', '−1,125 wie 1,125');
+  assert.equal(num(9 - 10.125), '−1,13', '9 − 10,125');
+  assert.equal(num(19.865), '19,87', '19,865 als Dezimalzahl'); assert.equal(num(-19.865), '−19,87');
+  assert.equal(num(2.675), '2,68'); assert.equal(num(1.005), '1,01'); assert.equal(num(-0.005), '−0,01'); assert.equal(num(-0.004), '0');
+  assert.equal(num(0.0505, 3), '0,051'); assert.equal(num(-2.5, 0), '−3');
+  assert.equal(signed(-0.125), '−0,13'); assert.equal(paren(-1.125), '(−1,13)'); assert.equal(unit(-1.125, 'Punkt', 'Punkte'), '−1,13 Punkte');
+  assert.equal(fixed(-1.125), '−1,13'); assert.equal(fixed(19.865), '19,87'); assert.equal(fixed(-0.004), '0,00');
+  assert.equal(count(-2.5), '−3'); assert.equal(count(2.5), '3');
+  for (const v of [0.125, 1.875, 4.585, 22.205, 100.125, 1819.125]) assert.equal(num(-v), `−${num(v)}`, `Vorzeichen symmetrisch bei ${v}`);
+  assert.equal(round(-1.125, 2), -1.13); assert.equal(round(0.1 + 0.2, 2), 0.3); assert.ok(Object.is(round(-0.001, 2), 0), 'kein −0');
+});
+
+test('cell() writes table numbers in German with every decimal and no thousands point below 10.000', () => {
+  assert.equal(cell(8.3), '8,3'); assert.equal(cell(-9), '−9'); assert.equal(cell(3850), '3850'); assert.equal(cell(12345.5), '12.345,5');
+  assert.equal(cell(0.123456), '0,123456'); assert.equal(cell(NaN), '–');
 });

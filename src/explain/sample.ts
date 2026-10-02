@@ -125,9 +125,15 @@ export function sampleColumnInfo(id: string): SampleColumn {
     : { id, title: id.toUpperCase(), unit: '', question: '', scale: 'metric', likert: false };
 }
 
-/** Zahl mit Einheit der Spalte, höchstens zwei Nachkommastellen: „3,24 h“, quadriert „10,48 h²“, ohne Einheit nur die Zahl. */
+/** Einzahl der ausgeschriebenen Einheiten im Lehrdatensatz („1 Jahr“, „1 Person“, „1 Aufgabe“); Abkürzungen wie h bleiben. */
+const SINGULAR: Record<string, string> = { Jahre: 'Jahr', Personen: 'Person', Aufgaben: 'Aufgabe', Punkte: 'Punkt', Stunden: 'Stunde' };
+
+/**
+ * Zahl mit Einheit der Spalte, höchstens zwei Nachkommastellen: „3,24 h“, quadriert „10,48 h²“, ohne Einheit nur die
+ * Zahl. Steht genau 1 da (auch −1), folgt die Einzahl: „1 Jahr“, aber „1,5 Jahre“ und „0 Jahre“.
+ */
 export function unitText(col: SampleColumn, v: number, opts: { squared?: boolean; digits?: number } = {}): string {
-  const t = num(v, opts.digits ?? 2), u = col.unit;
+  const t = num(v, opts.digits ?? 2), one = t === '1' || t === '−1', u = one ? SINGULAR[col.unit] ?? col.unit : col.unit;
   if (!u) return t;
   return opts.squared ? `${t} ${u.includes('/') ? `(${u})²` : `${u}²`}` : `${t} ${u}`;
 }

@@ -1,12 +1,23 @@
 import { near, numberReadings } from '../tasks/kit/numbers';
 
+/**
+ * Rundet auf `digits` Nachkommastellen, wie man es in der Schule lernt: eine 5 an der ersten wegfallenden Stelle
+ * rundet vom Betrag her auf, auch bei negativen Zahlen (1,125 → 1,13 und −1,125 → −1,13). Binäres Rauschen
+ * zählt nicht: 19,865 liegt im Rechner knapp darunter (19,864999…), wird aber wie die Dezimalzahl 19,865 zu 19,87.
+ * Dafür wird der Betrag zuerst auf 15 gültige Ziffern gebracht und dann über den Exponenten verschoben, nicht malgenommen.
+ */
+export function round(v: number, digits = 2): number {
+  if (!Number.isFinite(v) || v === 0) return v === 0 ? 0 : v;
+  const [mantissa, exponent = '0'] = Math.abs(v).toPrecision(15).split('e');
+  const shifted = Math.round(Number(`${mantissa}e${Number(exponent) + digits}`));
+  const r = shifted >= 1e21 ? shifted / 10 ** digits : Number(`${shifted}e${-digits}`);
+  return v < 0 && r !== 0 ? -r : r; // −0 vermeiden
+}
+
 /** Deutsche Zahl mit höchstens `digits` Nachkommastellen und echtem Minuszeichen: 3,16 · −4 · 0,5. */
 export function num(v: number, digits = 2): string {
   if (!Number.isFinite(v)) return '–';
-  const f = 10 ** digits;
-  let r = Math.round(v * f) / f;
-  if (r === 0) r = 0; // −0 vermeiden
-  return r.toLocaleString('de-DE', { maximumFractionDigits: digits }).replace('-', '−');
+  return round(v, digits).toLocaleString('de-DE', { maximumFractionDigits: digits }).replace('-', '−');
 }
 
 /** Mit Vorzeichen: +4 · −2 · 0. */
@@ -35,13 +46,22 @@ export function pct(share: number, digits = 1): string {
 /** Feste Nachkommastellen, für Werte, die nebeneinander verglichen werden: 2,70 und 3,30. */
 export function fixed(v: number, digits = 2): string {
   if (!Number.isFinite(v)) return '–';
-  const t = v.toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits }).replace('-', '−');
+  const t = round(v, digits).toLocaleString('de-DE', { minimumFractionDigits: digits, maximumFractionDigits: digits }).replace('-', '−');
   return /^−0(,0+)?$/.test(t) ? t.slice(1) : t;
 }
 
 /** Ganze Zahl mit Tausenderpunkt: 5.225. */
 export function count(v: number): string {
-  return Math.round(v).toLocaleString('de-DE');
+  return round(v, 0).toLocaleString('de-DE').replace('-', '−');
+}
+
+/**
+ * Zahl in einer Datentabelle (Tabellen-Werkzeug): deutsches Komma, echtes Minus, alle Nachkommastellen der Daten
+ * (höchstens sechs). Tausenderpunkte erst ab fünf Stellen, damit „3850“ nicht wie R-Schreibweise „3.850“ aussieht.
+ */
+export function cell(v: number): string {
+  if (!Number.isFinite(v)) return '–';
+  return round(v, 6).toLocaleString('de-DE', { maximumFractionDigits: 6, useGrouping: Math.abs(v) >= 10000 }).replace('-', '−');
 }
 
 /**
