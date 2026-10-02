@@ -9,6 +9,9 @@ import { LERNZEIT, range, rangeOf, rangeTabs, rangeWithTop } from './range';
 import { applyOp } from '../../sample';
 import { excessKurtosis, mean, median, quantile6, skewness } from './lage';
 import { FORM, formOf, formWithTop, shape, shapeTabs } from './shape';
+import { UEBERBLICK, describeCard, describeTabs, overviewOf } from './describe';
+import { CATALOG_OUTPUT } from '../../catalogOutput';
+import { sdOf } from './lage';
 
 /*
  * Referenzwerte des Bereichs B3, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -44,6 +47,15 @@ import { FORM, formOf, formWithTop, shape, shapeTabs } from './shape';
  *     # 0.9872025 1.858731 3161.44 2772 | 2.317081 13.58799 3186.44 | 4.18297 35.52917 3211.44 | 7.600467 84.98594 3261.44
  *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; G1(xx) }))      # 2.723155 2.821434
  *   G1(60 - x)                                                       # -0.1962485
+ *
+ * Deskriptiver Überblick (describe):
+ *   atlas %>% describe(lernzeit, einkommen, show = "all")            # lernzeit 7.752 7.600 3.238 … IQR 3.950; einkommen 3154.620 2772.000
+ *     # 1426.646 SE 100.879 Min 607 Max 8636 Range 8029 IQR 1864.750 Skewness 0.792 Mode 3070 Q25 2223 Q75 4087.750, N 200
+ *   atlas %>% describe(lernzeit, einkommen)                          # ohne show: Mean Median SD Range IQR Skewness N Missing
+ *   length(unique(inc)); sort(table(inc), decreasing = TRUE)[1:3]    # 197; 3070, 4549, 4917 je zweimal (Mode: kleinster)
+ *   mean(as.numeric(atlas$schulabschluss))                           # 1.985
+ *   sapply(1:200, function(k) { xx <- x; xx[k] <- 0; median(xx) })  # immer 7.6 (auch nach x + 1 bzw. 2 * x: 8.6 bzw. 15.2)
+ *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 0; mean(xx) - mean(x) }))   # -0.092 0
  */
 
 const rows = createSurvey();
@@ -124,4 +136,30 @@ test('B3 Schiefe & Kurtosis: Einkommen, Lernzeit, Regler und Auswertung wie in R
   assert.deepEqual([f.above, f.below], [97, 103]);
   assert.ok(s.kind === 'analysis' && /„Lernzeit“ ist fast symmetrisch verteilt: Die Schiefe beträgt 0,2\. Der Mittelwert 7,75 h liegt über dem Median 7,6 h\./.test(s.result({ rows, columns: { x: ['lernzeit'] } }).kurz));
   assert.ok(s.kind === 'analysis' && /läuft etwas zu großen Werten hin aus: Die Schiefe beträgt 0,79/.test(s.result({ rows, columns: { x: ['einkommen'] } }).kurz));
+});
+
+test('B3 Deskriptiver Überblick: Kennzahlen, R-Ausgabe und Vorhersagen wie in R', () => {
+  const inc = rows.map(r => r.values.einkommen), lz = rows.map(r => r.values.lernzeit), E = UEBERBLICK.einkommen;
+  const near = (a: number, b: number, tol = 1e-3) => assert.ok(close(a, b, tol), `${a} ≠ R ${b}`);
+  near(mean(inc), E.mean); near(median(inc), E.median); near(sdOf(inc), E.sd); near(quantile6(inc, 0.75) - quantile6(inc, 0.25), E.iqr);
+  near(Math.max(...inc) - Math.min(...inc), E.range); near(Math.min(...inc), E.min); near(Math.max(...inc), E.max);
+  near(sdOf(lz), UEBERBLICK.lernzeit.sd, 1e-6);
+  assert.equal(new Set(inc).size, E.distinct);
+  assert.equal(inc.filter(v => v === E.mode).length, 2);
+  assert.equal((rows.reduce((a, r) => a + r.values.schulabschluss, 0) / 200).toFixed(3), UEBERBLICK.schulabschlussMean);
+  const out = CATALOG_OUTPUT['describe:0'].output;
+  assert.match(out, /lernzeit {5}7\.752 {4}7\.600 {4}3\.238/);
+  assert.match(out, /einkommen 3154\.620 2772\.000 1426\.646 100\.879 607\.000 8636\.000 8029\.000/);
+  assert.match(out, /einkommen 1864\.750 {4}0\.792/);
+  assert.match(describeCard.bausteine[0].rechnung!, /3\.154,62 € gegen 2\.772 €, also 382,62 € Unterschied/);
+  assert.match(describeCard.bausteine[1].rechnung!, /SD 1\.426,65 €, IQR 1\.864,75 €, Range 8\.029 €/);
+  const s = describeTabs.sample!;
+  assert.ok(s.kind === 'analysis');
+  if (s.kind === 'analysis') {
+    assert.equal(s.result({ rows, columns: { x: ['lernzeit'] } }).kurz, 'Im Schnitt haben die 200 Befragten in den letzten sieben Tagen 7,75 Stunden gelernt, der Median liegt bei 7,6 Stunden. Grob gesagt liegt eine Person etwa 3,24 Stunden vom Durchschnitt entfernt; die mittlere Hälfte lernt zwischen 5,8 und 9,75 Stunden.');
+    const med0 = rows.map((_, k) => overviewOf({ rows: applyOp(rows, 'lernzeit', 'outlier', 0, k), columns: { x: ['lernzeit'] } }).median);
+    assert.ok(med0.every(m => close(m, 7.6, 1e-9)), 'Median bleibt bei 0 Stunden für jede Person');
+    const dm = rows.map((_, k) => mean(applyOp(rows, 'lernzeit', 'outlier', 0, k).map(r => r.values.lernzeit)) - mean(lz));
+    near(Math.min(...dm), -0.092, 1e-9); assert.ok(s.think[0].explain.includes('um bis zu 0,09 Stunden'));
+  }
 });
