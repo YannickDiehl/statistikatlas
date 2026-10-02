@@ -7,7 +7,7 @@ import { METHODEN_PCA } from '../../../explain/content/b14-faktoren/efa';
 import { VERTRAUEN } from '../../../explain/content/b14-faktoren/allbus';
 import { isMethoden } from '../../../explain/content/b14-faktoren/dimensionality';
 import { equalCorrelation } from '../../../explain/content/b14-faktoren/eigenvalues';
-import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useWidth, useDrag, type Picture } from './kit';
+import { Axis, Bar, clamp, DragPoint, forCard, forSentence, forWorkshop, keyStep, linear, MarkLine, useWidth, useDrag, type Picture } from './kit';
 
 const ITEM = { min: 1, max: 7 };
 
@@ -170,7 +170,43 @@ export function LoadingGrid({ rows, names, heads, title }: { rows: readonly (rea
   );
 }
 
+/**
+ * Kommunalität als Bild: die Frage als Punkt mit ihren beiden Ladungen als Koordinaten im Einheitskreis (Abstand vom
+ * Ursprung = √hⱼ²), darunter ein Balken von 0 bis 1 aus λⱼ₁², λⱼ₂² und dem Rest, der Einzigartigkeit.
+ */
+function CommunalityPicture({ l1, l2 }: { l1: number; l2: number }) {
+  const [box, W] = useWidth();
+  const side = Math.min(W - 60, 230), cx = 40 + side / 2, cy = 24 + side / 2, k = side / 2 / 1.1;
+  const X = (v: number) => cx + v * k, Y = (v: number) => cy - v * k;
+  const s1 = l1 * l1, s2 = l2 * l2, h2 = s1 + s2, over = h2 > 1 + 1e-9;
+  const barY = 24 + side + 46, L = 16, R = W - 16, bw = (v: number) => v * (R - L) / Math.max(1, h2);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={barY + 64} viewBox={`0 0 ${W} ${barY + 64}`} role="img"
+        aria-label={`Frage mit den Ladungen ${fixed(l1)} und ${fixed(l2)}: Kommunalität ${num(h2)}${over ? ', mehr als 1 und damit unmöglich' : `, Einzigartigkeit ${num(1 - h2)}`}.`}>
+        <circle className="b14-circle" cx={cx} cy={cy} r={k} />
+        <line className="xw-axis" x1={X(-1.1)} x2={X(1.1)} y1={cy} y2={cy} />
+        <line className="xw-axis" x1={cx} x2={cx} y1={Y(1.1)} y2={Y(-1.1)} />
+        <text className="xw-t" x={X(1.1)} y={cy - 8} textAnchor="end">Faktor 1</text>
+        <text className="xw-t" x={cx - 8} y={Y(1.1) + 10} textAnchor="end">Faktor 2</text>
+        <line className="b14-old" x1={X(l1)} x2={X(l1)} y1={cy} y2={Y(l2)} />
+        <line className="b14-old" x1={cx} x2={X(l1)} y1={Y(l2)} y2={Y(l2)} />
+        <line className="b14-rot" x1={cx} y1={cy} x2={X(l1)} y2={Y(l2)} />
+        <circle className="b14-point pol" cx={X(l1)} cy={Y(l2)} r={7} />
+        <text className="xw-t xw-strong" x={X(l1) + (l1 >= 0 ? 12 : -12)} y={Y(l2) + 5} textAnchor={l1 >= 0 ? 'start' : 'end'}>({fixed(l1)}; {fixed(l2)})</text>
+        <text className="xw-t" x={16} y={barY - 10}>{over ? `hⱼ² = ${num(h2)}: mehr als 1, das gibt es nicht` : `hⱼ² = ${num(h2)}, Einzigartigkeit ${num(1 - h2)}`}</text>
+        <rect className="b14-shared" x={L} y={barY} width={Math.max(0, bw(s1))} height={22} />
+        <rect className="b14-total" x={L + bw(s1)} y={barY} width={Math.max(0, bw(s2))} height={22} />
+        {!over && <rect className="b14-seg" x={L + bw(h2)} y={barY} width={Math.max(0, bw(1 - h2))} height={22} />}
+        {over && <rect className="b14-excess" x={L + bw(1)} y={barY} width={Math.max(0, bw(h2 - 1))} height={22} />}
+        <text className="xw-t" x={L} y={barY + 42}>λⱼ₁² = {num(s1)}, λⱼ₂² = {num(s2)}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b14-kommunalitaet': forSentence(p => <CommunalityPicture l1={p.values['λ₁'] ?? 0} l2={p.values['λ₂'] ?? 0} />),
   'b14-ladungen': forCard(() => <LoadingGrid rows={VERTRAUEN.rotated} names={VERTRAUEN.short} heads={['Politik', 'Kirchen']} title="Ladungen nach Varimax, ALLBUS 2023" />),
   'b14-scree': forCard(p => isMethoden(p.value ?? 0)
     ? <Scree values={METHODEN_PCA.eigen} title="Methoden-Zuversicht, Lehrdatensatz" />

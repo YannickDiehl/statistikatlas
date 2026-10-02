@@ -14,6 +14,7 @@ import { beideModelle, factorModel, factorModelTabs, METHODEN_ML } from './facto
 import { dimensionality, dimensionalityTabs } from './dimensionality';
 import { eigenvalues, eigenvaluesTabs, equalCorrelation } from './eigenvalues';
 import { loadings, loadingsTabs } from './loadings';
+import { communalityTabs, KIRCHE, kommunalitaet, NACHHER, VORHER } from './communality';
 import { VERTRAUEN } from './allbus';
 import { corMatrix } from './rechnen';
 
@@ -229,6 +230,25 @@ test('B14 Ladungen: ALLBUS-Muster und Reiter mit den Zahlen aus R', () => {
   assert.ok(close(s.value!(ctx(applyOp(rows, 'methoden1', 'reverse')))!, -0.8521855, 1e-6), 'umgepolt: −0.852 wie R');
   // In R (summary): Ladungen 0.829 bis 0.857.
   assert.deepEqual([Math.min(...METHODEN_PCA.loadings), Math.max(...METHODEN_PCA.loadings)].map(v => Math.round(v * 1000) / 1000), [0.829, 0.857]);
+});
+
+test('B14 Kommunalität: Formel als Satz und Reiter mit den Zahlen aus R', () => {
+  const k = kommunalitaet.compute(KIRCHE), v = kommunalitaet.compute(VORHER), n = kommunalitaet.compute(NACHHER);
+  assert.ok(close(k.h2, 0.866, 1e-9) && close(VERTRAUEN.communalities[3], 0.8651198, 1e-7), 'Kirche: 0,87 gerundet wie R 0.865');
+  assert.ok(close(KIRCHE['λ₁'], VERTRAUEN.rotated[3][0], 0.005) && close(KIRCHE['λ₂'], VERTRAUEN.rotated[3][1], 0.005), 'Ladungen auf zwei Stellen');
+  assert.ok(close(v.h2, 0.81, 1e-12) && close(n.h2, 0.81, 1e-12), 'vor und nach der Drehung 0,81');
+  assert.ok(close(Math.hypot(0.72, 0.54), 0.9, 1e-12), 'Drehung: gleicher Abstand vom Ursprung');
+  assert.match(kommunalitaet.interpret(k).kurz, /erfassen 87 % .* 13 % gehören ihr allein/);
+  assert.deepEqual(kommunalitaet.worked(k).map(w => w.text).slice(0, 3), ['0,14 · 0,14 ≈ 0,02.', '0,92 · 0,92 ≈ 0,85.', '0,02 + 0,85 = 0,87.']);
+  assert.match(kommunalitaet.fehler, /\(0,14 \+ 0,92\)² ≈ 1,12 statt 0,87/);
+  assert.ok(close((0.14 + 0.92) ** 2, 1.1236, 1e-9));
+  assert.match(kommunalitaet.check.diagnose(0.9), /ohne sie zu quadrieren/);
+  assert.match(kommunalitaet.interpret(kommunalitaet.compute({ 'λ₁': 1, 'λ₂': 1 })).kurz, /über 1 gibt es/);
+  const s = communalityTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = s.result(ctx());
+  assert.match(r.kurz, /bei Frage 1 73 % ihrer Streuung, 27 % gehören der Frage allein\. .* zwischen 69 und 73 %\./);
+  assert.match(r.fachlich, /Frage 1 0,73, Frage 2 0,71, Frage 3 0,69, Frage 4 0,73, Frage 5 0,71\. .* Eigenwert 3,56\./);
 });
 
 const allbusFile = process.env.ALLBUS_SAV;

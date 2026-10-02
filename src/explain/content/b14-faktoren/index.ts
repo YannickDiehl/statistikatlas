@@ -7,6 +7,7 @@ import { factorModel, factorModelTabs } from './factor-model';
 import { dimensionality, dimensionalityTabs } from './dimensionality';
 import { eigenvalues, eigenvaluesTabs } from './eigenvalues';
 import { loadings, loadingsTabs } from './loadings';
+import { communalityTabs, kommunalitaet } from './communality';
 
 export const b14Faktoren: AreaIndex = {
   explanations: {
@@ -16,6 +17,7 @@ export const b14Faktoren: AreaIndex = {
     dimensionality: { kind: 'begriff', card: dimensionality },
     eigenvalues: { kind: 'begriff', card: eigenvalues },
     loadings: { kind: 'begriff', card: loadings },
+    communality: { kind: 'satz', template: kommunalitaet },
   },
   tabs: {
     reliability: reliabilityTabs,
@@ -24,5 +26,6 @@ export const b14Faktoren: AreaIndex = {
     dimensionality: dimensionalityTabs,
     eigenvalues: eigenvaluesTabs,
     loadings: loadingsTabs,
+    communality: communalityTabs,
   },
 };
