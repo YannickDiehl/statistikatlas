@@ -3,12 +3,15 @@
 // Gemeinsame Rechnungen in ./rechnen.ts; Referenzwerte aus R in ./b09-testlogik.test.ts.
 import type { AreaIndex } from '../../types';
 import { hypothese, hypotheseTabs } from './hypothese';
+import { pruefgroesse, pruefgroesseTabs } from './pruefgroesse';
 
 export const b09Testlogik: AreaIndex = {
   explanations: {
     hypothesis: { kind: 'begriff', card: hypothese },
+    test_statistic: { kind: 'satz', template: pruefgroesse },
   },
   tabs: {
     hypothesis: hypotheseTabs,
+    test_statistic: pruefgroesseTabs,
   },
 };
