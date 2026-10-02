@@ -208,3 +208,35 @@ test('B7 Bernoulli-Verteilung: Anteil und Varianz der Weiterbildung wie in R', a
   assert.equal(flipped.k, 118); ok(flipped.v, 0.2419, 'umgepolt gleich');
   if (bernoulliTabs.sample?.kind === 'analysis') assert.match(bernoulliTabs.sample.result({ rows, columns: { x: ['weiterbildung'] } }).kurz, /^82 von 200 .* p̂ = 0,41\. Die Varianz p̂ · \(1 − p̂\) beträgt 0,24;/);
 });
+
+/*
+ * Binomialverteilung: fünf Befragte, p = 0,41
+ *   choose(5, 2); 0.41^2 * 0.59^3; dbinom(2, 5, 0.41)        # 10 0.03452421 0.3452421
+ *   5 * 0.41; 5 * 0.41 * 0.59                                # 2.05 1.2095
+ *   dbinom(2, 3, 0.5); which.max(dbinom(0:5, 5, 0.41)) - 1    # 0.375 2
+ *   binom.test(82, 200, 0.5)$p.value; binom.test(118, 200, 0.5)$p.value   # 0.01313036 0.01313036
+ *   binom.test(200, 200, 0.5)$p.value; sqrt(200 * 0.25)      # 1.244603e-60 7.071068
+ *   abs(82 - 100) / sqrt(50)                                 # 2.545584
+ *   atlas %>% binomial_test(weiterbildung, p = .5)           # Group 1 (Ja): prop = 0.410 vs 0.500, p = 0.013 *, N = 200
+ */
+test('B7 Binomialverteilung: Reihenfolgen, Wahrscheinlichkeit und Binomialtest wie in R', async () => {
+  const { binomial, binomialTabs, binFit, BIN_START } = await import('./binomial');
+  const { binomTest, dbinom, choose } = await import('./dist');
+  const s = binomial.compute(BIN_START);
+  assert.equal(s.c, 10); ok(s.one, 0.03452421, 'eine Reihenfolge'); ok(s.P, 0.3452421, 'P(X = 2)'); ok(s.e, 2.05, 'n · p'); ok(s.v, 1.2095, 'Varianz'); assert.equal(s.mode, 2);
+  assert.deepEqual(binomial.worked(s).map(w => w.text), [
+    'Zum Beispiel erst 2 Erfolge, dann 3 Misserfolge. Weil die Versuche unabhängig sind, wird malgenommen: 0,41² · 0,59³ ≈ 0,035.',
+    'Auf wie viele Arten lassen sich 2 Erfolge auf 5 Plätze verteilen? C(5, 2) = 10.',
+    '10 · 0,035 ≈ 0,35. Genau 2 von 5 kämen in etwa 35 von 100 solcher Stichproben vor.',
+  ]);
+  ok(dbinom(2, 3, 0.5), binomial.check.answer, 'Kontrollfrage'); assert.equal(choose(12, 6), 924);
+  assert.match(binomial.interpret(s).kurz, /^Bei 5 zufällig ausgewählten Personen und p = 0,41 kämen genau 2 mit Weiterbildung in etwa 35 von 100 solcher Stichproben vor\. Im Schnitt erwartest du 2,05\./);
+  ok(binomTest(82, 200, 0.5), 0.01313036, 'Binomialtest'); ok(binomTest(118, 200, 0.5), 0.01313036, 'umgepolt'); ok(binomTest(200, 200, 0.5), 1.244603e-60, 'alle', 1e-64);
+  const f = binFit({ rows, columns: { x: ['weiterbildung'] } });
+  assert.deepEqual([f.k, f.e], [82, 100]); ok(f.sd, 7.071068, 'Standardabweichung');
+  if (binomialTabs.sample?.kind === 'analysis') {
+    const r = binomialTabs.sample.result({ rows, columns: { x: ['weiterbildung'] } });
+    assert.match(r.kurz, /^82 von 200 .* im Schnitt 100, mit einer Standardabweichung von 7,07\. .* in etwa 1 von 100 Stichproben vor\./);
+    assert.match(r.zusatz!, /2,55 Standardabweichungen/);
+  }
+});

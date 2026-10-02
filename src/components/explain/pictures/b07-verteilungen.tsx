@@ -3,13 +3,14 @@
 // Eigene Stile in src/explain/areas/b07-verteilungen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { num, pct } from '../../../explain/format';
 import { baseSurvey } from '../../../explain/sample';
-import { columnStats, dchisq, dF, dnorm, dt, prob, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
+import { columnStats, dbinom, dchisq, dF, dnorm, dt, prob, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
 import { inside } from '../../../explain/content/b07-verteilungen/normal';
 import { areaText, type ZStats } from '../../../explain/content/b07-verteilungen/standard-normal';
 import { SCHLAF_T, tCrit } from '../../../explain/content/b07-verteilungen/t';
 import { CHI } from '../../../explain/content/b07-verteilungen/chi-square';
 import { ANOVA, fTail, pText } from '../../../explain/content/b07-verteilungen/f';
 import type { BernStats } from '../../../explain/content/b07-verteilungen/bernoulli';
+import type { BinStats } from '../../../explain/content/b07-verteilungen/binomial';
 import { AreaUnder, Axis, Bar, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Histogramm der Schlafdauer (halbe Stunden) mit der Normalverteilung x̄, s; markiert ist x̄ ± k · s. */
@@ -159,6 +160,24 @@ function BernoulliBars({ s }: { s: BernStats }) {
     </div>
   );
 }
+/** Binomialverteilung B(n, p): ein Balken je Zahl der Erfolge, k hervorgehoben, der Erwartungswert n · p gestrichelt. */
+function BinomialBars({ s }: { s: BinStats }) {
+  const [box, W] = useWidth();
+  const base = 196, top = 62, left = 28, right = W - 16, probs = Array.from({ length: s.n + 1 }, (_, j) => dbinom(j, s.n, s.p));
+  const X = linear([-0.5, s.n + 0.5], [left, right]), Y = linear([0, Math.max(...probs) * 1.1], [base, top]), bw = Math.max(4, (X(1) - X(0)) * 0.7);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={244} viewBox={`0 0 ${W} 244`} role="img"
+        aria-label={`Binomialverteilung mit n = ${s.n} und p = ${num(s.p)}: Wahrscheinlichkeiten für 0 bis ${s.n} Erfolge. ${s.valid ? `Hervorgehoben: genau ${s.k}, ${prob(s.P)}.` : `k = ${s.k} ist größer als n.`} Erwartungswert ${num(s.e)}.`}>
+        {probs.map((q, j) => <Bar key={j} x={X(j) - bw / 2} y={Y(q)} width={bw} height={base - Y(q)} tone={j === s.k ? 'pos' : 'plain'} selected={j === s.k} />)}
+        <MarkLine x={X(s.e)} from={top - 8} to={base} />
+        <Axis scale={X} ticks={Array.from({ length: s.n + 1 }, (_, j) => j)} at={base} from={left} to={right} labelGap={20} title="Zahl der Erfolge" />
+        <text className="xw-t xw-strong" x={left} y={16}>{s.valid ? `P(X = ${s.k}) ≈ ${prob(s.P)}` : `k = ${s.k} ist größer als n = ${s.n}`}</text>
+        <text className="xw-t" x={left} y={36}>gestrichelt: Erwartungswert {num(s.e)}</text>
+      </svg>
+    </div>
+  );
+}
 const fgText = (df: number) => `${num(df)} ${num(df) === '1' ? 'Freiheitsgrad' : 'Freiheitsgrade'}`;
 
 export const pictures: Record<string, Picture> = {
@@ -168,4 +187,5 @@ export const pictures: Record<string, Picture> = {
   'b07-chi': forCard(p => <ChiShape df={p.value ?? 4} />),
   'b07-f': forCard(p => <FTail value={p.value ?? ANOVA.f} />),
   'b07-bernoulli': forSentence(p => <BernoulliBars s={p.s as BernStats} />),
+  'b07-binomial': forSentence(p => <BinomialBars s={p.s as BinStats} />),
 };

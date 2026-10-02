@@ -7,6 +7,7 @@ import { tVerteilung, tTabs } from './t';
 import { chiQuadratVerteilung, chiTabs } from './chi-square';
 import { fVerteilung, fTabs } from './f';
 import { bernoulli, bernoulliTabs } from './bernoulli';
+import { binomial, binomialTabs } from './binomial';
 
 export const b07Verteilungen: AreaIndex = {
   explanations: {
@@ -16,6 +17,7 @@ export const b07Verteilungen: AreaIndex = {
     chi_square_distribution: { kind: 'begriff', card: chiQuadratVerteilung },
     f_distribution: { kind: 'begriff', card: fVerteilung },
     bernoulli_distribution: { kind: 'satz', template: bernoulli },
+    binomial_distribution: { kind: 'satz', template: binomial },
   },
   tabs: {
     normal_distribution: normalTabs,
@@ -24,5 +26,6 @@ export const b07Verteilungen: AreaIndex = {
     chi_square_distribution: chiTabs,
     f_distribution: fTabs,
     bernoulli_distribution: bernoulliTabs,
+    binomial_distribution: binomialTabs,
   },
 };
