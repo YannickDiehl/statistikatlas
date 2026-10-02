@@ -10,6 +10,7 @@ import { zstats } from './shared';
 import { zentrieren, bridgeZentrieren } from './zentrieren';
 import { standardisieren, bridgeStandardisieren } from './standardisieren';
 import { ssOf, tabsSs } from './ss';
+import { LERNZEIT, proTag, skalieren, tabsScaling } from './skalieren';
 
 /*
  * Referenzwerte des Bereichs B4 „Umformen“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -46,6 +47,12 @@ import { ssOf, tabsSs } from './ss';
  *   sum(((2 * x) - mean(2 * x))^2)                                           # 8343.278 = 4 · 2085.82
  *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; sum((xx - mean(xx))^2) - sum(q) }))   # 924.2424 1034.792
  *   atlas %>% describe(lernzeit, show = c("mean", "var"))                    # Mean 7.752, Variance 10.482, N 200
+ * Skalieren (Lernzeit pro Tag):
+ *   mean(x); sd(x); var(x)                                                  # 7.7515 3.237515 10.48150
+ *   mean(x / 7); sd(x / 7); var(x / 7); max(x) / 7                           # 1.107357 0.4625022 0.2139083 2.628571 (P175)
+ *   8.3 / 7; mean(x / sd(x)); sd(x / sd(x))                                  # 1.185714; 2.394274; 1
+ *   mean((2 * x) / 7); mean((x + 7) / 7) - mean(x / 7)                       # 2.214714; 1
+ *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; mean(xx / 7) - mean(x / 7) }))   # 0.01542857 0.02857143
  */
 
 const rows = createSurvey();
@@ -125,4 +132,25 @@ test('B4 Quadratsumme: Reiter mit den 200 Befragten wie in R', () => {
   const deltas = rows.map((_, k) => ssOf({ rows: applyOp(rows, 'lernzeit', 'outlier', 40, k), columns: c.columns }).ss - s.ss);
   assert.ok(close(Math.min(...deltas), 924.2424, 1e-3) && close(Math.max(...deltas), 1034.792, 1e-3), 'Ausreißer wie in R');
   assert.match(sample.think[2].explain, /um 924 bis 1\.035 h²/);
+});
+
+test('B4 Skalieren: Lernzeit pro Tag wie in R', () => {
+  const c = { rows, columns: { x: ['lernzeit'] } }, t = proTag(c);
+  assert.ok(close(t.mean, LERNZEIT.mean, 1e-9) && close(t.sd, LERNZEIT.sd, 1e-6) && close(t.variance, LERNZEIT.variance, 1e-6), 'Konstanten aus den Daten');
+  assert.ok(close(t.day, 1.107357, 1e-6) && close(t.sdDay, 0.4625022, 1e-6) && close(t.varDay, 0.2139083, 1e-6), 'pro Tag wie in R');
+  assert.equal(rows[t.top].id, 'P175');
+  const s = skalieren.compute(skalieren.initial);
+  assert.ok(close(s.xs, 1.185714, 1e-6) && close(s.meanS, 1.107357, 1e-6), 'Startwerte');
+  assert.equal(skalieren.interpret(s).kurz, 'Bei a = 7 rechnest du Stunden in sieben Tagen in Stunden pro Tag um. Eine Person mit 8,3 Stunden lernt etwa 1,19 Stunden pro Tag.');
+  assert.ok(close(LERNZEIT.mean / LERNZEIT.sd, 2.394274, 1e-6));
+  assert.match(skalieren.think.explain, /7,75 \/ 3,24 ≈ 2,39/);
+  assert.match(skalieren.check.diagnose(3), /^Fast! Das ist das alte s/);
+  const sample = tabsScaling.sample!;
+  if (sample.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = sample.result(c);
+  assert.equal(r.kurz, 'Pro Tag lernen die 200 Befragten im Schnitt 1,11 Stunden. Die Streuung schrumpft im selben Verhältnis: von 3,24 auf 0,46 Stunden.');
+  assert.equal(r.zusatz, 'Die Reihenfolge bleibt: Wer in sieben Tagen am meisten lernt (P175, 18,4 h), lernt auch pro Tag am meisten (2,63 h).');
+  const deltas = rows.map((_, k) => proTag({ rows: applyOp(rows, 'lernzeit', 'outlier', 40, k), columns: c.columns }).day - t.day);
+  assert.ok(close(Math.min(...deltas), 0.01542857, 1e-6) && close(Math.max(...deltas), 0.02857143, 1e-6), 'Ausreißer wie in R');
+  assert.ok(close(proTag({ rows: applyOp(rows, 'lernzeit', 'shift', 7), columns: c.columns }).day - t.day, 1, 1e-9));
 });

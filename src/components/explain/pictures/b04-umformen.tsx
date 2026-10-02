@@ -4,7 +4,8 @@
 import type { KeyboardEvent } from 'react';
 import { num, signed } from '../../../explain/format';
 import type { ZStats } from '../../../explain/content/b04-umformen/shared';
-import { DragPoint, forWorkshop, keyStep, linear, useDrag, useWidth, clamp, type Bounds, type Picture } from './kit';
+import { LERNZEIT } from '../../../explain/content/b04-umformen/skalieren';
+import { DragPoint, forSentence, forWorkshop, keyStep, linear, useDrag, useWidth, clamp, type Bounds, type Picture } from './kit';
 
 /** Gut lesbare Abstände für Striche (1, 2, 5 mal Zehnerpotenz), etwa `count` Stück über `span`. */
 function niceStep(span: number, count = 5): number {
@@ -85,7 +86,39 @@ function Lineale({ values, s, step, who, names, bounds, mode, onChange, onWho }:
   );
 }
 
+/**
+ * Teilen durch a: oben das Lineal in Stunden mit der Mitte der 200 Befragten und dem Wert am Regler, darunter dasselbe
+ * Lineal in der neuen Einheit. Die Punkte bleiben stehen; die Beschriftung wird durch a geteilt.
+ */
+function Teilen({ x, a }: { x: number; a: number }) {
+  const [box, W] = useWidth();
+  const top = Math.max(20, Math.ceil(x / 5) * 5), left = 24, right = W - 24, X = linear([0, top], [left, right]);
+  const r1 = 66, r2 = 136, H = 170;
+  const oldMarks = ticksBetween(0, top, niceStep(top, 4)).map(v => ({ x: X(v), label: num(v) }));
+  const newMarks = ticksBetween(0, top / a, niceStep(top / a, 4)).map(t => ({ x: X(t * a), label: num(t) }));
+  const m = LERNZEIT.mean, xs = X(Math.min(x, top));
+  const tag = (px: number, y: number, label: string, strong = false) => <text className={`xw-t xw-halo${strong ? ' xw-strong' : ''}`} x={Math.min(right - 30, Math.max(left + 30, px))} y={y} textAnchor="middle">{label}</text>;
+  const unitTitle = Math.abs(a - 7) < 1e-9 ? 'Stunden pro Tag' : `geteilt durch a = ${num(a)}`;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Zwei Lineale: oben Stunden in sieben Tagen, unten ${unitTitle}. Die Mitte ${num(m)} h liegt unten bei ${num(m / a)}, der Wert ${num(x)} h bei ${num(x / a)}.`}>
+        <line className="xw-mean" x1={X(m)} x2={X(m)} y1={18} y2={r2 + 4} />
+        <line className="b04-reading" x1={xs} x2={xs} y1={r1} y2={r2} />
+        <Ruler y={r1} from={left} to={right} marks={oldMarks} title="Stunden in sieben Tagen" />
+        <Ruler y={r2} from={left} to={right} marks={newMarks} title={unitTitle} />
+        {tag(X(m), 14, `x̄: ${num(m)} h oben, ${num(m / a)} unten`)}
+        {tag(xs, r1 - 8, num(x), true)}
+        {tag(xs, r2 - 8, num(x / a), true)}
+        <circle className="xw-s-dot sel" cx={xs} cy={r1} r={5.5} />
+        <circle className="xw-s-dot sel" cx={xs} cy={r2} r={5.5} />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b04-skalieren': forSentence(p => <Teilen x={p.values.x} a={p.values.a} />),
   'b04-zentrieren': forWorkshop(p => <Lineale values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} mode="centering" onChange={p.setData} onWho={p.pickWho} />),
   'b04-standardisieren': forWorkshop(p => <Lineale values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} mode="z" onChange={p.setData} onWho={p.pickWho} />),
 };
