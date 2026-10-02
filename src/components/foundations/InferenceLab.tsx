@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { normalPDF,normalTest } from '../../domain/foundations/probability';
 import { LabFrame,Plot,Slider,fmt } from './Charts';
+/** „p < 0,001“ oder „p = 0,03“: Das Zeichen gehört zur Angabe, nie „p = < 0,001“. */
+export const pLabel=(p:number)=>p<.001?'p < 0,001':`p = ${fmt(p)}`;
 export function InferenceLab(){
  const [observed,setObserved]=useState(.3),[n,setN]=useState(40),[sigma,setSigma]=useState(1),[alpha,setAlpha]=useState(.05),[side,setSide]=useState<'two'|'greater'|'less'>('two'),[effect,setEffect]=useState(.3);
  const validAlternative=side==='two'?effect!==0:side==='greater'?effect>0:effect<0;
@@ -10,7 +12,7 @@ export function InferenceLab(){
  <label className="foundation-select">Vorab gewählte Alternative<select value={side} onChange={e=>setSide(e.target.value as typeof side)}><option value="two">μ ≠ 0 (zweiseitig)</option><option value="greater">μ &gt; 0 (rechtsseitig)</option><option value="less">μ &lt; 0 (linksseitig)</option></select></label>
  <Slider label="Signifikanzniveau α" min={.01} max={.1} step={.01} value={alpha} onChange={setAlpha}/>
  <Plot points={points} title="Nullverteilung: schattierte Fläche ergibt den p-Wert" xLabel="Prüfgröße z unter H₀" shade={x=>side==='two'?Math.abs(x)>=Math.abs(r.z):side==='greater'?x>=r.z:x<=r.z} markers={[{x:r.z,label:'beobachtet'}]}/>
- <div className="lab-result" aria-live="polite"><span>SE = σ / √n = {fmt(r.se)}</span><span>z = (x̄ − 0) / SE = {fmt(r.z)}</span><strong>p = {r.p<.001?'< 0,001':fmt(r.p)}</strong><span>{r.p<=alpha?'H₀ nach dieser Regel verwerfen':'H₀ nach dieser Regel nicht verwerfen'}</span></div>
+ <div className="lab-result" aria-live="polite"><span>SE = σ / √n = {fmt(r.se)}</span><span>z = (x̄ − 0) / SE = {fmt(r.z)}</span><strong>{pLabel(r.p)}</strong><span>{r.p<=alpha?'H₀ nach dieser Regel verwerfen':'H₀ nach dieser Regel nicht verwerfen'}</span></div>
  <p>Kritischer Bereich: {side==='two'?`|z| ≥ ${fmt(r.critical)}`:side==='greater'?`z ≥ ${fmt(r.critical)}`:`z ≤ ${fmt(-r.critical)}`}. Der beobachtete p-Wert und die vorab gewählte Schwelle α haben verschiedene Rollen.</p>
  <p>Zweiseitiges {fmt((1-alpha)*100,0)}-%-Intervall: <strong>[{fmt(r.low)}; {fmt(r.high)}]</strong>. {side!=='two'&&'Dieses zweiseitige Intervall ist nicht die zum einseitigen Test gehörende Grenze.'}</p>
  <details><summary>Fehlerwahrscheinlichkeiten und Power</summary><Slider label="Angenommener wahrer Mittelwert μ" min={-1} max={1} step={.02} value={effect} onChange={setEffect}/><div className="lab-result"><strong>{validAlternative?'Power':'Ablehnungswahrscheinlichkeit'} = {fmt(r.power*100,1)} %</strong>{validAlternative&&<span>β = {fmt((1-r.power)*100,1)} %</span>}{!validAlternative&&<span>{effect===0?'Hier gilt die Nullhypothese. Die Ablehnungswahrscheinlichkeit ist α.':'Dieser Wert liegt außerhalb der gewählten Alternative; hier bezeichnen wir das Ergebnis nicht als Power oder β.'}</span>}</div><p>Die Power bezieht sich auf den hier angenommenen wahren Effekt, nicht auf den beobachteten Mittelwert. Unter μ = 0 beträgt die Ablehnungswahrscheinlichkeit α = {fmt(alpha*100,0)} %.</p><table className="foundation-table"><thead><tr><th>Entscheidung</th><th>H₀ gilt</th><th>Gewählte Alternative gilt</th></tr></thead><tbody><tr><th>Verwerfen</th><td>Fehler I: α</td><td>Power: 1−β</td></tr><tr><th>Nicht verwerfen</th><td>1−α</td><td>Fehler II: β</td></tr></tbody></table></details>
