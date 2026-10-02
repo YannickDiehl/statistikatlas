@@ -1,3 +1,6 @@
 /* Bereich B10 „Mittelwerte vergleichen“: Stile der Bilder in src/components/explain/pictures/b10-mittelwerte.tsx. */
 .b10-dot{fill:var(--ink);stroke:var(--paper);stroke-width:1}
 .b10-dot.sel{fill:var(--green)}
+.b10-group{fill:var(--wash);opacity:.55}
+.b10-dev{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:3 3}
+.b10-dev.sel{stroke:var(--ink);stroke-width:2.5;stroke-dasharray:none}

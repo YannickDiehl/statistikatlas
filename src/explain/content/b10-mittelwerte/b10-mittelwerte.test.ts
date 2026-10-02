@@ -22,6 +22,8 @@ import { dfText, lilliefors, often, pText, sig3, welchFor } from './stats';
 import { tTestSentence, VERTRAUEN, welchFromSummary } from './t-test';
 import { paarWerkstatt, pairedStats } from './paired-difference';
 import { pairedDesign, sdForR, tForR, WISSEN } from './paired-design';
+import { anovaStats, anovaWerkstatt } from './anova';
+import { anovaFor } from './stats';
 import { pairedFor } from './stats';
 import { txt } from '../../types';
 
@@ -197,6 +199,60 @@ test('Verbundene Messungen: Zahlen der Karte, Regler und Reiter wie in R', () =>
     assert.match(r.kurz, /von \+0,75 Aufgaben 5,6 Standardfehler groß\. Als zwei fremde Gruppen gerechnet sind es nur 2,27/);
     assert.match(r.fachlich, /t\(199\) ≈ 5,6, p < 0,001\. .* t ≈ 2,27 bei 393,1 Freiheitsgraden, p ≈ 0,024\. .* r ≈ 0,84/);
   }
+});
+
+/*
+ * Streuung zwischen und innerhalb, einfaktorielle ANOVA (Werkstatt), neun Beispielpersonen in drei Gruppen:
+ *   g <- factor(rep(1:3, each = 3))
+ *   anova(lm(c(4, 5, 6, 6, 7, 8, 8, 9, 10) ~ g))   # Sum Sq 24, 6; Mean Sq 12, 1; F 12; Pr(>F) 0.008; SS_T 30
+ *   anova(lm(c(2, 5, 8, 4, 7, 10, 6, 9, 12) ~ g))  # Sum Sq 24, 54; Mean Sq 12, 9; F 1.333333; Pr(>F) 0.3318161; SS_T 78
+ *   anova(lm(c(5, 7, 9, 6, 7, 8, 7, 7, 7) ~ g))    # Sum Sq 0, 10; Mean Sq 0, 1.666667; F 0; Pr(>F) 1
+ *   tibble(x = c(4, 5, 6, 6, 7, 8, 8, 9, 10), g = rep(1:3, each = 3)) %>% oneway_anova(x, group = g)   # F(2, 6) = 12.000, p = 0.008, eta2 = 0.800
+ * Lehrdatensatz, Lernzeit nach Schulabschluss (Reiter):
+ *   atlas %>% oneway_anova(lernzeit, group = schulabschluss) %>% summary()
+ *   # Between 313.983 (313.9825199), Within 1771.837 (1771.83703), Total 2085.820; Mean Square 78.496, 9.086;
+ *   # F = 8.639 (8.638857629), Sig < .001 (1.936849e-06); Welch 8.254 (8.253709138), df2 96.702, p 9.043868e-06; eta2 0.151 (0.1505320)
+ *   # Gruppenmittel 5.883 6.950 7.946 8.707 9.355; N je Gruppe 37 bis 42
+ *   anova(lm(2 * lernzeit ~ factor(schulabschluss)))   # Sum Sq zwischen 1255.93008 (4 · 313.98), F 8.638858
+ *   anova(lm((60 - lernzeit) ~ factor(schulabschluss)))  # Sum Sq zwischen 313.9825, F 8.638858
+ */
+test('Streuung zwischen und innerhalb und einfaktorielle ANOVA: die neun Beispielpersonen wie in R', () => {
+  const [klar, streut, gleich] = anovaWerkstatt.presets.map(p => anovaStats(p.data));
+  assert.deepEqual([klar.ssB, klar.ssW, klar.ssT, klar.msB, klar.msW, klar.F], [24, 6, 30, 12, 1, 12]);
+  near(klar.p!, 0.008, 1e-9, 'p klar');
+  assert.deepEqual([streut.ssB, streut.ssW, streut.ssT, streut.msB, streut.msW], [24, 54, 78, 12, 9]);
+  near(streut.F!, 1.333333, 1e-6, 'F streut'); near(streut.p!, 0.3318161, 1e-7, 'p streut');
+  near(gleich.ssB, 0, 1e-12, 'SS_B gleich'); assert.equal(gleich.ssW, 10); near(gleich.msW, 1.666667, 1e-6, 'MS_W gleich'); assert.equal(gleich.F, 0); near(gleich.p!, 1, 1e-12, 'p gleich');
+  const at = (s: typeof klar, who = 4) => ({ s, who, names: anovaWerkstatt.names });
+  assert.equal(txt(anovaWerkstatt.steps[1].rechnung, at(klar)), 'Person M2: (7 − 7)² = 0. Alle neun: 3 · (5 − 7)² + 3 · (7 − 7)² + 3 · (9 − 7)² = 24.');
+  assert.equal(txt(anovaWerkstatt.steps[3].rechnung, at(gleich)), 'MS_B = 0 / 2 = 0. MS_W = 10 / 6 ≈ 1,67.');
+  assert.equal(txt(anovaWerkstatt.steps[4].rechnung, at(streut)), 'F = 12 / 9 ≈ 1,33.');
+  assert.match(anovaWerkstatt.variants.group_variation.interpret(at(klar)).kurz, /\(30\) liegen 24, also 80 %, zwischen den Gruppen/);
+  assert.match(anovaWerkstatt.variants.group_variation.interpret(at(streut)).kurz, /\(78\) liegen 24, also 30,8 %/);
+  assert.match(anovaWerkstatt.variants.oneway_anova.interpret(at(klar)).kurz, /12-mal so groß .* in weniger als 1 von 100 Stichproben zu erwarten \(p ≈ 0,008\)/);
+  assert.match(anovaWerkstatt.variants.oneway_anova.interpret(at(streut)).kurz, /1,33-mal so groß .* in etwa 33 von 100 Stichproben zu erwarten \(p ≈ 0,33\)/);
+  // Diagnosen: jede Gruppe nur einmal gezählt (8 statt 24), durch N − 1 geteilt (6 / 8), Kehrwert von F.
+  assert.match(anovaWerkstatt.steps[1].check.diagnose(at(klar), 8)!, /nur einmal gezählt/);
+  assert.match(anovaWerkstatt.steps[3].check.diagnose(at(klar), 0.75)!, /durch 8 geteilt/);
+  assert.match(anovaWerkstatt.steps[4].check.diagnose(at(klar), 1 / 12)!, /Andersherum/);
+  // Denkfrage „alle Gruppen auf eine Mitte“: F wird 0.
+  assert.equal(anovaStats(anovaWerkstatt.think[0].tryIt!.apply(anovaWerkstatt.presets[0].data)).F, 0);
+});
+
+test('Einfaktorielle ANOVA: Lernzeit nach Schulabschluss im Reiter wie in R', () => {
+  const c = ctx({ x: 'lernzeit', group: 'schulabschluss' }), a = anovaFor(c)!;
+  near(a.ssBetween, 313.9825199, 1e-6, 'SS_B'); near(a.ssWithin, 1771.83703, 1e-5, 'SS_W'); near(a.F!, 8.638857629, 1e-8, 'F'); near(a.p!, 1.936848652e-6, 1e-12, 'p');
+  near(a.eta2, 0.1505319671, 1e-9, 'eta2'); near(a.welch.F, 8.253709138, 1e-8, 'Welch F'); near(a.welch.df2, 96.70170836, 1e-6, 'Welch df2');
+  near(anovaFor(ctx({ x: 'lernzeit', group: 'schulabschluss' }, applyOp(rows, 'lernzeit', 'double')))!.ssBetween, 1255.93008, 1e-4, 'doppelt: SS_B');
+  near(anovaFor(ctx({ x: 'lernzeit', group: 'schulabschluss' }, applyOp(rows, 'lernzeit', 'reverse')))!.F!, 8.638857629, 1e-8, 'umgepolt: F');
+  const one = b10Mittelwerte.tabs.oneway_anova.sample!, gv = b10Mittelwerte.tabs.group_variation.sample!;
+  if (one.kind === 'analysis') {
+    const r = one.result(c);
+    assert.match(r.kurz, /5,88 Stunden \(ohne Schulabschluss\) bis 9,36 Stunden \(Abitur\)\. .* 8,64-mal so groß .*\(p < 0,001\)/);
+    assert.match(r.fachlich, /F\(4, 195\) ≈ 8,64, p < 0,001, η² ≈ 0,15\. Welch-ANOVA ohne gleiche Varianzen: F ≈ 8,25 bei 4 und 96,7 Freiheitsgraden/);
+    assert.match(r.zusatz!, /zwischen 37 und 42 Befragte/);
+  }
+  if (gv.kind === 'analysis') assert.match(gv.result(c).kurz, /\(2\.085,82 h²\) liegen 313,98 h², also 15,1 %/);
 });
 
 // Damit der Import genutzt wird, auch wenn spätere Begriffe ihn brauchen.
