@@ -175,6 +175,30 @@ test('every registered explanation renders through Explanation in Ausführlich a
   }
 });
 
+test('think questions and try-it buttons follow the variant filter of a shared workshop (IB30)', () => {
+  const erwartung = WORKSHOPS.find(w => w.id === 'erwartung')!;
+  const shown = (variant: string) => text(renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: erwartung, variant, onConcept: noop })));
+  const e = shown('expectation'), pv = shown('population_variance');
+  assert.ok(e.includes('Was passiert mit μ?') && e.includes('mit 0,2 und nicht mit 0,25') && !e.includes('Was passiert mit σ²?') && !e.includes('durch 4 wie bei der Stichprobenvarianz'), 'Karte Erwartungswert ohne Fragen zur Streuung');
+  assert.ok(pv.includes('Was passiert mit σ²?') && pv.includes('durch 4 wie bei der Stichprobenvarianz') && !pv.includes('mit 0,2 und nicht mit 0,25'), 'Karte Populationsvarianz mit ihren Fragen');
+  // Ein Filter in einer Testkopie: Frage nur für sd, Ausprobieren nur für variance.
+  const streuung = WORKSHOPS.find(w => w.id === 'streuung')!, t0 = streuung.think.find(t => t.tryIt)!;
+  const copy = { ...streuung, think: [{ ...t0, questionFor: undefined, question: 'Nur für s?', onlyFor: ['sd'] }, { ...t0, questionFor: undefined, question: 'Ausprobieren nur bei s²?', tryFor: ['variance'] }] };
+  modeStore.set('ausfuehrlich');
+  const sd = renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: copy, variant: 'sd', onConcept: noop }));
+  const variance = renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: copy, variant: 'variance', onConcept: noop }));
+  assert.ok(text(sd).includes('Nur für s?') && !text(variance).includes('Nur für s?'), 'onlyFor');
+  assert.ok(text(variance).includes('Ausprobieren nur bei s²?') && text(sd).includes('Ausprobieren nur bei s²?'), 'tryFor blendet die Frage nicht aus');
+});
+
+test('the work table names its first column after the rows, and the tab counts people only when the rows are people (IB14, IB31)', () => {
+  const anpassung = WORKSHOPS.find(w => w.id === 'b12-anpassung')!, erwartung = WORKSHOPS.find(w => w.id === 'erwartung')!;
+  assert.ok(renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: anpassung, variant: 'chisq_gof', onConcept: noop })).includes('<th scope="col">Abschluss</th>'), 'Kopf der ersten Spalte');
+  assert.ok(renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: erwartung, variant: 'expectation', onConcept: noop })).includes('<th scope="col">Person</th>'), 'ohne rowHead „Person“');
+  assert.equal(tabList(explainFor('chisq_gof'), tabsFor('chisq_gof')!)[0].label, 'Verstehen', 'Zeilen sind Abschlüsse');
+  assert.equal(tabList(explainFor('expectation'), tabsFor('expectation')!)[0].label, 'Verstehen (5 Personen)', 'eigener dataNote, aber Personen');
+});
+
 test('the data note counts the example people or uses the workshop note', () => {
   const mittel = WORKSHOPS.find(w => w.id === 'mittel')!;
   assert.ok(text(renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: mittel, variant: 'mean', onConcept: noop }))).includes('Fünf Beispielpersonen. Die Punkte im Bild lassen sich ziehen.'));
@@ -242,7 +266,9 @@ test('tabs: four for sd, three for recode, Weiter for every concept with tabs, n
     assert.deepEqual(names, tabList(explainFor(id), tabs).map(t => t.label), id);
     assert.equal(names.at(-1), 'Weiter', `${id}: Reiter „Weiter“ fehlt`);
     assert.deepEqual(tabNames(compact), names, `${id}: Kompakt zeigt andere Reiter`);
-    assert.ok(text(compact).length < text(full).length, `${id}: Kompakt ist nicht kürzer`);
+    // Schrittkarten sind immer vollständig (eine Lernkarte); nur ihr Reiter „Weiter“ kommt dazu (Ruling IB19).
+    if (!STEP_CARD_IDS.includes(id)) assert.ok(text(compact).length < text(full).length, `${id}: Kompakt ist nicht kürzer`);
+    else assert.ok(text(full).includes('Werkstatt öffnen'), `${id}: Schrittkarte im Reiter „Verstehen“`);
     // ARIA-Muster „Tabs“: ein gewählter Reiter mit Fokus, alle Panels eingehängt, nur eines sichtbar.
     assert.equal((full.match(/role="tablist"/g) ?? []).length, 1);
     assert.equal((full.match(/aria-selected="true"/g) ?? []).length, 1);
@@ -332,6 +358,27 @@ test('In R: Anderer Aufruf lists the own calls of the concept beside a foreign l
   assert.ok(plain(panelOf(inspector('loadings'), 'loadings', 'r')).includes('summary(ergebnis)'), 'loadings: summary(ergebnis)');
   // IB29: Zahlen mit führendem Punkt und kleine Werte mit zwei gültigen Ziffern.
   assert.deepEqual(['3.238', '.021', '0.013', '<.001', '0.5'].map(asNumber), ['3,24', '0,021', '0,013', null, '0,5']);
+});
+
+test('tabs: one reset button in the sample tab, step cards keep h1 → h2 → h3, legacy labs collapsed under Weitere Übung (IB15, IB16, IB3)', () => {
+  const changed = applyOp(surveyRows, 'lernzeit', 'outlier', 40, 1);
+  for (const id of ['linear', 'ss', 'crosstab', 'validn', 'series']) {
+    const panel = panelOf(inspector(id, { rows: changed }), id, 'sample');
+    assert.equal((panel.match(/>Ausgangsdaten wiederherstellen<\/button>/g) ?? []).length, 1, `${id}: genau ein Knopf „Ausgangsdaten wiederherstellen“`);
+  }
+  for (const id of ['sum', 'ss', 'add', 'sqrt']) {
+    const html = inspector(id), levels = [...html.matchAll(/<h([1-6])[\s>]/g)].map(m => Number(m[1]));
+    const jump = levels.findIndex((n, i) => i > 0 && n > levels[i - 1] + 1);
+    assert.equal(jump, -1, `${id}: Überschriftenebene übersprungen (${levels.join(' ')})`);
+  }
+  assert.ok(tabsFor('add')?.next && tabNames(inspector('add')).includes('Weiter'), 'Schrittkarte add mit Reiter „Weiter“');
+  // Bisherige Übungen (FactorLab, SamplingLab …) unter einer neuen Erklärung: zugeklappt am Ende von „Verstehen“.
+  for (const id of ['loadings', 'sampling_distribution', 'confidence']) {
+    const v = panelOf(inspector(id), id, 'verstehen');
+    assert.match(v, /<details class="xw-more xw-practice"><summary>Weitere Übung<\/summary>/, `${id}: „Weitere Übung“ fehlt`);
+    assert.ok(v.indexOf('Weitere Übung') > v.lastIndexOf('Genau genommen'), `${id}: „Weitere Übung“ steht nicht am Ende`);
+    assert.equal((v.match(/class="foundation-lab"/g) ?? []).length, (v.match(/xw-practice/g) ?? []).length > 0 ? (v.match(/class="foundation-lab"/g) ?? []).length : 0);
+  }
 });
 
 test('tabs: rank routes (Spearman through Pearson with ranks) keep the old layout with rank-based numbers', () => {

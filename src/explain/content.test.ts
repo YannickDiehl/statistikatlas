@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { conceptById, concepts } from '../domain/concepts';
-import { txt, type AnySentence, type ConceptCard, type Ctx, type FNode, type TableTool, type Workshop } from './types';
+import { thinkFor, txt, type AnySentence, type ConceptCard, type Ctx, type FNode, type TableTool, type Workshop } from './types';
 import { EXPLANATIONS, WORKSHOPS, explainFor, mergeAreas, stepCardFor, tabsFor, requestStep, takeStep } from './registry';
 import { styleProblems } from './style';
 import { mittel } from './content/mittel';
@@ -120,11 +120,16 @@ test('every workshop text resolves for every preset, variant and person and foll
     Object.values(w.variants).forEach(v => { if (v.next) { concept(`${w.id} weiter`, v.next.id); clean(`${w.id} weiter`, v.next.label); } });
     w.presets.forEach(p => clean(`${w.id} Voreinstellung`, p.label));
     Object.values(w.captions).forEach(cap => clean(`${w.id} Bildunterschrift`, cap!));
+    for (const v of Object.keys(w.variants)) assert.ok(thinkFor(w.think, v).length >= 1, `${w.id}/${v}: keine Denkfrage für diesen Begriff`);
     w.think.forEach(t => {
       clean(`${w.id} Denkfrage kurz`, t.kurz, KURZ); clean(`${w.id} Denkfrage`, t.question);
       Object.values(t.questionFor ?? {}).forEach(q => clean(`${w.id} Denkfrage`, q));
       t.options.forEach(o => clean(`${w.id} Antwort`, o));
       assert.ok(t.correct >= 0 && t.correct < t.options.length);
+      // Variantenfilter (IB30): nur Begriffe dieser Werkstatt; tryFor nur mit Ausprobieren.
+      for (const v of [...(t.onlyFor ?? []), ...(t.tryFor ?? []), ...Object.keys(t.questionFor ?? {}), ...Object.keys(t.stepFor ?? {})])
+        assert.ok(w.variants[v], `${w.id}: Denkfrage „${t.question}“ nennt den Begriff „${v}“, den die Werkstatt nicht erklärt`);
+      if (t.tryFor) assert.ok(t.tryIt, `${w.id}: tryFor ohne Ausprobieren`);
       if (t.tryIt) {
         clean(`${w.id} Ausprobieren`, t.tryIt.label);
         for (const preset of w.presets) {

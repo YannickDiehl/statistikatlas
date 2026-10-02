@@ -96,7 +96,8 @@ export const erklaerteVarianz: SentenceTemplate<R2Values, R2Stats> = {
 
 export const erklaerteVarianzTabs: ConceptTabs = {
   sample: {
-    kind: 'analysis',
+    // Feste Spalten (IB32): Die Vorhersagen sprechen von Stunden und Aufgaben und gelten nur für diese beiden Spalten.
+    kind: 'analysis', columns: { x: 'lernzeit', y: 'wissenstest' },
     kurz: 'Dieselbe Frage mit allen 200 Befragten: Welchen Anteil der Streuung erfasst die Gerade?',
     value: c => lineFor(c).fit.r2,
     result: c => {

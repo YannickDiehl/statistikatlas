@@ -25,3 +25,5 @@ function FoundationLabImpl({id,rows,selection}:{id:string;rows?:SurveyRow[];sele
 }
 
 export const FoundationLab=memo(FoundationLabImpl);
+/** Ob es für den Begriff eine bisherige Übung gibt (für die zugeklappte „Weitere Übung“ unter neuen Erklärungen, IB3). FoundationLabImpl ruft keine Hooks auf. */
+export const hasFoundationLab=(id:string,rows?:SurveyRow[],selection?:ColumnSelection)=>FoundationLabImpl({id,rows,selection})!==null;

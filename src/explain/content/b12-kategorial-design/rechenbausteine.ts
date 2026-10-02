@@ -14,10 +14,9 @@ export const STEP_CARDS: NonNullable<AreaIndex['stepCards']> = {
 };
 
 /**
- * Reiter „Weiter“ für die sechs Schrittkarten, fertig geschrieben, aber noch nicht eingetragen: Eine Schrittkarte zeigt
- * in Ausführlich und Kompakt dasselbe, und render.test.ts verlangt für jeden Begriff mit Reitern, dass Kompakt kürzer ist.
- * Bis das Fundament Schrittkarten mit Reitern erlaubt, zeigt der Inspector für sie die bisherigen Bezüge
- * („Von hier aus weiter“), wie bei den Schrittkarten des Pilots. Der Bereichstest prüft Ton und Ziele dieser Sätze.
+ * Reiter „Weiter“ für die sechs Schrittkarten, eingetragen im Index (Ruling IB19): Eine Schrittkarte zeigt in Ausführlich
+ * und Kompakt dasselbe; render.test.ts nimmt Schrittkarten deshalb von „Kompakt kürzer“ aus. Der Bereichstest prüft Ton
+ * und Ziele dieser Sätze.
  */
 export const STEP_TABS: Record<string, ConceptTabs> = {
   add: {

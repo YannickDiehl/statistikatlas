@@ -9,7 +9,7 @@ import { mcnemarTest, mcnemarTabs } from './mcnemar-test';
 import { confounding, confoundingTabs } from './confounding';
 import { causality, causalityTabs } from './causality';
 import { randomAssignment, randomAssignmentTabs } from './random-assignment';
-import { STEP_CARDS } from './rechenbausteine';
+import { STEP_CARDS, STEP_TABS } from './rechenbausteine';
 import { zaehlen, zaehlenTabs } from './count';
 import { streuen, streuenTabs } from './positive-sd';
 
@@ -37,6 +37,8 @@ export const b12KategorialDesign: AreaIndex = {
     random_assignment: randomAssignmentTabs,
     count: zaehlenTabs,
     positive_sd: streuenTabs,
+    // Schrittkarten mit dem Reiter „Weiter“ (Ruling IB19); render.test nimmt sie von „Kompakt kürzer“ aus.
+    ...STEP_TABS,
   },
   stepCards: STEP_CARDS,
 };

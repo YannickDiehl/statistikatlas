@@ -86,6 +86,21 @@ export interface Think<D, S> {
   explain: Text<S>;
   kurz: string;
   tryIt?: { label: string; apply: (d: D) => D };
+  /**
+   * Nur für diese Begriffe der Werkstatt zeigen (IB30), etwa eine Frage zu σ² nur auf der Karte Populationsvarianz.
+   * Ohne Angabe für alle.
+   */
+  onlyFor?: string[];
+  /**
+   * Ausprobieren nur für diese Begriffe (IB30). Es meldet die letzte Kennzahl der Variante; passt die nicht zur Frage
+   * (die Karte Populationsvarianz endet mit σ², gefragt ist μ), lass das Ausprobieren dort weg. Ohne Angabe für alle.
+   */
+  tryFor?: string[];
+}
+
+/** Denkfragen, die eine Werkstatt für einen Begriff zeigt (`onlyFor`), Ausprobieren nur, wo `tryFor` es erlaubt (IB30). */
+export function thinkFor<D, S>(think: Think<D, S>[], variant: string): Think<D, S>[] {
+  return think.filter(t => !t.onlyFor || t.onlyFor.includes(variant)).map(t => t.tryIt && t.tryFor && !t.tryFor.includes(variant) ? { ...t, tryIt: undefined } : t);
 }
 
 export interface Metric<S> { label: string; value: (c: Ctx<S>) => string }
@@ -127,7 +142,11 @@ export interface Workshop<D, S> {
   glyphs: Glyph[];
   steps: Step<S>[];
   numeric: (c: Ctx<S>, lastStep: number) => FNode[];
-  table: { columns: Column<S>[]; lines: Line<S>[] };
+  /**
+   * Rechentabelle. `rowHead` ist der Kopf der ersten Spalte (IB14), ohne Angabe „Person“. Wer ihn setzt, hat keine
+   * Personen als Zeilen (Kategorien, Zellen): Der erste Reiter heißt dann „Verstehen“ ohne Personenzahl (IB31).
+   */
+  table: { columns: Column<S>[]; lines: Line<S>[]; rowHead?: string };
   captions: Partial<Record<number, string>>;
   think: Think<D, S>[];
   variants: Record<string, Variant<S>>;

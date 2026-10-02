@@ -179,6 +179,7 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
     ...(last >= 6 ? [{ br: true }, { part: ['df = (2 − 1) · (2 − 1) = 1'], m: 6 }, ', ', { part: [pText(c.s.p)], m: 6 }] as FNode[] : []),
   ],
   table: {
+    rowHead: 'Zelle', // Die Zeilen sind Zellen der Kreuztabelle, keine Personen (IB14, IB31).
     columns: [
       { head: 'Oⱼₖ', from: 1, active: [1, 2], cell: (c, i) => String(c.s.o[i]), sum: c => String(c.s.n), sumFrom: 1 },
       { head: 'Eⱼₖ', from: 1, active: [1], cell: (c, i) => fine(c.s.e[i]), sum: c => num(c.s.n), sumFrom: 1 },

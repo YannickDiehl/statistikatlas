@@ -6,6 +6,3 @@
 .b05-pair-tie{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 4}
 .b05-count{margin:.25rem 0 0}
 .b05-dot{fill:var(--green);stroke:var(--paper);stroke-width:1.5}
-/* Brücke für die bisherige Kreuztabelle unter „Mit 200 Befragten“ (SurveyAnalysis, nur beim Begriff crosstab):
-   Ihre erste Spalte klebt links (min-width 110px). Ohne Abstand landet eine fokussierte Zelle beim Tabben darunter. */
-.cross-table-scroll{scroll-padding-left:124px}

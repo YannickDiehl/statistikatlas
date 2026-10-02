@@ -39,9 +39,12 @@ const remembered = new Map<string, TabId>();
 /** Nur für Tests: Sitzungsgedächtnis leeren. */
 export const forgetTabs = () => remembered.clear();
 
-/** Name des ersten Reiters nach Vorlage: „Verstehen (5 Personen)“ für Werkstätten mit Personen, „Werkzeug“ für Werkzeuge. */
+/**
+ * Name des ersten Reiters nach Vorlage: „Verstehen (5 Personen)“ für Werkstätten mit Personen, auch mit eigenem
+ * `dataNote` (IB31); „Verstehen“, wenn die Zeilen keine Personen sind (`table.rowHead`); „Werkzeug“ für Werkzeuge.
+ */
 export function firstTabLabel(explain: Explain | null): string {
-  if (explain?.kind === 'werkstatt') return explain.workshop.dataNote ? 'Verstehen' : `Verstehen (${explain.workshop.names.length} Personen)`;
+  if (explain?.kind === 'werkstatt') return explain.workshop.table.rowHead ? 'Verstehen' : `Verstehen (${explain.workshop.names.length} Personen)`;
   if (explain?.kind === 'werkzeug' || explain?.kind === 'tabelle') return 'Werkzeug';
   return 'Verstehen';
 }

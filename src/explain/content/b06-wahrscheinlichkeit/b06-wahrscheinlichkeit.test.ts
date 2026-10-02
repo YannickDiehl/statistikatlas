@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createSurvey } from '../../../domain/survey';
 import { applyOp, bridgeContext, sampleColumn } from '../../sample';
 import { close } from '../../format';
-import { txt, type SampleCtx, type SampleTab } from '../../types';
+import { thinkFor, txt, type SampleCtx, type SampleTab } from '../../types';
 import { ABSCHLUSS, HAUSHALT, SCHLAF, WISSEN, cdf, schlafModell } from './gemeinsam';
 import { series } from '../../math';
 import { CATALOG_OUTPUT } from '../../catalogOutput';
@@ -365,19 +365,25 @@ test('B6 Fix-Runde 1: geänderte Texte und ihre Zahlen wie in R', () => {
   const a = { s: erwartung.compute([1, 2, 2, 3, 5]), who: 0, names: erwartung.names };
   assert.match(erwartung.variants.population_variance.interpret(a).kurz, /^Der gewichtete Durchschnitt der Abstandsquadrate, jede Person mit ihrer Chance 0,2, ist 1,84 Personen²\. Seine Wurzel σ ≈ 1,36 Personen/);
   assert.equal(txt(erwartung.steps[3].acht, a), 'Im Taschenrechner Klammern setzen: (−1,6)² = 2,56. Ohne Klammern zeigt er −2,56.');
-  assert.doesNotMatch(String(erwartung.think[1].explain), /σ²/);
-  assert.equal(erwartung.think[1].tryIt, undefined, 'kein Ausprobieren, das auf der Karte Erwartungswert μ statt der Abstände zeigt');
-  assert.equal(erwartung.think[2].questionFor?.expectation, 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?');
-  assert.doesNotMatch(String(erwartung.think[2].explain), /n − 1|s²/);
-  // Korrekturrunde 2: Was die gemeinsame Werkstatt auf der Karte Erwartungswert zeigt (Frage, Antworten, Erklärung, Kurz gesagt),
-  // nennt weder die Streuungszeichen noch n − 1; „Kurz gesagt“ jeder Denkfrage steht auf beiden Karten und ist neutral.
-  for (const t of erwartung.think) {
+  // Variantenfilter (IB30, ersetzt die neutrale Fassung aus Korrekturrunde 2): Was die Karte Erwartungswert zeigt
+  // (Frage, Antworten, Erklärung, Kurz gesagt), nennt weder die Streuungszeichen noch n − 1. Die Karte
+  // Populationsvarianz fragt nach σ² und nach „durch 5 statt durch 4“ im ursprünglichen Wortlaut.
+  const shownOn = (v: string) => thinkFor(erwartung.think, v);
+  for (const t of shownOn('expectation')) {
     const shown = [t.questionFor?.expectation ?? t.question, ...t.options, txt(t.explain, a), t.kurz];
     for (const x of shown) assert.doesNotMatch(x, /σ|s²|n − 1/, `Karte Erwartungswert zeigt Streuungsstoff: ${x}`);
-    for (const v of ['expectation', 'population_variance']) assert.ok(t.kurz.trim() && !/n − 1|0,25/.test(t.kurz), `${v}: Kurz gesagt nicht neutral: ${t.kurz}`);
   }
-  assert.equal(erwartung.think.filter(t => t.tryIt).length, 1, 'ein Ausprobieren, zu „Was passiert mit μ?“');
-  for (const v of ['expectation', 'population_variance']) assert.equal(erwartung.variants[v].metrics.at(-1)!.label, 'Erwartungswert μ', `${v}: Ausprobieren meldet μ`);
+  assert.deepEqual(shownOn('expectation').map(t => t.question), ['Alle Haushalte bekommen eine Person mehr. Was passiert mit μ?', 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?']);
+  assert.deepEqual(shownOn('population_variance').map(t => t.question), ['Alle Haushalte bekommen eine Person mehr. Was passiert mit μ?', 'Alle Haushalte bekommen eine Person mehr. Was passiert mit σ²?', 'Warum teilst du hier durch 5 und nicht durch 4 wie bei der Stichprobenvarianz s²?']);
+  assert.match(String(shownOn('population_variance')[1].explain), /Deshalb bleibt auch σ² gleich\.$/);
+  assert.equal(shownOn('population_variance')[2].explain, 'Durch n − 1 teilt man, wenn man aus einer Stichprobe die Varianz einer größeren Gruppe schätzt. Hier kennst du die ganze Gruppe, aus der gezogen wird; es gibt nichts zu schätzen.');
+  // Je Karte genau ein Ausprobieren, und es meldet die Zahl, nach der es fragt: μ bzw. σ² (letzte Kennzahl der Variante).
+  for (const [v, sym, label] of [['expectation', 'μ', 'Erwartungswert μ'], ['population_variance', 'σ²', 'Populationsvarianz σ²']] as const) {
+    const tries = shownOn(v).filter(t => t.tryIt);
+    assert.equal(tries.length, 1, `${v}: ein Ausprobieren`);
+    assert.ok(tries[0].question.endsWith(`Was passiert mit ${sym}?`), `${v}: Ausprobieren zur Frage nach ${sym}`);
+    assert.equal(erwartung.variants[v].metrics.at(-1)!.label, label, `${v}: Ausprobieren meldet ${sym}`);
+  }
   assert.doesNotMatch(erwartung.mut, /fünf kleinen Schritten/);
   assert.equal(erwartung.steps[4].title, 'Die Quadrate gewichtet zusammenzählen');
   const bc = bridgeContext(erwartung.compute, 'series', rows, 'lernzeit', '', 1);

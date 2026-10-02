@@ -55,7 +55,8 @@ export function ConceptInspector(p:Props){
  const routeSelect=out.id==='pearson'&&<div className="inspector-route"><label>Rechnung zeigen<select aria-label="Rechenweg zu Pearson" value={p.context.route} onChange={e=>p.onRoute(e.target.value as Route)}><option value="covariance">Über die Kovarianz</option><option value="z">Über z-Werte</option></select></label><span>Gleiche Daten, gleiches r.</span></div>;
  const recipeBox=(withRoute:boolean)=>inputs(r,p.context.route).length>0&&<details className="inspector-disclosure" key={`recipe-${selection}`}><summary>Die Rechnung als Baukasten entfalten</summary>{withRoute&&routeSelect}<Recipe key={`${selection}-${p.context.route}`} reference={r} context={p.context} onSelect={p.onSelect} onHover={p.onHover}/></details>;
  const casePicker=p.selection?<CasePicker ids={p.context.pairs.map(row=>row.id)} value={p.context.caseId} onChange={p.onCase}/>:<label>Person i = <select aria-label="Person für die Formel auswählen" value={p.context.caseId} onChange={e=>p.onCase(e.target.value)}>{p.context.pairs.map((row,i)=><option value={row.id} key={row.id}>{i+1}</option>)}</select></label>;
- const experimentBox=(key:string)=><details key={key} ref={experiment} className="inspector-disclosure experiment-disclosure" open={p.experimentOpen} onToggle={e=>p.onExperiment(e.currentTarget.open)}><summary>Mit den Daten experimentieren</summary>{p.context.columns&&p.onData?<SurveyExperiment key={p.resetRevision} reference={r} context={p.context} onPairs={p.onPairs} onCase={p.onCase} onData={p.onData} onReset={p.onReset}/>:<Experiment key={p.resetRevision} reference={r} context={p.context} showBoth={both} onCase={p.onCase} onPairs={p.onPairs} onReset={p.onReset}/>}</details>;
+ // Im Reiter „Mit 200 Befragten“ steht der Rücksetzknopf im Hinweis über dem Ergebnis; das Experiment bringt dort keinen zweiten mit (IB15).
+ const experimentBox=(key:string,inTab=false)=><details key={key} ref={experiment} className="inspector-disclosure experiment-disclosure" open={p.experimentOpen} onToggle={e=>p.onExperiment(e.currentTarget.open)}><summary>Mit den Daten experimentieren</summary>{p.context.columns&&p.onData?<SurveyExperiment key={p.resetRevision} reference={r} context={p.context} onPairs={p.onPairs} onCase={p.onCase} onData={p.onData} onReset={inTab?undefined:p.onReset}/>:<Experiment key={p.resetRevision} reference={r} context={p.context} showBoth={both} onCase={p.onCase} onPairs={p.onPairs} onReset={p.onReset}/>}</details>;
  const variableControl=!both&&!p.selection&&<div className="inspector-context"><span>Beispiel für</span><div className="variable-control" role="group" aria-label="Variable betrachten">{(['x','y'] as Variable[]).map(v=><button key={v} aria-pressed={r.variable===v} onClick={()=>p.onVariable(v)}>{v.toUpperCase()} · {v==='x'?'Lernzeit':'Aufgaben'}</button>)}</div></div>;
  const conditionList=checks.length>0&&<ul className="conditions" aria-label="Bedingungen und Annahmen">{checks.map((c,i)=><li key={i} className={c.ok===false?'unmet':c.ok===true?'met':'assumption'}>{c.ok===true?<Check size={14}/>:c.ok===false?<CircleAlert size={14}/>:<Info size={14}/>}<span>{c.text}{c.target&&<button className="condition-link" onClick={()=>p.onSelect(c.target!)}>Erklären</button>}</span></li>)}</ul>;
 
@@ -63,21 +64,25 @@ export function ConceptInspector(p:Props){
  if(tabs){
   const targets=stepTargets(explain,tabs),stepTitle=(n:number)=>targets?.titles[n-1];
   const sel=p.selection,ctx={rows,columns:{...(sel?{x:[sel[r.variable]],y:[sel.y]}:{}),...p.rSettings?.columns}};
-  const analysisExtras:ReactNode=<>
+  // Die bisherigen Teile „Mit deinen Daten“: im Reiter „Mit 200 Befragten“ unter der Deutung (ohne eigenen Rücksetzknopf,
+  // IB15), bei Schrittkarten ohne diesen Reiter zugeklappt als „Weitere Übung“ am Ende von „Verstehen“ (IB19, wie IB3).
+  const dataPart=(inSample:boolean):ReactNode=><>
    <div className="calculation-heading"><span className="eyebrow">Mit deinen Daten</span></div>
    {casePicker}
    <Formula key={`${selection}-numeric`} reference={r} context={p.context} onSelect={p.onSelect} onHighlight={p.onHighlight} highlight={p.highlight} numeric/>
    {result!==null&&<p className="compact-result" aria-live="polite">{displayValue(r,p.context)} {unitFor(r,p.context)}</p>}
    <SurveyAnalysis reference={r} context={contextFor(r,p.context)} onCase={p.onCase} onSelect={p.onSelect}/>
    {conditionList}
-   {experimentBox(`experiment-${selection}`)}
+   {experimentBox(`experiment-${selection}`,inSample)}
   </>;
+  const analysisExtras=dataPart(true);
   return <aside id="atlas-inspector" className="network-inspector has-tabs" ref={scroller} aria-labelledby="inspector-title">{header}{focusMap}
    <ExplainTabs key={r.id} concept={r.id} tabs={tabList(explain,tabs)} kurz={kurzOf(explain)} steps={targets?.tab} render={(id,links)=>{
     switch(id){
      case 'verstehen':return <>
       {explain&&<Explanation id={r.id} explain={explain} onConcept={open}/>}
       {card&&<StepCard key={`${r.id}-${card.workshop.id}`} card={card} current={r.id} onConcept={open} onOpen={(target,step)=>{requestStep(target,step);open(target);}}/>}
+      {card&&!tabs.sample&&<details className="xw-more xw-practice" key={`practice-${selection}`}><summary>Weitere Übung</summary>{dataPart(false)}</details>}
       {!explain&&!card&&<><p className="concept-intro">{introduction(r,p.context)}</p><Formula key={`${selection}-formal`} reference={r} context={p.context} onSelect={p.onSelect} onHighlight={p.onHighlight} highlight={p.highlight}/><CalculationSteps reference={r} route={p.context.route} onSelect={p.onSelect} onHover={p.onHover}/></>}
       {!explain&&<details key={`deep-${selection}`} className="inspector-disclosure"><summary>{deepQuestions[out.id]||'Genauer verstehen'}</summary><p>{deepCopy[out.id]||conceptById[out.id]?.explanation}</p></details>}
      </>;

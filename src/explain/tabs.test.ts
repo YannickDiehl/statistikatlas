@@ -104,6 +104,15 @@ function columnsOf(tabs: ConceptTabs): Record<'x' | 'y', string> {
   if (s.kind === 'bridge') { const [x, y] = s.variable.split(','); return { x, y: y ?? defaultSelection.y }; }
   return { x: s.columns?.x ?? defaultSelection.x, y: s.columns?.y ?? defaultSelection.y };
 }
+/**
+ * Spalten x, mit denen der Reiter rechnen kann: bei Auswertungen ohne feste Spalten jede Spalte, die die Spaltenwahl
+ * für den Begriff anbietet (außer der Spalte y), sonst nur die eigene (IB32).
+ */
+function selectableX(id: string, tabs: ConceptTabs): string[] {
+  const s = tabs.sample!, cols = columnsOf(tabs);
+  if (s.kind !== 'analysis' || s.columns) return [cols.x];
+  return [cols.x, ...surveyColumns.filter(c => c.id !== cols.x && c.id !== cols.y && compatible(id, c, defaultSelection.likertMetric)).map(c => c.id)];
+}
 function thinkClean(label: string, t: ThinkSample) {
   clean(`${label} Frage`, t.question); clean(`${label} Erklärung`, t.explain, SHORT); clean(`${label} kurz`, t.kurz, KURZ); clean(`${label} Ausprobieren`, t.tryIt.label);
   t.options.forEach(o => clean(`${label} Antwort`, o));
@@ -169,13 +178,16 @@ test('Mit 200 Befragten: analysis results resolve for the data and after every p
     clean(`${id} kurz`, s.kurz, KURZ);
     if (s.voraussetzung) clean(`${id} Voraussetzung`, s.voraussetzung, SHORT);
     assert.ok(s.think.length >= 1, `${id}: mindestens eine Vorhersagefrage`);
-    const cols = columnsOf(tabs), columns = s.columns ? Object.fromEntries(Object.entries(s.columns).map(([k, v]) => [k, [v]])) : { x: [cols.x], y: [cols.y] };
-    const ctx = (data: typeof rows): SampleCtx => ({ rows: data, columns });
-    const datasets = [rows, ...s.think.map(t => applyOp(rows, columns[t.tryIt.column]?.[0] ?? cols[t.tryIt.column], t.tryIt.op, t.tryIt.value, 1))];
-    s.think.forEach((t, k) => { thinkClean(`${id} Vorhersage ${k + 1}`, t); assert.ok(fitsColumn(datasets[k + 1], columns[t.tryIt.column]?.[0] ?? cols[t.tryIt.column]), `${id} Vorhersage ${k + 1}: Ausprobieren passt nicht`); });
-    for (const [d, data] of datasets.entries()) {
-      const r = s.result(ctx(data));
-      clean(`${id} Daten ${d} Deutung`, r.kurz, DEUTUNG); clean(`${id} Daten ${d} Fachsprache`, r.fachlich); if (r.zusatz) clean(`${id} Daten ${d} Zusatz`, r.zusatz, SHORT);
+    // Ohne feste Spalten: für jede Spalte, die die Spaltenwahl anbietet (IB32); Ausprobieren muss zur eigenen Spalte passen.
+    for (const [n, x] of selectableX(id, tabs).entries()) {
+      const cols = { ...columnsOf(tabs), x }, columns = s.columns ? Object.fromEntries(Object.entries(s.columns).map(([k, v]) => [k, [v]])) : { x: [cols.x], y: [cols.y] };
+      const ctx = (data: typeof rows): SampleCtx => ({ rows: data, columns }), column = (t: ThinkSample) => columns[t.tryIt.column]?.[0] ?? cols[t.tryIt.column];
+      const datasets = [rows, ...s.think.map(t => applyOp(rows, column(t), t.tryIt.op, t.tryIt.value, 1)).filter((d, k) => fitsColumn(d, column(s.think[k])))];
+      if (n === 0) s.think.forEach((t, k) => { thinkClean(`${id} Vorhersage ${k + 1}`, t); assert.ok(fitsColumn(applyOp(rows, column(t), t.tryIt.op, t.tryIt.value, 1), column(t)), `${id} Vorhersage ${k + 1}: Ausprobieren passt nicht`); });
+      for (const [d, data] of datasets.entries()) {
+        const r = s.result(ctx(data)), l = `${id} mit ${x}, Daten ${d}`;
+        clean(`${l} Deutung`, r.kurz, DEUTUNG); clean(`${l} Fachsprache`, r.fachlich); if (r.zusatz) clean(`${l} Zusatz`, r.zusatz, SHORT);
+      }
     }
   }
   // Zahlen der Muster aus den Daten (R-Befehle oben).
@@ -397,10 +409,10 @@ export function answerFits(answer: string, e: Expect): string | null {
  * Datenstände: die Ausgangsdaten und die Daten nach jeder anderen Vorhersage des Reiters (bei outlier mit P002);
  * bei der eigenen Vorhersage mit outlier jede der 200 Personen.
  */
-function predictionFails(id: string, tabs: ConceptTabs, s: SampleTab, t: ThinkSample, own: number, count: () => void): string | null {
+function predictionFails(id: string, tabs: ConceptTabs, s: SampleTab, t: ThinkSample, own: number, count: () => void, x?: string): string | null {
   const words = answerFits(t.options[t.correct], t.expect);
   if (words) return `${id}: ${words}`;
-  const cols = columnsOf(tabs);
+  const cols = { ...columnsOf(tabs), ...(x ? { x } : {}) };
   const columnOf = (axis: 'x' | 'y') => s.kind === 'analysis' && s.columns?.[axis] ? s.columns[axis] : cols[axis];
   let measure: (d: SurveyRow[]) => number | null;
   if (s.kind === 'bridge') {
@@ -423,7 +435,7 @@ function predictionFails(id: string, tabs: ConceptTabs, s: SampleTab, t: ThinkSa
       if (!fitsColumn(next, column)) continue;           // die Oberfläche lehnt das Ausprobieren dann ab
       const a = measure(state), b = measure(next);
       count();
-      if (!holds(t.expect, a, b)) return `${id}: „${t.question}“ (${t.options[t.correct]}) stimmt nicht nach Datenstand ${k}, Person ${state[who].id}: vorher ${a}, nachher ${b}`;
+      if (!holds(t.expect, a, b)) return `${id}${x ? ` mit ${x}` : ''}: „${t.question}“ (${t.options[t.correct]}) stimmt nicht nach Datenstand ${k}, Person ${state[who].id}: vorher ${a}, nachher ${b}`;
     }
   }
   return null;
@@ -448,8 +460,9 @@ test('Mit 200 Befragten: every prediction keeps its marked answer, for every per
   for (const [id, tabs] of ALL()) {
     const s = tabs.sample;
     if (!s) continue;
-    for (const [own, t] of s.think.entries()) {
-      const fail = predictionFails(id, tabs, s, t, own, count);
+    // Ohne feste Spalten wirkt Ausprobieren auf die gewählte Spalte: jede wählbare Spalte durchrechnen (IB32).
+    for (const x of selectableX(id, tabs)) for (const [own, t] of s.think.entries()) {
+      const fail = predictionFails(id, tabs, s, t, own, count, x);
       assert.equal(fail, null, fail ?? '');
     }
   }

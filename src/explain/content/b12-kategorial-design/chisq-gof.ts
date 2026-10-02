@@ -176,6 +176,7 @@ export const anpassung: Workshop<GofData, GofStats> = {
     ...(last >= 6 ? [{ br: true }, { part: [`df = ${c.s.k} − 1 = ${c.s.df}`], m: 6 }, ', ', { part: [pText(c.s.p)], m: 6 }] as FNode[] : []),
   ],
   table: {
+    rowHead: 'Abschluss', // Die Zeilen sind Abschlüsse, keine Personen (IB14, IB31).
     columns: [
       { head: 'Oⱼ', from: 1, active: [1, 2], cell: (c, i) => String(c.s.o[i]), sum: c => String(c.s.n), sumFrom: 1 },
       { head: 'Eⱼ', from: 1, active: [1], cell: (c, i) => fine(c.s.e[i]), sum: c => num(c.s.n), sumFrom: 1 },

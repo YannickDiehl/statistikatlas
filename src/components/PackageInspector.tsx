@@ -9,7 +9,7 @@ import type { ColumnSelection, SurveyRow } from '../domain/survey';
 import { Explanation, EXPLAIN_LABEL } from './explain/Explanation';
 import { ModeToggle } from './explain/basics';
 import { visibleNeighbors } from '../domain/visibleNetwork';
-import { FoundationLab } from './foundations/FoundationLab';
+import { FoundationLab, hasFoundationLab } from './foundations/FoundationLab';
 import { MeaningLinks } from './MeaningLinks';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowUpRight, Focus, X } from 'lucide-react';
@@ -39,6 +39,8 @@ export function PackageInspector(p:RPanelProps&PackageTabProps&{selected:Ref;onC
  const top=<div className="inspector-top" key="top"><span className="eyebrow">{template?EXPLAIN_LABEL[template.kind]:e.variants.length?'Verfahren & Werkzeuge':'Gemeinsamer Baustein'}</span>{(template||tabs)&&<ModeToggle/>}<button className="inspector-close" onClick={p.onClose} aria-label="Erklärung einklappen"><X size={18}/></button></div>;
  const focusMap=<button className="map-focus-link" key="focus" onClick={p.onFocusMap}><Focus size={15}/>Bezüge in der Karte zeigen</button>;
  const conditions=<section className="package-conditions"><h2>Voraussetzungen & Einordnung</h2>{e.requires.map(r=>link(r.id,r.reason))}<ul>{e.notes.map((text,i)=><li key={i}>{text}</li>)}</ul></section>;
+ // Bisherige Übungen unter einer neuen Erklärung: zugeklappt als „Weitere Übung“ am Ende des Reiters (IB3, IB25).
+ const practice=template&&hasFoundationLab(e.id,p.rows,p.selection)?<details className="xw-more xw-practice" key={`practice-${e.id}`}><summary>Weitere Übung</summary><FoundationLab key={`foundation-${e.id}`} id={e.id} rows={p.rows} selection={p.selection}/></details>:null;
  const sources=e.sources?.length?<details className="foundation-sources"><summary>Fachlich nachlesen</summary>{e.sources.map(source=><a key={source.url} href={source.url} target="_blank" rel="noreferrer">{source.title}</a>)}</details>:null;
 
  // Begriffe mit Reitern (Spezifikation Lehrdatensatz 5.1/5.2): Titel, Kurz gesagt, Reiterleiste; die bisherigen Teile wandern in die Reiter.
@@ -50,7 +52,7 @@ export function PackageInspector(p:RPanelProps&PackageTabProps&{selected:Ref;onC
     switch(id){
      case 'verstehen':return <>
       {template?<Explanation id={e.id} explain={template} onConcept={open}/>:<><p className="concept-intro">{e.intro}</p><LinkedFormula key={`${e.id}-${p.settings?.variant||0}`} contextAnchor={p.contextAnchor} route={p.route} formula={v?.formula||e.formula} reference={p.selected} onSelect={p.onSelect} onHover={p.onHover}/><CalculationSteps reference={p.selected} route={route} formula={v?.formula||e.formula} onSelect={p.onSelect} onHover={p.onHover}/><section className="package-meaning"><h2>Was sagt das Ergebnis?</h2><p>{e.output}</p></section></>}
-      <FoundationLab key={`foundation-${e.id}`} id={e.id} rows={p.rows} selection={p.selection}/>
+      {template?practice:<FoundationLab key={`foundation-${e.id}`} id={e.id} rows={p.rows} selection={p.selection}/>}
       {e.lab&&!template&&<PrincipleLab key={`principle-${e.id}`} id={e.lab}/>}
      </>;
      case 'sample':return <SampleTab tab={tabs.sample!} rows={rows} onRows={p.onRows} onReset={p.onReset} modified={modified} reference={p.selected} selection={p.selection} onColumns={p.onColumns} columnNotice={p.columnNotice} settingsColumns={p.settings?.columns} caseId={p.caseId??rows[1]?.id??''} onCase={p.onCase??(()=>{})} goTo={tabLinks.goSample}/>;
@@ -66,7 +68,7 @@ export function PackageInspector(p:RPanelProps&PackageTabProps&{selected:Ref;onC
  {template&&<Explanation id={e.id} explain={template} onConcept={open}/>}
  {!template&&<><LinkedFormula key={`${e.id}-${p.settings?.variant||0}`} contextAnchor={p.contextAnchor} route={p.route} formula={v?.formula||e.formula} reference={p.selected} onSelect={p.onSelect} onHover={p.onHover}/>
  <CalculationSteps reference={p.selected} route={p.route||'covariance'} formula={v?.formula||e.formula} onSelect={p.onSelect} onHover={p.onHover}/></>}
- <FoundationLab key={`foundation-${e.id}`} id={e.id} rows={p.rows} selection={p.selection}/>
+ {template?practice:<FoundationLab key={`foundation-${e.id}`} id={e.id} rows={p.rows} selection={p.selection}/>}
  {e.lab&&!template&&<PrincipleLab key={`principle-${e.id}`} id={e.lab}/>}
  {!template&&<section className="package-meaning" key="meaning"><h2>Was sagt das Ergebnis?</h2><p>{e.output}</p></section>}
  {conditions}

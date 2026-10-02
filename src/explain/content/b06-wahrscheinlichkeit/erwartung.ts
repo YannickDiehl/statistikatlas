@@ -290,27 +290,35 @@ export const erwartung: Workshop<number[], Erw> = {
     4: 'Rechts steht das Quadrat jedes Abstands.',
     5: 'σ² ist der mit den Chancen gewichtete Durchschnitt der Abstandsquadrate; σ ist seine Wurzel.',
   },
+  // Variantenfilter (IB30): Fragen zur Streuung stehen nur auf der Karte Populationsvarianz, im Wortlaut vor der
+  // neutralen Fassung; die Karte Erwartungswert hat ihre eigene Frage zu den Chancen. Ausprobieren meldet die letzte
+  // Kennzahl der Variante: μ auf der Karte Erwartungswert, σ² auf der Karte Populationsvarianz.
   think: [
     {
       question: 'Alle Haushalte bekommen eine Person mehr. Was passiert mit μ?',
       options: ['steigt um 1', 'bleibt gleich', 'verdoppelt sich'], correct: 0, step: 2,
       explain: 'Jeder Wert steigt um 1, die Chancen bleiben 0,2. Zusammen kommt 5 · 0,2 · 1 = 1 dazu, solange niemand schon bei der Obergrenze 8 liegt.',
       kurz: 'Verschieben verschiebt den Erwartungswert um genau so viel.',
+      tryIt: { label: 'alle eine Person mehr', apply: d => d.map(x => Math.min(8, x + 1)) }, tryFor: ['expectation'],
+    },
+    {
+      question: 'Alle Haushalte bekommen eine Person mehr. Was passiert mit σ²?', onlyFor: ['population_variance'],
+      options: ['wird um 1 größer', 'ändert sich nicht', 'verdoppelt sich'], correct: 1, step: 3,
+      explain: 'μ steigt mit um 1. Im Abstand hebt sich die 1 auf: (xᵢ + 1) − (μ + 1) = xᵢ − μ. Deshalb bleibt auch σ² gleich.',
+      kurz: 'Verschieben ändert die Lage, nicht die Streuung.',
       tryIt: { label: 'alle eine Person mehr', apply: d => d.map(x => Math.min(8, x + 1)) },
     },
     {
-      question: 'Alle Haushalte bekommen eine Person mehr. Was passiert mit σ²?',
-      questionFor: { expectation: 'Alle Haushalte bekommen eine Person mehr. Was passiert mit dem Abstand jeder Person zu μ?' },
-      options: ['wird um 1 größer', 'ändert sich nicht', 'verdoppelt sich'], correct: 1, step: 3, stepFor: { expectation: 2 },
-      explain: 'μ steigt mit um 1. Im Abstand hebt sich die 1 auf: (xᵢ + 1) − (μ + 1) = xᵢ − μ. Die Lage verschiebt sich, die Streuung um μ bleibt gleich.',
-      kurz: 'Verschieben ändert die Lage, nicht die Streuung.',
-    },
-    {
-      question: 'Warum teilst du hier durch 5 und nicht durch 4 wie bei der Stichprobenvarianz s²?',
-      questionFor: { expectation: 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?' },
-      options: ['weil die fünf die ganze Gruppe sind, aus der gezogen wird', 'weil das Ergebnis dann kleiner wird'], correct: 0, step: 5, stepFor: { expectation: 1 },
+      question: 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?', onlyFor: ['expectation'],
+      options: ['weil die fünf die ganze Gruppe sind, aus der gezogen wird', 'weil das Ergebnis dann kleiner wird'], correct: 0, step: 1,
       explain: 'Gezogen wird aus genau diesen fünf, jede mit der Chance 1 / 5. Zusammen ergeben die fünf Chancen 1.',
       kurz: 'Gezogen wird aus allen n: Jede Person zählt mit 1 / n.',
+    },
+    {
+      question: 'Warum teilst du hier durch 5 und nicht durch 4 wie bei der Stichprobenvarianz s²?', onlyFor: ['population_variance'],
+      options: ['weil die fünf die ganze Gruppe sind, aus der gezogen wird', 'weil 5 die größere Zahl ist'], correct: 0, step: 5,
+      explain: NEN,
+      kurz: 'Ganze Gruppe: durch n. Schätzung aus einer Stichprobe: durch n − 1.',
     },
   ],
   variants: {
@@ -341,8 +349,8 @@ export const erwartung: Workshop<number[], Erw> = {
       fachlich: 'Der Erwartungswert der quadrierten Abweichung vom Erwartungswert: σ² = E[(X − μ)²], bei N gleich wahrscheinlichen Werten Σ(xᵢ − μ)² / N.',
       symbolic: ['σ² = ', { big: 'Σ', m: 5 }, { part: ['('], m: 4 }, { part: ['x', { sub: 'i' }, ' −'], m: 3 }, ' ', { part: ['μ'], m: 2 }, { part: [')²'], m: 4 }, ' · ', { part: ['p', { sub: 'i' }], m: 1 }],
       aria: 'sigma Quadrat gleich Summe über alle Personen i von x i minus mü, zum Quadrat, mal p i',
-      // μ zuletzt: Das einzige Ausprobieren (Denkfrage 1, „Was passiert mit μ?“) meldet die letzte Kennzahl.
-      metrics: [{ label: 'Populationsvarianz σ²', value: c => num(c.s.sigma2) }, { label: 'Erwartungswert μ', value: c => num(c.s.mu) }],
+      // σ² zuletzt: Das Ausprobieren dieser Karte (Denkfrage zu σ²) meldet die letzte Kennzahl.
+      metrics: [{ label: 'Erwartungswert μ', value: c => num(c.s.mu) }, { label: 'Populationsvarianz σ²', value: c => num(c.s.sigma2) }],
       interpret: c => ({
         kurz: c.s.sigma2 < 1e-12 ? 'Alle fünf leben in gleich großen Haushalten. Es gibt keine Streuung, σ² ist 0.'
           : `Der gewichtete Durchschnitt der Abstandsquadrate, jede Person mit ihrer Chance 0,2, ist ${unit(c.s.sigma2, 'Person²', 'Personen²')}. Seine Wurzel σ ≈ ${people(c.s.sigma)} sagt grob, wie weit ein Haushalt von μ = ${num(c.s.mu)} entfernt liegt.`,

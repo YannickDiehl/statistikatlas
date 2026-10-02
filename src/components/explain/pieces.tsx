@@ -205,7 +205,7 @@ export function LearnCard<S>({ step, ctx, compact, onConcept, onWho, position, f
   );
 }
 
-/** Rechentabelle: eine Zeile je Person, Spalten erscheinen mit ihrem Schritt. */
+/** Rechentabelle: eine Zeile je Person (oder je Kategorie, Kopf aus `table.rowHead`), Spalten erscheinen mit ihrem Schritt. */
 export function WorkTable<D, S>({ workshop, ctx, step, lastStep, onWho }: {
   workshop: Workshop<D, S>; ctx: Ctx<S>; step: number; lastStep: number; onWho: (i: number) => void;
 }) {
@@ -215,7 +215,7 @@ export function WorkTable<D, S>({ workshop, ctx, step, lastStep, onWho }: {
   return (
     <div className="xw-table-wrap">
       <table className="xw-table">
-        <thead><tr><th scope="col">Person</th>{cols.map(c => <th scope="col" key={c.head} className={cls(c.active)}>{c.head}</th>)}</tr></thead>
+        <thead><tr><th scope="col">{workshop.table.rowHead ?? 'Person'}</th>{cols.map(c => <th scope="col" key={c.head} className={cls(c.active)}>{c.head}</th>)}</tr></thead>
         <tbody>
           {ctx.names.map((n, r) => (
             <tr key={n} className={r === ctx.who ? 'sel' : undefined}>

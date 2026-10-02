@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ref, titleFor } from '../../domain/learning';
-import { txt, type AnyWorkshop, type Ctx, type Workshop } from '../../explain/types';
+import { thinkFor, txt, type AnyWorkshop, type Ctx, type Workshop } from '../../explain/types';
 import { close, num } from '../../explain/format';
 import { takeStep, type StepCard as StepCardData } from '../../explain/registry';
 import { AllGlyphs, FormulaView, Genau, MutBox, Section, StepNav, TopKurz, useExplainMode, useTabLink, useWorkbenchLayout } from './basics';
@@ -97,7 +97,7 @@ function WorkshopView<D, S>({ workshop: w, variant, onConcept }: {
         return <Section title="Was heißt das Ergebnis?"><p className="xw-deutung">{i.kurz}</p><p className="xw-fach-line">In der Fachsprache: {i.fachlich}</p>
           {v.next && <p><ConceptLink id={v.next.id} onConcept={onConcept}>{v.next.label}</ConceptLink></p>}</Section>;
       })()}
-      {!compact && <ThinkQuestions items={w.think.map(t => ({
+      {!compact && <ThinkQuestions items={thinkFor(w.think, variant).map(t => ({
         question: t.questionFor?.[variant] ?? t.question,
         options: t.options, correct: t.correct, kurz: t.kurz,
         explain: () => txt(t.explain, ctx),
@@ -128,8 +128,10 @@ export function StepCard(p: StepCardProps) {
 function StepCardView<D, S>({ card, current, onConcept, onOpen, workshop: w }: StepCardProps & { workshop: Workshop<D, S> }) {
   const v = w.variants[card.variant], step = w.steps[card.step - 1];
   const ctx: Ctx<S> = { s: w.compute(w.presets[0].data), who: 0, names: w.names };
+  // Die Lernkarte beginnt mit h3; unter dem Titel des Begriffs (h1) hält eine Überschrift h2 die Gliederung lückenlos (IB16).
   return (
     <div className="xw xw-stepcard">
+      <h2 className="sr-only">Schritt {card.step} der Werkstatt {titleFor(ref(card.variant))}</h2>
       <LearnCard step={step} ctx={ctx} compact={false} onConcept={onConcept} current={current} nameLinks
         footer={<p className="xw-open"><button type="button" className="xw-button" onClick={() => onOpen(card.variant, card.step)}>
           Ist Schritt {card.step} von {v.lastStep} der Werkstatt {titleFor(ref(card.variant))}: Werkstatt öffnen</button></p>} />
