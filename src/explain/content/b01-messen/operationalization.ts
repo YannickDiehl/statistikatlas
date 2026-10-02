@@ -15,7 +15,7 @@ export const operationalization: ConceptCard = {
   wofuer: '„Lernaufwand“ kann man nicht direkt ablesen. Bevor im Datensatz eine Zahl steht, muss jemand entscheiden: Was genau fragen wir, über welchen Zeitraum, in welcher Einheit? Diese Übersetzung heißt Operationalisierung.',
   kurz: 'Operationalisieren heißt, einen Begriff in eine genaue Frage und eine Antwortregel zu übersetzen. Erst diese Regeln legen fest, was eine Zahl im Datensatz bedeutet.',
   stellDirVor: {
-    text: `Der Begriff lautet „Wie viel lernen Menschen?“. Im Lehrdatensatz wird daraus die Frage: „${LZ.question}“ Die Antwortregel: Stunden mit einer Nachkommastelle, von ${LZ.min} bis ${LZ.max}. So wird aus dem Lernen von ${FUENF[1].id} die Zahl ${num(FUENF[1].lernzeit)}.`,
+    text: `Der Begriff heißt „Lernaufwand“: Wie viel lernen Menschen? Im Lehrdatensatz wird daraus die Frage: „${LZ.question}“ Die Antwortregel: Stunden mit einer Nachkommastelle, von ${LZ.min} bis ${LZ.max}. So wird aus dem Lernen von ${FUENF[1].id} die Zahl ${num(FUENF[1].lernzeit)}.`,
     figures: [
       { label: 'Begriff', value: 'Lernaufwand' },
       { label: 'Zeitraum', value: 'letzte sieben Tage' },
@@ -43,7 +43,7 @@ export const operationalization: ConceptCard = {
     },
     {
       title: 'Eine Antwortregel festlegen',
-      was: `Die Antwort kommt in Stunden mit einer Nachkommastelle, erlaubt sind ${LZ.min} bis ${LZ.max}. Fehlt eine Antwort, bekommt sie einen eigenen Code.`,
+      was: `Die Antwort kommt in Stunden mit einer Nachkommastelle, erlaubt sind ${LZ.min} bis ${LZ.max}. Für eine fehlende Antwort legt die Regel einen eigenen Code fest, etwa −9.`,
       rechnung: `${FUENF[1].id} → ${num(FUENF[1].lernzeit)}; P100 → 0`,
       warum: 'Nur mit einer festen Regel bedeuten gleiche Zahlen bei allen Personen dasselbe.',
       acht: '0 Stunden ist eine echte Antwort. Eine fehlende Antwort braucht einen anderen Code, sonst rechnet sie als 0 mit.',

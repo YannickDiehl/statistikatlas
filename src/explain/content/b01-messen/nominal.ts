@@ -30,7 +30,7 @@ export const nominal: ConceptCard = {
     {
       title: 'Kategorien unterscheiden',
       was: 'Jede Person fällt in genau eine Kategorie. Über zwei Personen lässt sich nur sagen: gleicher Abschluss oder verschiedener.',
-      warum: 'Ein Bachelor ist kein Mehr an Meister, sondern ein anderer Weg. Die Frage legt keine Rangfolge fest.',
+      warum: 'Ein Bachelor ist nicht „mehr“ als ein Meister, sondern ein anderer Weg. Die Frage legt keine Rangfolge fest.',
       acht: 'Auch Kategorien, die nach oben und unten klingen, haben keine Reihenfolge, solange die Frage keine festlegt.',
     },
     {

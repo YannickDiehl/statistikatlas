@@ -4,7 +4,8 @@ import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { columnById } from '../../../domain/survey';
 import { num, pct } from '../../format';
 import { sampleColumn, sampleColumnInfo, unitText } from '../../sample';
-import { FUENF, labelOf, mean, middle, numR, role, valueText } from './shared';
+import { describe } from '../../math';
+import { FUENF, labelOf, middle, numR, role, valueText } from './shared';
 
 const P1 = FUENF[0], P4 = FUENF[3];
 
@@ -112,9 +113,8 @@ export function kindOf(column: string): Kind {
 }
 
 function metricOf(c: SampleCtx) {
-  const column = role(c, 'x', 'lernzeit'), values = sampleColumn(c.rows, column), m = mean(values);
-  const sd = Math.sqrt(values.reduce((a, v) => a + (v - m) ** 2, 0) / (values.length - 1));
-  return { column, values, m, sd, info: sampleColumnInfo(column), kind: kindOf(column) };
+  const column = role(c, 'x', 'lernzeit'), values = sampleColumn(c.rows, column), d = describe(values);
+  return { column, values, m: d.mean, sd: d.sd, info: sampleColumnInfo(column), kind: kindOf(column) };
 }
 
 export const metricTabs: ConceptTabs = {
@@ -180,11 +180,11 @@ export const metricTabs: ConceptTabs = {
       { match: 'N', atlas: 'Fallzahl n', explain: 'Für Lernzeit und Einkommen liegen alle 200 Angaben vor.' },
     ],
     check: {
-      question: 'Welche dieser Zahlen ergibt auch bei geordneten Kategorien einen Sinn? Tippe sie an.', correct: 'Median',
+      question: 'Welcher dieser Lagewerte ergibt auch bei geordneten Kategorien einen Sinn? Tippe ihn an.', correct: 'Median',
       wrong: {
         Mean: 'Fast! Der Mittelwert zählt Abstände zusammen. Das setzt ein metrisches Skalenniveau voraus.',
-        SD: 'Fast! Die Standardabweichung misst Abstände zur Mitte. Ohne feste Abstände bedeutet sie nichts.',
-        N: 'Fast! N zählt nur die Personen. Gesucht ist ein Kennwert, der mit der Reihenfolge allein auskommt.',
+        SD: 'Fast! Die Standardabweichung ist kein Lagewert, und sie misst Abstände.',
+        N: 'Fast! N ist kein Lagewert, es zählt nur die Personen.',
       },
     },
   },
@@ -195,7 +195,7 @@ export const metricTabs: ConceptTabs = {
       { id: 'operationalization', why: 'Erst die Messregel entscheidet, ob Abstände etwas bedeuten.' },
     ],
     after: [
-      { id: 'sd', why: 'Misst, wie weit die Werte typischerweise von der Mitte entfernt sind.' },
+      { id: 'sd', why: 'Misst, wie weit die Werte ungefähr von der Mitte entfernt liegen.' },
       { id: 'pearson', why: 'Geradliniger Zusammenhang zweier metrischer Merkmale.' },
       { id: 't_test', why: 'Vergleicht die Mittelwerte zweier Gruppen.' },
     ],

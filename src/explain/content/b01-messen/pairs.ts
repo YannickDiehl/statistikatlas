@@ -61,7 +61,7 @@ export const pairs: ConceptCard = {
       title: 'Spalten nie getrennt sortieren',
       was: 'Sortierst du Lernzeiten und Testergebnisse jede für sich, bekommt die kürzeste Lernzeit das schlechteste Ergebnis. Diese Paare gibt es bei keiner Person.',
       rechnung: `Wie erhoben: r ≈ ${num(R_FUENF.erhoben)}. Getrennt sortiert: r ≈ ${num(R_FUENF.sortiert)}.`,
-      warum: 'Getrennt sortierte Spalten steigen immer gemeinsam. Jede Korrelation wird dann künstlich stark.',
+      warum: 'Getrennt sortierte Spalten steigen immer gemeinsam. r wird dann so groß, wie es mit diesen Werten überhaupt geht.',
       acht: 'In einer Tabellenkalkulation passiert das schnell, wenn du nur eine Spalte markierst und sortierst. Markiere immer alle Spalten.',
       concept: 'pearson',
     },
@@ -84,7 +84,7 @@ export const pairs: ConceptCard = {
       question: 'Bei allen 200 Befragten ist r ≈ 0,54. Was ergibt sich, wenn du beide Spalten getrennt sortierst?',
       options: ['ein viel stärkerer Zusammenhang', 'derselbe Zusammenhang', 'kein Zusammenhang'], correct: 0, step: 3,
       explain: 'Getrennt sortiert steigt r auf 0,99. Dieser Zusammenhang beschreibt keine einzige Person, er ist durch das Sortieren entstanden.',
-      kurz: 'Getrennt sortieren macht jeden Zusammenhang künstlich stark.',
+      kurz: 'Getrennt sortieren treibt r künstlich nach oben.',
     },
     {
       question: 'Bei P002 fehlt das Testergebnis. Wie viele Paare haben die fünf dann noch?',

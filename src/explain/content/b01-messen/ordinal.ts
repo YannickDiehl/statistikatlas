@@ -109,7 +109,7 @@ function finanzOf(c: SampleCtx) {
 export const ordinalTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { x: 'finanzlage' },
-    kurz: 'Dieselbe Frage mit allen 200 Befragten: Wie gut kommen ihre Haushalte mit dem Einkommen aus, und wo liegt die Mitte der Reihe nach?',
+    kurz: 'Dieselbe Frage mit allen 200 Befragten: Wie gut kommen ihre Haushalte mit dem Einkommen aus, und wo liegt der mittlere Wert der Reihe nach?',
     value: c => { const f = finanzOf(c); return (f.lo + f.hi) / 2; },
     result: c => {
       const { column, counts, lo, hi, n, m } = finanzOf(c);
@@ -132,9 +132,9 @@ export const ordinalTabs: ConceptTabs = {
         expect: { change: 'same' },
       },
       {
-        question: `Die Antworten werden umgepolt: ${F(1)} wird ${F(5)} und umgekehrt. Wie viele sagen danach ${F(5)}?`,
+        question: `In den Ausgangsdaten sagen ${FINANZ[0]} Befragte ${F(1)}. Nun werden alle Antworten umgepolt: ${F(1)} wird ${F(5)} und umgekehrt. Wie viele sagen danach ${F(5)}?`,
         options: [String(FINANZ[0]), String(FINANZ[4]), String(FINANZ[2])], correct: 0,
-        explain: `Umpolen dreht die Reihenfolge um. Die ${FINANZ[0]}, die vorher ${F(1)} sagten, stehen jetzt ganz oben.`,
+        explain: `Umpolen dreht die Reihenfolge um. Wer vorher ${F(1)} sagte, steht jetzt ganz oben; in den Ausgangsdaten sind das ${FINANZ[0]} Befragte.`,
         kurz: 'Umpolen tauscht oben und unten.',
         tryIt: { label: 'die Antworten umpolen (1 wird 5, 5 wird 1)', op: 'reverse', column: 'x' },
         expect: { change: 'equals', value: FINANZ[0], measure: c => finanzOf(c).counts[4].n },
@@ -144,7 +144,7 @@ export const ordinalTabs: ConceptTabs = {
   r: {
     entry: 'frequency', variant: 0,
     outputMap: [
-      { match: 'Cum. %', atlas: 'kumulierte Prozent', step: 1, explain: 'Von unten aufaddiert: 59,5 % haben höchstens einen mittleren Abschluss. Das nutzt nur die Reihenfolge.' },
+      { match: 'Cum. %', atlas: 'kumulierte Prozent', step: 1, explain: 'Von unten aufaddiert: 21 % haben keinen Schulabschluss, bis zum mittleren Abschluss sind es 59,5 %. Das nutzt nur die Reihenfolge.' },
       { match: 'mean', atlas: 'Mittelwert der Codes', step: 2, explain: 'R mittelt die Codes 0 bis 4. Das setzt gleich große Abstände zwischen den Abschlüssen voraus, die es nicht gibt.' },
       { match: 'valid N', atlas: 'gültige Angaben n', step: 3, explain: 'Alle 200 Befragten haben eine gültige Angabe zum Schulabschluss.' },
     ],

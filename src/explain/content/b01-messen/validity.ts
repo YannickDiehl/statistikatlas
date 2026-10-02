@@ -14,7 +14,7 @@ export const validity: ConceptCard = {
   wofuer: 'Ein Test kann sehr genau sein und trotzdem das Falsche messen. Validität fragt: Darf man die Zahlen so deuten, wie man es möchte? Misst der Wissenstest Wissen, misst die Methoden-Zuversicht Können?',
   kurz: 'Validität heißt: Eine Messung misst das, was sie messen soll. Belegt wird das mit Gründen und Befunden, nicht mit einer einzigen Kennzahl.',
   stellDirVor: {
-    text: `Fünf Fragen erfassen im Lehrdatensatz die Methoden-Zuversicht, etwa „Ich kann ein statistisches Ergebnis erklären.“ Die fünf Antworten hängen eng zusammen: Cronbach-Alpha ${num(VAL.alpha, 1)}. Mit dem Wissenstest hängt ihr Mittelwert aber kaum zusammen: r ≈ ${num(VAL.rMethoden)}. Die Lernzeit dagegen schon: r ≈ ${num(VAL.rLernzeit)}.`,
+    text: `Fünf Fragen erfassen im Lehrdatensatz die Methoden-Zuversicht, etwa „Ich kann ein statistisches Ergebnis erklären.“ Die fünf Antworten hängen eng zusammen: Cronbach-Alpha, ein Maß für diese Übereinstimmung, liegt bei ${num(VAL.alpha, 1)}. Mit dem Wissenstest hängt ihr Mittelwert aber kaum zusammen: r ≈ ${num(VAL.rMethoden)}. Die Lernzeit dagegen schon: r ≈ ${num(VAL.rLernzeit)}.`,
     figures: [
       { label: 'Alpha der fünf Fragen', value: num(VAL.alpha, 1) },
       { label: 'r Zuversicht und Wissenstest', value: num(VAL.rMethoden) },
@@ -42,7 +42,7 @@ export const validity: ConceptCard = {
     },
     {
       title: 'Genauigkeit nicht mit Gültigkeit verwechseln',
-      was: 'Die fünf Methodenfragen stimmen untereinander stark überein. Das zeigt nur, dass sie dasselbe messen, nicht was.',
+      was: 'Die fünf Methodenfragen stimmen untereinander stark überein. Das zeigt nur, dass sie einheitlich messen, nicht was.',
       rechnung: `Alpha ${num(VAL.alpha, 1)}: sehr genau. r mit dem Wissenstest ${num(VAL.rMethoden)}: kein Maß für Wissen.`,
       warum: 'Reliabilität ist eine Voraussetzung, kein Beweis. Ein Maßband, das immer 5 cm zu viel anzeigt, misst zuverlässig falsch.',
       acht: 'Ein hoher Reliabilitätswert ist kein Gütesiegel für die Deutung.',

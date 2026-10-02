@@ -2,7 +2,9 @@
 // Werte und Kategorien einer Spalte als Text und kleine Rechnungen für die Reiter „Mit 200 Befragten“.
 // Alle Zahlen sind in R nachgerechnet, siehe b01-messen.test.ts.
 import { columnById } from '../../../domain/survey';
+import { mean as weightedMean } from '../../../tasks/kit/means';
 import { num } from '../../format';
+import { relate } from '../../math';
 import { sampleColumn, sampleColumnInfo } from '../../sample';
 import type { SampleCtx } from '../../types';
 
@@ -15,18 +17,14 @@ export const FUENF = [
   { id: 'P005', lernzeit: 6.8, wissenstest: 11, einkommen: 1868 },
 ] as const;
 
-export const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+/** Mittelwert aller gültigen Werte, wahlweise gewichtet (Rechnung aus src/tasks/kit/means.ts). */
+export const mean = (xs: readonly number[], w: readonly number[] | null = null) => weightedMean(xs, w);
 
 /** Wie num(), aber Gleitkomma-Halbe wie in der Ausgabe von R aufgerundet: 1,985 → „1,99“ (num() zeigte „1,98“). */
 export const numR = (v: number, digits = 2) => num(v + Math.sign(v) * 1e-9, digits);
 
-/** Pearson-r zweier gleich langer Reihen; null, wenn eine nicht streut. */
-export function pearson(xs: readonly number[], ys: readonly number[]): number | null {
-  const mx = mean(xs), my = mean(ys);
-  let sxy = 0, sxx = 0, syy = 0;
-  xs.forEach((x, i) => { sxy += (x - mx) * (ys[i] - my); sxx += (x - mx) ** 2; syy += (ys[i] - my) ** 2; });
-  return sxx > 0 && syy > 0 ? sxy / Math.sqrt(sxx * syy) : null;
-}
+/** Pearson-r zweier gleich langer Reihen (relate aus src/explain/math.ts); null, wenn eine nicht streut. */
+export const pearson = (xs: readonly number[], ys: readonly number[]): number | null => relate(xs, ys).r;
 
 /** Spalte einer Rolle der Auswertung (`x`, `y`, `group`), sonst die Vorgabe. */
 export const role = (c: SampleCtx, key: string, fallback: string) => c.columns[key]?.[0] ?? fallback;

@@ -8,8 +8,12 @@ import { baseSurvey, sampleColumn } from '../../sample';
 import { mean, role } from './shared';
 import { ALLBUS_INC } from './missing';
 
-/** ALLBUS 2023, ungewichtet: Vertrauen in den Bundestag (pt03) war bei 1.596 von 5.246 Befragten durch den Fragebogensplit nicht gefragt. */
-export const ALLBUS_SPLIT = { nichtGefragt: 1596, n: 5246 } as const;
+/**
+ * ALLBUS 2023, ungewichtet: Den Fragebogen füllten 3.243 Befragte selbst aus (CAWI, MAIL; splt23_1 = 1 oder 2), 2.003 wurden
+ * persönlich befragt (CAPI, splt23_1 = −15). Nur unter den Selbstausfüllern war der Fragebogen geteilt: 1.596 (Split B) bekamen
+ * die Frage nach dem Vertrauen in den Bundestag (pt03) nicht. Vertrauen im Schnitt: persönlich 4,0604, Split A 3,8090.
+ */
+export const ALLBUS_SPLIT = { nichtGefragt: 1596, selbst: 3243, persoenlich: 2003, n: 5246, vertrauenPersoenlich: 4.0604, vertrauenSplitA: 3.8090 } as const;
 
 /** Mittelwert ohne die `k` größten Werte (die Spitzenverdiener verschweigen ihre Angabe). */
 export function ohneSpitze(values: readonly number[], k: number) {
@@ -26,13 +30,13 @@ export const missingMechanisms: ConceptCard = {
   concept: 'missing_mechanisms',
   picture: 'b01-fehlmuster',
   wofuer: 'Dass Angaben fehlen, ist noch kein Problem. Schwierig wird es, wenn sie aus einem bestimmten Grund fehlen. Ob die übrigen Antworten das Bild verzerren, hängt davon ab, warum die anderen schweigen.',
-  kurz: 'Fehlen Angaben rein zufällig, bleiben die Ergebnisse im Schnitt richtig. Fehlen sie, weil der Wert selbst ungewöhnlich ist, sind die übrigen Antworten verzerrt.',
+  kurz: 'Fehlen Angaben rein zufällig, bleiben die Ergebnisse im Schnitt richtig. Fehlen sie gerade wegen des fehlenden Werts, etwa weil hohe Einkommen verschwiegen werden, verzerren die übrigen Antworten das Bild.',
   stellDirVor: {
-    text: `Im ALLBUS 2023 wurde ${count(ALLBUS_SPLIT.nichtGefragt)} von ${count(ALLBUS_SPLIT.n)} Befragten die Frage nach dem Vertrauen in den Bundestag gar nicht gestellt. Der Fragebogen war in Versionen aufgeteilt, und sie bekamen eine Version ohne diese Frage. Ob jemand dort fehlt, hat mit seinem Vertrauen nichts zu tun. Beim eigenen Nettoeinkommen ist das anders: ${ALLBUS_INC.fehlend} Befragte machten keine Angabe oder verweigerten sie, vielleicht gerade wegen der Höhe ihres Einkommens.`,
+    text: `Im ALLBUS 2023 füllten ${count(ALLBUS_SPLIT.selbst)} Befragte den Fragebogen selbst aus, online oder auf Papier. Er war in zwei Versionen aufgeteilt, und ${count(ALLBUS_SPLIT.nichtGefragt)} von ihnen bekamen die Version ohne die Frage nach dem Vertrauen in den Bundestag. Beide Gruppen sind nach Alter, Bildung und Wohnort gleich zusammengesetzt. Ob jemand dort fehlt, hat deshalb mit seinem Vertrauen nichts zu tun. Beim eigenen Nettoeinkommen ist das anders: ${ALLBUS_INC.fehlend} Befragte machten keine Angabe oder verweigerten sie, vielleicht gerade wegen der Höhe ihres Einkommens.`,
     figures: [
+      { label: 'Selbst ausgefüllt', value: count(ALLBUS_SPLIT.selbst) },
       { label: 'Bundestag: nicht gefragt', value: count(ALLBUS_SPLIT.nichtGefragt) },
-      { label: 'Einkommen: keine Angabe', value: String(ALLBUS_INC.fehlend) },
-      { label: 'Befragte, ALLBUS 2023', value: count(ALLBUS_SPLIT.n) },
+      { label: 'Einkommen: keine Angabe oder verweigert', value: String(ALLBUS_INC.fehlend) },
     ],
   },
   regler: {
@@ -53,9 +57,9 @@ export const missingMechanisms: ConceptCard = {
     {
       title: 'Rein zufälliges Fehlen erkennen',
       was: 'Wer fehlt, fehlt ohne jedes Muster, etwa weil der Zufall die Version des Fragebogens bestimmt hat.',
-      rechnung: `Fehlt im Lehrdatensatz jede zehnte Person (P010, P020 bis P200), liegt das mittlere Haushaltseinkommen der übrigen bei ${eur(ohneJedeZehnte(EIN()))} statt ${eur(mean(EIN()))}.`,
+      rechnung: `Fehlt im Lehrdatensatz jede zehnte Person (P010, P020 bis P200), liegt der Mittelwert des Haushaltseinkommens der übrigen bei ${eur(ohneJedeZehnte(EIN()))} statt ${eur(mean(EIN()))}.`,
       warum: 'Die übrigen sind dann selbst eine Zufallsauswahl. Der Mittelwert bleibt im Schnitt richtig, er wird nur ungenauer.',
-      acht: 'Rein zufälliges Fehlen lässt sich selten belegen. Ein Fragebogensplit, den der Zufall zuteilt, ist der klare Fall.',
+      acht: 'Rein zufälliges Fehlen lässt sich selten belegen. Ein Fragebogensplit, den der Zufall zuteilt, ist der klare Fall, aber nur unter denen, die geteilt wurden.',
       concept: 'random_sampling',
     },
     {
@@ -117,6 +121,7 @@ export const missingMechanisms: ConceptCard = {
       'Formal ist M das Muster der fehlenden Angaben, Y_obs sind die beobachteten und Y_mis die fehlenden Werte. MCAR heißt P(M | Y_obs, Y_mis) = P(M), MAR heißt P(M | Y_obs, Y_mis) = P(M | Y_obs).',
       'MNAR liegt vor, wenn das Fehlen auch nach Berücksichtigung aller beobachteten Angaben vom fehlenden Wert abhängt. Beispiel: Fehlende Einkommen hängen zusätzlich von der nicht angegebenen Einkommenshöhe ab.',
       'MAR und MNAR lassen sich aus den beobachteten Daten allein im Allgemeinen nicht unterscheiden. MAR rechtfertigt weder pauschal die Auswertung vollständiger Fälle noch das Ersetzen durch den Mittelwert; passende Modelle wie die multiple Imputation und Sensitivitätsanalysen bleiben nötig.',
+      `Die ${count(ALLBUS_SPLIT.persoenlich)} persönlich Befragten bekamen die Frage alle. Über alle ${count(ALLBUS_SPLIT.n)} Befragten hängt das Fehlen deshalb vom Erhebungsweg ab, und persönlich Befragte antworten im Schnitt höher (${num(ALLBUS_SPLIT.vertrauenPersoenlich)} gegen ${num(ALLBUS_SPLIT.vertrauenSplitA)}, ungewichtet). Über alle gesehen ist das Fehlen also MAR: Es hängt an einer bekannten Angabe, dem Erhebungsweg.`,
       'Die Szenarien mit dem Lehrdatensatz sind Gedankenexperimente: Dort fehlt in Wahrheit keine Angabe.',
     ],
   },

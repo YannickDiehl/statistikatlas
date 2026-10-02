@@ -41,7 +41,7 @@ export const missing: TableTool = {
   concept: 'missing',
   wofuer: `Beim Einkommen fehlt in Umfragen oft die Antwort. Im ALLBUS 2023 (ungewichtet) machten ${pct(ALLBUS_HHINC.fehlend / ALLBUS_HHINC.n)} der Befragten keine Angabe zum Haushaltseinkommen oder verweigerten sie. Wie du mit solchen Lücken umgehst, verändert das Ergebnis.`,
   kurz: 'Ein fehlender Wert ist keine Null und kein Messwert. Er wird als NA markiert und zählt bei Rechnungen nicht mit.',
-  mut: 'Hier rechnest du nichts Schweres. Du entscheidest nur für jede Zelle: echte Antwort oder fehlend?',
+  mut: 'Hier entscheidest du für jede Zelle nur eins: echte Antwort oder fehlend? Das Rechnen übernimmt R.',
   columns: [
     { key: 'person', label: 'Person' },
     { key: 'einkommen', label: 'einkommen' },
@@ -65,7 +65,7 @@ export const missing: TableTool = {
     {
       title: 'Als fehlend markieren',
       was: 'Mit set_na() wird aus der −9 ein NA. NA heißt: Hier fehlt etwas.',
-      warum: 'R lässt NA bei Rechnungen weg. Mit einer −9 rechnet es dagegen ohne Warnung, als wäre sie ein Einkommen.',
+      warum: 'mariposa lässt NA bei Rechnungen weg und zählt es unter Missing. Mit einer −9 rechnet es dagegen ohne Warnung, als wäre sie ein Einkommen.',
       acht: 'NA ist keine 0. Eine 0 ist eine echte Antwort, etwa 0 Stunden gelernt.',
       sym: 'NA', say: 'N A',
       fach: 'NA (not available) ist in R der Platzhalter für einen fehlenden Wert. set_na() aus mariposa wandelt angegebene Missing-Codes in NA um.',
@@ -112,7 +112,7 @@ export const missing: TableTool = {
     '  describe(einkommen, show = "mean")',
   ].join('\n'),
   check: {
-    question: 'Wie hoch ist mit dieser Wahl das mittlere Haushaltseinkommen der fünf? Zwei Nachkommastellen reichen.',
+    question: 'Wie hoch ist mit dieser Wahl der Mittelwert der fünf Haushaltseinkommen? Zwei Nachkommastellen reichen.',
     answer: option => MITTEL[option as Option],
     right: 'Genau. So rechnet auch R mit dieser Wahl.',
     diagnose: (option, v) => {
@@ -151,6 +151,7 @@ export const missing: TableTool = {
     paragraphs: [
       'Paarweiser Ausschluss kann eine Korrelationsmatrix erzeugen, die sich nicht als gemeinsame Datenmatrix deuten lässt: Jede Zahl beruht auf anderen Personen.',
       `Im ALLBUS 2023 (ungewichtet) haben beim eigenen Nettoeinkommen ${ALLBUS_INC.fehlend} von ${count(ALLBUS_INC.n)} Befragten keine Angabe gemacht oder verweigert. Weitere ${ALLBUS_INC.keinEinkommen} sagten „kein Einkommen“, und auch das hat einen negativen Code (−50). Wer alle negativen Codes als fehlend behandelt, verliert diese echten Nullen.`,
+      'Base-R-Funktionen wie mean() oder sum() geben bei einem NA selbst NA zurück, bis du na.rm = TRUE setzt. mariposa lässt fehlende Werte von selbst weg und nennt ihre Zahl.',
       'Der Lehrdatensatz ist vollständig. Die Lücken hier entstehen in einer Übungskopie, wie im R-Code zu sehen.',
       'Ob der Ausschluss das Ergebnis verzerrt, hängt davon ab, warum Angaben fehlen. Darum geht es im Begriff „Warum fehlen Angaben?“.',
     ],
@@ -173,7 +174,7 @@ export const missingTabs: ConceptTabs = {
           ? `Alle ${n} Befragten haben eine gültige Angabe zum Haushaltsnettoeinkommen. Der Mittelwert ${u(m)} beruht deshalb auf allen ${n}.`
           : `${valid} von ${n} Befragten haben eine gültige Angabe zum Haushaltsnettoeinkommen. Der Mittelwert ${u(m)} beruht nur auf ihnen.`,
         fachlich: `n gültig = ${valid}, n fehlend = ${n - valid}; Mittelwert x̄ ≈ ${u(m)}.`,
-        zusatz: `Im ALLBUS 2023 (ungewichtet) fehlte das Haushaltseinkommen bei ${pct(ALLBUS_HHINC.fehlend / ALLBUS_HHINC.n)} der Befragten: keine Angabe oder verweigert.`,
+        zusatz: `Im ALLBUS 2023 (ungewichtet) machten ${pct(ALLBUS_HHINC.fehlend / ALLBUS_HHINC.n)} der Befragten keine Angabe zum Haushaltseinkommen oder verweigerten sie.`,
       };
     },
     voraussetzung: 'Missing-Codes müssen vor der Rechnung als fehlend markiert sein, sonst rechnet R sie als Zahl mit.',
@@ -191,7 +192,7 @@ export const missingTabs: ConceptTabs = {
   r: {
     entry: 'missing_tools', variant: 0,
     outputMap: [
-      { match: 'Missing', atlas: 'n fehlend', step: 2, explain: 'Die eine Angabe, die mit set_na() als fehlend markiert wurde: die −9 von P001.' },
+      { match: 'Missing', atlas: 'n fehlend', step: 2, explain: 'Die eine Angabe, die mit set_na() als fehlend markiert wurde: die −9, die der Aufruf hier P001 gibt (im Werkzeug war es P003).' },
       { match: 'N', atlas: 'n gültig', step: 3, explain: 'Gültig sind 200 minus 1 fehlende Angabe, also 199.' },
       { match: 'Mean', atlas: 'Mittelwert der gültigen Angaben', step: 3, explain: 'Der Mittelwert der 199 gültigen Angaben. Mit der −9 als Zahl läge er niedriger.' },
     ],

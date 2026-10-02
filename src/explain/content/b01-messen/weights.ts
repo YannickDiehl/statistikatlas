@@ -142,7 +142,7 @@ export const gewichte: Workshop<Gewichtet, GewichtetS> = {
     },
     {
       button: '÷ Σ wᵢ', title: 'Gerecht teilen', sym: 'x̄w', say: 'x quer w', concept: 'mean', perPerson: false,
-      was: 'Wir teilen die Summe der gewichteten Antworten durch die Summe der Gewichte.',
+      was: 'Wir teilen die Summe der gewichteten Antworten durch die Summe der Gewichte. Das ist der gewichtete Mittelwert.',
       rechnung: c => `${num(c.s.sumWX)} / ${num(c.s.sumW)} ${eq(c.s.meanW)} ${num(c.s.meanW)}`,
       fach: 'Der gewichtete Mittelwert ist x̄w = Σ wᵢxᵢ / Σ wᵢ. Sind alle Gewichte gleich, ist er das gewöhnliche arithmetische Mittel.',
       warum: c => `So liegt die Mitte dort, wo sie mit den richtigen Anteilen läge. Ohne Gewichte läge sie bei ${num(c.s.mean)}.`,
@@ -196,10 +196,10 @@ export const gewichte: Workshop<Gewichtet, GewichtetS> = {
       tryIt: { label: 'alle Gewichte verdoppeln', apply: d => ({ x: d.x, w: d.w.map(w => w * 2) }) },
     },
     {
-      question: 'D und E aus dem Osten antworten jetzt beide 7. Welcher Mittelwert steigt stärker?', options: ['der Mittelwert ohne Gewichte', 'der gewichtete Mittelwert'], correct: 0, step: 1,
+      question: 'Mit den Gewichten 2 und 1 antworten D und E aus dem Osten jetzt beide 7. Welcher Mittelwert steigt stärker?', options: ['der Mittelwert ohne Gewichte', 'der gewichtete Mittelwert'], correct: 0, step: 1,
       explain: 'Ohne Gewichte zählen D und E wie alle anderen. Mit Gewichten zählen sie nur halb so viel wie eine Person aus dem Westen und bewegen die Mitte weniger.',
       kurz: 'Wer weniger Gewicht hat, bewegt die gewichtete Mitte weniger.',
-      tryIt: { label: 'D und E auf 7', apply: d => ({ x: d.x.map((x, i) => i >= 3 ? 7 : x), w: d.w }) },
+      tryIt: { label: 'Gewichte 2 und 1, D und E auf 7', apply: d => ({ x: d.x.map((x, i) => i >= 3 ? 7 : x), w: d.x.map((_, i) => i < 3 ? 2 : 1) }) },
     },
   ],
   variants: {
@@ -214,7 +214,7 @@ export const gewichte: Workshop<Gewichtet, GewichtetS> = {
         const d = c.s.meanW - c.s.mean;
         return {
           kurz: Math.abs(d) < 0.005
-            ? `Gewichtet und ohne Gewichte liegt das Vertrauen bei ${num(c.s.meanW)} Punkten. Antworten Personen mit viel und wenig Gewicht im Schnitt gleich, ändern Gewichte die Mitte nicht.`
+            ? `Gewichtet und ohne Gewichte liegt das Vertrauen bei ${num(c.s.meanW)} Punkten. ${new Set(c.s.ws).size === 1 ? 'Alle zählen gleich viel, deshalb ist der gewichtete Mittelwert der gewöhnliche.' : 'Antworten Personen mit viel und wenig Gewicht im Schnitt gleich, ändern Gewichte die Mitte nicht.'}`
             : `Gewichtet liegt das Vertrauen in den Bundestag bei ${num(c.s.meanW)} Punkten, ohne Gewichte bei ${num(c.s.mean)}. Die Personen mit mehr Gewicht antworten hier im Schnitt ${d > 0 ? 'höher und ziehen die Mitte nach oben' : 'niedriger und ziehen die Mitte nach unten'}.`,
           fachlich: `x̄w = ${num(c.s.sumWX)} / ${num(c.s.sumW)} ${eq(c.s.meanW)} ${num(c.s.meanW)}; ohne Gewichte x̄ = ${num(c.s.mean)}. ${Math.abs(d) < 0.005 ? 'Der Unterschied ist 0, weil Gewicht und Antwort nicht zusammenhängen.' : `Der Unterschied von ${signed(d)} Punkten entsteht, weil Gewicht und Antwort zusammenhängen.`}`,
         };
@@ -242,8 +242,8 @@ export function bildungsgewicht(c: SampleCtx) {
   const xs = sampleColumn(c.rows, role(c, 'x', 'lernzeit')), school = sampleColumn(c.rows, role(c, 'group', 'schulabschluss'));
   const hr = school.map(s => s >= 3), share = hr.filter(Boolean).length / hr.length;
   const wHr = ZIEL_HOCHSCHULREIFE / share, wOther = (1 - ZIEL_HOCHSCHULREIFE) / (1 - share);
-  const w = hr.map(h => h ? wHr : wOther), sumW = w.reduce((a, b) => a + b, 0);
-  return { xs, share, wHr, wOther, nHr: hr.filter(Boolean).length, mean: mean(xs), meanW: xs.reduce((a, x, i) => a + w[i] * x, 0) / sumW };
+  const w = hr.map(h => h ? wHr : wOther);
+  return { xs, share, wHr, wOther, nHr: hr.filter(Boolean).length, mean: mean(xs), meanW: mean(xs, w) };
 }
 
 export const weightsTabs: ConceptTabs = {
@@ -259,7 +259,7 @@ export const weightsTabs: ConceptTabs = {
         zusatz: `${g.nHr} von ${g.xs.length} Befragten haben Fachhochschulreife oder Abitur.`,
       };
     },
-    voraussetzung: 'Die Gewichte gleichen nur den Bildungsanteil aus. Andere Unterschiede zwischen Stichprobe und Bevölkerung bleiben bestehen.',
+    voraussetzung: 'Die Gewichte gleichen nur den Anteil mit Hochschulreife an den ALLBUS 2023 an. Andere Unterschiede bleiben, und der ALLBUS selbst ist nur nach Ost und West gewichtet, nicht nach Bildung.',
     think: [
       {
         question: 'Alle lernen eine Stunde mehr. Was passiert mit dem gewichteten Mittelwert?',

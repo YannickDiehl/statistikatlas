@@ -77,6 +77,7 @@ import { styleProblems } from '../../style';
  *
  * Messfehler (measurement_error), klassisches Messmodell mit fehlerfreiem Wissenstest:
  *   cor(y, as.numeric(atlas$wissenstest_t2))       # 0.8413497 (zwei Zeitpunkte)
+ *   mean(y); mean(as.numeric(atlas$wissenstest_t2))  # 10.125; 10.875 (+0.75 Aufgaben)
  *   v <- var(x); r <- cor(x, y)                     # 10.4815; 0.5391689
  *   for (s in c(1, 2, 3, 6)) { rel <- v / (v + s^2); print(c(v + s^2, rel, r * sqrt(rel))) }
  *   #   s = 1: 11.4815 0.9129 0.5152;  s = 2: 14.4815 0.7238 0.4587;  s = 3: 19.4815 0.5380 0.3955;  s = 6: 46.4815 0.2255 0.2560
@@ -95,6 +96,7 @@ import { styleProblems } from '../../style';
  *   fuenf %>% set_na(einkommen = -9) %>% describe(einkommen, show = "mean")        # Mean 3717.750, N 4, Missing 1
  *   fuenf %>% mutate(einkommen = replace(einkommen, id == "P003", 0)) %>% describe(einkommen, show = "mean")   # 2974.200
  *   fuenf %>% set_na(einkommen = -9) %>% pearson_cor(einkommen, lernzeit)          # N = 3 (listenweise)
+ *   fuenf %>% set_na(einkommen = -9) %>% summarise(m = mean(einkommen), m2 = mean(einkommen, na.rm = TRUE))   # NA; 3717.75 (base R)
  *   atlas %>% mutate(einkommen = replace(einkommen, id == "P001", -9)) %>% set_na(einkommen = -9) %>%
  *     describe(einkommen, show = c("mean", "sd"))                                   # Mean 3147.613, SD 1426.790, N 199, Missing 1
  *
@@ -102,6 +104,9 @@ import { styleProblems } from '../../style';
  *   table(a$hhincc)[c("-9", "-7")]                  # 696 keine Angabe, 28 verweigert: 724 / 5246 = 13.8 %
  *   table(a$incc)[c("-9", "-7", "-50")]             # 362 + 84 = 446 keine Angabe oder verweigert; 251 kein Einkommen
  *   sum(a$pt03 == -11)                              # 1596 nicht gefragt (TNZ: Split; genau die Splitgruppe 2 von splt23_1)
+ *   table(a$splt23_1)                               # -15 (TNZ: MODE, CAPI) 2003; Split A 1647; Split B 1596 -> selbst ausgefüllt 3243
+ *   sum(a$pt03 == -11 & a$splt23_1 == 2)            # 1596 (alle nicht Gefragten in Split B; CAPI war nicht vom Split betroffen)
+ *   ok <- a$pt03 >= 1; tapply(a$pt03[ok], a$splt23_1[ok], mean)   # CAPI 4.0604 (n 1969), Split A 3.8090 (n 1623)
  *
  * Warum fehlen Angaben? (missing_mechanisms), Gedankenexperiment auf dem Lehrdatensatz:
  *   ein <- as.numeric(atlas$einkommen); mean(ein)   # 3154.62
@@ -250,7 +255,10 @@ test('B1 Messfehler: Messmodell, Regler und Reiter wie in R', () => {
     const a = attenuation(s);
     assert.ok(close(a.varX, varX, 1e-4) && close(a.rel, rel, 1e-4) && close(a.r, r, 1e-4), `Messmodell bei s = ${s}: ${JSON.stringify(a)}`);
   }
-  assert.match(measurementError.stellDirVor.text, /r ≈ 0,84\./);
+  assert.match(measurementError.stellDirVor.text, /mit einer zweiten Form desselben Tests\. .* r ≈ 0,84\./);
+  const t1 = col('wissenstest'), t2 = col('wissenstest_t2');
+  assert.ok(close(t1.reduce((a, b) => a + b, 0) / 200, MF.wissenT1, 1e-9) && close(t2.reduce((a, b) => a + b, 0) / 200, MF.wissenT2, 1e-9), 'Mittelwerte der zwei Zeitpunkte wie in R');
+  assert.match(measurementError.genau.paragraphs[0], /beim zweiten Mal 0,75 Aufgaben mehr \(10,13 gegen 10,88\)/);
   assert.match(measurementError.bausteine[2].rechnung!, /Var\(X\) = 10,48 h² \+ 4 h² = 14,48 h²\. Echt sind 10,48 \/ 14,48 ≈ 0,72 davon\./);
   assert.match(measurementError.regler!.describe(2), /wächst die Streuung auf 14,48 h²\. Nur 72 % davon sind echt, .* von 0,54 auf etwa 0,46\./);
   assert.match(measurementError.ausprobieren[1].explain, /auf etwa 0,4\./);
@@ -263,7 +271,7 @@ test('B1 Messfehler: Messmodell, Regler und Reiter wie in R', () => {
 test('B1 Validität: Alpha, Zuversicht und Lernzeit gegen den Wissenstest wie in R', () => {
   assert.match(CATALOG_OUTPUT['reliability:0'].output, /Cronbach's Alpha:\s+0\.898/, 'Alpha wie in R');
   assert.ok(close(VAL.rLernzeit, MF.r, 1e-12) && close(VAL.rMethoden, OP.rMethodenWissen, 1e-12), 'dieselben Referenzwerte wie oben');
-  assert.match(validity.stellDirVor.text, /Cronbach-Alpha 0,9\. .* r ≈ 0,02\. Die Lernzeit dagegen schon: r ≈ 0,54\./);
+  assert.match(validity.stellDirVor.text, /Cronbach-Alpha, ein Maß für diese Übereinstimmung, liegt bei 0,9\. .* r ≈ 0,02\. Die Lernzeit dagegen schon: r ≈ 0,54\./);
   const tab = analysis(validityTabs.sample);
   assert.equal(tab.result(ctx()).kurz, 'Wer mehr lernt, löst im Wissenstest eher mehr Aufgaben: r ≈ 0,54. Das passt zur Deutung „Der Test misst Wissen“. Mit der Methoden-Zuversicht hängt der Wissenstest kaum zusammen (r ≈ 0,02).');
   const reversed = tab.result(ctx(applyOp(rows, 'wissenstest', 'reverse')));
@@ -276,6 +284,8 @@ test('B1 fehlende Angaben: die Übungskopie und ihre Mittelwerte wie in R', () =
   assert.ok(close(MITTEL.zahl, 2972.4, 1e-9) && close(MITTEL.na, 3717.75, 1e-9) && close(MITTEL.null, 2974.2, 1e-9), JSON.stringify(MITTEL));
   for (const o of ['zahl', 'na', 'null']) assert.equal(missing.check.answer(o), MITTEL[o as keyof typeof MITTEL]);
   assert.match(missing.check.diagnose('na', 2974.2)!, /^Fast! Du hast durch 5 geteilt/);
+  assert.match(missing.genau.paragraphs.join(' '), /mean\(\) oder sum\(\) geben bei einem NA selbst NA zurück, bis du na\.rm = TRUE setzt/);
+  assert.ok(!/mittlere/.test(missing.check.question), 'Mittelwert heißt nicht „mittleres“ (Leitplanke Mitte/Median)');
   assert.deepEqual(missing.apply(missing.rows, 'na').rows.map(r => r.einkommen), [4549, 3850, null, 4604, 1868]);
   assert.deepEqual(missing.apply(missing.rows, 'null').rows.map(r => r.zaehlt), ['ja', 'ja', 'ja, als 0', 'ja', 'ja']);
   assert.match(missing.rCode('na'), /set_na\(einkommen = -9\) %>%\n  describe\(einkommen, show = "mean"\)$/);
@@ -297,6 +307,13 @@ test('B1 ALLBUS 2023: Aggregate wie in R (nur mit der eigenen GESIS-Datei)', { s
   assert.deepEqual([codeCount('hhincc', -9), codeCount('hhincc', -7)], [696, 28]);
   assert.deepEqual([codeCount('incc', -9), codeCount('incc', -7), codeCount('incc', -50)], [362, 84, 251]);
   assert.equal(codeCount('pt03', -11), 1596, 'Vertrauen in den Bundestag: durch den Split nicht gefragt');
+  // C1: Der Split betrifft nur die Selbstausfüller (splt23_1 = 1 oder 2); alle −11 liegen in Split B; CAPI (−15) wurde immer gefragt.
+  const split = loadAllbus().byName.get('splt23_1')!.values, pt = loadAllbus().byName.get('pt03')!.values;
+  assert.deepEqual([codeCount('splt23_1', 1) + codeCount('splt23_1', 2), codeCount('splt23_1', -15)], [ALLBUS_SPLIT.selbst, ALLBUS_SPLIT.persoenlich]);
+  let inB = 0; for (let i = 0; i < pt.length; i++) if (pt[i] === -11 && split[i] === 2) inB++;
+  assert.equal(inB, 1596, 'alle nicht Gefragten in Split B');
+  const trust = (code: number) => { let a = 0, k = 0; for (let i = 0; i < pt.length; i++) if (pt[i] >= 1 && split[i] === code) { a += pt[i]; k++; } return a / k; };
+  assert.ok(close(trust(-15), ALLBUS_SPLIT.vertrauenPersoenlich, 1e-4) && close(trust(1), ALLBUS_SPLIT.vertrauenSplitA, 1e-4), `Vertrauen nach Erhebungsweg: ${trust(-15)} ${trust(1)}`);
   const sav = loadAllbus(), ew = sav.byName.get('eastwest')!.values, w = sav.byName.get('wghtpew')!.values;
   const t = sav.byName.get('pt03')!.values, e = sav.byName.get('educ')!.values;
   const sum = (f: (i: number) => number) => { let a = 0; for (let i = 0; i < sav.nCases; i++) a += f(i); return a; };
@@ -321,8 +338,10 @@ test('B1 warum fehlen Angaben: Spitzenverdiener verschweigen ihr Einkommen, Wert
   assert.match(missingMechanisms.bausteine[2].rechnung!, /von 3\.154,62 € auf 2\.836,92 €\./);
   assert.equal(missingMechanisms.regler!.describe(20), 'Fehlen die 20 Befragten mit dem höchsten Einkommen, liegt der Mittelwert der übrigen 180 bei 2.836,92 € statt 3.154,62 €: 317,7 € zu niedrig.');
   assert.match(missingMechanisms.regler!.describe(1), /^Fehlt die Person mit dem höchsten Einkommen, .* 3\.127,08 €/);
-  assert.match(missingMechanisms.stellDirVor.text, /1\.596 von 5\.246 Befragten .* 446 Befragte/);
-  assert.equal(ALLBUS_SPLIT.nichtGefragt, 1596);
+  assert.match(missingMechanisms.stellDirVor.text, /füllten 3\.243 Befragte den Fragebogen selbst aus.* 1\.596 von ihnen .* 446 Befragte/);
+  assert.match(missingMechanisms.genau.paragraphs.join(' '), /Die 2\.003 persönlich Befragten .* \(4,06 gegen 3,81, ungewichtet\)\. .* MAR/);
+  assert.deepEqual([ALLBUS_SPLIT.nichtGefragt, ALLBUS_SPLIT.selbst, ALLBUS_SPLIT.persoenlich], [1596, 3243, 2003]);
+  assert.equal(ALLBUS_SPLIT.selbst + ALLBUS_SPLIT.persoenlich, ALLBUS_SPLIT.n);
   const tab = analysis(missingMechanismsTabs.sample), at = (data = rows) => tab.result(ctx(data, { x: ['einkommen'] }));
   assert.match(at().fachlich, /n = 180; Verzerrung des Mittelwerts −317,7 €\./);
   assert.match(at(applyOp(rows, 'einkommen', 'double')).fachlich, /−635,41 €\./);

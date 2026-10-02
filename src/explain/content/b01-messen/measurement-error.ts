@@ -5,10 +5,14 @@
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num, pct, unit } from '../../format';
 import { sampleColumn, sampleColumnInfo, unitText } from '../../sample';
-import { mean, pearson, role } from './shared';
+import { relate } from '../../math';
+import { role } from './shared';
 
-/** Varianz der Lernzeit (R: var(lernzeit) = 10.4815), r mit dem Wissenstest (0.5392), r der Wissenstests zu zwei Zeitpunkten (0.8413). */
-export const MF = { varT: 10.48150, r: 0.5391689, rRetest: 0.8413497 } as const;
+/**
+ * Varianz der Lernzeit (R: var(lernzeit) = 10.4815), r mit dem Wissenstest (0.5392), r der Wissenstests zu zwei Zeitpunkten
+ * (0.8413) und ihre Mittelwerte (10.125, 10.875).
+ */
+export const MF = { varT: 10.48150, r: 0.5391689, rRetest: 0.8413497, wissenT1: 10.125, wissenT2: 10.875 } as const;
 
 /** Klassisches Messmodell: Fehler mit Standardabweichung `sigma` auf wahre Werte mit Varianz `varT`; r des fehlerfreien Paars `r`. */
 export function attenuation(sigma: number, varT: number = MF.varT, r: number = MF.r) {
@@ -24,7 +28,7 @@ export const measurementError: ConceptCard = {
   wofuer: 'Keine Messung ist perfekt. Wer seine Lernzeit der letzten sieben Tage schätzt, rundet, vergisst einen Abend oder zählt etwas doppelt. Messfehler machen einzelne Werte ungenau, und sie verändern, was du in den Daten siehst.',
   kurz: 'Ein Messwert besteht aus dem wahren Wert und einem Fehler. Zufällige Fehler machen Zusammenhänge schwächer, systematische Fehler verschieben die Werte in eine Richtung.',
   stellDirVor: {
-    text: `Dieselben 200 Personen haben den Wissenstest ein zweites Mal gemacht, mit einer gleich schweren zweiten Form. Wer beim ersten Mal viele Aufgaben löste, löste auch beim zweiten Mal eher viele: r ≈ ${num(MF.rRetest)}. Gleich sind die Ergebnisse aber nicht. Ein Teil des Unterschieds ist Messfehler: Tagesform, Raten, Glück bei einzelnen Aufgaben.`,
+    text: `Dieselben 200 Personen haben den Wissenstest ein zweites Mal gemacht, mit einer zweiten Form desselben Tests. Wer beim ersten Mal viele Aufgaben löste, löste auch beim zweiten Mal eher viele: r ≈ ${num(MF.rRetest)}. Gleich sind die Ergebnisse aber nicht. Ein Teil des Unterschieds ist Messfehler: Tagesform, Raten, Glück bei einzelnen Aufgaben.`,
     figures: [
       { label: 'r Zeitpunkt 1 und 2', value: num(MF.rRetest) },
       { label: 'Lernzeit, Varianz s²', value: `${num(MF.varT)} h²` },
@@ -49,7 +53,7 @@ export const measurementError: ConceptCard = {
       title: 'Zufällige Fehler erkennen',
       was: 'Mal rundet jemand auf, mal vergisst er einen Abend. Solche Fehler gehen mal nach oben, mal nach unten.',
       warum: 'Zufällige Fehler gleichen sich im Mittel aus. Sie machen einzelne Werte ungenau, verschieben aber nicht den Mittelwert.',
-      acht: 'Sie schwächen Zusammenhänge ab: r wird kleiner, als es ohne Fehler wäre.',
+      acht: 'Sie schwächen Zusammenhänge ab: r rückt näher an 0, als es ohne Fehler wäre.',
       concept: 'reliability',
     },
     {
@@ -108,6 +112,7 @@ export const measurementError: ConceptCard = {
   genau: {
     kurz: 'Zufälliger Messfehler senkt die Reliabilität und schwächt Korrelationen ab. Systematischer Fehler verzerrt Mittelwerte und kann im wahren Wert T stecken.',
     paragraphs: [
+      `Im Schnitt lösen die 200 beim zweiten Mal ${num(MF.wissenT2 - MF.wissenT1)} Aufgaben mehr (${num(MF.wissenT1)} gegen ${num(MF.wissenT2)}). r ≈ ${num(MF.rRetest)} sagt nur, dass die Reihenfolge der Personen weitgehend erhalten bleibt.`,
       'Im klassischen Modell ist T der Erwartungswert einer Person über gedachte Wiederholungen derselben Messung; E hat den Erwartungswert 0. Die Zerlegung Var(X) = Var(T) + Var(E) setzt voraus, dass T und E nicht zusammenhängen.',
       'Reliabilität ist der Anteil Var(T) / Var(X). Sind beide Merkmale mit unabhängigen Fehlern gemessen, gilt für die beobachtete Korrelation r(X, Y) = r(T_X, T_Y) · √(Rel_X · Rel_Y). Der Regler rechnet so, mit einem fehlerfreien Wissenstest.',
       'Der wahre Wert garantiert nicht, dass das gemeinte Konstrukt getroffen wird. Gleichbleibende Verzerrungen, etwa geschöntes Antworten, stecken im wahren Wert T und fallen erst bei der Frage nach der Validität auf.',
@@ -118,9 +123,8 @@ export const measurementError: ConceptCard = {
 
 function fehlerOf(c: SampleCtx) {
   const x = role(c, 'x', 'lernzeit'), y = role(c, 'y', 'wissenstest');
-  const xs = sampleColumn(c.rows, x), ys = sampleColumn(c.rows, y), m = mean(xs);
-  const v = xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1), r = pearson(xs, ys);
-  return { xs, m, v, r, info: sampleColumnInfo(x), att: r === null ? null : attenuation(2, v, r) };
+  const xs = sampleColumn(c.rows, x), rel = relate(xs, sampleColumn(c.rows, y)), r = rel.r, v = rel.x.variance;
+  return { xs, m: rel.x.mean, v, r, info: sampleColumnInfo(x), att: r === null ? null : attenuation(2, v, r) };
 }
 
 export const measurementErrorTabs: ConceptTabs = {
@@ -174,7 +178,7 @@ export const measurementErrorTabs: ConceptTabs = {
     entry: 'reliability', variant: 0,
     outputMap: [
       { match: '0.898', atlas: 'Reliabilität (Cronbach-Alpha)', step: 3, explain: 'Alpha schätzt, welcher Anteil der Streuung im Summenwert der fünf Fragen echt ist: hier etwa 90 %. Der Rest gilt als zufälliger Messfehler.' },
-      { match: 'Corrected', atlas: 'Trennschärfe einer Frage', step: 1, explain: 'Wie eng die erste Frage mit der Summe der anderen zusammenhängt. Je kleiner, desto mehr eigenes Rauschen steckt in ihr.' },
+      { match: 'Corrected', atlas: 'Trennschärfe einer Frage', step: 1, explain: 'Wie eng die erste Frage mit der Summe der anderen zusammenhängt. Je kleiner, desto weniger teilt sie mit den anderen: eigenes Rauschen oder ein anderer Inhalt.' },
       { match: 'N (listwise)', atlas: 'Fallzahl n', explain: 'Gerechnet wird mit den 200 Befragten, die alle fünf Fragen beantwortet haben.' },
     ],
     check: {
