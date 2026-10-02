@@ -5,7 +5,8 @@ import { num, pct } from '../../../explain/format';
 import { baseSurvey } from '../../../explain/sample';
 import { columnStats, dnorm, within } from '../../../explain/content/b07-verteilungen/dist';
 import { inside } from '../../../explain/content/b07-verteilungen/normal';
-import { AreaUnder, Axis, Bar, Curve, forCard, linear, useWidth, type Picture } from './kit';
+import { areaText, type ZStats } from '../../../explain/content/b07-verteilungen/standard-normal';
+import { AreaUnder, Axis, Bar, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Histogramm der Schlafdauer (halbe Stunden) mit der Normalverteilung x̄, s; markiert ist x̄ ± k · s. */
 function NormalFit({ k }: { k: number }) {
@@ -34,6 +35,30 @@ function NormalFit({ k }: { k: number }) {
   );
 }
 
+/** Standardnormalverteilung mit der Fläche links von z; darunter dieselben Stellen in Stunden (μ + z · σ). */
+function StandardArea({ s }: { s: ZStats }) {
+  const [box, W] = useWidth();
+  const lim = 4, base = 168, left = 28, right = W - 28, cut = Math.max(-lim, Math.min(lim, s.zr));
+  const X = linear([-lim, lim], [left, right]), Y = linear([0, 0.42], [base, 46]);
+  const hours = [-2, 0, 2];
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={238} viewBox={`0 0 ${W} 238`} role="img"
+        aria-label={`Standardnormalverteilung. Markiert ist die Fläche links von z = ${num(s.zr)}: ${areaText(s.area)}. Die Mitte 0 entspricht ${num(s.mu)} Stunden, eine Standardabweichung ${num(s.sigma)} Stunden.`}>
+        <AreaUnder f={dnorm} from={-lim} to={cut} x={X} y={Y} tone="pos" />
+        <Curve f={dnorm} from={-lim} to={lim} x={X} y={Y} />
+        <MarkLine x={X(cut)} from={46} to={base} label={Math.abs(s.zr) <= lim ? `z = ${num(s.zr)}` : `z = ${num(s.zr)} (außerhalb)`} />
+        <Axis scale={X} ticks={[-3, -2, -1, 0, 1, 2, 3]} at={base} from={left} to={right} labelGap={18} />
+        <text className="xw-t" x={right} y={base + 18} textAnchor="end">z</text>
+        {hours.map(z => <text key={z} className="xw-t" x={X(z)} y={base + 42} textAnchor="middle">{num(s.mu + z * s.sigma)}</text>)}
+        <text className="xw-t" x={(left + right) / 2} y={base + 62} textAnchor="middle">Stunden: μ − 2σ, μ, μ + 2σ</text>
+        <text className="xw-t xw-strong" x={left} y={16}>Fläche links von z: {areaText(s.area)}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b07-normal': forCard(p => <NormalFit k={p.value ?? 1} />),
+  'b07-standard': forSentence(p => <StandardArea s={p.s as ZStats} />),
 };

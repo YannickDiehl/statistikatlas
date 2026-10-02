@@ -59,3 +59,37 @@ test('B7 Normalverteilung: Schlafdauer, Flächen und Schiefe wie in R', () => {
   assert.deepEqual([f.k1, f.k2], [140, 191]);
   if (normalTabs.sample?.kind === 'analysis') assert.match(normalTabs.sample.result(ctx).kurz, /7,08 Stunden .* 0,82 Stunden\. 140 von 200 .* etwa 137 voraus\. Die Schiefe ist −0,06;/);
 });
+
+/*
+ * Standardnormalverteilung: 5,5 Stunden Schlaf bei μ = 7,08 und σ = 0,82 (x̄ und s der 200, gerundet)
+ *   (5.5 - 7.08) / 0.82; pnorm(-1.93)                                         # -1.926829; 0.02680342
+ *   sum(x <= 5.5)                                                            # 7
+ *   pnorm(-2); qnorm(0.975); qnorm(0.995); pnorm(2)                          # 0.02275013 1.959964 2.575829 0.9772499
+ *   z <- (x - mean(x)) / sd(x); sum(abs(z) > 1.96); max(z); min(z)          # 10; 2.94904; -2.418396
+ *   atlas$id[which.max(z)]                                                   # P181 (9,5 Stunden)
+ *   mean(x) + c(-1.96, 1.96) * sd(x)                                        # 5.475794 8.689206
+ *   sapply(1:200, function(i) { xx <- x; xx[i] <- 14; max(scale(xx)) })     # 7.210069 bis 7.339311
+ *   sapply(1:200, function(i) { xx <- x + 0.5; xx[i] <- 14; max(scale(xx)) })   # mindestens 6.814707
+ *   atlas %>% std(lernzeit, method = "sd", suffix = "_z") %>% describe(lernzeit, lernzeit_z, show = c("mean", "sd"))
+ *                                                                            # lernzeit 7.752 3.238; lernzeit_z 0.000 1.000
+ *   atlas %>% std(lernzeit, method = "SD")   # Fehler: 'arg' sollte eines von '“sd”, “2sd”, “mad”, “gmd”' sein
+ */
+test('B7 Standardnormalverteilung: z, Fläche und die z-Werte der 200 wie in R', async () => {
+  const { standardnormal, standardTabs, zFit, Z_START } = await import('./standard-normal');
+  const s = standardnormal.compute(Z_START);
+  ok(s.z, -1.926829, 'z'); assert.equal(s.zr, -1.93); ok(s.area, 0.02680342, 'Φ(−1,93)'); assert.equal(s.count, 7, 'höchstens 5,5 h');
+  assert.match(standardnormal.interpret(s).kurz, /^Laut Modell schlafen etwa 2,7 % der Menschen höchstens 5,5 Stunden pro Nacht\. 5,5 Stunden liegen 1,93 Standardabweichungen unter der Mitte\. Bei den 200 Befragten sind es 7 von 200\.$/);
+  assert.equal(standardnormal.worked(s)[1].text, '(−1,58) / 0,82 ≈ −1,93. Das sind 1,93 Standardabweichungen unter der Mitte.');
+  const two = standardnormal.compute(standardnormal.quick[0].apply(Z_START));
+  assert.deepEqual([two.x, two.zr], [8.72, 2]); ok(two.area, 0.9772499, 'Φ(2)');
+  assert.match(standardnormal.fehler, /Φ\(−2\) ≈ 2,3 %/);
+  const f = zFit({ rows, columns: { x: ['schlafdauer'] } });
+  assert.equal(f.outside, 10); ok(f.zmax, 2.94904, 'größter z-Wert', 1e-5); ok(f.zmin, -2.418396, 'kleinster z-Wert', 1e-5); assert.equal(f.who, 'P181');
+  const after = rows.map((_, i) => zFit({ rows: applyOp(rows, 'schlafdauer', 'outlier', 14, i), columns: { x: ['schlafdauer'] } }).zmax);
+  assert.ok(Math.min(...after) > 7.21 && Math.max(...after) < 7.34, 'größter z-Wert nach dem Ausreißer über 7');
+  if (standardTabs.sample?.kind === 'analysis') {
+    const r = standardTabs.sample.result({ rows, columns: { x: ['schlafdauer'] } });
+    assert.match(r.kurz, /10 von 200 liegen weiter als 1,96 .* also 10\. Der größte z-Wert ist 2,95\./);
+    assert.match(r.zusatz!, /Zwischen 5,48 und 8,69 Stunden liegen 190 von 200 Befragten\./);
+  }
+});
