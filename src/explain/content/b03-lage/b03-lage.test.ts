@@ -7,7 +7,8 @@ import { close } from '../../format';
 import { ALLBUS_N, validn, validnTabs, validCounts } from './validn';
 import { LERNZEIT, range, rangeOf, rangeTabs, rangeWithTop } from './range';
 import { applyOp } from '../../sample';
-import { quantile6 } from './lage';
+import { excessKurtosis, mean, median, quantile6, skewness } from './lage';
+import { FORM, formOf, formWithTop, shape, shapeTabs } from './shape';
 
 /*
  * Referenzwerte des Bereichs B3, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -31,6 +32,18 @@ import { quantile6 } from './lage';
  *   q(x, .25); q(x, .75); q(x, .75) - q(x, .25)                                       # 5.8 9.75 3.95 (wie w_quantile, w_iqr)
  *   for (top in c(25, 40, 60)) { xx <- x; xx[atlas$id == "P175"] <- top; max(xx) - min(xx); q(xx, .75) - q(xx, .25) }   # 25/40/60, IQR immer 3.95
  *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; max(xx) - min(xx) }))   # 39.1 40
+ *
+ * Schiefe & Kurtosis (shape), Formeln wie mariposa .calc_skewness / w_kurtosis(excess = TRUE):
+ *   G1 <- function(v) { n <- length(v); m <- mean(v); m2 <- sum((v-m)^2)/n; m3 <- sum((v-m)^3)/n; sqrt(n*(n-1))/(n-2) * m3/m2^1.5 }
+ *   G2 <- function(v) { n <- length(v); m <- mean(v); m2 <- sum((v-m)^2)/n; m4 <- sum((v-m)^4)/n; ((n+1)*(m4/m2^2-3)+6)*(n-1)/((n-2)*(n-3)) }
+ *   atlas %>% w_skew(lernzeit, einkommen)                            # 0.196 0.792 (G1: 0.1962485 0.7915222)
+ *   atlas %>% w_kurtosis(lernzeit, einkommen)                        # 0.338 0.678 (G2: 0.3383592 0.6781967); excess = FALSE: 3.338
+ *   inc <- as.numeric(atlas$einkommen); mean(inc); median(inc); quantile(inc, c(.25, .75), type = 6)   # 3154.62 2772; 2223 4087.75
+ *   o <- order(inc, decreasing = TRUE); atlas$id[o[1]]; inc[o[1]]   # P054 8636
+ *   for (v in c(10000, 15000, 20000, 30000)) { ii <- inc; ii[o[1]] <- v; G1(ii); G2(ii); mean(ii); median(ii) }
+ *     # 0.9872025 1.858731 3161.44 2772 | 2.317081 13.58799 3186.44 | 4.18297 35.52917 3211.44 | 7.600467 84.98594 3261.44
+ *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; G1(xx) }))      # 2.723155 2.821434
+ *   G1(60 - x)                                                       # -0.1962485
  */
 
 const rows = createSurvey();
@@ -86,4 +99,29 @@ test('B3 Spannweite: Lernzeit, Regler und Auswertung wie in R', () => {
   assert.ok(close(Math.min(...after), 39.1, 1e-9) && close(Math.max(...after), 40, 1e-9), 'Ausreißer 40: 39,1 bis 40 Stunden');
   const s = rangeTabs.sample!;
   assert.ok(s.kind === 'analysis' && s.think[0].explain.includes('auf 39,1 bis 40 Stunden'));
+});
+
+test('B3 Schiefe & Kurtosis: Einkommen, Lernzeit, Regler und Auswertung wie in R', () => {
+  const inc = rows.map(r => r.values.einkommen), lz = rows.map(r => r.values.lernzeit);
+  const near = (a: number, b: number, tol = 1e-6) => assert.ok(close(a, b, tol), `${a} ≠ R ${b}`);
+  near(skewness(inc), FORM.einkommen.skew); near(excessKurtosis(inc), FORM.einkommen.kurt);
+  near(skewness(lz), FORM.lernzeit.skew); near(excessKurtosis(lz), FORM.lernzeit.kurt); near(excessKurtosis(lz) + 3, FORM.lernzeit.kurtosis);
+  near(mean(inc), FORM.einkommen.mean); near(median(inc), FORM.einkommen.median); near(quantile6(inc, 0.25), FORM.einkommen.q1); near(quantile6(inc, 0.75), FORM.einkommen.q3);
+  near(mean(lz), FORM.lernzeit.mean); near(median(lz), FORM.lernzeit.median);
+  assert.equal(rows.find(r => r.values.einkommen === Math.max(...inc))!.id, FORM.einkommen.top);
+  for (const [v, sk, ku, m] of [[10000, 0.9872025, 1.858731, 3161.44], [15000, 2.317081, 13.58799, 3186.44], [20000, 4.18297, 35.52917, 3211.44], [30000, 7.600467, 84.98594, 3261.44]]) {
+    const f = formWithTop(v);
+    near(f.skew, sk); near(f.kurt, ku, 1e-5); near(f.mean, m); near(f.median, 2772);
+  }
+  assert.match(shape.regler!.describe(30000), /Mit 30\.000 € für diesen Haushalt beträgt die Schiefe 7,6 und der Exzess 84,99\. Der Mittelwert wandert auf 3\.261,44 €, der Median bleibt bei 2\.772 €\./);
+  assert.match(shape.regler!.describe(8636), /So ist es in den Daten: Die Schiefe beträgt 0,79\. Der Mittelwert 3\.154,62 € liegt über dem Median 2\.772 €\./);
+  assert.match(shape.ausprobieren[1].explain, /von 3\.154,62 € auf 3\.261,44 €.*von 0,79 auf 7,6/);
+  const after = rows.map((_, k) => skewness(applyOp(rows, 'lernzeit', 'outlier', 40, k).map(r => r.values.lernzeit)));
+  near(Math.min(...after), 2.723155); near(Math.max(...after), 2.821434);
+  assert.ok(shapeTabs.sample!.think[2].explain.includes('auf 2,72 bis 2,82'));
+  near(skewness(applyOp(rows, 'lernzeit', 'reverse').map(r => r.values.lernzeit)), -FORM.lernzeit.skew);
+  const f = formOf({ rows, columns: { x: ['lernzeit'] } }), s = shapeTabs.sample!;
+  assert.deepEqual([f.above, f.below], [97, 103]);
+  assert.ok(s.kind === 'analysis' && /„Lernzeit“ ist fast symmetrisch verteilt: Die Schiefe beträgt 0,2\. Der Mittelwert 7,75 h liegt über dem Median 7,6 h\./.test(s.result({ rows, columns: { x: ['lernzeit'] } }).kurz));
+  assert.ok(s.kind === 'analysis' && /läuft etwas zu großen Werten hin aus: Die Schiefe beträgt 0,79/.test(s.result({ rows, columns: { x: ['einkommen'] } }).kurz));
 });

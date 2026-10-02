@@ -3,14 +3,17 @@
 import type { AreaIndex } from '../../types';
 import { validn, validnTabs } from './validn';
 import { range, rangeTabs } from './range';
+import { shape, shapeTabs } from './shape';
 
 export const b03Lage: AreaIndex = {
   explanations: {
     validn: { kind: 'begriff', card: validn },
     range: { kind: 'begriff', card: range },
+    shape: { kind: 'begriff', card: shape },
   },
   tabs: {
     validn: validnTabs,
     range: rangeTabs,
+    shape: shapeTabs,
   },
 };
