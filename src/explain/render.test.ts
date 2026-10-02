@@ -444,7 +444,9 @@ test('In R: every catalog lead call shows exactly the captured call, also after 
     assert.ok(lead.script.includes(captured.code.slice(startBlock().length).trim()) && lead.script.includes(startBlock()), `${id}: R-Skript mit anderem Aufruf`);
     // M2: Der Hinweis der Katalogvariante steht unter „Der Aufruf“ (Einheitsgewichte, Richtung des einseitigen Tests …).
     if (lead.note) {
-      assert.deepEqual(styleProblems(lead.note), [], `${id}: Hinweis zum Aufruf`);
+      assert.deepEqual(styleProblems(lead.note, { maxWords: 25 }), [], `${id}: Hinweis zum Aufruf`);
+      // Der Reiter zeigt keine Formel und keine Zeichen vor dem Aufruf: Der Hinweis nennt Wörter, keine Formelstücke (Sprachleitfaden).
+      assert.ok(!/[₀-₉ₐ-ₜ]|[\p{L}\d]=[\p{L}\d−]|\bFormel\b/u.test(lead.note), `${id}: Hinweis mit Formelstück oder Verweis auf eine Formel: ${lead.note}`);
       const panel = text(panelOf(inspector(id), id, 'r'));
       assert.ok(panel.includes(text(lead.note)) && panel.indexOf(text(lead.note)) < panel.indexOf('So antwortet R'), `${id}: Hinweis zum Aufruf fehlt unter „Der Aufruf“`);
     }

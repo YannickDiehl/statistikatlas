@@ -975,7 +975,7 @@ export const mariposaEntries:AtlasEntry[]=[
       "many": false
      }
     ],
-    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
+    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Die Richtung legst du fest, bevor du die Daten ansiehst."
    },
    {
     "label": "Erste Gruppe größer · einseitig",
@@ -1001,7 +1001,7 @@ export const mariposaEntries:AtlasEntry[]=[
       "many": false
      }
     ],
-    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
+    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Die Richtung legst du fest, bevor du die Daten ansiehst."
    }
   ],
   "roles": [
@@ -1062,7 +1062,7 @@ export const mariposaEntries:AtlasEntry[]=[
     "fn": "oneway_anova",
     "code": "a <- atlas %>%\n  oneway_anova({x}, group = {group})\n\nsummary(a)",
     "formula": "wⱼ = nⱼ/[[sⱼ²|variance|Gruppenvarianz]]; W=Σwⱼ; x̄w=Σwⱼx̄ⱼ/W; B=Σ(1−wⱼ/W)²/(nⱼ−1); F_W=[Σwⱼ(x̄ⱼ−x̄w)²/(k−1)]/[1+2(k−2)B/(k²−1)]; df₂=(k²−1)/(3B)",
-    "note": "Beide Rechenwege stehen in derselben R-Ausgabe. Welch benötigt positive Gruppenvarianzen und genügend Fälle je Gruppe; df₁=k−1."
+    "note": "Beide Rechenwege stehen in derselben R-Ausgabe. Der Welch-Weg braucht in jeder Gruppe eine Varianz größer als null und genügend Fälle. Die Freiheitsgrade im Zähler sind die Zahl der Gruppen minus eins."
    }
   ],
   "roles": [
@@ -1380,7 +1380,7 @@ export const mariposaEntries:AtlasEntry[]=[
       "many": false
      }
     ],
-    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
+    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Die Richtung legst du fest, bevor du die Daten ansiehst."
    },
    {
     "label": "Erste Gruppe größer · einseitig",
@@ -1406,7 +1406,7 @@ export const mariposaEntries:AtlasEntry[]=[
       "many": false
      }
     ],
-    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Eine Richtung wird vor der Analyse inhaltlich festgelegt."
+    "note": "Die erste Gruppe ist der kleinere Code aus dem Codebuch, bei Weiterbildung also 0 = Nein. Die Richtung legst du fest, bevor du die Daten ansiehst."
    }
   ],
   "roles": [
@@ -2306,7 +2306,7 @@ export const mariposaEntries:AtlasEntry[]=[
       "many": true
      }
     ],
-    "formula": "[[ŷ|prediction|Modellvorhersage]] = b₀ + b₁X + b₂Z + [[b₃XZ|interaction|Interaktion]]", "note": "Die Formel zeigt zwei skalare Prädiktoren. Mehrstufige Faktoren erzeugen mehrere Indikatoren und entsprechend mehrere Interaktionsterme."
+    "formula": "[[ŷ|prediction|Modellvorhersage]] = b₀ + b₁X + b₂Z + [[b₃XZ|interaction|Interaktion]]", "note": "Der Aufruf rechnet mit genau zwei Prädiktoren und ihrem Interaktionsterm, dem Produkt beider. Hat ein Prädiktor mehr als zwei Stufen, entstehen mehrere Indikatorspalten (mit 0 und 1) und entsprechend mehrere Interaktionsterme."
    }
   ],
   "roles": [
