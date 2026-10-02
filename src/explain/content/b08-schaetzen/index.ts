@@ -10,6 +10,7 @@ import { centralLimit, centralLimitTabs } from './central-limit';
 import { samplingBias, samplingBiasTabs } from './sampling-bias';
 import { randomSampling, randomSamplingTabs } from './random-sampling';
 import { confidence, confidenceTabs } from './confidence';
+import { predictionInterval, predictionIntervalTabs } from './prediction-interval';
 
 export const b08Schaetzen: AreaIndex = {
   explanations: {
@@ -22,6 +23,7 @@ export const b08Schaetzen: AreaIndex = {
     sampling_bias: { kind: 'begriff', card: samplingBias },
     random_sampling: { kind: 'begriff', card: randomSampling },
     confidence: { kind: 'satz', template: confidence },
+    prediction_interval: { kind: 'satz', template: predictionInterval },
   },
   tabs: {
     sampling: samplingTabs,
@@ -33,5 +35,6 @@ export const b08Schaetzen: AreaIndex = {
     sampling_bias: samplingBiasTabs,
     random_sampling: randomSamplingTabs,
     confidence: confidenceTabs,
+    prediction_interval: predictionIntervalTabs,
   },
 };

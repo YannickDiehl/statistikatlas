@@ -4,6 +4,8 @@
 import { count, fixed, num, pct } from '../../../explain/format';
 import { VERTRAUEN } from '../../../explain/content/b08-schaetzen/daten';
 import type { KiStats } from '../../../explain/content/b08-schaetzen/confidence';
+import { GERADE, type PiStats } from '../../../explain/content/b08-schaetzen/prediction-interval';
+import { baseSurvey } from '../../../explain/sample';
 import { HAUSHALT_KENNWERTE, binomial, haushaltMittel, middle95, stufe } from '../../../explain/content/b08-schaetzen/daten';
 import { GLOCKE_N, schiefeMittel } from '../../../explain/content/b08-schaetzen/central-limit';
 import { ANTEIL_N, WEITERBILDUNG } from '../../../explain/content/b08-schaetzen/sampling-distribution';
@@ -152,10 +154,46 @@ function IntervallBild({ s }: { s: KiStats }) {
   );
 }
 
+/**
+ * Die 200 Befragten (Lernzeit, Wissenstest) mit der Geraden und an der Stelle x₀ beiden Intervallen: breit das
+ * Vorhersageintervall für eine neue Person, schmal das Konfidenzintervall für den Mittelwert.
+ */
+function VorhersageBild({ s }: { s: PiStats }) {
+  const [box, W] = useWidth();
+  const rows = baseSurvey(), left = 44, right = W - 20, top = 64, bottom = 266, H = 320;
+  const X = linear([0, 19], [left, right]), Y = linear([0, 22], [bottom, top]);
+  const cy = (v: number) => Y(Math.max(0, Math.min(22, v))), x0 = X(s.x);
+  const label = (y: number, text: string) => <text className="xw-t xw-halo" x={x0 > (left + right) / 2 ? x0 - 12 : x0 + 12} y={y} textAnchor={x0 > (left + right) / 2 ? 'end' : 'start'}>{text}</text>;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Streudiagramm der 200 Befragten mit der Geraden. Bei ${num(s.x)} Stunden reicht das Vorhersageintervall von ${num(s.lo)} bis ${num(s.hi)} Aufgaben, das Konfidenzintervall für den Mittelwert von ${num(s.ciLo)} bis ${num(s.ciHi)}.`}>
+        <text className="xw-t" x={left - 30} y={16}>Lange Klammer: eine neue Person</text>
+        <text className="xw-t" x={left - 30} y={36}>Kurzer Balken: ihr Mittelwert</text>
+        {rows.map(r => <circle key={r.id} className="xw-s-dot" cx={X(r.values.lernzeit)} cy={Y(r.values.wissenstest)} r={2.4} />)}
+        <line className="xw-curve" x1={X(0)} y1={Y(GERADE.a)} x2={X(19)} y2={Y(GERADE.a + GERADE.b * 19)} />
+        <rect className="xw-band" x={x0 - 7} y={cy(s.hi)} width={14} height={Math.max(2, cy(s.lo) - cy(s.hi))} />
+        <line className="xw-neg" strokeWidth={2.5} x1={x0} x2={x0} y1={cy(s.hi)} y2={cy(s.lo)} />
+        <line className="xw-neg" strokeWidth={2.5} x1={x0 - 7} x2={x0 + 7} y1={cy(s.hi)} y2={cy(s.hi)} />
+        <line className="xw-neg" strokeWidth={2.5} x1={x0 - 7} x2={x0 + 7} y1={cy(s.lo)} y2={cy(s.lo)} />
+        <rect className="xw-bar-pos" x={x0 - 7} y={cy(s.ciHi)} width={14} height={Math.max(3, cy(s.ciLo) - cy(s.ciHi))} />
+        <circle cx={x0} cy={cy(s.yhat)} r={2.5} className="xw-s-dot sel" />
+        {label(cy(s.hi) + 4, `${num(s.hi)}`)}
+        {label(cy(s.lo) + 4, `${num(s.lo)}`)}
+        {label(cy(s.yhat) + 4, `ŷ₀ = ${num(s.yhat)}`)}
+        <Axis scale={X} ticks={[0, 5, 10, 15]} at={bottom} from={left} to={right} labelGap={20} title="Lernzeit in Stunden" />
+        <Axis scale={Y} ticks={[0, 5, 10, 15, 20]} at={left} from={bottom} to={top} orient="left" labelGap={24} />
+        <text className="xw-t" x={left + 6} y={top - 6}>Aufgaben</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b08-anteil': forCard(p => <AnteilVerteilung n={stufe(ANTEIL_N, p.value ?? ANTEIL_N.indexOf(50))} />),
   'b08-gesetz': forCard(p => <GesetzVerteilung n={stufe(GESETZ_N, p.value ?? 0)} />),
   'b08-glocke': forCard(p => <GlockeVerteilung n={stufe(GLOCKE_N, p.value ?? 0)} />),
   'b08-intervall': forSentence(p => <IntervallBild s={p.s as KiStats} />),
+  'b08-vorhersage': forSentence(p => <VorhersageBild s={p.s as PiStats} />),
   'b08-verzerrung': forCard(p => <VerzerrungBild n={stufe(VERZERRUNG_N, p.value ?? VERZERRUNG_N.indexOf(100))} />),
 };

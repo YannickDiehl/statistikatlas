@@ -15,6 +15,8 @@ import { GLOCKE_N, centralLimit, centralLimitTabs, einkommenSchiefe, glockeText,
 import { PLANUNG, VERZERRUNG_N, bereichText, bereiche, samplingBias, samplingBiasTabs, verzerrung } from './sampling-bias';
 import { EINKOMMEN, auswahl, auswahlText, moeglich, randomSampling, randomSamplingTabs, seOhne, zehnerPotenz } from './random-sampling';
 import { confidence, confidenceTabs, kritisch, lernzeitKi } from './confidence';
+import { GERADE, predictionInterval, predictionIntervalTabs, vorhersage, vorhersageDaten } from './prediction-interval';
+import { gerade } from './daten';
 import { CATALOG_OUTPUT } from '../../catalogOutput';
 import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft } from './law-large-numbers';
 
@@ -68,6 +70,15 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
  *   g <- x[as.numeric(atlas$schulabschluss) == 0]; length(g); mean(g); sd(g) / sqrt(42)   # 42  5.883333  0.474016
  *   mean(g) + c(-1, 1) * qt(.975, 41) * sd(g) / sqrt(42)      # 4.926038 6.840628, qt(.975, 41) = 2.019541
  *   atlas %>% oneway_anova(lernzeit, group = schulabschluss) %>% summary()   # Ohne Schulabschluss: 5.883 0.474 4.926 6.841
+ *   y <- as.numeric(atlas$wissenstest); m <- lm(y ~ x); coef(m); summary(m)$sigma; sum((x - mean(x))^2)
+ *   # a = 6.1028182424, b = 0.5188907641, sₑ = 2.630697799, Σ(x − x̄)² = 2085.81955, ȳ = 10.125
+ *   predict(m, data.frame(x = c(10, mean(x), 0, 18)), interval = "prediction")   # [6.0847, 16.4987] [4.9243, 15.3257] [0.8281, 11.3776] [10.1134, 20.7723]
+ *   predict(m, data.frame(x = c(10, mean(x), 0, 18)), interval = "confidence")   # [10.8447, 11.7387] [9.7582, 10.4918] [5.1490, 7.0567] [14.2223, 16.6634]
+ *   w0 <- 2 * qt(.975, 198) * summary(m)$sigma * sqrt(1 + 1/200); w0; sum(abs(resid(m)) <= w0 / 2)   # 10.40147, 191 von 200
+ *   range(sapply(1:200, function(k) { yy <- y; yy[k] <- 20; 2 * qt(.975, 198) * summary(lm(yy ~ x))$sigma * sqrt(1 + 1/200) - w0 }))   # +0.063 bis +0.677
+ *   # Regler n bei gleicher Geraden und Streuung, x₀ = 10: h₀ = 1/n + (10 − x̄)² / ((n − 1) · var(x)); halbe Breiten:
+ *   # n = 10: 6.515648 und 2.377490 (qt(.975, 8) = 2.306004); n = 20000: 5.156576 und 0.044392
+ *   atlas %>% linear_regression(wissenstest ~ lernzeit + alter, use = "listwise", standardized = TRUE)   # Std. Error of the Estimate 2.635
  * Vertrauen in den Bundestag (ALLBUS 2023, Aggregat oben): se3 <- 1.625373 / sqrt(3592)    # 0.0271197
  *   for (L in c(.8, .9, .95, .99)) print(3.946826 + c(-1, 1) * qt(1 - (1 - L) / 2, 3591) * se3)
  *   # 80 %: 3.912064 3.981588 (t 1.281787);  90 %: 3.902207 3.991445 (t 1.645278)
@@ -292,6 +303,39 @@ test('B8 confidence: Konfidenzintervalle für das Vertrauen in den Bundestag und
   const out = CATALOG_OUTPUT['oneway_anova:0'].output;
   assert.match(out, /Ohne Schulabschluss +42 +5\.883 +3\.072 +0\.474 +4\.926 +6\.841/, 'erfasste Ausgabe wie in R');
   assert.ok(close(5.883333333 - 2.01954097 * 0.4740160867, 4.926038426, 1e-8), 'untere Grenze aus t(41)');
+});
+
+test('B8 prediction_interval: Vorhersage- und Konfidenzintervall der Geraden Wissenstest auf Lernzeit wie in R', () => {
+  const g = gerade(rows.map(r => r.values.lernzeit), rows.map(r => r.values.wissenstest));
+  for (const [mine, data, r] of [[GERADE.a, g.a, 6.1028182424], [GERADE.b, g.b, 0.5188907641], [GERADE.se, g.se, 2.630697799], [GERADE.ssx, g.ssx, 2085.81955], [GERADE.my, g.my, 10.125], [GERADE.mx, g.mx, 7.7515]])
+    { assert.ok(close(mine, r, 1e-8), `${mine} ≠ R ${r}`); assert.ok(close(data, r, 1e-8), `Lehrdatensatz ${data} ≠ R ${r}`); }
+  const R: [number, number, number, number, number][] = [[10, 6.084722747, 16.49872902, 10.844736862, 11.73871490], [7.7515, 4.924264678, 15.32573532, 9.758168414, 10.49183159], [0, 0.8280739615, 11.37756252, 5.148960416, 7.056676069], [18, 10.1134186166, 20.77228537, 14.222287509, 16.663416482]];
+  for (const [x, lo, hi, cl, ch] of R) {
+    const p = vorhersage({ x, n: 200, t: 95 });
+    assert.ok(close(p.lo, lo, 1e-7) && close(p.hi, hi, 1e-7) && close(p.ciLo, cl, 1e-7) && close(p.ciHi, ch, 1e-7), `x₀ = ${x}: ${JSON.stringify(p)}`);
+  }
+  for (const [n, half, ci] of [[10, 6.515648051, 2.377490387], [20000, 5.156576115, 0.04439246155]]) {
+    const p = vorhersage({ x: 10, n, t: 95 });
+    assert.ok(close(p.half, half, 1e-7) && close(p.ciHalf, ci, 1e-8), `n = ${n}`);
+  }
+  const k = predictionInterval.compute(predictionInterval.initial);
+  assert.match(predictionInterval.interpret(k).kurz, /mit 10 Stunden Lernzeit sind 6,08 bis 16,5 gelöste Aufgaben plausibel\. .* im Mittel 10,84 bis 11,74 Aufgaben/);
+  assert.match(predictionInterval.interpret(predictionInterval.compute({ x: 18, n: 200, t: 95 })).kurz, /das Modell ist am Rand nur eine Näherung/);
+  const w = predictionInterval.worked(k).map(x => x.text);
+  assert.match(w[0], /^Die Gerade ŷ = 6,1 \+ 0,52 · x sagt für 10 Stunden 11,29 Aufgaben voraus/);
+  assert.equal(w[1], 'h₀ = 1 / 200 + (10 − 7,75)² / 2.086 ≈ 0,0074.');
+  assert.equal(w[2], '1,97 · 2,63 · √(1 + 0,0074) ≈ 5,21 Aufgaben nach jeder Seite.');
+  assert.match(w[3], /√0,0074 ≈ 0,45\. Dieses Intervall reicht nur von 10,84 bis 11,74\.$/);
+  const xy = (data = rows) => ({ rows: data, columns: { x: ['lernzeit'], y: ['wissenstest'] } }), d = vorhersageDaten(xy());
+  assert.ok(close(2 * d.half, 10.40147064, 1e-7) && d.inside === 191, `Breite ${2 * d.half}, innerhalb ${d.inside}`);
+  const s = predictionIntervalTabs.sample!;
+  if (s.kind === 'analysis') {
+    const r = s.result(xy());
+    assert.match(r.kurz, /mit 7,75 Stunden Lernzeit sagt die Gerade 10,13 Aufgaben voraus\. Plausibel sind 4,92 bis 15,33 gelöste Aufgaben\. .* nur 9,76 bis 10,49\./);
+    assert.equal(r.zusatz, '191 von 200 Befragten liegen höchstens 5,2 Aufgaben neben ihrer eigenen Vorhersage.');
+  }
+  const out = CATALOG_OUTPUT['linear_regression:0'].output;
+  assert.match(out, /Std\. Error of the Estimate +2\.635/); assert.match(out, /wissenstest +10\.125/); assert.match(out, / 9\.180750 /);
 });
 
 test('B8: ALLBUS-Aggregate aus der Datei nachgerechnet (nur mit ALLBUS_SAV)', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, () => {
