@@ -2,7 +2,8 @@ import { LearningPath } from './components/LearningPath';
 import { BookOpen, Network } from 'lucide-react';
 import { flushSync } from 'react-dom';
 import { registerAtlasTools, type AtlasToolContext } from './domain/atlasTools';
-import { entryById, functionToConcept, mariposaEntries } from './domain/mariposaCatalog';
+import { entryById, functionToConcept } from './domain/mariposaCatalog';
+import { MAP_NOTE } from './domain/mapNote';
 import { initialRSettings, rolesFor, eligible, packageSearch, type RSettings } from './domain/mariposa';
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useStableActions } from './components/useStableActions';
@@ -16,7 +17,7 @@ import { ref, keyOf, lessonContext, titleFor, outputRef, type Ref, type Route, t
 import { routeAfterSelection } from './domain/network';
 import { initialExploration, visit, step, type ExplorationView } from './domain/exploration';
 import { gravityLayout, type MapLayout } from './domain/mapLayout';
-import { mapConcepts, mapIds, detailIds } from './domain/visibleNetwork';
+import { detailIds } from './domain/visibleNetwork';
 import { NetworkMap, type CameraRequest } from './components/NetworkMap';
 import { ConceptInspector } from './components/ConceptInspector';
 import { explainFor, tabsFor } from './explain/registry';
@@ -26,11 +27,6 @@ import { useViewportWidth, useWorkbenchWidth, WorkbenchHandle } from './componen
 import { fitWidth, standardWidth, workbenchStore } from './explain/workbench';
 const MemoConceptInspector=memo(ConceptInspector);
 const searchIndex=concepts.map(c=>({concept:c,text:`${titleFor(ref(c.id))} ${c.title} ${c.short} ${packageSearch(c.id)}`.toLocaleLowerCase('de')}));
-/**
- * Notiz unten in der Karte: Die mariposa-Funktionen sind keine eigenen Punkte, sie stecken in den Begriffen mit
- * R-Aufruf (alle Katalogbegriffe liegen im Netz). Beide Zahlen kommen aus den Daten.
- */
-const withR=mariposaEntries.filter(e=>mapIds.has(e.id)),MAP_NOTE=`${mapConcepts.length} Begriffe im Netz; ${withR.length} davon führen zu den ${new Set(withR.flatMap(e=>e.variants.map(v=>v.fn))).size} mariposa-Funktionen`;
 const storageKey='statistikatlas.survey.v1';
 function storedStudy():{rows:SurveyRow[];selection:ColumnSelection}{try{const value=JSON.parse(localStorage.getItem(storageKey)||'null');const migrated=migrateSurvey(value?.rows);if(migrated){const s=value.selection;return {rows:migrated,selection:s&&columnById[s.x]&&columnById[s.y]&&typeof s.likertMetric==='boolean'?reconcileColumns('series',s):{...defaultSelection}};}}catch{}return {rows:createSurvey(),selection:{...defaultSelection}};}
 
