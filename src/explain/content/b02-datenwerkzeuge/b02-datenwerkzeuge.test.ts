@@ -10,6 +10,7 @@ import type { SampleCtx } from '../../types';
 import { ALLBUS, FUENF } from './daten';
 import { LABELS_MITTEL, labels, labelsTabs } from './labels';
 import { CONVERSION_MITTEL, conversion, conversionTabs } from './conversion';
+import { EINKOMMEN, missingMittel, missingTools, missingToolsTabs, mitCode } from './missing-tools';
 
 /*
  * Referenzwerte des Bereichs B2, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -109,6 +110,52 @@ test('Datentypen umwandeln: Tabelle nachher und Mittelwerte wie in R', () => {
   const out = CATALOG_OUTPUT['conversion:0'].output;
   assert.match(out, /\| Nein\s+\|\s+63 \|\s+31\.50 \|/);
   assert.doesNotMatch(out, /mean=/);
+});
+
+/*
+ * Missing-Codes (einkommen, P001 bis P005; zum Üben P001 = -9, P004 = -8):
+ *   five <- five %>% select(id, einkommen) %>%
+ *     mutate(einkommen = replace(einkommen, id == "P001", -9), einkommen = replace(einkommen, id == "P004", -8))
+ *   mean(five$einkommen)                                         # 1692.6 (Summe 8463)
+ *   n9 <- five %>% set_na(einkommen = -9); mean(n9$einkommen, na.rm = TRUE)          # 2118 (8472 / 4), P001 NA(a)
+ *   b <- five %>% set_na(einkommen = c(-9, -8)); mean(b$einkommen, na.rm = TRUE)     # 2826.666667 (8480 / 3), NA(a), NA(b)
+ *   na_frequencies(b$einkommen)                                  # -9 Tag a, -8 Tag b
+ *   b %>% describe(einkommen, show = "mean")                     # Mean 2826.667, N 3, Missing 2
+ *   200 Befragte, der Katalogaufruf mit P001 = -9:
+ *   atlas %>% mutate(einkommen = replace(einkommen, id == "P001", -9)) %>% set_na(einkommen = -9) %>%
+ *     describe(einkommen, show = c("mean", "sd"))                # Mean 3147.613, SD 1426.790, N 199, Missing 1
+ *   mean(replace(atlas$einkommen, 1, -9))                        # 3131.83 (ohne set_na), Unterschied 15.783065
+ *   mean(replace(atlas$einkommen + 100, 1, -9)) - 3131.83        # 99.5: ohne set_na() wächst der Code nicht mit
+ *   Codezeilen des Werkzeugs auf atlas (P001 = -9, P004 = -8): ohne set_na Mean 3108.770 (N 200), nur -9 3124.437 (199, 1),
+ *   beide 3140.258 (198, 2)
+ *   d <- atlas %>% mutate(alter = replace(alter, id == "P002", -9), einkommen = replace(einkommen, id == "P001", -9)) %>% set_na(-9)
+ *   sum(is.na(d$alter)); sum(is.na(d$einkommen))                 # 1 1: ohne Spaltennamen gilt der Code für alle Zahlenspalten
+ *   Fehlermeldungen: set_na(einkommen = "-9")                    → Missing values for `einkommen` must be numeric.
+ *                    replace(einkommen, id = "P001", -9)          → unbenutztes Argument (id = "P001")
+ *                    replace(einkommen, id == P001, -9)           → Objekt 'P001' nicht gefunden
+ */
+test('Missing-Codes: Mittelwerte der fünf und der 200 wie in R', () => {
+  assert.deepEqual([...EINKOMMEN], [-9, 3850, 2762, -8, 1868]);
+  assert.deepEqual(['keine', 'neun', 'beide'].map(o => { const m = missingMittel(o); return [m.summe, m.n]; }), [[8463, 5], [8472, 4], [8480, 3]]);
+  assert.ok(close(missingMittel('keine').mittel, 1692.6, 1e-9) && close(missingMittel('neun').mittel, 2118, 1e-9) && close(missingMittel('beide').mittel, 2826.666667, 1e-6), 'Mittelwerte wie in R');
+  assert.deepEqual(missingTools.apply(missingTools.rows, 'beide').rows.map(r => r.einkommen), ['NA(a)', 3850, 2762, 'NA(b)', 1868]);
+  assert.deepEqual(missingTools.apply(missingTools.rows, 'neun').rows.map(r => r.einkommen), ['NA(a)', 3850, 2762, '−8', 1868]);
+  assert.match(missingTools.check.diagnose('neun', 8472 / 5)!, /8\.472 \/ 4 = 2\.118\./);
+  assert.match(missingTools.check.diagnose('beide', 2120)!, /8\.480 \/ 3 ≈ 2\.826,67\./);
+  assert.match(missingTools.check.diagnose('keine', 8463 / 4)!, /8\.463 \/ 5 = 1\.692,6\./);
+  assert.match(missingTools.wofuer, /1\.654 von 5\.246 Befragten .* bei −0,76 statt bei 3,95\./);
+  assert.match(missingTools.rCode('beide'), /set_na\(einkommen = c\(-9, -8\)\)/);
+  const m = mitCode(ctx(rows, 'einkommen'));
+  assert.ok(close(m.ohne, 3147.613065, 1e-6) && close(m.mit, 3131.83, 1e-9), 'mit und ohne Code wie in R');
+  const shifted = mitCode(ctx(applyOp(rows, 'einkommen', 'shift', 100), 'einkommen'));
+  assert.ok(close(shifted.mit - m.mit, 99.5, 1e-9) && close(shifted.ohne - m.ohne, 100, 1e-9), 'um 100 € verschoben');
+  const s = missingToolsTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = s.result(ctx(rows, 'einkommen'));
+  assert.match(r.kurz, /bei 3\.131,83 €\. Als fehlend markiert sind es 3\.147,61 €, berechnet aus 199 gültigen Angaben\./);
+  assert.match(r.zusatz!, /um 15,78 € nach unten/);
+  const out = CATALOG_OUTPUT['missing_tools:0'].output;
+  assert.match(out, /einkommen  3147\.613  1426\.790  199        1/);
 });
 
 // ALLBUS 2023 nur, wenn die eigene GESIS-Datei da ist (ALLBUS_SAV); die Aggregate stehen fest in ./daten.ts.
