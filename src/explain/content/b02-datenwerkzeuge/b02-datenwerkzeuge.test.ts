@@ -14,6 +14,7 @@ import { EINKOMMEN, missingMittel, missingTools, missingToolsTabs, mitCode } fro
 import { FORMATE, dataExport } from './data-export';
 import { positionP002, reihe, sorting, sortingTabs } from './sorting';
 import { codebook, codebookTabs, eintrag } from './codebook';
+import { dataImport } from './data-import';
 import { surveyColumns } from '../../../domain/survey';
 import { savVariableLabel } from '../../../domain/savWriter';
 
@@ -251,6 +252,21 @@ test('Codebuch: Zahlen der Karte, der Suche und des Eintrags wie in R', () => {
   assert.match(out, /Types: 1 chr, 9 dbl, 19 lbl\+dbl/);
   // Jede Spalte des Lehrdatensatzes ergibt einen lesbaren Eintrag.
   for (const c of surveyColumns) { const r = s.result(ctx(rows, c.id)); assert.ok(!/NaN|undefined|Infinity/.test(r.kurz + r.fachlich + r.zusatz), c.id); }
+});
+
+/*
+ * Einlesen (ALLBUS-Zahlen siehe den ALLBUS-Test unten):
+ *   allbus %>% describe(pt03, show = "mean")      # Mean 3.947, N 3592, Missing 1654
+ *   read_stata("atlas.sav")                       # `read_stata()` cannot read 'atlas.sav': it looks like an SPSS data file (.sav). Use `read_spss()` instead.
+ *   read_spss("gibtsnicht.sav")                   # File 'gibtsnicht.sav' does not exist.
+ *   openxlsx2::write_xlsx(data.frame(erwerbstaetig = c(1, 0), einkommen = c(-9, 3850)), "fremd.xlsx"); read_xlsx("fremd.xlsx")
+ *   # ohne Labelblatt: <dbl> ohne Labels, -9 bleibt eine Zahl (Mittelwert 1920.5)
+ */
+test('Einlesen: die ALLBUS-Zahlen der Karte', () => {
+  assert.equal(ALLBUS.pt03.gueltig + ALLBUS.pt03.fehlend, ALLBUS.befragte);
+  assert.equal(ALLBUS.pt03.codes.reduce((a, c) => a + c.n, 0), ALLBUS.pt03.fehlend);
+  assert.match(dataImport.stellDirVor.text, /5\.246 Befragte und 579 Spalten\..*3\.592 gültige Antworten, im Schnitt 3,95, ungewichtet\..*fiele auf −0,76\./);
+  assert.match(dataImport.ausprobieren[1].explain, /^3\.592 und 1\.654 ergeben zusammen die 5\.246 Befragten\./);
 });
 
 // ALLBUS 2023 nur, wenn die eigene GESIS-Datei da ist (ALLBUS_SAV); die Aggregate stehen fest in ./daten.ts.
