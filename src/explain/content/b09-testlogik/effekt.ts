@@ -48,7 +48,7 @@ export const effekt: SentenceTemplate<DValues, DStats> = {
     { title: 'Durch die Streuung teilen', text: `d = ${num(s.diff)} / ${num(s.s)} ≈ ${num(s.d)}.` },
     { title: 'Mit der Faustregel einordnen', text: `Nach der Faustregel von Cohen ist ein Betrag von ${num(Math.abs(s.d))} ${cohenLabel(s.d)}: ab 0,2 klein, ab 0,5 mittel, ab 0,8 groß.` },
   ],
-  fehler: 'Ein kleiner p-Wert heißt nicht, dass der Effekt groß ist. Mit 20.000 Befragten wird auch d = 0,05 signifikant. Umgekehrt kann ein großer Effekt bei wenigen Befragten nicht signifikant sein.',
+  fehler: 'Ein kleiner p-Wert heißt nicht, dass der Effekt groß ist. Mit 20.000 Befragten wird auch d = 0,05 bei α = 0,05 signifikant. Umgekehrt kann ein großer Effekt bei wenigen Befragten nicht signifikant sein.',
   sliders: [
     { key: 'diff', label: 'Unterschied der Mittelwerte in Stunden', min: -6, max: 6, step: 0.01, format: v => `${signed(v)} h` },
     { key: 's', label: 'Standardabweichung innerhalb der Gruppen', min: 0.5, max: 8, step: 0.01, format: v => `${num(v)} h` },

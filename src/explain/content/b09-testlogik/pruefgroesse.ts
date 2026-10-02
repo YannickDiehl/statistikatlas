@@ -86,7 +86,7 @@ export const pruefgroesse: SentenceTemplate<TValues, TStats> = {
   genau: {
     kurz: 't hängt vom Abstand, von der Streuung und von der Fallzahl ab. Welche Referenzverteilung passt, bestimmen Test und Modell.',
     paragraphs: [
-      `R meldet für die Schlafdauer t(199) = 1.423. Mit s ≈ ${num(SCHLAF.sd)} statt 0,82 und allen Nachkommastellen kommt dieselbe Zahl heraus. In Klammern stehen die Freiheitsgrade der Referenzverteilung, hier n − 1 = 199.`,
+      'R meldet für die Schlafdauer t(199) = 1.423, gerechnet mit allen Nachkommastellen von s. In Klammern stehen die Freiheitsgrade der Referenzverteilung, hier n − 1 = 199.',
       'Andere Tests haben andere Prüfgrößen: F in der Varianzanalyse, χ² in der Kreuztabelle, z bei großen Stichproben. Bei F und χ² zählt nur der rechte Rand, weil sie nie negativ werden.',
       'n − 1 ist kein allgemeiner Freiheitsgrad: Ein Pearson-Test hat n − 2, eine Kreuztabelle mit r Zeilen und c Spalten (r − 1)(c − 1). Mehr dazu bei den Freiheitsgraden im Modell.',
       'Unter H₀ folgt t nur dann einer t-Verteilung, wenn die Annahmen stimmen: unabhängige Befragte und ein annähernd normalverteilter Mittelwert.',

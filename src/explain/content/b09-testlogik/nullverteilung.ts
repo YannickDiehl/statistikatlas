@@ -111,7 +111,7 @@ export const nullverteilung: ConceptCard = {
       3: 'Noch nicht ganz. Die Nullverteilung beschreibt eine gedachte Welt ohne Unterschied, nicht die wirkliche.',
     },
   },
-  fuerDich: 'Wenn ein Ergebnis „signifikant“ heißt, steckt dahinter immer ein Vergleich mit einer Nullverteilung. Frag dich: Welche Welt ohne Unterschied wurde angenommen, und passt sie zu den Daten?',
+  fuerDich: 'Wenn ein Ergebnis „signifikant“ heißt, lag p unter einer Schwelle α, und dahinter steckt immer ein Vergleich mit einer Nullverteilung. Frag dich: Welche Welt ohne Unterschied wurde angenommen, und passt sie zu den Daten?',
   genau: {
     kurz: 'Die Nullverteilung hängt von Prüfgröße, Nullhypothese und Modell ab. Das Mischen ist ein Permutationstest, die t-Verteilung eine Näherung dafür.',
     paragraphs: [

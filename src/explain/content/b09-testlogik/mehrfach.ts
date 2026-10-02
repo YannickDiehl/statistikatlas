@@ -57,7 +57,7 @@ export const mehrfach: ConceptCard = {
     {
       question: 'Du rechnest 20 Tests, und nirgends gibt es einen echten Unterschied. Wie viele Fehlalarme erwartest du bei α = 0,05 im Mittel?',
       options: ['etwa 1', 'keinen', 'etwa 5'], correct: 0, step: 2,
-      explain: `5 % von 20 sind 1. Im Mittel ist also ein Test zufällig signifikant, und die Chance auf mindestens einen liegt bei etwa ${Math.round(familyError(20) * 100)} %.`,
+      explain: `5 % von 20 sind 1. Im Mittel ist also ein Test bei α = 0,05 zufällig signifikant, und die Chance auf mindestens einen liegt bei etwa ${Math.round(familyError(20) * 100)} %.`,
       kurz: 'Viele Tests, fast sicher ein Zufallstreffer.',
     },
     {
@@ -67,7 +67,7 @@ export const mehrfach: ConceptCard = {
       kurz: 'Bonferroni teilt α durch die Zahl der Tests.',
     },
     {
-      question: 'Nach der Korrektur ist kein Vergleich signifikant. Heißt das, die Abschlüsse unterscheiden sich nicht?',
+      question: 'Nach der Korrektur ist bei α = 0,05 kein Vergleich signifikant. Heißt das, die Abschlüsse unterscheiden sich nicht?',
       options: ['ja', 'nein'], correct: 1, step: 3,
       explain: 'Nicht verworfen ist nicht bewiesen. Die Korrektur schützt vor Fehlalarmen und übersieht dafür leichter einen echten Unterschied.',
       kurz: 'Korrektur kostet Teststärke.',
@@ -84,7 +84,7 @@ export const mehrfach: ConceptCard = {
     },
   },
   check: {
-    question: 'Du vergleichst zehn Gruppenpaare ohne Korrektur. Ein Paar hat p = 0,03. Was ist die vorsichtige Deutung?',
+    question: 'Du vergleichst zehn Gruppenpaare ohne Korrektur, mit der Schwelle α = 0,05. Ein Paar hat p = 0,03. Was ist die vorsichtige Deutung?',
     options: [
       'Das Paar unterscheidet sich sicher.',
       'Bei zehn Tests kann so ein p leicht ein Zufallstreffer sein; mit Korrektur ist es nicht signifikant.',
@@ -115,7 +115,7 @@ export const mehrfach: ConceptCard = {
 export const mehrfachTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { x: 'finanzlage', group: 'schulabschluss' },
-    kurz: 'Dieselben zehn Paarvergleiche mit allen 200 Befragten: Wie viele sind ohne und wie viele mit Holm-Korrektur signifikant?',
+    kurz: 'Dieselben zehn Paarvergleiche mit allen 200 Befragten: Wie viele sind bei α = 0,05 ohne und wie viele mit Holm-Korrektur signifikant?',
     value: c => dunn(c).raw,
     result: c => {
       const d = dunn(c), min = Math.min(...d.pairs.map(p => p.p)), minHolm = Math.min(...d.pairs.map(p => p.holm));
@@ -146,7 +146,7 @@ export const mehrfachTabs: ConceptTabs = {
       { match: 'Holm', atlas: 'Korrekturverfahren', step: 3, explain: 'R nennt das Verfahren in Klammern. Die korrigierten p-Werte zeigt summary().' },
     ],
     check: {
-      question: 'Wie viele Vergleiche sind nach der Korrektur signifikant? Tippe es an.', correct: '0 significant',
+      question: 'Wie viele Vergleiche sind nach der Korrektur bei α = 0,05 signifikant? Tippe es an.', correct: '0 significant',
       wrong: { '10 comparisons': 'Fast! Das ist die Zahl aller Vergleiche. Wie viele davon signifikant sind, steht dahinter.', Holm: 'Fast! Das ist der Name der Korrektur. Die Zahl der signifikanten Vergleiche steht in der zweiten Zeile.' },
     },
   },

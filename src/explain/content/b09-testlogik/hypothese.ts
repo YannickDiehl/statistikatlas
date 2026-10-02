@@ -1,7 +1,7 @@
 // Begriffskarte „Null- & Alternativhypothese“. Beispiel: Schlafdauer der 200 Befragten gegen sieben Stunden
 // (t-Test einer Stichprobe wie mariposa::t_test(schlafdauer, mu = 7)). Zahlen in R nachgerechnet, siehe b09-testlogik.test.ts.
 import type { ConceptCard, ConceptTabs } from '../../types';
-import { num } from '../../format';
+import { fixed, num } from '../../format';
 import { MU0, SCHLAF as S, outOf100, pShown, schlafP, schlafTest } from './rechnen';
 
 
@@ -59,7 +59,7 @@ export const hypothese: ConceptCard = {
     {
       question: 'Der Test verwirft H₀ nicht. Heißt das, die Menschen schlafen im Mittel genau sieben Stunden?',
       options: ['ja', 'nein'], correct: 1, step: 3,
-      explain: `Schieb den Regler auf 7,1 Stunden: Auch diesen Wert verwirft der Test nicht. Alle Werte von etwa ${num(S.lo)} bis ${num(S.hi)} Stunden passen zu den Daten; sieben Stunden ist nur einer davon.`,
+      explain: `Schieb den Regler auf 7,1 Stunden: Auch diesen Wert verwirft der Test nicht. Alle Werte von etwa ${fixed(S.lo)} bis ${fixed(S.hi)} Stunden passen zu den Daten; sieben Stunden ist nur einer davon.`,
       kurz: 'Nicht verworfen ist nicht bewiesen.',
     },
     {
@@ -99,7 +99,7 @@ export const hypothese: ConceptCard = {
   genau: {
     kurz: 'Hypothesen handeln von Kennwerten der Grundgesamtheit, etwa μ. Die Entscheidung lautet „verwerfen“ oder „nicht verwerfen“, nie „H₀ bewiesen“.',
     paragraphs: [
-      `Hier ist das ein t-Test für eine Stichprobe: t(199) ≈ ${num(S.t)}, p ≈ ${num(S.p)}. Das 95-%-Konfidenzintervall reicht von ${num(S.lo)} bis ${num(S.hi)} Stunden. Jeden Vergleichswert μ₀ in diesem Bereich würde der Test bei α = 0,05 nicht verwerfen.`,
+      `Hier ist das ein t-Test für eine Stichprobe: t(199) ≈ ${num(S.t)}, p ≈ ${num(S.p)}. Das 95-%-Konfidenzintervall reicht von ${fixed(S.lo)} bis ${fixed(S.hi)} Stunden. Jeden Vergleichswert μ₀ in diesem Bereich würde der Test bei α = 0,05 nicht verwerfen.`,
       'Bei Gruppenvergleichen kann H₀ gleiche Mittelwerte behaupten (t-Test) oder gleiche Verteilungen (Rangtests wie Mann-Whitney). Das sind verschiedene Aussagen.',
       'Eine gerichtete Alternative (größer oder kleiner) muss inhaltlich vor der Analyse feststehen. Wer sie erst nach dem Blick in die Daten wählt, meldet ohne echten Unterschied in etwa 10 statt 5 von 100 Studien einen.',
       'Die 200 Befragten des Lehrdatensatzes sind synthetisch. Die Rechnung zeigt, wie ein Test funktioniert, nicht, wie lange Menschen in Deutschland schlafen.',
@@ -119,7 +119,7 @@ export const hypotheseTabs: ConceptTabs = {
       const d = r.mean - MU0, side = d >= 0 ? 'mehr' : 'weniger';
       return {
         kurz: `Die 200 Befragten schlafen im Schnitt ${num(r.mean)} Stunden pro Nacht, ${num(Math.abs(d))} Stunden ${side} als sieben. Läge der wahre Mittelwert bei sieben Stunden, käme ein so großer Abstand ${outOf100(r.p)} Stichproben vor (p ${pShown(r.p)}). Bei α = 0,05 verwirfst du H₀ ${r.p > 0.05 ? 'nicht' : 'und nennst den Unterschied signifikant'}.`,
-        fachlich: `t-Test für eine Stichprobe, H₀: μ = 7, H₁: μ ≠ 7. t(${r.df}) ≈ ${num(r.t)}, p ${pShown(r.p)}; 95-%-Konfidenzintervall von ${num(r.ci[0])} bis ${num(r.ci[1])} Stunden.`,
+        fachlich: `t-Test für eine Stichprobe, H₀: μ = 7, H₁: μ ≠ 7. t(${r.df}) ≈ ${num(r.t)}, p ${pShown(r.p)}; 95-%-Konfidenzintervall von ${fixed(r.ci[0])} bis ${fixed(r.ci[1])} Stunden.`,
         zusatz: `${r.mehr} Befragte schlafen mehr als sieben Stunden, ${r.weniger} weniger.`,
       };
     },
