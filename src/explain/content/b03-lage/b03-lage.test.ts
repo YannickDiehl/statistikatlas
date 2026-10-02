@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createSurvey } from '../../../domain/survey';
 import { readSav, isMissingCode } from '../../../sandbox/readSav';
 import { close } from '../../format';
-import { ALLBUS_N, validn, validnTabs } from './validn';
+import { ALLBUS_N, validn, validnTabs, validCounts } from './validn';
 import { liveOutput } from '../../rRead';
 import { LERNZEIT, range, rangeOf, rangeTabs, rangeWithTop } from './range';
 import { applyOp } from '../../sample';
@@ -108,8 +108,10 @@ test('B3 Anzahl: die ALLBUS-Zahlen gehen auf, die Texte nennen sie, der Lehrdate
   // Probier es selbst: 1.000 − (50 + 80 − 20) = 890; doppelt abgezogen 870; nur Einkommen 920.
   assert.equal(validn.check.options[validn.check.correct], String(1000 - (50 + 80 - 20)));
   assert.deepEqual(validn.check.options.slice(1), ['870', '920', '1.000']);
-  assert.ok(rows.every(r => Object.values(r.values).every(Number.isFinite)), 'Lehrdatensatz ohne fehlende Werte: kein Reiter „Mit 200 Befragten“');
-  assert.equal(validnTabs.sample, undefined);
+  const v = validCounts({ rows, columns: { x: ['lernzeit'], y: ['wissenstest'] } });
+  assert.deepEqual([v.nx, v.ny, v.nxy], [200, 200, 200], 'Lehrdatensatz ohne fehlende Werte');
+  const s = validnTabs.sample!;
+  assert.ok(s.kind === 'analysis' && /n = 200/.test(s.result({ rows, columns: { x: ['lernzeit'], y: ['wissenstest'] } }).kurz), 'Deutung nennt n = 200');
   assert.match(liveOutput(validnTabs.r!.live!, rows, 'lernzeit'), /lernzeit {2}7\.752 {2}200 {8}0/);
 });
 

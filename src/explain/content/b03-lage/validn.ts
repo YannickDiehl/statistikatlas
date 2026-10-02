@@ -1,9 +1,9 @@
 // Begriffskarte „Anzahl“ (validn): Welche Personen gehen in eine Rechnung ein? Beispiel aus dem ALLBUS 2023,
 // ungewichtet und nur als Aggregat: Links-rechts-Einstufung (pa01) und Vertrauen in den Bundestag (pt03).
 // Alle Zahlen sind in R nachgerechnet; Referenzwerte und R-Befehle: b03-lage.test.ts.
-import type { ConceptCard, ConceptTabs } from '../../types';
+import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { count } from '../../format';
-import { DESCRIBE_NOTE, showNote, T } from './lage';
+import { column, DESCRIBE_NOTE, showNote, T } from './lage';
 
 /** ALLBUS 2023 (ZA8831, ungewichtet): Befragte, gültige Antworten und vollständige Paare. */
 export const ALLBUS_N = {
@@ -103,9 +103,46 @@ export const validn: ConceptCard = {
   },
 };
 
-// Kein Reiter „Mit 200 Befragten“: Im Lehrdatensatz fehlt niemand, n ist für jede Spalte 200 (siehe „In R“: N 200,
-// Missing 0). Eine Auswertung dazu hätte nichts zu zeigen, und die Datenänderungen der Vorhersagen erzeugen keine Lücken.
+/** Gültige Werte je Spalte und vollständige Paare in den aktuellen Daten. */
+export function validCounts(c: SampleCtx) {
+  const x = column(c, 'x', 'lernzeit'), y = column(c, 'y', 'wissenstest');
+  const ok = (v: number) => Number.isFinite(v);
+  return { x, y, nx: x.values.filter(ok).length, ny: y.values.filter(ok).length, nxy: x.values.filter((v, i) => ok(v) && ok(y.values[i])).length, total: c.rows.length };
+}
+
 export const validnTabs: ConceptTabs = {
+  sample: {
+    kind: 'analysis',
+    kurz: 'Dieselbe Frage mit den 200 Befragten des Lehrdatensatzes: Wie viele vollständige Paare gehen in eine Rechnung ein?',
+    value: c => validCounts(c).nxy,
+    result: c => {
+      const v = validCounts(c);
+      return {
+        kurz: v.nxy === v.total
+          ? `Alle ${v.total} Befragten haben bei „${v.x.info.title}“ und bei „${v.y.info.title}“ eine gültige Antwort. Für den Zusammenhang der beiden Spalten ist n = ${v.nxy}.`
+          : `${v.nxy} von ${v.total} Befragten haben bei „${v.x.info.title}“ und bei „${v.y.info.title}“ eine gültige Antwort. Für den Zusammenhang ist n = ${v.nxy}.`,
+        fachlich: `Gültige Werte: „${v.x.info.title}“ ${v.nx}, „${v.y.info.title}“ ${v.ny}; vollständige Wertepaare n = ${v.nxy}, fehlend ${v.total - v.nxy}.`,
+        zusatz: 'Im Lehrdatensatz fehlt niemand. In echten Umfragen wie dem ALLBUS ist das selten.',
+      };
+    },
+    voraussetzung: 'Gezählt wird jede Person mit einem Wert in beiden Spalten, egal wie groß der Wert ist. Auch 0 ist ein gültiger Wert.',
+    think: [
+      {
+        question: 'Eine Person lernt plötzlich 40 Stunden. Was passiert mit n?', options: ['bleibt gleich', 'steigt', 'sinkt'], correct: 0,
+        explain: 'n zählt Personen, nicht Stunden. Wie groß ein Wert ist, ändert nichts daran, ob er gültig ist.',
+        kurz: 'Jede Person zählt genau einmal.',
+        tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
+        expect: { change: 'same' },
+      },
+      {
+        question: 'Alle haben in den letzten sieben Tagen gar nicht gelernt. Was passiert mit n?', options: ['bleibt gleich', 'wird 0', 'sinkt'], correct: 0,
+        explain: '0 Stunden ist eine gültige Antwort. Alle 200 haben weiterhin einen Wert, also bleibt n bei 200.',
+        kurz: 'Null ist nicht fehlend.',
+        tryIt: { label: 'alle auf 0 Stunden', op: 'constant', column: 'x', value: 0 },
+        expect: { change: 'same' },
+      },
+    ],
+  },
   r: {
     entry: '', variant: 0, live: { fn: 'describe', show: ['mean'] },
     tokens: {
