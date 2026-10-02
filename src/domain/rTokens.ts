@@ -106,10 +106,12 @@ export const RTOKENS: Record<string, TokenNote> = {
     kurz: 'Nennt die Spalte, die festlegt, wie stark jede Person zählt. Im ALLBUS heißt sie wghtpew.',
     fehler: 'Gibt es die Spalte nicht, meldet mariposa: Weights variable `gewicht` not found in data. Bilde sie vorher mit mutate().',
   },
+  // Gilt für alle Aufrufe mit group = (t_test, oneway_anova, levene_test, mann_whitney, kruskal_wallis …); Besonderheiten
+  // eines Tests (genau zwei Gruppen bei t_test) gehören in die Karte seines Reiters (IB29).
   group: {
     sym: 'group =', term: 'Gruppenvariable',
-    kurz: 'Nennt die Spalte, die die Befragten in Gruppen teilt, etwa Weiterbildung Ja oder Nein. Die Gruppennamen kommen aus den Labels der SPSS-Datei.',
-    fehler: 't_test() vergleicht genau zwei Gruppen. Bei mehr Gruppen meldet mariposa: must have exactly 2 groups, und schlägt oneway_anova() vor.',
+    kurz: 'Nennt die Spalte, die die Befragten in Gruppen teilt, etwa Weiterbildung Ja oder Nein oder die fünf Schulabschlüsse. Die Gruppennamen kommen aus den Labels der SPSS-Datei.',
+    fehler: 'Schreib den Spaltennamen genau wie im Datensatz. Bei einem Tippfehler wie group = weiterbilding meldet mariposa: Column `weiterbilding` doesn\'t exist.',
   },
   use: {
     sym: 'use =', term: 'Fehlende Angaben',
@@ -126,9 +128,10 @@ export const RTOKENS: Record<string, TokenNote> = {
     kurz: 'Legt das Niveau des Konfidenzintervalls fest. .95 bedeutet 95 Prozent.',
     fehler: 'Das Niveau ist ein Anteil, keine Prozentzahl. conf.level = 95 ergibt bei pearson_cor(): `conf.level` must be between 0 and 1.',
   },
+  // Gilt für t_test (eine Gruppe, Differenzen) und mann_whitney (Verschiebung), IB29.
   mu: {
     sym: 'mu =', term: 'Null- & Alternativhypothese', say: 'mü',
-    kurz: 'Der Vergleichswert der Nullhypothese. mu = 7 prüft, ob der Mittelwert in der Grundgesamtheit 7 sein könnte.',
+    kurz: 'Der Vergleichswert der Nullhypothese. mu = 7 prüft, ob der Mittelwert in der Grundgesamtheit 7 sein könnte; mu = 0 heißt bei Differenzen oder einer Verschiebung: kein Unterschied.',
     fehler: 'mu ist nicht dein Stichprobenmittelwert, sondern der Wert, gegen den du testest. Lege ihn vor der Analyse fest.',
   },
   alternative: {

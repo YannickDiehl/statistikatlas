@@ -144,16 +144,20 @@ export const communalityTabs: ConceptTabs = {
     ],
   },
   r: {
-    entry: 'efa', variant: 0,
+    // Mit summary() (IB2): Die Kommunalitäten stehen unter Communalities, Spalte Extraction.
+    entry: 'efa', variant: 0, summary: true,
     tokens: PCA_TOKENS,
     outputMap: [
-      { match: '71.2%', atlas: 'Durchschnitt der Kommunalitäten', explain: 'Mit einer Komponente ergeben die fünf Kommunalitäten zusammen 3,56. Geteilt durch 5 sind das 71,2 %.' },
-      { match: 'summary()', atlas: 'Tabelle mit den Kommunalitäten', explain: 'summary() zeigt die Kommunalitäten unter Communalities, Spalte Extraction, hier 0.687 bis 0.734.' },
-      { match: '1 component', atlas: 'eine Komponente', explain: 'Mit einer Komponente ist die Kommunalität jeder Frage ihre quadrierte Ladung.' },
+      { match: 'Extraction', atlas: 'hⱼ² von Frage 1', explain: 'Unter Communalities, Spalte Extraction, steht die Kommunalität jeder Frage. Mit einer Komponente ist sie die quadrierte Ladung: Frage 1 lädt mit 0.852, zum Quadrat 0.726.' },
+      { match: 'Initial', atlas: 'Varianz einer standardisierten Frage', explain: 'Bei Hauptkomponenten startet jede Frage mit ihrer ganzen Varianz 1. Extraction zeigt, wie viel davon die Komponente erfasst.' },
+      { match: '% Var.', atlas: 'Durchschnitt der Kommunalitäten', explain: 'Die fünf Kommunalitäten ergeben zusammen 3,56. Geteilt durch 5 sind das 71,2 %.' },
     ],
     check: {
-      question: 'Welche Zahl ist der Durchschnitt der fünf Kommunalitäten? Tippe sie an.', correct: '71.2%',
-      wrong: { KMO: 'Fast! Der KMO-Wert prüft vorab die Korrelationen. Der Durchschnitt der Kommunalitäten steht hinter Variance explained.' },
+      question: 'Welche Zahl ist die Kommunalität der ersten Frage? Tippe sie an.', correct: 'Extraction',
+      wrong: {
+        Initial: 'Fast! Das ist der Ausgangswert 1, mit dem jede Frage startet. Die Kommunalität steht daneben unter Extraction.',
+        '% Var.': 'Fast! Das ist der Durchschnitt aller fünf Kommunalitäten in Prozent. Die Kommunalität einer Frage steht unter Extraction.',
+      },
     },
   },
   next: {

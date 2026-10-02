@@ -341,12 +341,20 @@ export type { TokenNote };
  * nach „Ausprobieren“: `describe(x, show = …)` (show aus mean, sd, se, var, min, max, range), `pearson_cor(x, y)`,
  * `summarise(kovarianz = cov(x, y))`, `frequency(x)` und `frequency()` nach `rec()` mit umgepolten Codes.
  */
-export type LiveCall =
+export type LiveCall = (
   | { fn: 'describe'; show: string[] }
   | { fn: 'pearson_cor' }
   | { fn: 'cov' }
   | { fn: 'frequency' }
-  | { fn: 'rec_frequency' };
+  | { fn: 'rec_frequency' }
+) & {
+  /**
+   * Feste Spalten des Leitaufrufs (IB6), etwa `x: 'schulabschluss'` für frequency() mit Wertelabels. Ohne Angabe
+   * folgt der Aufruf der Spaltenwahl bzw. den R-Einstellungen; passt die feste Spalte nicht zum Aufruf, auch.
+   */
+  x?: string;
+  y?: string;
+};
 /**
  * Reiter „In R“. Leitaufruf ist die Katalogvariante `entry`/`variant` mit der in R erfassten Ausgabe für die
  * Ausgangsdaten (CATALOG_OUTPUT), oder `live`, dann druckt der Atlas die Ausgabe selbst; `entry` nennt dann nur die
@@ -360,6 +368,21 @@ export interface RTab {
   entry: string;                         // Katalog-ID in mariposaCatalog
   variant: number;                       // Leitaufruf
   live?: LiveCall;
+  /**
+   * Leitaufruf mit summary(): Der Aufruf wird gespeichert (`ergebnis <- …`) und `summary(ergebnis)` gedruckt, die
+   * Ausgabe kommt aus CATALOG_OUTPUT[`${entry}:${variant}:summary`] (in R erfasst, bisher für efa; IB2).
+   */
+  summary?: boolean;
+  /**
+   * Katalog-ID, deren Aufrufe unter „Anderer Aufruf“ stehen (IB5). Ohne Angabe die eigenen Aufrufe des Begriffs,
+   * wenn der Katalog welche hat, sonst `entry`; '' für keine.
+   */
+  others?: string;
+  /**
+   * Erster Satz von „Kurz gesagt“ im Reiter (ein Satz, IB7); der Hinweis zum Antippen folgt von selbst. Ohne Angabe
+   * wählt `rKurz()` (registry.ts) nach Leitaufruf und Vorlage.
+   */
+  kurz?: string;
   tokens?: Record<string, TokenNote>;    // Ergänzungen zur allgemeinen Codelegende (Funktion, Argumente)
   outputMap: { match: string; atlas: string; step?: number; explain: string }[]; // „SD“ ↔ „s, Schritt 6“
   check: { question: string; correct: string; wrong: Record<string, string> };   // Schlüssel = match

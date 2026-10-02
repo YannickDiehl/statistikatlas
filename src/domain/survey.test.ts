@@ -31,6 +31,10 @@ test('variable eligibility follows scale meaning, with explicit metric treatment
  for(const id of ['mean','variance','sd','z','pearson']){assert.ok(compatible(id,columnById.einkommen));assert.ok(compatible(id,columnById.lernplanung5));assert.ok(compatible(id,columnById.erwerbstaetig));assert.ok(!compatible(id,columnById.schulabschluss));assert.ok(!compatible(id,columnById.geschlecht));assert.ok(!compatible(id,columnById.lernplanung5,false));}
  for(const id of ['median','ranks','spearman']){assert.ok(compatible(id,columnById.schulabschluss));assert.ok(compatible(id,columnById.finanzlage));assert.ok(!compatible(id,columnById.berufsabschluss));}
  assert.ok(compatible('crosstab',columnById.lernplanung5));assert.ok(!compatible('crosstab',columnById.einkommen));assert.ok(compatible('frequency',columnById.einkommen));
+ // IB11: Katalogbegriffe ohne Spaltenrollen, die mit Zahlen rechnen, bieten keine nominalen Spalten an; Werkzeuge wie das Codebuch alle.
+ for(const id of ['expectation','population_variance','prediction','residuals','explained_variance']){assert.ok(compatible(id,columnById.lernzeit),id);assert.ok(!compatible(id,columnById.geschlecht),id);assert.ok(!compatible(id,columnById.schulabschluss),id);}
+ assert.ok(compatible('concordance',columnById.schulabschluss));assert.ok(!compatible('concordance',columnById.berufsabschluss));
+ for(const id of ['codebook','p_value','labels'])assert.ok(compatible(id,columnById.geschlecht),id);
  const selected=reconcileColumns('pearson',{x:'geschlecht',y:'schulabschluss',likertMetric:true});assert.ok(compatible('pearson',columnById[selected.x]));assert.ok(compatible('pearson',columnById[selected.y]));assert.notEqual(selected.x,selected.y);
  const duplicate=reconcileColumns('series',{...defaultSelection,y:defaultSelection.x});assert.notEqual(duplicate.x,duplicate.y);
 });

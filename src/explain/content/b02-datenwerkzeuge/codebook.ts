@@ -155,6 +155,7 @@ export const codebookTabs: ConceptTabs = {
   },
   r: {
     entry: 'codebook', variant: 0,
+    kurz: 'In R baut codebook() die Übersicht über alle Spalten aus den Labels der Datei.',
     tokens: {
       codebook: { sym: 'codebook()', term: 'Codebuch & Variablensuche', kurz: 'Baut aus den Metadaten ein Codebuch: Fragetexte, Typen, Werte und Wertelabels jeder Spalte.', fehler: 'Fehlt atlas %>% davor, meldet mariposa: Argument `data` is missing, with no default.' },
       view: { sym: 'view =', term: 'Ansicht', kurz: 'FALSE druckt nur die Übersicht in die Konsole. TRUE öffnet das Codebuch als HTML-Seite.', fehler: 'Mit großem V meldet mariposa: Unknown argument `View` of `codebook()`. R unterscheidet Groß- und Kleinschreibung.' },

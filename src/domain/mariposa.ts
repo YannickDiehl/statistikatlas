@@ -65,6 +65,17 @@ export function analysisCode(entry:AtlasEntry,s:RSettings,ranked=false){
  }
  return `${startBlock()}\n\n${call}`;
 }
+/**
+ * Leitaufruf mit summary() (Reiter „In R“, `RTab.summary`, IB2): Der Aufruf wird als `ergebnis` gespeichert, dann druckt
+ * summary(ergebnis) die ausführliche Ausgabe, bei efa() etwa Ladungen, Eigenwerte und Kommunalitäten. Speichert der
+ * Aufruf schon selbst (reliability, oneway_anova), bleibt er, wie er ist.
+ */
+export function summaryCode(entry:AtlasEntry,s:RSettings,ranked=false){
+ const code=analysisCode(entry,s,ranked),start=`${startBlock()}\n\n`;if(!code.startsWith(start))return code;
+ const call=code.slice(start.length);return /(^|\n)[A-Za-z_][A-Za-z0-9_.]* <- /.test(call)?code:`${start}ergebnis <- ${call}\n\nsummary(ergebnis)`;
+}
+/** Katalogaufrufe, deren summary()-Ausgabe zusätzlich in R erfasst ist (Schlüssel `${id}:${variant}:summary`). */
+export const SUMMARY_ENTRIES=['efa'];
 /** Kommentarzeilen mit höchstens 78 Zeichen. */
 function comment(text:string){const lines:string[]=[];let line='#';for(const word of text.split(/\s+/).filter(Boolean)){if(line.length+1+word.length>78&&line!=='#'){lines.push(line);line='#';}line+=` ${word}`;}lines.push(line);return lines.join('\n');}
 /** R-Skript zum Herunterladen: Startblock, gewählter Aufruf und kurze Kommentare in Klartext. */

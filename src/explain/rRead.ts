@@ -68,20 +68,31 @@ export function liveHelp(live: LiveCall): string[] {
 
 export type Spot = { start: number; end: number; text: string };
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-/** Eine Zahl als eigenes Wort (nicht in „lernplanung5“ oder „schulabschluss_1“). */
-const NUMBER = /(?<![\p{L}\p{N}_.])-?\d+(?:\.\d+)?(?:e[+-]?\d+)?(?![\p{L}\p{N}_])/gu;
+/**
+ * Eine Zahl als eigenes Wort (nicht in „lernplanung5“ oder „schulabschluss_1“), auch mit führendem Punkt, wie R
+ * p-Werte in Tabellen schreibt („.021“, „<.001“). Mit führendem Punkt zählt sie nur, wenn danach eine Lücke oder
+ * das Zeilenende kommt, also in einer Tabellenspalte, nicht in Sätzen wie „(p < .05)“.
+ */
+const NUM = '-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:e[+-]?\\d+)?';
+const NUMBER = /(?<![\p{L}\p{N}_.])(?:-?\d+(?:\.\d+)?(?:e[+-]?\d+)?(?![\p{L}\p{N}_])|-?\.\d+(?=\s|$))/gu;
 const numbersIn = (line: string) => [...line.matchAll(NUMBER)].map(m => ({ start: m.index ?? 0, end: (m.index ?? 0) + m[0].length, text: m[0] }));
+/**
+ * Zahlen einer Zeile, die Werte sind. Eine ganze Zahl mit Prozentzeichen gehört zur Beschriftung einer Spalte
+ * („95% CI Lower“, „25%“ in quantile()); eine Kopfzeile bleibt damit eine Kopfzeile.
+ */
+const valuesIn = (line: string) => numbersIn(line).filter(n => !(line[n.end] === '%' && /^\d+$/.test(n.text)));
 
 /**
  * Wo `match` in der Ausgabe auf eine Zahl zeigt:
  * 1. „match = Zahl“ oder „match < Zahl“, auch mit Klammer dazwischen („r = 0.539“, „mean=3.26“, „t(175.8) = 0.156“, „p < 0.001“);
- * 2. `match` als Spaltenkopf (eine Zeile ohne eigene Zahlen), darunter die erste Zahl, die unter dem Kopf steht
- *    („SD“ über „3.238“, „kovarianz“ über „5.44“, „N“ in der Häufigkeitstabelle);
+ * 2. `match` als Spaltenkopf (eine Zeile ohne eigene Werte; „95% CI Lower“ zählt als Beschriftung), darunter die
+ *    erste Zahl, die unter dem Kopf steht („SD“ über „3.238“, „kovarianz“ über „5.44“, „N“ in der Häufigkeitstabelle,
+ *    „Lower“ über der unteren Grenze, „Sig.“ über „.021“);
  * 3. sonst der Text selbst. null, wenn `match` nicht vorkommt.
  */
 export function locate(output: string, match: string): Spot | null {
   if (!match) return null;
-  const assign = new RegExp(`(?<![\\p{L}\\p{N}_.])${escape(match)}(?:\\([^)\\n]*\\))?\\s?[=<]\\s?(-?\\d+(?:\\.\\d+)?(?:e[+-]?\\d+)?)`, 'u').exec(output);
+  const assign = new RegExp(`(?<![\\p{L}\\p{N}_.])${escape(match)}(?:\\([^)\\n]*\\))?\\s?[=<]\\s?(${NUM})`, 'u').exec(output);
   if (assign) {
     const text = assign[1], start = assign.index + assign[0].length - text.length;
     return { start, end: start + text.length, text };
@@ -92,12 +103,14 @@ export function locate(output: string, match: string): Spot | null {
   lines.reduce((at, line) => { offsets.push(at); return at + line.length + 1; }, 0);
   const head = new RegExp(`(?<=^|[\\s|])${escape(match)}(?=$|[\\s|])`, 'gu');
   for (let i = 0; i < lines.length; i++) {
-    if (numbersIn(lines[i]).length) continue;
+    if (valuesIn(lines[i]).length) continue;
     for (const m of lines[i].matchAll(head)) {
       const from = m.index ?? 0, to = from + match.length;
       for (let j = i + 1; j < Math.min(lines.length, i + 5); j++) {
         const hit = numbersIn(lines[j]).find(n => n.start < to && n.end > from);
-        if (hit) return { start: offsets[j] + hit.start, end: offsets[j] + hit.end, text: hit.text };
+        // „<.001“ bleibt ganz: Das Zeichen davor gehört zum Wert (p ist kleiner als 0.001, nicht gleich).
+        const less = hit && lines[j][hit.start - 1] === '<' ? 1 : 0;
+        if (hit) return { start: offsets[j] + hit.start - less, end: offsets[j] + hit.end, text: lines[j].slice(hit.start - less, hit.end) };
       }
     }
   }

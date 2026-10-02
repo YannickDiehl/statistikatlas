@@ -39,11 +39,16 @@ export const scaleName=(c:SurveyColumn)=>c.kind==='likert'?`Likert, ${c.categori
 export const columnChoiceLabel=(c:SurveyColumn)=>c.kind==='likert'?c.title:`${c.title} (${c.kind==='binary'?'0/1':c.scale==='metric'?'metrisch':c.scale})`;
 export const formatValue=(c:SurveyColumn|undefined,n:number|null|undefined)=>n==null?'Nicht definiert':c?.categories?.find(k=>k.value===n)?.label||new Intl.NumberFormat('de-DE',{maximumFractionDigits:3}).format(n);
 export const quantitative=(c:SurveyColumn,likertMetric=true)=>c.scale==='metric'||c.kind==='binary'||c.kind==='likert'&&likertMetric;
+/**
+ * Katalogbegriffe ohne Spaltenrollen, die trotzdem mit den Werten einer Spalte rechnen (Brücke oder Auswertung mit
+ * Spaltenwahl im Reiter „Mit 200 Befragten“): Sie bieten nur passende Spalten an, nicht alle (IB11).
+ */
+const ROLELESS_QUANTITATIVE=new Set(['expectation','population_variance','prediction','residuals','explained_variance']),ROLELESS_ORDERED=new Set(['concordance']);
 export function compatible(id:string,c:SurveyColumn,likertMetric=true){
- if(entryById[id]&&!entryById[id].existing){const role=entryById[id].roles.find(r=>r.key==='x')||entryById[id].roles[0];return role?eligible(role,c,likertMetric):true;}
+ if(entryById[id]&&!entryById[id].existing){const role=entryById[id].roles.find(r=>r.key==='x')||entryById[id].roles[0];if(role)return eligible(role,c,likertMetric);if(!ROLELESS_QUANTITATIVE.has(id)&&!ROLELESS_ORDERED.has(id))return true;}
  if(['series','pairs','validn','count','df','frequency','metric','nominal','ordinal'].includes(id))return true;
  if(id==='crosstab')return !!c.categories;
- if(['median','ranks','spearman'].includes(id))return c.scale!=='nominal'||c.kind==='binary';
+ if(['median','ranks','spearman'].includes(id)||ROLELESS_ORDERED.has(id))return c.scale!=='nominal'||c.kind==='binary';
  return quantitative(c,likertMetric);
 }
 export function compatibilityReason(id:string,c:SurveyColumn,likertMetric=true){

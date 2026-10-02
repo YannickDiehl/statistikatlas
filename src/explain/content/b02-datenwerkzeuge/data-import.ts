@@ -83,6 +83,7 @@ export const dataImport: ConceptCard = {
 export const dataImportTabs: ConceptTabs = {
   r: {
     entry: 'data_import', variant: 0, live: { fn: 'describe', show: ['min', 'max'] },
+    kurz: 'Nach dem Einlesen prüfst du in R mit wenigen Kennwerten, ob alle Werte richtig angekommen sind.',
     tokens: {
       '"min"': { sym: '"min"', term: 'Minimum', kurz: 'Der kleinste Wert der Spalte. Steht hier −9 oder −11, sind Codes für fehlende Angaben als Zahlen angekommen.', fehler: 'Schreibst du "minimum", meldet mariposa: Unknown `show` value: "minimum". Erlaubt ist "min".' },
       '"max"': { sym: '"max"', term: 'Maximum', kurz: 'Der größte Wert der Spalte. Auch ein Wert wie 99 kann ein Code sein, keine echte Antwort.', fehler: 'Ohne Anführungszeichen meldet mariposa: `show` must be a character vector of statistic names.' },

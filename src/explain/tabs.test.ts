@@ -3,16 +3,16 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { conceptById, concepts } from '../domain/concepts';
 import { entryById } from '../domain/mariposaCatalog';
-import { analysisCode, initialRSettings } from '../domain/mariposa';
+import { analysisCode, initialRSettings, summaryCode } from '../domain/mariposa';
 import { RTOKENS } from '../domain/rTokens';
 import { neighbors } from '../domain/network';
 import { mapIds, visibleNeighbors } from '../domain/visibleNetwork';
 import { ref } from '../domain/learning';
 import { compatible, createSurvey, defaultSelection, surveyColumns, type SurveyRow } from '../domain/survey';
-import { EXPLANATIONS, TAB_IDS, bridgeFor, explainFor, tabsFor, workshopFor } from './registry';
+import { EXPLANATIONS, TAB_IDS, bridgeFor, explainFor, rKurz, R_TAP, tabsFor, workshopFor } from './registry';
 import { CATALOG_OUTPUT } from './catalogOutput';
 import { applyOp, bridgeContext, fitsColumn } from './sample';
-import { liveCode, liveOutput, locate, noteFor, tokenize } from './rRead';
+import { liveCode, liveFits, liveOutput, locate, noteFor, tokenize } from './rRead';
 import { mergeRelations, nextLists, relationText } from './relations';
 import { styleProblems } from './style';
 import type { BridgePicture, ConceptTabs, Expect, SampleCtx, SampleTab, ThinkSample } from './types';
@@ -200,15 +200,21 @@ test('In R: every output map finds its number, the quick check has its answers, 
     if (r.entry) assert.ok(entry, `${id}: Katalogeintrag „${r.entry}“ fehlt`);
     let output: string, code: string;
     if (r.live) {
-      const x = r.live.fn === 'rec_frequency' ? entry?.roles.find(x => x.key === 'x')?.default[0] ?? 'lernplanung5' : 'lernzeit';
-      output = liveOutput(r.live, rows, x, 'wissenstest'); code = liveCode(r.live, x, 'wissenstest');
+      // Feste Spalten des Reiters (live.x, IB6) gehen vor; sonst wie die Oberfläche ohne Spaltenwahl.
+      const x = r.live.x ?? (r.live.fn === 'rec_frequency' ? entry?.roles.find(x => x.key === 'x')?.default[0] ?? 'lernplanung5' : 'lernzeit'), y = r.live.y ?? 'wissenstest';
+      assert.ok(liveFits(r.live, x, y), `${id}: Leitaufruf passt nicht zu den Spalten ${x}, ${y}`);
+      output = liveOutput(r.live, rows, x, y); code = liveCode(r.live, x, y);
     } else {
       assert.ok(entry && entry.variants[r.variant], `${id}: Leitaufruf ${r.entry}:${r.variant} fehlt im Katalog`);
-      const captured = CATALOG_OUTPUT[`${r.entry}:${r.variant}`];
-      assert.ok(captured?.output, `${id}: keine in R erfasste Ausgabe für ${r.entry}:${r.variant}`);
-      assert.equal(captured.code, analysisCode(entry!, initialRSettings(entry!, r.variant)), `${id}: erfasster Code passt nicht zum Katalog`);
+      // Mit summary() (IB2) liegt die Ausgabe unter „…:summary“, der Code speichert das Ergebnis und ruft summary() auf.
+      const key = `${r.entry}:${r.variant}${r.summary ? ':summary' : ''}`, captured = CATALOG_OUTPUT[key];
+      assert.ok(captured?.output, `${id}: keine in R erfasste Ausgabe für ${key}`);
+      assert.equal(captured.code, (r.summary ? summaryCode : analysisCode)(entry!, initialRSettings(entry!, r.variant)), `${id}: erfasster Code passt nicht zum Katalog`);
       output = captured.output; code = captured.code;
     }
+    // „Kurz gesagt“ des Reiters (IB7): höchstens zwei Sätze im Ton des Sprachleitfadens; der eigene Satz ist einer.
+    clean(`${id} In R Kurz gesagt`, rKurz(r, id), KURZ);
+    if (r.kurz) clean(`${id} In R kurz`, r.kurz, { maxWords: 25, maxSentences: 1 });
     const spots = r.outputMap.map(m => ({ m, spot: locate(output, m.match) }));
     for (const { m, spot } of spots) {
       assert.ok(spot, `${id}: „${m.match}“ kommt in der Ausgabe nicht vor`);
@@ -229,6 +235,31 @@ test('In R: every output map finds its number, the quick check has its answers, 
     }
     for (const part of tokenize(code, { ...RTOKENS, ...r.tokens })) if (part.key) assert.ok(noteFor(part.key, r.tokens), `${id}: keine Karte für „${part.key}“`);
   }
+});
+
+test('In R: Kurz gesagt fits the lead call of each concept (IB7, IB24, IB35)', () => {
+  assert.equal(rKurz(tabsFor('sd')!.r!, 'sd'), `In R rechnet mariposa dieselbe Zahl. ${R_TAP}`, 'eigener Leitaufruf');
+  assert.equal(rKurz(tabsFor('covariance')!.r!, 'covariance'), `In R rechnet mariposa dieselbe Zahl. ${R_TAP}`, 'Live-Aufruf ohne Katalogeintrag');
+  assert.equal(rKurz(tabsFor('p_value')!.r!, 'p_value'), `Der Begriff steckt in diesem Aufruf und in seiner Ausgabe. ${R_TAP}`, 'fremder Leitaufruf');
+  for (const id of ['confidence', 'prediction_interval']) assert.ok(!rKurz(tabsFor(id)!.r!, id).includes('dieselbe Zahl'), `${id}: B8 M18`);
+  assert.ok(rKurz(tabsFor('dummy')!.r!, 'dummy').startsWith('In R erledigt mariposa denselben Schritt'), 'Werkzeug');
+  assert.equal(rKurz({ ...tabsFor('sd')!.r!, kurz: 'Ein eigener Satz.' }, 'sd'), `Ein eigener Satz. ${R_TAP}`);
+  for (const id of ['data_import', 'data_export', 'codebook']) assert.ok(tabsFor(id)?.r?.kurz, `${id}: eigener Satz für „Kurz gesagt“ (B2, IB7)`);
+});
+
+test('In R: summary() of efa is captured in R and shows loadings, eigenvalues and communalities (IB2)', () => {
+  for (let v = 0; v < entryById.efa.variants.length; v++) {
+    const captured = CATALOG_OUTPUT[`efa:${v}:summary`];
+    assert.ok(captured?.output.includes('Total Variance Explained') && captured.output.includes('Communalities'), `efa:${v}:summary fehlt`);
+    assert.equal(captured.code, summaryCode(entryById.efa, initialRSettings(entryById.efa, v)), `efa:${v}:summary: Code`);
+    assert.match(captured.code, /\nergebnis <- atlas %>%\n  efa\(.*\)\n\nsummary\(ergebnis\)$/s, `efa:${v}: gespeichert und summary()`);
+  }
+  // R: eigen(cor(methoden1:5)): 3.5602, 0.4136 …; Ladungen 0.8522 0.8398 0.8287 0.8567 0.8414; Quadrate 0.7262 … 0.7339
+  const o = CATALOG_OUTPUT['efa:0:summary'].output;
+  assert.deepEqual(['Total', '% Var.', 'PC1', 'Extraction', 'Initial'].map(m => locate(o, m)?.text), ['3.560', '71.204', '0.857', '0.726', '1.000']);
+  for (const id of ['loadings', 'eigenvalues', 'communality']) assert.ok(tabsFor(id)?.r?.summary, `${id}: Leitaufruf mit summary()`);
+  // Ein Aufruf, der sein Ergebnis schon speichert, bleibt, wie er ist.
+  assert.equal(summaryCode(entryById.reliability, initialRSettings(entryById.reliability, 0)), analysisCode(entryById.reliability, initialRSettings(entryById.reliability, 0)));
 });
 
 test('In R: the live lead calls print exactly what R printed for the starting data', () => {
@@ -259,6 +290,15 @@ test('locate: label = number, column header, literal text', () => {
   const freq = fixture('ausgang--frequency');
   assert.deepEqual(['mean', 'sd', 'valid N', 'Raw %'].map(m => locate(freq, m)?.text), ['3.26', '1.20', '200', '8.50']);
   assert.equal(locate(freq, 'gibtsnicht'), null);
+  // IB23: „95% CI Lower“ ist eine Kopfzeile, keine Zeile mit Werten; darunter steht die untere Grenze.
+  const anova = CATALOG_OUTPUT['oneway_anova:0'].output;
+  assert.deepEqual(['95% CI Lower', '95% CI Upper', 'Std. Error'].map(m => locate(anova, m)?.text), ['4.926', '6.841', '0.474']);
+  assert.deepEqual(['25%', '50%', '75%', 'N'].map(m => locate(CATALOG_OUTPUT['quantile:0'].output, m)?.text), ['5.800', '7.600', '9.750', '200']);
+  // IB29: Zahlen mit führendem Punkt in Tabellenspalten („.021“, „<.001“), nicht in Sätzen wie „(p < .05)“.
+  assert.equal(locate(CATALOG_OUTPUT['kruskal_wallis:0'].output, 'p value')?.text, '.021');
+  assert.equal(locate(CATALOG_OUTPUT['linear_regression:0'].output, 'Sig.')?.text, '<.001', 'Sig. über „<.001“, mit dem Kleinerzeichen');
+  assert.equal(locate('Test (Holm)\n  3 comparisons, 3 significant (p < .05)', '(Holm)')?.text, '(Holm)', 'kein Satz als Tabellenzeile');
+  assert.deepEqual(locate('p = .021', 'p'), { start: 4, end: 8, text: '.021' });
 });
 
 test('tokenize: functions, arguments, columns and atlas are tappable, strings only with their own card', () => {

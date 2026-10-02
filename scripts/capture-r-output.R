@@ -3,7 +3,8 @@
 #       dazu Zusatzfälle für Tabellenbreiten, p-Werte, ungerade Summen, fehlende Werte, jede Änderung von
 #       lernplanung5 um ±1 und den Tibble-Druck; src/explain/rOutput.test.ts
 #       vergleicht sie zeichengenau mit src/explain/rOutput.ts.
-#   (b) catalog.json mit Code und Ausgabe aller 110 Katalogbeispiele auf den Ausgangsdaten.
+#   (b) catalog.json mit Code und Ausgabe aller 110 Katalogbeispiele auf den Ausgangsdaten, dazu summary() der
+#       Ergebnisobjekte, die „In R“ ausführlich zeigt (Schlüssel „efa:0:summary“ …, SUMMARY_ENTRIES in mariposa.ts).
 # Aufruf (nach generate-mariposa-check.ts):
 #   Rscript --vanilla scripts/capture-r-output.R <mariposa-quellbaum> <prüfverzeichnis> src/explain/fixtures/r-output
 options(warn = 1, cli.num_colors = 1, crayon.enabled = FALSE, width = 80)
@@ -96,7 +97,8 @@ invisible(file.copy(sav, work, overwrite = TRUE))
 old <- setwd(work)
 catalog <- list()
 for (ex in examples) {
-  if (length(strsplit(ex$key, ":", fixed = TRUE)[[1]]) != 2L) next # Zusatzwege der Prüfstrecke
+  # Zusatzwege der Prüfstrecke überspringen; summary()-Ausgaben (Schlüssel „…:summary“) gehören in den Katalog.
+  if (length(strsplit(ex$key, ":", fixed = TRUE)[[1]]) != 2L && !endsWith(ex$key, ":summary")) next
   stopifnot(startsWith(ex$code, start))
   output <- character()
   if (!ex$fn %in% c("read_por", "read_sas")) {
@@ -110,7 +112,7 @@ for (ex in examples) {
   catalog[[ex$key]] <- list(code = ex$code, output = paste(output, collapse = "\n"))
 }
 setwd(old)
-stopifnot(length(catalog) == 110L)
+stopifnot(sum(!endsWith(names(catalog), ":summary")) == 110L)
 jsonlite::write_json(catalog, file.path(out_dir, "catalog.json"), auto_unbox = TRUE, pretty = TRUE)
 cat(sprintf("%d Referenzausgaben, %d Zusatzfälle, %d Einzeländerungen, %d Tibble-Fälle, %d Katalogausgaben in %s\n",
             length(data) * length(lead), length(extra) + 3L, length(edits), length(tibbles), length(catalog), out_dir))

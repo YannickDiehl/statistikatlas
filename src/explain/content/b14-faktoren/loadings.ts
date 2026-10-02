@@ -132,18 +132,19 @@ export const loadingsTabs: ConceptTabs = {
     ],
   },
   r: {
-    entry: 'efa', variant: 0,
+    // Mit summary() (IB2): Die Ladungen stehen in der Komponentenmatrix, ihre Quadrate unter Communalities.
+    entry: 'efa', variant: 0, summary: true,
     tokens: PCA_TOKENS,
     outputMap: [
-      { match: 'summary()', atlas: 'Tabelle mit den Ladungen', step: 1, explain: 'summary() zeigt die Komponentenmatrix mit allen fünf Ladungen, hier 0.829 bis 0.857.' },
-      { match: '71.2%', atlas: 'Summe der quadrierten Ladungen geteilt durch 5', explain: 'Die fünf Ladungen quadriert und zusammengezählt ergeben 3,56. Geteilt durch 5 sind das 71,2 %.' },
-      { match: '1 component', atlas: 'eine Komponente', explain: 'Jede Frage hat eine Ladung, weil es nur eine Komponente gibt.' },
+      { match: 'PC1', atlas: 'Ladung von Frage 4', step: 1, explain: 'Die Komponentenmatrix ordnet die Fragen nach ihrer Ladung. Ganz oben steht Frage 4 mit 0,86, ganz unten Frage 3 mit 0,83.' },
+      { match: 'Extraction', atlas: 'Ladung von Frage 1 zum Quadrat', explain: 'Unter Communalities steht jede Ladung zum Quadrat: Frage 1 lädt mit 0.852, und 0.852 zum Quadrat ergibt 0.726.' },
+      { match: '% Var.', atlas: 'Summe der quadrierten Ladungen geteilt durch 5', explain: 'Die fünf Ladungen quadriert und zusammengezählt ergeben 3,56. Geteilt durch 5 sind das 71,2 %.' },
     ],
     check: {
-      question: 'Wo verweist R auf die Tabelle mit den Ladungen? Tippe es an.', correct: 'summary()',
+      question: 'Welche Zahl ist die größte Ladung? Tippe sie an.', correct: 'PC1',
       wrong: {
-        '71.2%': 'Fast! In diesem Anteil stecken die quadrierten Ladungen aller fünf Fragen. Die Tabelle selbst zeigt summary().',
-        KMO: 'Fast! Der KMO-Wert prüft vorab die Korrelationen. Die Ladungen zeigt summary().',
+        Extraction: 'Fast! Das ist eine Ladung zum Quadrat, die Kommunalität von Frage 1. Die Ladungen selbst stehen unter PC1.',
+        '% Var.': 'Fast! Das ist der Anteil der Komponente an der gesamten Streuung, in Prozent. Die Ladungen stehen unter PC1.',
       },
     },
   },

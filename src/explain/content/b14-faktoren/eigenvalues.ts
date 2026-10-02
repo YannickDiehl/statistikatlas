@@ -146,16 +146,20 @@ export const eigenvaluesTabs: ConceptTabs = {
     ],
   },
   r: {
-    entry: 'efa', variant: 0,
+    // Mit summary() (IB2): Die Eigenwerte stehen in der Tabelle Total Variance Explained.
+    entry: 'efa', variant: 0, summary: true,
     tokens: PCA_TOKENS,
     outputMap: [
-      { match: '71.2%', atlas: 'erster Eigenwert geteilt durch 5', step: 2, explain: '3,56 / 5 ≈ 71,2 %. Den Eigenwert selbst zeigt summary() in der Tabelle Total Variance Explained.' },
-      { match: '1 component', atlas: 'eine Komponente', step: 3, explain: 'Nur die erste Komponente wird behalten, wie mit n_factors = 1 verlangt. Ihre Nachfolger hätten Eigenwerte unter 1.' },
-      { match: 'KMO', atlas: 'KMO-Wert', explain: 'Prüft vorab, ob die Korrelationen genug Gemeinsames enthalten. Er ist kein Eigenwert.' },
+      { match: 'Total', atlas: 'd₁, der erste Eigenwert', step: 2, explain: 'Unter Initial Eigenvalues, Spalte Total, steht für die erste Komponente 3.560. So viel von der gesamten Streuung 5 bündelt sie.' },
+      { match: '% Var.', atlas: 'd₁ geteilt durch 5', step: 2, explain: '3,56 / 5 ≈ 71,2 %. Diesen Anteil meldet die Kurzfassung von efa() als Variance explained.' },
+      { match: '0.414', atlas: 'd₂, der zweite Eigenwert', step: 3, explain: 'Die zweite Komponente bündelt nur 0,41, weniger als eine einzelne Frage mit 1. Mit n_factors = 1 behält efa() nur die erste.' },
     ],
     check: {
-      question: 'Aus welcher Zahl der Ausgabe kannst du den ersten Eigenwert ausrechnen? Tippe sie an.', correct: '71.2%',
-      wrong: { KMO: 'Fast! Der KMO-Wert prüft die Korrelationen vorab. Den Eigenwert bekommst du aus Variance explained: 0,712 · 5 ≈ 3,56.' },
+      question: 'Welche Zahl ist der erste Eigenwert? Tippe sie an.', correct: 'Total',
+      wrong: {
+        '% Var.': 'Fast! Das ist der Anteil in Prozent: 3,56 / 5 ≈ 71,2 %. Der Eigenwert selbst steht links daneben unter Total.',
+        '0.414': 'Fast! Das ist der Eigenwert der zweiten Komponente. Der erste steht eine Zeile darüber.',
+      },
     },
   },
   next: {

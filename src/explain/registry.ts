@@ -3,7 +3,7 @@
  * Standardfehler, Rekodieren), dann alle Bereiche aus src/explain/content/index.ts (`AREAS`).
  * Bereiche tragen sich nicht hier ein, sondern nur in ihrem eigenen `content/<bereich>/index.ts`.
  */
-import type { AnyWorkshop, AreaIndex, Bridge, ConceptTabs, Explain } from './types';
+import type { AnyWorkshop, AreaIndex, Bridge, ConceptTabs, Explain, RTab } from './types';
 import { mittel } from './content/mittel';
 import { streuung } from './content/streuung';
 import { zusammenhang } from './content/zusammenhang';
@@ -124,6 +124,23 @@ export function tabsFor(id: string): ConceptTabs | null {
 
 /** Alle Begriffe mit Reitern (Pilot und Bereiche), für tabs.test.ts und render.test.ts. Das Prüfskript (CommonJS, ohne TypeScript) bekommt seine IDs über IDS. */
 export const TAB_IDS: string[] = [...Object.keys(PILOT_TABS), ...Object.keys(merged.tabs)];
+
+/** Zweiter Satz von „Kurz gesagt“ im Reiter „In R“: wie man den Code liest. */
+export const R_TAP = 'Tippe ein Zeichen im Code an, um zu lesen, was es tut.';
+
+/**
+ * „Kurz gesagt“ im Reiter „In R“ (IB7, IB24, IB35): der eigene Satz des Reiters (`r.kurz`), sonst nach dem Leitaufruf.
+ * Gehört er zum Begriff selbst (gleiche Katalog-ID oder ein Live-Aufruf ohne Katalogeintrag), rechnet mariposa
+ * dieselbe Zahl, bei Werkzeugen erledigt es denselben Schritt; gehört er zu einem anderen Begriff (p-Wert → t-Test,
+ * Konfidenzintervall → Varianzanalyse), steckt der Begriff in diesem Aufruf. Dahinter steht immer `R_TAP`.
+ */
+export function rKurz(r: RTab, concept: string): string {
+  const kind = explainFor(concept)?.kind, own = r.entry === concept || r.entry === '';
+  const first = r.kurz ?? (!own ? 'Der Begriff steckt in diesem Aufruf und in seiner Ausgabe.'
+    : kind === 'tabelle' || kind === 'werkzeug' ? 'In R erledigt mariposa denselben Schritt, für alle 200 Befragten auf einmal.'
+    : 'In R rechnet mariposa dieselbe Zahl.');
+  return `${first} ${R_TAP}`;
+}
 
 /** Werkstatt mit dieser Kennung (Pilot oder Bereich), sonst null. */
 export function workshopFor(id: string): AnyWorkshop | null {

@@ -122,6 +122,7 @@ export const dataExport: TableTool = {
 export const dataExportTabs: ConceptTabs = {
   r: {
     entry: 'data_export', variant: 0, live: { fn: 'describe', show: ['mean'] },
+    kurz: 'Vor dem Weitergeben und nach dem Wiedereinlesen müssen in R dieselben Kennwerte herauskommen.',
     tokens: {
       describe: { sym: 'describe()', term: 'Deskriptiver Überblick', kurz: 'Zeigt Kennwerte einer Spalte. Vor dem Weitergeben und nach dem Wiedereinlesen müssen dieselben Zahlen herauskommen.', fehler: 'Bei einem Tippfehler im Spaltennamen meldet mariposa: Can\'t select columns that don\'t exist.' },
       '"mean"': { sym: '"mean"', term: 'Mittelwert', kurz: 'Fordert den Mittelwert an. N und Missing druckt describe() immer dazu.', fehler: 'Ohne Anführungszeichen meldet mariposa: `show` must be a character vector of statistic names.' },

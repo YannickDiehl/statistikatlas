@@ -3,7 +3,7 @@
 //   node --import tsx scripts/generate-mariposa-check.ts <prüfverzeichnis> [<mariposa-quellbaum>]
 import {mkdirSync,writeFileSync,readFileSync} from 'node:fs';
 import {resolve} from 'node:path';
-import {exampleVariants,analysisCode,surveyCsv,startBlock,SAV_NAME} from '../src/domain/mariposa';
+import {exampleVariants,analysisCode,summaryCode,SUMMARY_ENTRIES,surveyCsv,startBlock,SAV_NAME} from '../src/domain/mariposa';
 import {writeSav,savVariableLabel,savMeasure} from '../src/domain/savWriter';
 import {createSurvey,surveyColumns} from '../src/domain/survey';
 import {mariposaExports,entryById} from '../src/domain/mariposaCatalog';
@@ -24,6 +24,8 @@ extra('linear_regression','linear_regression:0:faktoren','Regression mit kategor
 extra('linear_regression','linear_regression:1:faktor','Interaktion mit einem Faktor',{x:['wissenstest'],predictors:['lernzeit','berufsabschluss']},1);
 extra('logistic_regression','logistic_regression:0:faktoren','Logitmodell mit kategorialem Prädiktor',{x:['weiterbildung'],predictors:['lernzeit','finanzlage']});
 extra('marginal_effects','marginal_effects:0:faktoren','Marginale Effekte mit kategorialem Prädiktor',{x:['weiterbildung'],predictors:['lernzeit','geschlecht']});
+// summary() der Ergebnisobjekte, die der Atlas in „In R“ ausführlich zeigt (efa: Ladungen, Eigenwerte, Kommunalitäten).
+for(const v of exampleVariants().filter(v=>SUMMARY_ENTRIES.includes(v.entry.id)))examples.push({id:v.entry.id,key:`${v.entry.id}:${v.settings.variant}:summary`,variant:examples.length,fn:v.variant.fn,label:`${v.variant.label} mit summary()`,external:false,code:summaryCode(v.entry,v.settings)});
 const rows=createSurvey();
 writeFileSync(resolve(directory,'examples.json'),JSON.stringify(examples,null,1));
 writeFileSync(resolve(directory,SAV_NAME),writeSav(rows,new Date(Date.UTC(2026,9,1,12))));

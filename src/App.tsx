@@ -20,7 +20,7 @@ import { mapConcepts, detailIds } from './domain/visibleNetwork';
 import { NetworkMap, type CameraRequest } from './components/NetworkMap';
 import { ConceptInspector } from './components/ConceptInspector';
 import { explainFor, tabsFor } from './explain/registry';
-import { baseSurvey, modifiedFrom } from './explain/sample';
+import { baseSurvey, modifiedFrom, textTitle } from './explain/sample';
 import { useExplainMode } from './components/explain/basics';
 import { useViewportWidth, useWorkbenchWidth, WorkbenchHandle } from './components/explain/WorkbenchHandle';
 import { fitWidth, standardWidth, workbenchStore } from './explain/workbench';
@@ -58,9 +58,10 @@ function AtlasWorkspace({conceptRequest,visible,toolApi}:{conceptRequest:{id:str
   for(const role of roles){const values=settings.columns[role.key]||[];if(role.key==='y'&&values[0]===settings.columns.x?.[0])settings.columns.y=role.default.filter(id=>id!==settings.columns.x?.[0]);}
   rSettings={...rSettings,[r.id]:settings};r={...r,variable:'x',basis:undefined,use:`v${settings.variant}`};
  }
- let columns=foundation?selection:reconcileColumns(r.basis==='ranks'?'spearman':outputRef(r).id,selection);
+ // Auch Grundbegriffe ohne Katalogaufruf gleichen die Spaltenwahl ab: Wer mit Zahlen rechnet (Erwartungswert, Vorhersage …), bekommt keine nominale Spalte (IB11).
+ let columns=reconcileColumns(r.basis==='ranks'?'spearman':outputRef(r).id,selection);
  if(entry&&!entry.existing&&entry.variants.length){const config=rSettings?.[r.id]||initialRSettings(entry),values=config.columns,chosen=values.x||values.items||values.times||values.variables;const x=chosen?.[0],y=values.y?.[0]||chosen?.[1];if(x)columns={...columns,x,y:y&&y!==x?y:columns.y===x?(x==='lernzeit'?'wissenstest':'lernzeit'):columns.y};}
-  setColumnNotice(columns.x!==selection.x||columns.y!==selection.y?`Passende Spalten eingesetzt: X = ${columnById[columns.x].title}, Y = ${columnById[columns.y].title}.`:'');setQuery('');setSearchOpen(false);if(foundVariant<0&&selected&&keyOf(selected)===keyOf(r)&&selected.variable===r.variable&&(!caseId||caseId===view.caseId)){setHistory(h=>({...h,present:{...h.present,panelOpen:true}}));setCamera(c=>({id:c.id+1,kind:'ensure'}));return;}changeView({...view,selected:r,columns,rSettings,contextAnchor,variable:r.variable,route:routeAfterSelection(selected,r,view.route),caseId:caseId||view.caseId,panelOpen:true});}
+  setColumnNotice(columns.x!==selection.x||columns.y!==selection.y?`Passende Spalten eingesetzt: X = ${textTitle(columnById[columns.x].title)}, Y = ${textTitle(columnById[columns.y].title)}.`:'');setQuery('');setSearchOpen(false);if(foundVariant<0&&selected&&keyOf(selected)===keyOf(r)&&selected.variable===r.variable&&(!caseId||caseId===view.caseId)){setHistory(h=>({...h,present:{...h.present,panelOpen:true}}));setCamera(c=>({id:c.id+1,kind:'ensure'}));return;}changeView({...view,selected:r,columns,rSettings,contextAnchor,variable:r.variable,route:routeAfterSelection(selected,r,view.route),caseId:caseId||view.caseId,panelOpen:true});}
  function travel(direction:'back'|'forward'){const next=step(history,direction,viewportReader.current?.()||viewport.current,pairs.map(p=>p.id),layoutReader.current?.());setHistory(next);setHighlight(null);setHovered(null);setCamera(c=>({id:c.id+1,kind:'restore',viewport:next.present.viewport}));}
  function wholeMap(){changeView({...view,selected:null,contextAnchor:undefined,trace:false,panelOpen:false,gravity:false},'all');}
  function changePairs(next:DataPair[]){setSurvey(rows=>updateProjectedPairs(rows,selection,next));}

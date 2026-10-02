@@ -20,6 +20,7 @@ import { modeStore } from './mode';
 import { ConceptInspector } from '../components/ConceptInspector';
 import { forgetTabs, kurzOf, tabList } from '../components/explain/ExplainTabs';
 import { KurzGesagt } from '../components/explain/basics';
+import { asNumber, RTab } from '../components/explain/RTab';
 import { TAB_IDS, tabsFor } from './registry';
 import { applyOp } from './sample';
 import { columnById, createSurvey, defaultSelection, projectPairs, type ColumnSelection, type SurveyRow } from '../domain/survey';
@@ -309,6 +310,28 @@ test('tabs: package concepts (se, p_value, dummy, recode) show their sample and 
   has(rec, 'recode', 'r', 'lernplanung5_umgepolt (Ich plane feste Zeiten zum Lernen ein. (recoded))');
   has(rec, 'recode', 'r', 'mean=2.74');
   has(inspector('dummy'), 'dummy', 'sample', 'haupt 40, mittel 37, fhr 41, abitur 40');
+});
+
+test('In R: Anderer Aufruf lists the own calls of the concept beside a foreign lead call; fixed live columns; German reading of R numbers', () => {
+  // IB5: labels führt mit to_labelled() (conversion) und listet unter „Anderer Aufruf“ seine eigenen fünf Aufrufe.
+  const labels = plain(panelOf(inspector('labels'), 'labels', 'r'));
+  assert.ok(labels.includes('to_labelled('), 'Leitaufruf bleibt to_labelled()');
+  for (const part of ['Anderer Aufruf', 'Fragetext setzen', 'Antworttexte setzen', 'Labels kopieren', 'Unbenutzte Labels entfernen', 'Labels entfernen', '?mariposa::var_label'])
+    assert.ok(labels.includes(part), `labels: „${part}“ fehlt`);
+  assert.ok(!labels.includes('Labels zu Faktoren'), 'labels: „Anderer Aufruf“ zeigt nicht mehr die Varianten von conversion');
+  // p_value hat keine eigenen Aufrufe: „Anderer Aufruf“ bleibt beim t-Test.
+  assert.ok(plain(panelOf(inspector('p_value'), 'p_value', 'r')).includes('Anderer Aufruf'), 'p_value: Anderer Aufruf mit den t-Test-Varianten');
+  // IB6: Ein Live-Leitaufruf mit fester Spalte folgt nicht der Spaltenwahl (hier lernzeit).
+  const base = { title: 'Test', rows: surveyRows, modified: false, reference: ref('ordinal'), selection: defaultSelection, onSelect: noop, onHover: noop, onConcept: noop };
+  const fixedTab = { entry: 'frequency', variant: 0, live: { fn: 'frequency' as const, x: 'schulabschluss' }, outputMap: [], check: { question: 'Test?', correct: 'N', wrong: {} } };
+  const fixedHtml = plain(renderToStaticMarkup(createElement(RTab, { ...base, tab: fixedTab })));
+  assert.ok(fixedHtml.includes('frequency(schulabschluss)') && fixedHtml.includes('Abitur'), 'frequency() mit der festen Spalte und ihren Wertelabels');
+  const followHtml = plain(renderToStaticMarkup(createElement(RTab, { ...base, tab: { ...fixedTab, live: { fn: 'frequency' as const } } })));
+  assert.ok(followHtml.includes('frequency(lernzeit)'), 'ohne feste Spalte folgt der Aufruf der Spaltenwahl');
+  // IB2: summary() im Leitaufruf der Ladungen.
+  assert.ok(plain(panelOf(inspector('loadings'), 'loadings', 'r')).includes('summary(ergebnis)'), 'loadings: summary(ergebnis)');
+  // IB29: Zahlen mit führendem Punkt und kleine Werte mit zwei gültigen Ziffern.
+  assert.deepEqual(['3.238', '.021', '0.013', '<.001', '0.5'].map(asNumber), ['3,24', '0,021', '0,013', null, '0,5']);
 });
 
 test('tabs: rank routes (Spearman through Pearson with ranks) keep the old layout with rank-based numbers', () => {

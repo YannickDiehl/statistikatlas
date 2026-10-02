@@ -1,13 +1,14 @@
 {
   "package": "mariposa",
   "version": "0.7.4",
-  "date": "2026-10-01",
+  "date": "2026-10-02",
   "input": "Statistikatlas-200-Befragte.sav (writeSav)",
   "publicFunctions": 80,
   "concepts": 159,
   "connections": 485,
   "exampleVariants": 110,
   "extraPaths": 5,
+  "summaryPaths": 5,
   "checks": [
     {
       "id": "se",
@@ -1040,6 +1041,51 @@
       "key": "marginal_effects:0:faktoren",
       "fn": "marginal_effects",
       "label": "Marginale Effekte mit kategorialem Prädiktor",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "key": "efa:0:summary",
+      "fn": "efa",
+      "label": "Eine Hauptkomponente · PCA mit summary()",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "key": "efa:1:summary",
+      "fn": "efa",
+      "label": "Ein gemeinsamer Faktor · ML mit summary()",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "key": "efa:2:summary",
+      "fn": "efa",
+      "label": "Zwei Komponenten · Varimax mit summary()",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "key": "efa:3:summary",
+      "fn": "efa",
+      "label": "Zwei Komponenten · Oblimin mit summary()",
+      "status": "ok",
+      "detail": "",
+      "warnings": []
+    },
+    {
+      "id": "efa",
+      "key": "efa:4:summary",
+      "fn": "efa",
+      "label": "Zwei Komponenten · Promax mit summary()",
       "status": "ok",
       "detail": "",
       "warnings": []

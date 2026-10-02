@@ -8,7 +8,7 @@ import { describeOutput, pearsonOutput, covOutput, frequencyOutput, cFixed, rMea
 import { CATALOG_OUTPUT } from './catalogOutput';
 import { createSurvey, columnById, type SurveyRow } from '../domain/survey';
 import { savVariableLabel } from '../domain/savWriter';
-import { analysisCode, exampleVariants } from '../domain/mariposa';
+import { analysisCode, exampleVariants, SUMMARY_ENTRIES } from '../domain/mariposa';
 
 /** Referenztext ohne den Zeilenumbruch, den writeLines() anhängt. */
 const fixture = (name: string) => readFileSync(new URL(`./fixtures/r-output/${name}.txt`, import.meta.url), 'utf8').replace(/\n$/, '');
@@ -98,9 +98,11 @@ test('pearson without variance or with too few cases prints the mariposa note', 
   assert.match(pearsonOutput([1, 2], [2, 1], 'x', 'y'), /not computed \(too few valid cases\), N = 2/);
 });
 
-test('the catalog output holds the code and the R output of all 110 examples', () => {
+test('the catalog output holds the code and the R output of all 110 examples, plus summary() for efa', () => {
   const examples = exampleVariants();
-  assert.equal(Object.keys(CATALOG_OUTPUT).length, 110);
+  const summaries = Object.keys(CATALOG_OUTPUT).filter(k => k.endsWith(':summary'));
+  assert.equal(Object.keys(CATALOG_OUTPUT).length - summaries.length, 110);
+  assert.deepEqual(summaries, examples.filter(v => SUMMARY_ENTRIES.includes(v.entry.id)).map(v => `${v.entry.id}:${v.settings.variant}:summary`), 'summary() je Variante der efa');
   for (const { entry, settings } of examples) {
     const key = `${entry.id}:${settings.variant}`, captured = CATALOG_OUTPUT[key];
     assert.ok(captured, key);
