@@ -12,6 +12,7 @@ import { LERNZEIT, estimator, estimatorTabs, schaetzungen } from './estimator';
 import { ANTEIL_N, WEITERBILDUNG, anteilText, mittelwerte, samplingDistribution, samplingDistributionTabs, seAnteil } from './sampling-distribution';
 import { HAUSHALT, HAUSHALT_KENNWERTE, HAUSHALT_N, binomial, haushaltMittel, middle95 } from './daten';
 import { GLOCKE_N, centralLimit, centralLimitTabs, einkommenSchiefe, glockeText, schiefeMittel } from './central-limit';
+import { PLANUNG, VERZERRUNG_N, bereichText, bereiche, samplingBias, samplingBiasTabs, verzerrung } from './sampling-bias';
 import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft } from './law-large-numbers';
 
 /*
@@ -48,6 +49,13 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
  *   g1(e); g1(e) / sqrt(30); mean(e)                          # 0.7855733  0.1434254  3154.62 (gleich nach mal 2 und plus 100)
  *   range(sapply(1:200, function(k) { ee <- e; ee[k] <- 30000; g1(ee) - g1(e) }))   # +6.49 bis +6.76; nach mal 2: +1.46 bis +1.53
  *   atlas %>% describe(einkommen, show = c("mean", "skew"))   # Skewness 0.792 (mit Kleinstichprobenkorrektur)
+ *   atlas %>% filter(lernplanung5 >= 4) %>% summarise(n = n(), m = mean(lernzeit))   # 88  8.670455 (Verzerrung +0.918955)
+ *   s <- x[as.numeric(atlas$lernplanung5) >= 4]; sN <- function(v) sqrt(mean((v - mean(v))^2))
+ *   sN(s); sN(x); sd(s) / sqrt(length(s))                     # 2.743014  3.229411  0.294082
+ *   for (n in c(10, 25, 50, 100, 250, 500, 1000, 5000))       # Bereiche ± 1.96 σ / √n: Online-Umfrage und Zufallsstichprobe
+ *     print(c(mean(s) + c(-1, 1) * 1.96 * sN(s) / sqrt(n), mean(x) + c(-1, 1) * 1.96 * sN(x) / sqrt(n)))
+ *   # n = 10: 6.970 10.371 | 5.750 9.753;  n = 50: 7.910 9.431 | 6.856 8.647;  n = 100: 8.133 9.208 | 7.119 8.384
+ *   # n = 5000: 8.594 8.746 | 7.662 7.841
  *
  * ALLBUS 2023 (ZA8831_v1-3-0.sav, nur lesen, Pfad in ALLBUS_SAV), nur Aggregate:
  *   d <- haven::read_sav(Sys.getenv("ALLBUS_SAV"))
@@ -206,6 +214,27 @@ test('B8 central_limit: exakte Verteilung der mittleren Haushaltsgröße und die
   if (s.kind === 'analysis') {
     assert.match(s.result(ectx()).kurz, /Schiefe von 0,79: .* nur noch eine Schiefe von 0,14\./);
     assert.match(s.result(ectx()).zusatz!, /3\.155 € im Monat/);
+  }
+});
+
+test('B8 sampling_bias: die Online-Umfrage der Planenden und die Bereiche im Bild wie in R', () => {
+  const v = verzerrung(ctx());
+  assert.equal(v.n, PLANUNG.n);
+  for (const [mine, data, r] of [[PLANUNG.teil, v.teil, 8.670454545], [PLANUNG.alle, v.alle, 7.7515], [PLANUNG.sigmaTeil, v.sigmaTeil, 2.74301423], [PLANUNG.sigma, v.sigma, 3.229411363]])
+    { assert.ok(close(mine, r, 1e-6), `${mine} ≠ R ${r}`); assert.ok(close(data, r, 1e-8), `Lehrdatensatz ${data} ≠ R ${r}`); }
+  assert.ok(close(v.bias, 0.9189545455, 1e-9) && close(v.se, 0.2940819939, 1e-9), 'Verzerrung und SE');
+  const R: Record<number, number[]> = { 10: [6.970316712, 10.37059238, 5.7498901, 9.7531099], 50: [7.910129792, 9.430779299, 6.85635284, 8.64664716], 100: [8.132823756, 9.208085335, 7.118535373, 8.384464627], 5000: [8.59442207, 8.746487021, 7.661985284, 7.841014716] };
+  for (const [n, r] of Object.entries(R)) { const b = bereiche(Number(n)); [...b.online, ...b.zufall].forEach((x, i) => assert.ok(close(x, r[i], 1e-5), `n = ${n}: ${x} ≠ R ${r[i]}`)); }
+  assert.match(bereichText(100), /zwischen 8,13 und 9,21 Stunden\. .* zwischen 7,12 und 8,38 Stunden, rund um den wahren Wert 7,75\. Der wahre Wert liegt nicht einmal/);
+  assert.match(bereichText(10), /Noch überlappen sich beide Bereiche/);
+  assert.equal(VERZERRUNG_N.filter(n => bereiche(n).online[0] <= PLANUNG.alle).join(), '10,25', 'wahrer Wert im Bereich der Online-Umfrage nur bei 10 und 25 Antworten');
+  assert.match(samplingBias.stellDirVor.text, /88 feste Zeiten .* im Schnitt 8,67 Stunden gelernt, alle 200 zusammen 7,75 Stunden\. .* um 0,92 Stunden zu hoch/);
+  assert.equal(samplingBias.bausteine[1].rechnung, 'Verzerrung = 8,67 − 7,75 ≈ 0,92 h');
+  assert.match(samplingBias.bausteine[2].acht, /bei 3,95 statt 4,01\./);
+  const s = samplingBiasTabs.sample!;
+  if (s.kind === 'analysis') {
+    assert.match(s.result(ctx()).kurz, /Die 88 Befragten, .* 8,67 Stunden\. Alle 200 lernen 7,75 Stunden\. Die Online-Umfrage läge systematisch 0,92 Stunden zu hoch\./);
+    assert.match(s.result(ctx()).fachlich, /≈ \+0,92 h\. Der Standardfehler dieser Teilstichprobe beträgt nur 0,29 h/);
   }
 });
 

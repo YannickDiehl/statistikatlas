@@ -6,6 +6,7 @@ import { HAUSHALT_KENNWERTE, binomial, haushaltMittel, middle95, stufe } from '.
 import { GLOCKE_N, schiefeMittel } from '../../../explain/content/b08-schaetzen/central-limit';
 import { ANTEIL_N, WEITERBILDUNG } from '../../../explain/content/b08-schaetzen/sampling-distribution';
 import { GESETZ_N, daneben, wieOft } from '../../../explain/content/b08-schaetzen/law-large-numbers';
+import { PLANUNG, VERZERRUNG_N, bereiche } from '../../../explain/content/b08-schaetzen/sampling-bias';
 import { Axis, Curve, forCard, linear, MarkLine, useWidth, type Picture } from './kit';
 import { niceTicks } from './sample';
 
@@ -86,8 +87,40 @@ function GlockeVerteilung({ n }: { n: number }) {
     label={`Exakte Verteilung ${n === 1 ? 'der Haushaltsgröße' : `der mittleren Haushaltsgröße von ${n} Befragten`} im ALLBUS 2023 mit Glockenkurve. Schiefe ${num(schiefeMittel(n))}${n === 1 ? ': rechts ein langer Ausläufer.' : '.'}`} />;
 }
 
+/**
+ * Verzerrung gegen Zufallsfehler: Bereiche, in denen etwa 95 von 100 Umfragen mit n Antworten landen, für eine
+ * Zufallsstichprobe (um den wahren Wert) und die Online-Umfrage der Planenden (um 8,67 h). Beide schrumpfen mit n,
+ * nur einer bleibt um den wahren Wert.
+ */
+function VerzerrungBild({ n }: { n: number }) {
+  const [box, W] = useWidth();
+  const b = bereiche(n), left = 26, right = W - 28, base = 186, H = 246;
+  const X = linear([5, 11.5], [left, right]);
+  const row = (y: number, name: string, [lo, hi]: [number, number], mid: number, tone: 'pos' | 'neg') => (
+    <g>
+      <text className="xw-t xw-halo" x={left} y={y - 8}>{name}</text>
+      <rect className={`xw-bar-${tone}`} x={X(lo)} y={y} width={Math.max(2, X(hi) - X(lo))} height={22} />
+      <line className="xw-axis" x1={X(mid)} x2={X(mid)} y1={y - 3} y2={y + 25} strokeWidth={2} />
+    </g>
+  );
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Bei ${count(n)} Antworten landet eine Zufallsstichprobe in etwa 95 von 100 Fällen zwischen ${num(b.zufall[0])} und ${num(b.zufall[1])} Stunden, die Online-Umfrage zwischen ${num(b.online[0])} und ${num(b.online[1])} Stunden. Der wahre Wert ist ${num(PLANUNG.alle)} Stunden.`}>
+        <text className="xw-t" x={left} y={16}>Wo etwa 95 von 100 Umfragen landen</text>
+        <MarkLine x={X(PLANUNG.alle)} from={36} to={base} />
+        {row(64, 'Zufallsstichprobe', b.zufall, PLANUNG.alle, 'pos')}
+        {row(132, 'Online-Umfrage der Planenden', b.online, PLANUNG.teil, 'neg')}
+        <text className="xw-t xw-strong xw-halo" x={X(PLANUNG.alle) + 6} y={base - 6}>wahrer Wert {num(PLANUNG.alle)} h</text>
+        <Axis scale={X} ticks={[5, 6, 7, 8, 9, 10, 11]} at={base} from={left} to={right} format={v => num(v)} labelGap={20} title="mittlere Lernzeit in Stunden" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b08-anteil': forCard(p => <AnteilVerteilung n={stufe(ANTEIL_N, p.value ?? ANTEIL_N.indexOf(50))} />),
   'b08-gesetz': forCard(p => <GesetzVerteilung n={stufe(GESETZ_N, p.value ?? 0)} />),
   'b08-glocke': forCard(p => <GlockeVerteilung n={stufe(GLOCKE_N, p.value ?? 0)} />),
+  'b08-verzerrung': forCard(p => <VerzerrungBild n={stufe(VERZERRUNG_N, p.value ?? VERZERRUNG_N.indexOf(100))} />),
 };

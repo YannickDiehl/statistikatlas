@@ -7,6 +7,7 @@ import { estimator, estimatorTabs } from './estimator';
 import { samplingDistribution, samplingDistributionTabs } from './sampling-distribution';
 import { lawLargeNumbers, lawLargeNumbersTabs } from './law-large-numbers';
 import { centralLimit, centralLimitTabs } from './central-limit';
+import { samplingBias, samplingBiasTabs } from './sampling-bias';
 
 export const b08Schaetzen: AreaIndex = {
   explanations: {
@@ -16,6 +17,7 @@ export const b08Schaetzen: AreaIndex = {
     sampling_distribution: { kind: 'begriff', card: samplingDistribution },
     law_large_numbers: { kind: 'begriff', card: lawLargeNumbers },
     central_limit: { kind: 'begriff', card: centralLimit },
+    sampling_bias: { kind: 'begriff', card: samplingBias },
   },
   tabs: {
     sampling: samplingTabs,
@@ -24,5 +26,6 @@ export const b08Schaetzen: AreaIndex = {
     sampling_distribution: samplingDistributionTabs,
     law_large_numbers: lawLargeNumbersTabs,
     central_limit: centralLimitTabs,
+    sampling_bias: samplingBiasTabs,
   },
 };
