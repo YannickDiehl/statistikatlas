@@ -115,7 +115,28 @@ function Kumuliert({ cut }: { cut: number }) {
   );
 }
 
+/** Theoretisches Quantil: Dichte der Schlafdauer, Fläche p links der Grenze qₚ markiert. */
+function Quantil({ p }: { p: number }) {
+  const [box, W] = useWidth();
+  const base = 196, top = 48, left = 40, right = W - 16, lo = 4.5, hi = 9.7, q = schlafModell.q(p);
+  const x = linear([lo, hi], [left, right]), y = linear([0, 0.56], [base, top]), at = Math.max(lo, Math.min(hi, q));
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={254} viewBox={`0 0 ${W} 254`} role="img"
+        aria-label={`Dichte des Normalmodells der Schlafdauer. Links der Grenze ${num(q)} Stunden liegt die Fläche ${pct(p, 0)}: das ${num(p * 100, 0)}-%-Quantil.`}>
+        <AreaUnder f={sleepDensity} from={lo} to={at} x={x} y={y} tone="pos" />
+        <Curve f={sleepDensity} from={lo} to={hi} x={x} y={y} />
+        <MarkLine x={x(at)} from={top} to={base} />
+        <Axis scale={x} ticks={[5, 6, 7, 8, 9]} at={base} from={left} to={right} labelGap={22} title="Schlafdauer pro Nacht in Stunden" />
+        <text className="xw-t xw-strong" x={left} y={16}>Grenze q = {num(q)} h</text>
+        <text className="xw-t" x={left} y={34}>Fläche links davon: {pct(p, 0)}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b06-quantil': forCard(p => <Quantil p={p.value ?? 0.1} />),
   'b06-kumuliert': forCard(p => <Kumuliert cut={p.value ?? 6} />),
   'b06-dichte': forCard(p => <Dichte h={p.value ?? 0.5} />),
   'b06-masse': forCard(p => <Masse k={p.value ?? 2} />),

@@ -15,6 +15,7 @@ import { discreteContinuous, discreteContinuousTabs } from './discrete_continuou
 import { probabilityMass, probabilityMassTabs, massUpTo } from './probability_mass';
 import { densityFunction, densityFunctionTabs, areaAround7 } from './density_function';
 import { cumulativeProbability, cumulativeProbabilityTabs, observedUpTo } from './cumulative_probability';
+import { theoreticalQuantile, theoreticalQuantileTabs } from './theoretical_quantile';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -266,4 +267,28 @@ test('B6 cumulative_probability: F(6), F(8), Bereiche und Fₙ(6) wie in R', () 
   assert.equal(r.kurz, '22 von 200 Befragten schlafen höchstens 6 Stunden, also Fₙ(6) = 11 %. Das Normalmodell mit μ = 7,08 h und σ = 0,82 h sagt F(6) ≈ 9,3 %.');
   assert.equal(tab.value!(ctxFor(tab)), 0.11);
   assert.equal(count(col('schlafdauer'), v => v - 1 <= 6 + 1e-9), 99, 'eine Stunde kürzer: 99 höchstens 6 Stunden');
+});
+
+/*
+ *   qnorm(.1, m, s); qnorm(.9, m, s); qnorm(.5, m, s)              # 6.031937 8.133063 7.0825
+ *   qnorm(c(.1, .95, .975, .995))                                  # -1.281552 1.644854 1.959964 2.575829
+ *   7.08 + 0.82 * (-1.28)                                          # 6.0304: die Rechnung mit den sichtbaren Zahlen
+ *   sum(sl <= qnorm(.1, m, s)); mean(h <= 2); mean(h <= 3)         # 22; 0.425 0.6
+ *   qnorm(.1, m + 1, s)                                            # 7.031937 (eine Stunde länger: genau +1)
+ */
+test('B6 theoretical_quantile: Quantile des Schlafmodells und kritische Werte wie in R', () => {
+  const card = theoreticalQuantile;
+  assert.deepEqual(card.stellDirVor.figures!.map(f => f.value), ['6,03 h', '8,13 h', '1,96']);
+  assert.equal(card.bausteine[1].rechnung, 'q₀,₁ = 7,08 + 0,82 · (−1,28) ≈ 6,03 h');
+  assert.match(card.bausteine[2].acht, /Das 95-%-Quantil ist 1,64\./);
+  assert.deepEqual(card.ausprobieren[1].options, ['1,64', '1,96', '2,58']);
+  assert.match(card.ausprobieren[2].explain, /F\(2\) = 42,5 % und F\(3\) = 60 %/);
+  assert.equal(card.regler!.describe(0.1), 'Das 10-%-Quantil liegt bei 6,03 Stunden: Im Modell schlafen 10 % höchstens so lange. In Standardabweichungen gemessen liegt es bei z = −1,28.');
+  assert.match(card.genau.paragraphs[1], /22 der 200 Befragten bei höchstens 6,03 Stunden, also 11 %/);
+  assert.equal(count(col('schlafdauer'), v => v <= 6.031937), 22, 'höchstens q₀,₁');
+  const tab = theoreticalQuantileTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, 'Im Normalmodell mit μ = 7,08 h und σ = 0,82 h liegt das 10-%-Quantil bei 6,03 Stunden. In den Daten schlafen 22 von 200 höchstens so lange.');
+  assert.ok(close(tab.value!(ctxFor(tab))!, 6.031937, 1e-6));
 });

@@ -11,6 +11,7 @@ import { discreteContinuous, discreteContinuousTabs } from './discrete_continuou
 import { probabilityMass, probabilityMassTabs } from './probability_mass';
 import { densityFunction, densityFunctionTabs } from './density_function';
 import { cumulativeProbability, cumulativeProbabilityTabs } from './cumulative_probability';
+import { theoreticalQuantile, theoreticalQuantileTabs } from './theoretical_quantile';
 
 export const b06Wahrscheinlichkeit: AreaIndex = {
   explanations: {
@@ -24,6 +25,7 @@ export const b06Wahrscheinlichkeit: AreaIndex = {
     probability_mass: { kind: 'begriff', card: probabilityMass },
     density_function: { kind: 'begriff', card: densityFunction },
     cumulative_probability: { kind: 'begriff', card: cumulativeProbability },
+    theoretical_quantile: { kind: 'begriff', card: theoreticalQuantile },
   },
   tabs: {
     probability: probabilityTabs,
@@ -36,5 +38,6 @@ export const b06Wahrscheinlichkeit: AreaIndex = {
     probability_mass: probabilityMassTabs,
     density_function: densityFunctionTabs,
     cumulative_probability: cumulativeProbabilityTabs,
+    theoretical_quantile: theoreticalQuantileTabs,
   },
 };
