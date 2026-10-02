@@ -17,6 +17,7 @@ import { teststaerke } from './teststaerke';
 import { DF, freiheitsgrade } from './freiheitsgrade';
 import { exakt, vergleich } from './exakt';
 import { DUNN, mehrfach } from './mehrfach';
+import { ABITUR, abiturD, effekt } from './effekt';
 
 /*
  * Referenzwerte des Bereichs B9, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -63,6 +64,15 @@ import { DUNN, mehrfach } from './mehrfach';
  *   # 12.7062047, 2.7764451, 2.0555294, 2.0518305, 2.0422725, 1.9839715, 1.9719565; 1.9599640 (gerundet ab df = 27 weniger als 0,1 über 1,96)
  *   t.test(lz ~ wb, alternative = "greater")$p.value; t.test(lz ~ wb, alternative = "less")$p.value   # 0.4379349, 0.5620651
  *   atlas %>% t_test(lernzeit, group = weiterbildung, alternative = "greater")  # t(175.8) = 0.156, p = 0.438
+ *   sp <- sqrt(((118 - 1) * var(lz[wb == 0]) + (82 - 1) * var(lz[wb == 1])) / 198); d <- (mean(lz[wb == 0]) - mean(lz[wb == 1])) / sp
+ *   # sp = 3.2454809, d = 0.0224372, Hedges g = d * (1 - 3 / (4 * 200 - 9)) = 0.0223521; t_test meldet g = 0.022 (negligible)
+ *
+ * E. Effektgröße: Lernzeit mit Abitur (Code 4) gegen ohne Schulabschluss (Code 0)
+ *   sa <- as.numeric(atlas$schulabschluss); g4 <- lz[sa == 4]; g0 <- lz[sa == 0]
+ *   mean(g4); sd(g4); mean(g0); sd(g0)                  # 9.355, 3.3604754 (n 40); 5.8833333, 3.0719753 (n 42)
+ *   sp <- sqrt((39 * var(g4) + 41 * var(g0)) / 80); d <- (mean(g4) - mean(g0)) / sp; d * (1 - 3 / (4 * 82 - 9))
+ *   # sp = 3.2158540, d = 1.0795474, g = 1.0693949; pnorm(3.47 / 3.22) = 0.8594027; 3.47 / 3.22 = 1.0776398
+ *   0.05 * sqrt(10000 / 2); 2 * pnorm(-0.05 * sqrt(10000 / 2))   # 3.5355, 0.000407 (d = 0,05 bei 20.000 Befragten signifikant)
  *
  * D. Mehrere Vergleiche: finanzielle Lage nach Schulabschluss
  *   k <- atlas %>% kruskal_wallis(finanzlage, group = schulabschluss)   # H(4) = 11.585, p = 0.021 *
@@ -91,7 +101,8 @@ const tabs = (id: string): ConceptTabs => b09Testlogik.tabs[id];
 const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.ok(s?.kind === 'analysis', `${id}: Auswertung`); const cols = Object.fromEntries(Object.entries(s.columns ?? {}).map(([k, v]) => [k, [v]])); return s.result({ rows: data, columns: cols }); };
 
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
-  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power', 'general_df', 'exact_asymptotic', 'multiplicity'];
+  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power', 'general_df', 'exact_asymptotic', 'multiplicity', 'effect'];
+  assert.deepEqual(Object.keys(b09Testlogik.explanations).sort(), [...ids].sort(), 'genau die zwölf Begriffe des Bereichs');
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -295,4 +306,22 @@ test('B9 Mehrere Vergleiche: Dunn ohne und mit Holm wie in R', () => {
   assert.match(mehrfach.genau.paragraphs[2], /p ≈ 0,021 bei α = 0,05/);
   assert.match(result('multiplicity').kurz, /Von 10 Paarvergleichen .* ohne Korrektur 2 unter 0,05, nach Holm 0\. .*von 0,006 auf 0,06\./);
   assert.match(result('multiplicity', applyOp(rows, 'finanzlage', 'reverse')).kurz, /ohne Korrektur 2 unter 0,05, nach Holm 0\./);
+});
+
+test('B9 Effektgröße: Cohens d und Hedges g wie in R', () => {
+  const abi = abiturD(ctx({ x: 'lernzeit' }))!;
+  assert.ok(close(abi, ABITUR.d, 1e-6) && close(ABITUR.d, 1.0795474, 1e-6), `Abitur d ${abi}`);
+  assert.ok(close(ABITUR.sp, 3.2158540, 1e-7) && close(ABITUR.g, 1.0693949, 1e-7) && close(ABITUR.mit - ABITUR.ohne, 3.4716667, 1e-6), 'Abitur');
+  const g = gruppenTest(ctx({ x: 'lernzeit', group: 'weiterbildung' }))!;
+  assert.ok(close(g.cohen, 0.0224372, 1e-6) && close(g.hedges, 0.0223521, 1e-6), `Weiterbildung d ${g.cohen}, g ${g.hedges}`);
+  const s = effekt.compute(effekt.initial);
+  assert.ok(close(s.d, 1.0776398, 1e-6) && close(s.u3, 0.8594027, 1e-6), 'Startwerte');
+  assert.match(effekt.wofuer, /im Schnitt 9,36 Stunden gelernt, die ohne Schulabschluss 5,88 Stunden\./);
+  assert.deepEqual(effekt.worked(s).map(w => w.text), ['R meldet die Mittelwerte 9.355 und 5.883 Stunden. Abitur minus ohne Schulabschluss ergibt 3,47 Stunden.', 'd = 3,47 / 3,22 ≈ 1,08.', 'Nach der Faustregel von Cohen ist ein Betrag von 1,08 ein großer Effekt: ab 0,2 klein, ab 0,5 mittel, ab 0,8 groß.']);
+  assert.match(effekt.interpret(s).kurz, /1,08 Standardabweichungen auseinander, .*ein großer Effekt\. .*etwa 86 von 100 Personen/);
+  assert.match(effekt.interpret(effekt.compute({ diff: 0.07, s: 3.25 })).kurz, /0,02 Standardabweichungen .*vernachlässigbar/);
+  assert.match(effekt.genau.paragraphs[0], /≈ 3,22 Stunden, mit allen Nachkommastellen gerechnet, also d ≈ 1,08\. .*g ≈ 1,07\./);
+  assert.match(result('effect').kurz, /0,07 Stunden, bei einer Standardabweichung von 3,25 Stunden .*d ≈ 0,02, nach der Faustregel von Cohen vernachlässigbar\./);
+  assert.match(result('effect').fachlich, /Hedges g ≈ 0,02; der Welch-Test ergibt p ≈ 0,88\./);
+  assert.equal(result('effect').zusatz, 'Zum Vergleich: Abitur gegen ohne Schulabschluss ergibt d ≈ 1,08.');
 });

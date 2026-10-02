@@ -13,6 +13,7 @@ import { teststaerke, teststaerkeTabs } from './teststaerke';
 import { freiheitsgrade, freiheitsgradeTabs } from './freiheitsgrade';
 import { exakt, exaktTabs } from './exakt';
 import { mehrfach, mehrfachTabs } from './mehrfach';
+import { effekt, effektTabs } from './effekt';
 
 export const b09Testlogik: AreaIndex = {
   explanations: {
@@ -27,6 +28,7 @@ export const b09Testlogik: AreaIndex = {
     general_df: { kind: 'begriff', card: freiheitsgrade },
     exact_asymptotic: { kind: 'begriff', card: exakt },
     multiplicity: { kind: 'begriff', card: mehrfach },
+    effect: { kind: 'satz', template: effekt },
   },
   tabs: {
     hypothesis: hypotheseTabs,
@@ -40,5 +42,6 @@ export const b09Testlogik: AreaIndex = {
     general_df: freiheitsgradeTabs,
     exact_asymptotic: exaktTabs,
     multiplicity: mehrfachTabs,
+    effect: effektTabs,
   },
 };

@@ -12,6 +12,7 @@ import type { PStats } from '../../../explain/content/b09-testlogik/teststaerke'
 import { dfOf } from '../../../explain/content/b09-testlogik/freiheitsgrade';
 import { nOf, vergleich } from '../../../explain/content/b09-testlogik/exakt';
 import { mOf } from '../../../explain/content/b09-testlogik/mehrfach';
+import type { DStats } from '../../../explain/content/b09-testlogik/effekt';
 import { MU0, SCHLAF, dbinom, familyError, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
 import { baseSurvey } from '../../../explain/sample';
@@ -305,7 +306,34 @@ function Mehrfach({ value }: { value: number }) {
   );
 }
 
+/** Zwei Gruppen als Glockenkurven mit derselben Streuung, ihre Mitten d Standardabweichungen auseinander. */
+function Effekt({ s }: { s: DStats }) {
+  const [box, W] = useWidth();
+  const d = Math.max(-12, Math.min(12, s.d)), lo = Math.min(0, d) - 3.5, hi = Math.max(0, d) + 3.5, base = 160;
+  const x = linear([lo, hi], [24, W - 24]), y = linear([0, 0.42], [base, 56]);
+  const g2 = (v: number) => Math.exp(-v * v / 2) / Math.sqrt(2 * Math.PI), g1 = (v: number) => g2(v - d);
+  const step = hi - lo > 14 ? 4 : hi - lo > 8 ? 2 : 1, ticks: number[] = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) ticks.push(v);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={256} viewBox={`0 0 ${W} 256`} role="img"
+        aria-label={`Zwei Glockenkurven mit derselben Streuung. Ihre Mitten liegen ${num(Math.abs(s.d))} Standardabweichungen auseinander, d = ${num(s.d)}.`}>
+        <text className="xw-t xw-strong" x={24} y={16}>d = {num(s.d)}{Math.abs(s.d) > 12 ? ' (gekürzt gezeichnet)' : ''}</text>
+        <Curve f={g2} from={lo} to={hi} x={x} y={y} className="b09-other" samples={200} />
+        <Curve f={g1} from={lo} to={hi} x={x} y={y} className="b09-alt" samples={200} />
+        <MarkLine x={x(0)} from={50} to={base} />
+        <MarkLine x={x(d)} from={50} to={base} />
+        <line className="b09-arrow" x1={x(0)} x2={x(d)} y1={44} y2={44} />
+        <Axis scale={x} ticks={ticks} at={base} from={24} to={W - 24} labelGap={20} title="Lage in Standardabweichungen" />
+        <text className="xw-t" x={24} y={230}>gestrichelt: Gruppe 2, Mitte bei 0</text>
+        <text className="xw-t" x={24} y={250}>durchgezogen: Gruppe 1, Mitte bei d</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-effekt': forSentence(p => <Effekt s={p.s as DStats} />),
   'b09-mehrfach': forCard(p => <Mehrfach value={p.value ?? 10} />),
   'b09-exakt': forCard(p => <Exakt value={p.value ?? 200} />),
   'b09-freiheitsgrade': forCard(p => <Freiheitsgrade value={p.value ?? 4} />),
