@@ -11,6 +11,8 @@ import { pairs, pairsTabs, R_FUENF } from './pairs';
 import { metric, metricTabs } from './metric';
 import { BERUF, nominal, nominalTabs } from './nominal';
 import { FINANZ, ordinal, ordinalTabs } from './ordinal';
+import { OP, operationalization, operationalizationTabs } from './operationalization';
+import { pearson } from './shared';
 import { surveyColumns } from '../../../domain/survey';
 import { styleProblems } from '../../style';
 
@@ -57,6 +59,12 @@ import { styleProblems } from '../../style';
  *   mean(c(1, 2, 3, 10, 20)[f]); median(c(1, 2, 3, 10, 20)[f])   # 6.08; 3 (Median bleibt „Teils / teils“)
  *   table(6 - f)[5]                                # 17 (umgepolt: wer „Sehr schwer“ sagte, steht oben)
  *   atlas %>% frequency(schulabschluss, show_unused = TRUE)   # mean=1.99 sd=1.43, Cum. % 21.00 41.00 59.50 80.00 100.00
+ *
+ * Operationalisierung (operationalization):
+ *   mean(x); 2 * mean(x); mean(x + 1); range(x)   # 7.7515; 15.503; 8.7515; 0 18.4
+ *   m <- rowMeans(sapply(paste0("methoden", 1:5), function(v) as.numeric(atlas[[v]])))
+ *   cor(m, y)                                       # 0.0211 (Methoden-Zuversicht und Wissenstest)
+ *   atlas %>% find_var("lern", search = "name_label")   # lernzeit in Spalte 10, Label = Fragetext
  */
 
 const rows = createSurvey();
@@ -155,4 +163,19 @@ test('B1 ordinal: finanzielle Lage wie in R, Median und Umpolen', () => {
   assert.equal(at().zusatz, 'Häufigkeiten von „Sehr schwer“ bis „Sehr leicht“: 17, 54, 57, 52, 20.');
   assert.equal(at(applyOp(rows, 'finanzlage', 'reverse')).zusatz, 'Häufigkeiten von „Sehr schwer“ bis „Sehr leicht“: 20, 52, 57, 54, 17.');
   assert.equal(tab.value!(ctx(rows, { x: ['finanzlage'] })), 3);
+});
+
+test('B1 Operationalisierung: Messregel, Mittelwerte und Methoden-Zuversicht wie in R', () => {
+  const lz = col('lernzeit'), m = lz.reduce((a, b) => a + b, 0) / 200;
+  assert.ok(close(m, OP.mittel, 1e-9), 'Mittelwert der Lernzeit wie in R');
+  const methoden = rows.map(r => [1, 2, 3, 4, 5].reduce((a, k) => a + r.values[`methoden${k}`], 0) / 5);
+  assert.ok(close(pearson(methoden, col('wissenstest'))!, OP.rMethodenWissen, 5e-5), 'r Methoden-Zuversicht und Wissenstest wie in R');
+  assert.match(operationalization.stellDirVor.text, /die Frage: „Wie viele Stunden haben Sie in den letzten sieben Tagen selbstständig gelernt\?“ Die Antwortregel: Stunden mit einer Nachkommastelle, von 0 bis 60\. .* die Zahl 8,3\./);
+  assert.match(operationalization.ausprobieren[0].explain, /Aus 7,75 würden etwa 15,5 Stunden/);
+  assert.match(operationalization.ausprobieren[1].explain, /r ≈ 0,02\./);
+  const tab = analysis(operationalizationTabs.sample), at = (data = rows) => tab.result(ctx(data, { x: ['lernzeit'] }));
+  assert.match(at().kurz, /Im Schnitt antworten die 200 Befragten mit 7,75 h\./);
+  assert.match(at().fachlich, /beobachtet 0 h bis 18,4 h, Mittelwert x̄ ≈ 7,75 h/);
+  assert.match(at(applyOp(rows, 'lernzeit', 'double')).kurz, /mit 15,5 h\./);
+  assert.match(at(applyOp(rows, 'lernzeit', 'shift', 1)).kurz, /mit 8,75 h\./);
 });
