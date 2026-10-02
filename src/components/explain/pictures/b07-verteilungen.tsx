@@ -3,11 +3,12 @@
 // Eigene Stile in src/explain/areas/b07-verteilungen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { num, pct } from '../../../explain/format';
 import { baseSurvey } from '../../../explain/sample';
-import { columnStats, dchisq, dnorm, dt, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
+import { columnStats, dchisq, dF, dnorm, dt, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
 import { inside } from '../../../explain/content/b07-verteilungen/normal';
 import { areaText, type ZStats } from '../../../explain/content/b07-verteilungen/standard-normal';
 import { SCHLAF_T, tCrit } from '../../../explain/content/b07-verteilungen/t';
 import { CHI } from '../../../explain/content/b07-verteilungen/chi-square';
+import { ANOVA, fTail, pText } from '../../../explain/content/b07-verteilungen/f';
 import { AreaUnder, Axis, Bar, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Histogramm der Schlafdauer (halbe Stunden) mit der Normalverteilung x̄, s; markiert ist x̄ ± k · s. */
@@ -108,6 +109,28 @@ function ChiShape({ df }: { df: number }) {
     </div>
   );
 }
+/** F-Verteilung mit 4 und 195 Freiheitsgraden: Fläche rechts vom gewählten F braunrot, Grenze für die äußeren 5 % gestrichelt. */
+function FTail({ value }: { value: number }) {
+  const [box, W] = useWidth();
+  const lim = 10, base = 202, top = 78, left = 28, right = W - 20, p = fTail(value);
+  const f = (v: number) => dF(v, ANOVA.df1, ANOVA.df2);
+  const X = linear([0, lim], [left, right]), Y = linear([0, 0.8], [base, top]);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={248} viewBox={`0 0 ${W} 248`} role="img"
+        aria-label={`F-Verteilung mit 4 und 195 Freiheitsgraden. Braunrot ist die Fläche rechts von F = ${num(value)}: ${pText(p)}. Gestrichelt die Grenze ${num(ANOVA.crit)} für die äußeren 5 %.`}>
+        <AreaUnder f={f} from={Math.min(value, lim)} to={lim} x={X} y={Y} tone="neg" samples={120} />
+        <Curve f={f} from={0.01} to={lim} x={X} y={Y} samples={200} />
+        <MarkLine x={X(ANOVA.crit)} from={top} to={base} />
+        <line className="xw-pos" strokeWidth={2.5} x1={X(Math.min(value, lim))} x2={X(Math.min(value, lim))} y1={Y(f(Math.min(value, lim))) - 14} y2={base} />
+        <Axis scale={X} ticks={[0, 2, 4, 6, 8, 10]} at={base} from={left} to={right} labelGap={20} title="F" />
+        <text className="xw-t xw-strong" x={left} y={16}>Fläche rechts von F = {num(value)}: {pText(p)}</text>
+        <text className="xw-t" x={left} y={36}>F-Verteilung, 4 und 195 Freiheitsgrade</text>
+        <text className="xw-t" x={left} y={56}>gestrichelt: Grenze {num(ANOVA.crit)} für 5 %</text>
+      </svg>
+    </div>
+  );
+}
 const fgText = (df: number) => `${num(df)} ${num(df) === '1' ? 'Freiheitsgrad' : 'Freiheitsgrade'}`;
 
 export const pictures: Record<string, Picture> = {
@@ -115,4 +138,5 @@ export const pictures: Record<string, Picture> = {
   'b07-standard': forSentence(p => <StandardArea s={p.s as ZStats} />),
   'b07-t': forCard(p => <TCompare df={p.value ?? 4} />),
   'b07-chi': forCard(p => <ChiShape df={p.value ?? 4} />),
+  'b07-f': forCard(p => <FTail value={p.value ?? ANOVA.f} />),
 };

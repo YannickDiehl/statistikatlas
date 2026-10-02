@@ -150,3 +150,36 @@ test('B7 χ²-Verteilung: Chi-Quadrat-Test von Schulabschluss und Weiterbildung 
   assert.match(chiQuadratVerteilung.regler!.describe(4), /^Bei 4 Freiheitsgraden liegt der Erwartungswert bei 4, und nur 5 % der χ²-Werte sind größer als 9,49\. So ist es/);
   if (chiTabs.sample?.kind === 'analysis') assert.match(chiTabs.sample.result(ctx).kurz, /5 Abschlüssen und 2 Antworten ergibt χ² = 3,08 bei 4 Freiheitsgraden\. .* unter 9,49\. .* in etwa 54 von 100 Stichproben vor\./);
 });
+
+/*
+ * F-Verteilung: Lernzeit nach Schulabschluss
+ *   lz <- as.numeric(atlas$lernzeit); summary(aov(lz ~ factor(sa)))     # Sum Sq 313.98 / 1771.84, Mean Sq 78.50 / 9.09, F 8.639
+ *   qf(0.95, 4, 195); pf(8.638858, 4, 195, lower.tail = FALSE)         # 2.417963 1.936e-06
+ *   pf(c(1, 2, 2.42, 3, 5), 4, 195, lower.tail = FALSE)                # 0.408754 0.0960657 0.0498391 0.0196893 0.000739
+ *   tapply(lz, sa, mean); summary(lm(lz ~ factor(sa)))$r.squared        # 5.883 6.950 7.946 8.707 9.355; 0.1505
+ *   195 / 193                                                           # 1.010363
+ *   oneway.test(lz ~ factor(sa))                                        # F = 8.2537, num df = 4, denom df = 96.702
+ *   summary(aov(lz * 2 ~ factor(sa))); summary(aov(lz + 1 ~ factor(sa)))   # F jeweils 8.639
+ *   atlas %>% oneway_anova(lernzeit)     # Fehler: Argument `group` is missing, with no default.
+ */
+test('B7 F-Verteilung: ANOVA der Lernzeit nach Schulabschluss wie in R', async () => {
+  const { ANOVA, fFit, fTabs, fTail, fVerteilung } = await import('./f');
+  const { qf } = await import('./dist');
+  const ctx: SampleCtx = { rows, columns: { x: ['lernzeit'], group: ['schulabschluss'] } }, f = fFit(ctx);
+  ok(f.f, 8.638858, 'F'); assert.deepEqual([f.df1, f.df2, f.k], [4, 195, 5]); ok(f.msb, 78.49563, 'MS zwischen', 1e-4); ok(f.msw, 9.086344, 'MS innerhalb', 1e-5);
+  ok(f.between, 313.9825, 'SS zwischen', 1e-3); ok(f.inside, 1771.837, 'SS innerhalb', 1e-3); ok(f.crit, 2.417963, 'Grenze'); ok(f.p, 1.936406e-6, 'p', 1e-9);
+  ok(f.lowest, 5.883333, 'kleinstes Gruppenmittel'); ok(f.highest, 9.355, 'größtes Gruppenmittel');
+  for (const [k, v] of Object.entries({ f: f.f, msb: f.msb, msw: f.msw, crit: f.crit })) ok(ANOVA[k as 'f'], v, `ANOVA.${k}`, 1e-4);
+  [[1, 0.408754], [2, 0.0960657], [2.42, 0.0498391], [3, 0.0196893], [5, 0.000739]].forEach(([v, p]) => ok(fTail(v), p, `pf(${v})`, 1e-6));
+  ok(qf(0.95, 4, 195), 2.417963, 'qf');
+  for (const d of [applyOp(rows, 'lernzeit', 'double'), applyOp(rows, 'lernzeit', 'shift', 1)]) ok(fFit({ rows: d, columns: ctx.columns }).f, 8.638858, 'F bleibt');
+  assert.match(fVerteilung.stellDirVor.text, /zwischen 5,9 Stunden \(ohne Schulabschluss\) und 9,4 Stunden \(Abitur\).* F ≈ 8,64 bei 4 und 195 .* unter 2,42\./);
+  assert.equal(fVerteilung.bausteine[0].rechnung, '313,98 / 4 ≈ 78,5. Geteilt wird durch 5 Gruppen minus 1, die Zähler-Freiheitsgrade.');
+  assert.equal(fVerteilung.bausteine[1].rechnung, '1.771,84 / 195 ≈ 9,09. Geteilt wird durch 200 Befragte minus 5 Gruppen, die Nenner-Freiheitsgrade.');
+  assert.equal(fVerteilung.bausteine[2].rechnung, 'F = 78,5 / 9,09 ≈ 8,64.');
+  assert.equal(Math.round(78.5 / 9.09 * 100) / 100, 8.64, 'die Rechnung geht mit den sichtbaren Zahlen auf');
+  assert.match(fVerteilung.bausteine[3].rechnung!, /in weniger als 1 von 1\.000 Stichproben/);
+  assert.match(fVerteilung.regler!.describe(1), /in etwa 41 von 100 Stichproben vor \(p ≈ 0,41\)\. Das liegt unter der Grenze 2,42/);
+  assert.match(fVerteilung.fuerDich, /hier 0,15\./); assert.match(fVerteilung.genau.paragraphs[1], /≈ 1,01\./);
+  if (fTabs.sample?.kind === 'analysis') assert.match(fTabs.sample.result(ctx).kurz, /zwischen den 5 Gruppen ist 8,64-mal .* F = 8,64 bei 4 und 195 .* unter 2,42\. .* in weniger als 1 von 1\.000 Stichproben vor\./);
+});
