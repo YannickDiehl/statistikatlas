@@ -109,7 +109,7 @@ function Kumuliert({ cut }: { cut: number }) {
         <circle className="xw-s-dot" cx={x(cut)} cy={yF(F)} r={5} />
         <Axis scale={yF} ticks={[0, 0.5, 1]} at={left} from={300} to={196} orient="left" labelGap={24} format={v => num(v)} />
         <Axis scale={x} ticks={[5, 6, 7, 8, 9]} at={300} from={left} to={right} labelGap={22} title="Schlafdauer pro Nacht in Stunden" />
-        <text className="xw-t" x={right} y={206} textAnchor="end">Verteilungsfunktion F</text>
+        <text className="xw-t" x={right} y={yF(0.12)} textAnchor="end">Verteilungsfunktion F</text>
       </svg>
     </div>
   );
