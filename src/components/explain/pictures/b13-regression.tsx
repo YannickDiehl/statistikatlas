@@ -7,6 +7,8 @@ import type { Fit, Pairs } from '../../../explain/content/b13-regression/fit';
 import { IA } from '../../../explain/content/b13-regression/interaction';
 import { llWb } from '../../../explain/content/b13-regression/likelihood';
 import { pBestanden } from '../../../explain/content/b13-regression/logistisch-kit';
+import { P175, withScore } from '../../../explain/content/b13-regression/outliers';
+import { fitLine } from '../../../explain/content/b13-regression/fit';
 import { baseSurvey, sampleColumn } from '../../../explain/sample';
 import { Axis, clamp, Curve, DragPoint, forCard, forSentence, forWorkshop, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
@@ -224,7 +226,37 @@ function SCurve({ hours }: { hours: number }) {
   );
 }
 
+/** Ausreißer und Einfluss: die 200 Befragten, P175 mit dem Wissenstest des Reglers, die Gerade mit ihr und ohne sie. */
+function Influence({ score }: { score: number }) {
+  const [box, W] = useWidth();
+  const L = 46, T = 14, R = W - 16, B = T + 230, H = B + 100;
+  const X = linear([0, 20], [L, R]), Y = linear([0, 20], [B, T]);
+  const x = base('lernzeit'), y = base('wissenstest'), w = withScore(P175, score);
+  const rest = fitLine({ x: x.filter((_, i) => i !== P175), y: y.filter((_, i) => i !== P175) });
+  const line = (b0: number, b1: number) => ({ x1: X(0), x2: X(20), y1: Y(Math.max(0, Math.min(20, b0))), y2: Y(Math.max(0, Math.min(20, b0 + b1 * 20))) });
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Streudiagramm der 200 Befragten; P175 mit 18,4 Stunden und ${score} Aufgaben; Steigung mit ihr ${num(w.b1)}, ohne sie ${num(rest.b1!)}`}>
+        {x.map((v, i) => i !== P175 && <circle key={i} className="b13-dot" cx={X(v)} cy={Y(y[i])} r={2.6} />)}
+        <line className="b13-line b13-alt" {...line(rest.b0!, rest.b1!)} />
+        <line className="b13-line" {...line(w.b0, w.b1)} />
+        <line className="xw-neg" strokeWidth={2.5} x1={X(x[P175])} x2={X(x[P175])} y1={Y(score)} y2={Y(w.b0 + w.b1 * x[P175])} />
+        <circle className="b13-mark" cx={X(x[P175])} cy={Y(score)} r={6} />
+        <text className="xw-t xw-strong" x={X(x[P175]) - 10} y={Y(score) + (score > 10 ? 22 : -10)} textAnchor="end">P175</text>
+        <Axis scale={X} ticks={[0, 5, 10, 15, 20]} at={B} from={L} to={R} labelGap={20} title="Lernzeit in Stunden" />
+        <Axis scale={Y} ticks={[0, 5, 10, 15, 20]} at={L} from={B} to={T} orient="left" title="Gelöste Aufgaben" />
+        <line className="b13-line" x1={L - 30} x2={L - 6} y1={B + 66} y2={B + 66} />
+        <text className="xw-t" x={L} y={B + 71}>mit P175: {num(w.b1)} je Stunde</text>
+        <line className="b13-line b13-alt" x1={L - 30} x2={L - 6} y1={B + 88} y2={B + 88} />
+        <text className="xw-t" x={L} y={B + 93}>ohne P175: {num(rest.b1!)} je Stunde</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b13-einfluss': forCard(p => <Influence score={p.value ?? 17} />),
   'b13-logistisch': forCard(p => <SCurve hours={p.value ?? 8} />),
   'b13-likelihood': forCard(p => <LikelihoodCurve p={p.value ?? 0.41} />),
   'b13-logit': forSentence(p => <LogitCurve p={p.values.p} />),

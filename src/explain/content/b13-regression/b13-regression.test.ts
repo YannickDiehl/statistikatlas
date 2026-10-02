@@ -14,6 +14,7 @@ import { BESTANDEN, WB_MODELL, pBestanden, wbModel } from './logistisch-kit';
 import { logistic } from './fit';
 import { logistischeRegression, logistischeRegressionTabs } from './logistic-regression';
 import { marginaleEffekte, marginaleEffekteTabs } from './marginal-effects';
+import { ausreisser, ausreisserTabs, influence, P175, P008, withScore } from './outliers';
 
 /*
  * Referenzwerte des Bereichs B13 „Regression“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -85,6 +86,17 @@ import { marginaleEffekte, marginaleEffekteTabs } from './marginal-effects';
  *   # 0.3316507 0.4926246 0.5759351 0.6551424 0.8791250 0.9521662 0.9653308 0.9749676 0.9999886;  Logit bei 12 h: 1.984170
  *   -coef(gb)[1] / coef(gb)[2]                              # 6.08791 (50 %)
  *   mean(coef(gb)[2] * fitted(gb) * (1 - fitted(gb)))       # AME 0.0651654 (mariposa: AME = 0.065)
+ *
+ * Ausreißer und Einfluss (Gerade y ~ x):
+ *   cd <- cooks.distance(m); h <- hatvalues(m)
+ *   which.max(cd); x[21]; y[21]; cd[21]               # P021: 1.6 h, 0 Aufgaben, D = 0.08421977; sum(cd > 4/200) = 9
+ *   coef(lm(y[-21] ~ x[-21]))[2]                       # 0.4979594
+ *   which.max(h); h[175]; cd[175]; resid(m)[175]       # P175: h = 0.05936259, D = 0.008828791, e = 1.349592
+ *   cd[136]; h[136]                                    # 0.0237967  0.005750905
+ *   for (v in 0:20) { yy <- y; yy[175] <- v; c(coef(lm(yy ~ x))[2], cooks.distance(lm(yy ~ x))[175]) }
+ *   # v = 0: 0.432103 / 0.891998;  v = 10: 0.483154 / 0.130249;  v = 17: 0.518891 / 0.008829;  v = 20: 0.534206 / 0.083342
+ *   yy <- y; yy[8] <- 0; coef(lm(yy ~ x))[2]           # P008 (7.8 h, 13 Aufgaben) auf 0: 0.5185885
+ *   coef(lm(y[-175] ~ x[-175]))[2]                     # 0.511566
  */
 
 const rows = createSurvey();
@@ -256,4 +268,31 @@ test('B13 Marginale Effekte: Formel, Beispiel und AME wie in R', () => {
   assert.ok(close(m.p.reduce((a, p) => a + m.b[1] * p * (1 - p), 0) / 200, BESTANDEN.ame, 1e-7), 'AME bestanden wie R');
   const t = marginaleEffekteTabs.sample!;
   if (t.kind === 'analysis') assert.match(t.result({ rows, columns: { x: ['lernzeit'], y: ['weiterbildung'] } }).kurz, /im Schnitt um −0,14 Prozentpunkte, bei gleichem Alter\. Das ist so gut wie nichts/);
+});
+
+test('B13 Ausreißer und Einfluss: Hebel, Cooks Distanz und Steigungen wie in R', () => {
+  const inf = influence({ x: X, y: Y });
+  assert.equal(rows[P175].id, 'P175'); assert.equal(rows[P008].id, 'P008');
+  assert.deepEqual([X[P175], Y[P175], X[P008], Y[P008], X[20], Y[20]], [18.4, 17, 7.8, 13, 1.6, 0], 'P175, P008, P021');
+  assert.ok(close(inf.cook[20], 0.08421977, 1e-7) && inf.cook.indexOf(Math.max(...inf.cook)) === 20, 'größte Cooks Distanz P021');
+  assert.equal(inf.cook.filter(d => d > 0.02).length, 9, 'über 4 / n');
+  assert.ok(close(inf.h[P175], 0.05936259, 1e-8) && close(inf.cook[P175], 0.008828791, 1e-8), 'P175');
+  assert.ok(close(inf.cook[135], 0.0237967, 1e-7) && close(inf.h[135], 0.005750905, 1e-8), 'P136');
+  ([[0, 0.432103, 0.891998], [10, 0.483154, 0.130249], [17, 0.518891, 0.008829], [20, 0.534206, 0.083342]] as const)
+    .forEach(([v, b, d]) => { const w = withScore(P175, v); assert.ok(close(w.b1, b, 1e-6) && close(w.cook, d, 1e-6), `P175 auf ${v}`); });
+  assert.ok(close(withScore(P008, 0).b1, 0.5185885, 1e-7), 'P008 auf 0');
+  assert.ok(close(withScore(P175, 17).e, 1.349592, 1e-6), 'Residuum P175');
+  assert.ok(close(fitLine({ x: X.filter((_, i) => i !== 20), y: Y.filter((_, i) => i !== 20) }).b1!, 0.4979594, 1e-7), 'ohne P021');
+  assert.ok(close(fitLine({ x: X.filter((_, i) => i !== P175), y: Y.filter((_, i) => i !== P175) }).b1!, 0.511566, 1e-6), 'ohne P175');
+  assert.ok(close(0.005 + (18.4 - 7.75) ** 2 / 2085.82, 0.06, 0.005), 'Hebel mit den sichtbaren Zahlen');
+  assert.match(ausreisser.stellDirVor.text, /fiele die Steigung von 0,52 auf 0,43 Aufgaben je Stunde\. .* bleibt die Steigung bei 0,52/);
+  assert.match(ausreisser.regler!.describe(17), /Cooks Distanz von P175: 0,009, unter der Faustregel/);
+  assert.match(ausreisser.ausprobieren[0].explain, /auf 0,43 Aufgaben je Stunde\. .* Cooks Distanz steigt auf 0,89/);
+  const t = ausreisserTabs.sample!;
+  if (t.kind === 'analysis') {
+    const r = t.result({ rows, columns: { x: ['lernzeit'], y: ['wissenstest'] } });
+    assert.match(r.kurz, /P021 mit 1,6 Stunden und 0 Aufgaben\. Ohne diese Person läge die Steigung bei 0,5 statt 0,52/);
+    assert.match(r.fachlich, /Dᵢ ≈ 0,084\. Nach der Faustregel 4 \/ n = 0,02 sind 9 von 200/);
+    assert.match(r.zusatz!, /P175 mit 18,4 Stunden Lernzeit: hᵢ ≈ 0,059/);
+  }
 });
