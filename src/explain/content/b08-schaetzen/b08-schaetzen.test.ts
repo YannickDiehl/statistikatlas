@@ -10,7 +10,8 @@ import { haelften, kopienSE, sampling, samplingTabs } from './sampling';
 import { parameter, populationParameter, populationParameterTabs } from './population-parameter';
 import { LERNZEIT, estimator, estimatorTabs, schaetzungen } from './estimator';
 import { ANTEIL_N, WEITERBILDUNG, anteilText, mittelwerte, samplingDistribution, samplingDistributionTabs, seAnteil } from './sampling-distribution';
-import { binomial, middle95 } from './daten';
+import { HAUSHALT, HAUSHALT_KENNWERTE, HAUSHALT_N, binomial, haushaltMittel, middle95 } from './daten';
+import { GLOCKE_N, centralLimit, centralLimitTabs, einkommenSchiefe, glockeText, schiefeMittel } from './central-limit';
 import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft } from './law-large-numbers';
 
 /*
@@ -43,6 +44,10 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
  *     print(sum(dbinom(k, n, 0.41)[abs(200 * k - 82 * n) * 20 > 200 * n])) }
  *   # 0.7496966 0.6552191 0.3885462 0.2633219 0.1309173 0.02031882 0.001156979 4.838542e-06 5.8997e-13 2.78257e-24
  *   # umgepolt (π = 0,59) bei n = 100: 0.2633219; alle mit Weiterbildung (π = 1): 0
+ *   e <- as.numeric(atlas$einkommen); g1 <- function(v) { m <- mean(v); mean((v - m)^3) / mean((v - m)^2)^1.5 }
+ *   g1(e); g1(e) / sqrt(30); mean(e)                          # 0.7855733  0.1434254  3154.62 (gleich nach mal 2 und plus 100)
+ *   range(sapply(1:200, function(k) { ee <- e; ee[k] <- 30000; g1(ee) - g1(e) }))   # +6.49 bis +6.76; nach mal 2: +1.46 bis +1.53
+ *   atlas %>% describe(einkommen, show = c("mean", "skew"))   # Skewness 0.792 (mit Kleinstichprobenkorrektur)
  *
  * ALLBUS 2023 (ZA8831_v1-3-0.sav, nur lesen, Pfad in ALLBUS_SAV), nur Aggregate:
  *   d <- haven::read_sav(Sys.getenv("ALLBUS_SAV"))
@@ -55,6 +60,12 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
  *   x <- 6 - as.numeric(d$pa02a); x <- x[!is.na(x)]          # politisches Interesse, umgepolt
  *   length(x); mean(x); sd(x); sum(x >= 4)                   # 5225  3.297225  0.93954  2069; 2069 / 5225 = 0.39598
  *   for (k in 1:4) { xx <- rep(x, k); print(sd(xx) / sqrt(length(xx))) }   # 0.012998 0.009190 0.007504 0.006498
+ *   h <- as.numeric(d$dh04); h <- h[!is.na(h) & h > 0]; table(h)       # 1181 2287 772 647 195 40 11 6 4 1 (1–9, 12), n = 5144
+ *   v <- as.numeric(names(table(h))); p <- as.numeric(table(h)) / length(h)
+ *   mu <- sum(v * p); s2 <- sum((v - mu)^2 * p); sum((v - mu)^3 * p) / s2^1.5   # 2.341952, σ 1.176618, Schiefe 1.208179
+ *   mean(h <= 2); mean(h >= 5)                                # 0.6741835  0.04996112
+ *   # exakte Verteilung der Summe von n Ziehungen durch wiederholtes Falten (Skript b8-scratch/hh.R):
+ *   # n = 2: sd 0.831995, Schiefe 0.854311; n = 10: 0.372079, 0.382060; n = 30: 0.214820, 0.220582; n = 100: 0.117662, 0.120818
  */
 
 const rows = createSurvey();
@@ -169,6 +180,35 @@ test('B8 law_large_numbers: exakte Wahrscheinlichkeiten, mehr als 5 Prozentpunkt
   }
 });
 
+test('B8 central_limit: exakte Verteilung der mittleren Haushaltsgröße und die Schiefe der Einkommen wie in R', () => {
+  const H = HAUSHALT_KENNWERTE;
+  assert.equal(HAUSHALT_N, 5144);
+  assert.ok(close(H.mu, 2.341952, 1e-6) && close(H.sigma, 1.176618, 1e-6) && close(H.skew, 1.208179, 1e-6), 'Haushaltsgröße: μ, σ, Schiefe');
+  assert.ok(close(H.bisZwei, 0.6741835, 1e-7) && close(H.abFuenf, 0.04996112, 1e-8), 'Anteile');
+  const R: Record<number, [number, number]> = { 2: [0.831995, 0.854311], 10: [0.372079, 0.382060], 30: [0.214820, 0.220582], 100: [0.117662, 0.120818] };
+  for (const [n, [sd, sk]] of Object.entries(R).map(([k, v]) => [Number(k), v] as const)) {
+    const { sums, probs } = haushaltMittel(n), xs = sums.map(s => s / n);
+    const total = probs.reduce((a, b) => a + b, 0), m = xs.reduce((a, x, i) => a + x * probs[i], 0);
+    const v2 = xs.reduce((a, x, i) => a + (x - m) ** 2 * probs[i], 0), v3 = xs.reduce((a, x, i) => a + (x - m) ** 3 * probs[i], 0);
+    assert.ok(close(total, 1, 1e-12) && close(m, H.mu, 1e-9), `n = ${n}: Summe und Mitte`);
+    assert.ok(close(Math.sqrt(v2), sd, 1e-6) && close(v3 / v2 ** 1.5, sk, 1e-6) && close(schiefeMittel(n), sk, 1e-6), `n = ${n}: sd ${Math.sqrt(v2)}, Schiefe ${v3 / v2 ** 1.5}`);
+  }
+  assert.deepEqual(GLOCKE_N.map(n => glockeText(n).split('. ').at(-1)), [
+    'Die Glockenkurve passt schlecht.', 'Die Verteilung ist noch deutlich schief.', 'Die Verteilung ist noch deutlich schief.', 'Die Verteilung ist noch deutlich schief.',
+    'Die Glocke passt schon recht gut; rechts bleibt ein kleiner Überhang.', 'Die Glocke passt schon recht gut; rechts bleibt ein kleiner Überhang.',
+    'Die Balken folgen fast genau der Glockenkurve.', 'Die Balken folgen fast genau der Glockenkurve.', 'Die Balken folgen fast genau der Glockenkurve.']);
+  assert.match(centralLimit.stellDirVor.text, /5\.144 Menschen .* 67,4 % leben allein oder zu zweit, nur 5 % zu fünft oder mehr\./);
+  assert.equal(centralLimit.bausteine[1].rechnung, '1,21 / √30 ≈ 1,21 / 5,48 ≈ 0,22');
+  const ectx = (data = rows) => ({ rows: data, columns: { x: ['einkommen'] } });
+  const e = einkommenSchiefe(ectx());
+  assert.ok(close(e.skew, 0.7855733276, 1e-9) && close(e.skewMean, 0.1434254107, 1e-9) && close(e.mean, 3154.62, 1e-9), 'Schiefe der Einkommen');
+  const s = centralLimitTabs.sample!;
+  if (s.kind === 'analysis') {
+    assert.match(s.result(ectx()).kurz, /Schiefe von 0,79: .* nur noch eine Schiefe von 0,14\./);
+    assert.match(s.result(ectx()).zusatz!, /3\.155 € im Monat/);
+  }
+});
+
 test('B8: ALLBUS-Aggregate aus der Datei nachgerechnet (nur mit ALLBUS_SAV)', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, () => {
   const a = allbus(['eastwest', 'wghtpew', 'pt03', 'pa02a', 'dh04']);
   const ew = a.v('eastwest'), w = a.v('wghtpew'), t3 = a.v('pt03'), pa = a.v('pa02a'), hh = a.v('dh04');
@@ -186,4 +226,6 @@ test('B8: ALLBUS-Aggregate aus der Datei nachgerechnet (nur mit ALLBUS_SAV)', { 
   const pi = pa.filter(v => v >= 1 && v <= 5).map(v => 6 - v), pm = pi.reduce((x, y) => x + y, 0) / pi.length;
   assert.equal(pi.length, INTERESSE.n); assert.equal(pi.filter(v => v >= 4).length, INTERESSE.stark);
   assert.ok(close(pm, INTERESSE.mean, 1e-6) && close(Math.sqrt(pi.reduce((x, y) => x + (y - pm) ** 2, 0) / (pi.length - 1)), INTERESSE.sd, 1e-5), 'pa02a');
+  assert.deepEqual(HAUSHALT.groessen.map(g => hh.filter(v => v === g).length), [...HAUSHALT.anzahl], 'dh04: Häufigkeiten');
+  assert.equal(hh.filter(v => v > 0).length, HAUSHALT_N, 'dh04: gültige Angaben');
 });

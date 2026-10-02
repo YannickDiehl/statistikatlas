@@ -2,10 +2,12 @@
 // `forWorkshop`/`forCard`/`forSentence`/`forTable` aus ./kit.tsx.
 // Eigene Stile in src/explain/areas/b08-schaetzen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { count, num, pct } from '../../../explain/format';
-import { binomial, middle95, stufe } from '../../../explain/content/b08-schaetzen/daten';
+import { HAUSHALT_KENNWERTE, binomial, haushaltMittel, middle95, stufe } from '../../../explain/content/b08-schaetzen/daten';
+import { GLOCKE_N, schiefeMittel } from '../../../explain/content/b08-schaetzen/central-limit';
 import { ANTEIL_N, WEITERBILDUNG } from '../../../explain/content/b08-schaetzen/sampling-distribution';
 import { GESETZ_N, daneben, wieOft } from '../../../explain/content/b08-schaetzen/law-large-numbers';
 import { Axis, Curve, forCard, linear, MarkLine, useWidth, type Picture } from './kit';
+import { niceTicks } from './sample';
 
 type Tone = 'pos' | 'neg' | 'plain';
 /** Ein Balken der Verteilung: Wert, Wahrscheinlichkeit und Farbe (Farbe ist nie allein Träger, das Band zeigt die Lage). */
@@ -67,7 +69,25 @@ function GesetzVerteilung({ n }: { n: number }) {
     label={`Stichprobenverteilung des Anteils bei ${count(n)} Gezogenen. Hinterlegt ist der Bereich von 36 % bis 46 %; ${often} liegt der Anteil außerhalb.`} />;
 }
 
+/**
+ * Exakte Verteilung der mittleren Haushaltsgröße von n Befragten (ALLBUS 2023, ungewichtet) mit der Glockenkurve
+ * gleicher Mitte und Streuung. Der Ausschnitt folgt den sichtbaren Balken, damit die Form bei jedem n zu sehen ist.
+ */
+function GlockeVerteilung({ n }: { n: number }) {
+  const { sums, probs } = haushaltMittel(n), H = HAUSHALT_KENNWERTE, sd = H.sigma / Math.sqrt(n), step = 1 / n;
+  const maxP = Math.max(...probs), seen = sums.filter((_, i) => probs[i] >= maxP * 1e-3).map(s => s / n);
+  const domain: [number, number] = [Math.max(0.5, Math.min(...seen) - step), Math.max(...seen) + step];
+  const bars = sums.map((s, i): Balken => ({ x: s / n, p: probs[i], tone: 'plain' }));
+  const bell = (v: number) => step * Math.exp(-0.5 * ((v - H.mu) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI));
+  return <Verteilung bars={bars} step={step} domain={domain} ticks={niceTicks(domain[0], domain[1], 5)} format={v => num(v)}
+    curve={bell} marks={[{ x: H.mu, label: `μ = ${num(H.mu)}` }]}
+    legend="Linie: Glockenkurve mit gleicher Mitte und Streuung"
+    title={n === 1 ? 'Haushaltsgröße einer Person' : `mittlere Haushaltsgröße von ${n} Befragten`}
+    label={`Exakte Verteilung ${n === 1 ? 'der Haushaltsgröße' : `der mittleren Haushaltsgröße von ${n} Befragten`} im ALLBUS 2023 mit Glockenkurve. Schiefe ${num(schiefeMittel(n))}${n === 1 ? ': rechts ein langer Ausläufer.' : '.'}`} />;
+}
+
 export const pictures: Record<string, Picture> = {
   'b08-anteil': forCard(p => <AnteilVerteilung n={stufe(ANTEIL_N, p.value ?? ANTEIL_N.indexOf(50))} />),
   'b08-gesetz': forCard(p => <GesetzVerteilung n={stufe(GESETZ_N, p.value ?? 0)} />),
+  'b08-glocke': forCard(p => <GlockeVerteilung n={stufe(GLOCKE_N, p.value ?? 0)} />),
 };

@@ -6,6 +6,7 @@ import { populationParameter, populationParameterTabs } from './population-param
 import { estimator, estimatorTabs } from './estimator';
 import { samplingDistribution, samplingDistributionTabs } from './sampling-distribution';
 import { lawLargeNumbers, lawLargeNumbersTabs } from './law-large-numbers';
+import { centralLimit, centralLimitTabs } from './central-limit';
 
 export const b08Schaetzen: AreaIndex = {
   explanations: {
@@ -14,6 +15,7 @@ export const b08Schaetzen: AreaIndex = {
     estimator: { kind: 'begriff', card: estimator },
     sampling_distribution: { kind: 'begriff', card: samplingDistribution },
     law_large_numbers: { kind: 'begriff', card: lawLargeNumbers },
+    central_limit: { kind: 'begriff', card: centralLimit },
   },
   tabs: {
     sampling: samplingTabs,
@@ -21,5 +23,6 @@ export const b08Schaetzen: AreaIndex = {
     estimator: estimatorTabs,
     sampling_distribution: samplingDistributionTabs,
     law_large_numbers: lawLargeNumbersTabs,
+    central_limit: centralLimitTabs,
   },
 };
