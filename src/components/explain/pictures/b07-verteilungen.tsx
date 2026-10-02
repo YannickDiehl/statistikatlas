@@ -3,9 +3,10 @@
 // Eigene Stile in src/explain/areas/b07-verteilungen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { num, pct } from '../../../explain/format';
 import { baseSurvey } from '../../../explain/sample';
-import { columnStats, dnorm, within } from '../../../explain/content/b07-verteilungen/dist';
+import { columnStats, dnorm, dt, within } from '../../../explain/content/b07-verteilungen/dist';
 import { inside } from '../../../explain/content/b07-verteilungen/normal';
 import { areaText, type ZStats } from '../../../explain/content/b07-verteilungen/standard-normal';
+import { SCHLAF_T, tCrit } from '../../../explain/content/b07-verteilungen/t';
 import { AreaUnder, Axis, Bar, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Histogramm der Schlafdauer (halbe Stunden) mit der Normalverteilung x̄, s; markiert ist x̄ ± k · s. */
@@ -58,7 +59,34 @@ function StandardArea({ s }: { s: ZStats }) {
   );
 }
 
+/** t-Verteilung mit df Freiheitsgraden neben der Standardnormalverteilung (gestrichelt); markiert die äußeren 5 % und t = 1,42. */
+function TCompare({ df }: { df: number }) {
+  const [box, W] = useWidth();
+  const lim = 5, base = 222, top = 98, left = 28, right = W - 28, crit = tCrit(df), t = SCHLAF_T.t;
+  const X = linear([-lim, lim], [left, right]), Y = linear([0, 0.42], [base, top]);
+  const f = (v: number) => dt(v, df), cut = Math.min(crit, lim);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={268} viewBox={`0 0 ${W} 268`} role="img"
+        aria-label={`t-Verteilung mit ${num(df)} Freiheitsgraden und gestrichelt die Standardnormalverteilung. Die äußeren 5 % liegen jenseits von ±${num(crit)}. Markiert ist t = ${num(t)} aus dem Lehrdatensatz.`}>
+        {crit < lim && <><AreaUnder f={f} from={-lim} to={-cut} x={X} y={Y} tone="neg" /><AreaUnder f={f} from={cut} to={lim} x={X} y={Y} tone="neg" /></>}
+        <Curve f={dnorm} from={-lim} to={lim} x={X} y={Y} className="b07-ref" />
+        <Curve f={f} from={-lim} to={lim} x={X} y={Y} />
+        {crit < lim && <><MarkLine x={X(cut)} from={top} to={base} /><MarkLine x={X(-cut)} from={top} to={base} /></>}
+        <line className="xw-pos" strokeWidth={2.5} x1={X(t)} x2={X(t)} y1={top + 20} y2={base} />
+        <Axis scale={X} ticks={[-4, -2, 0, 2, 4]} at={base} from={left} to={right} labelGap={20} title="t" />
+        <text className="xw-t xw-strong" x={left} y={16}>t-Verteilung, {fgText(df)}</text>
+        <text className="xw-t" x={left} y={36}>gestrichelt: Standardnormalverteilung</text>
+        <text className="xw-t" x={left} y={56}>braunrot: äußere 5 %, jenseits von ±{num(crit)}</text>
+        <text className="xw-t" x={left} y={76}>grüner Strich bei {num(t)}: t der Schlafdauer</text>
+      </svg>
+    </div>
+  );
+}
+const fgText = (df: number) => `${num(df)} ${num(df) === '1' ? 'Freiheitsgrad' : 'Freiheitsgrade'}`;
+
 export const pictures: Record<string, Picture> = {
   'b07-normal': forCard(p => <NormalFit k={p.value ?? 1} />),
   'b07-standard': forSentence(p => <StandardArea s={p.s as ZStats} />),
+  'b07-t': forCard(p => <TCompare df={p.value ?? 4} />),
 };

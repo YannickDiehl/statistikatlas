@@ -3,14 +3,17 @@
 import type { AreaIndex } from '../../types';
 import { normalverteilung, normalTabs } from './normal';
 import { standardnormal, standardTabs } from './standard-normal';
+import { tVerteilung, tTabs } from './t';
 
 export const b07Verteilungen: AreaIndex = {
   explanations: {
     normal_distribution: { kind: 'begriff', card: normalverteilung },
     standard_normal: { kind: 'satz', template: standardnormal },
+    t_distribution: { kind: 'begriff', card: tVerteilung },
   },
   tabs: {
     normal_distribution: normalTabs,
     standard_normal: standardTabs,
+    t_distribution: tTabs,
   },
 };

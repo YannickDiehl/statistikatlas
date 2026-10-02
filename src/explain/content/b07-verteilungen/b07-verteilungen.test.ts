@@ -93,3 +93,31 @@ test('B7 Standardnormalverteilung: z, Fläche und die z-Werte der 200 wie in R',
     assert.match(r.zusatz!, /Zwischen 5,48 und 8,69 Stunden liegen 190 von 200 Befragten\./);
   }
 });
+
+/*
+ * t-Verteilung: Schlafdauer gegen 7 Stunden
+ *   tt <- t.test(x, mu = 7); tt$statistic; tt$parameter; tt$p.value; tt$stderr   # 1.423256 199 0.1562278 0.05796567
+ *   (mean(x) - 7) * 60; tt$stderr * 60; 2 * pnorm(-1.423256)                     # 4.95 3.47794 0.1546619
+ *   atlas %>% t_test(schlafdauer, mu = 7, alternative = "two.sided")             # t(199) = 1.423, p = 0.156, N = 200
+ *   atlas %>% t_test(schlafdauer)                                                # t(199) = 122.184 (ohne mu: gegen 0)
+ *   qt(0.975, c(1, 4, 9, 28, 30, 199))       # 12.706205 2.776445 2.262157 2.048407 2.042272 1.971957
+ *   2 * pt(-1.423256, c(4, 199)); 2 * pt(-2.5, 4)                               # 0.2278 0.1563; 0.06676654
+ *   t.test(x + 0.5, mu = 7)$statistic; t.test(x - 0.5, mu = 7)$statistic        # 10.04906 -7.202567
+ */
+test('B7 t-Verteilung: t-Test der Schlafdauer gegen 7 Stunden und Grenzen wie in R', async () => {
+  const { SCHLAF_T, tCrit, tFit, tTabs, tVerteilung } = await import('./t');
+  const ctx: SampleCtx = { rows, columns: { x: ['schlafdauer'] } }, f = tFit(ctx);
+  ok(f.t, 1.423256, 't'); assert.equal(f.df, 199); ok(f.p, 0.1562278, 'p'); ok(f.pz, 0.1546619, 'p normal'); ok(f.se * 60, 3.47794, 'SE in Minuten', 1e-5);
+  ok(SCHLAF_T.t, f.t, 'SCHLAF_T.t'); ok(SCHLAF_T.p, f.p, 'SCHLAF_T.p'); ok(SCHLAF_T.seMin, f.se * 60, 'SCHLAF_T.seMin', 1e-5); ok(SCHLAF_T.diffMin, (f.mean - 7) * 60, 'SCHLAF_T.diffMin');
+  // Die Rechnung im Text geht mit den sichtbaren Zahlen auf: 4,95 / 3,48 ≈ 1,42.
+  assert.equal(Math.round(4.95 / 3.48 * 100) / 100, 1.42);
+  for (const [df, q] of [[1, 12.706205], [4, 2.776445], [9, 2.262157], [28, 2.048407], [30, 2.042272], [199, 1.971957]]) ok(tCrit(df), q, `qt(0.975, ${df})`);
+  ok(tFit({ rows: applyOp(rows, 'schlafdauer', 'shift', 0.5), columns: { x: ['schlafdauer'] } }).t, 10.04906, 't nach +0,5 h', 1e-4);
+  ok(tFit({ rows: applyOp(rows, 'schlafdauer', 'shift', -0.5), columns: { x: ['schlafdauer'] } }).t, -7.202567, 't nach −0,5 h', 1e-4);
+  assert.match(tVerteilung.stellDirVor.text, /7,08 Stunden, knapp 5 Minuten darüber\. .* 4,95 Minuten .* 3,48 Minuten: t ≈ 1,42 bei 199 Freiheitsgraden\./);
+  assert.match(tVerteilung.bausteine[2].rechnung!, /±2,78\. .* ±2,04\. .* ±1,97\./);
+  assert.equal(tVerteilung.regler!.describe(4), 'Bei 4 Freiheitsgraden liegen die äußeren 5 % jenseits von ±2,78, bei der Standardnormalverteilung jenseits von ±1,96. Gäbe es keinen Unterschied, käme ein t von 1,42 oder weiter außen in etwa 23 von 100 Stichproben vor.');
+  assert.match(tVerteilung.regler!.describe(199), /±1,97.*in etwa 16 von 100/);
+  assert.match(tVerteilung.check.options[1], /2,26/); assert.match(tVerteilung.fuerDich, /bei 2,05/);
+  if (tTabs.sample?.kind === 'analysis') assert.match(tTabs.sample.result(ctx).kurz, /7,08 Stunden pro Nacht, 4,95 Minuten über 7 Stunden\. Das ergibt t = 1,42 bei 199 Freiheitsgraden; .* ±1,97\. .* in etwa 16 von 100 Stichproben vor\./);
+});
