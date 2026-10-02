@@ -101,7 +101,7 @@ export const ancova: ConceptCard = {
     paragraphs: [
       'Das Modell nimmt an, dass eine Kovariate in allen Gruppen gleich stark mit dem Wissenstest zusammenhängt: parallele Geraden. mariposa enthält keine Interaktion von Faktor und Kovariate; prüfen lässt sich das etwa mit einer Regression mit Interaktionsterm.',
       'Die Kovariaten sollten sich zwischen den Gruppen überschneiden. Lernen Befragte ohne Abschluss fast nie so lange wie Befragte mit Abitur, rechnet das Modell für sie weit außerhalb ihrer Daten.',
-      'Im Leitaufruf stehen Lernzeit und Alter als Kovariaten. Das Alter hängt hier kaum mit dem Wissenstest zusammen: Je Lebensjahr sagt das Modell nur 0,0041 Aufgaben mehr voraus, η²p ≈ 0,001 (R: F(1, 193) = 0.131, p = 0.718, eta2p = 0.001).',
+      'Im Leitaufruf stehen Lernzeit und Alter als Kovariaten. Das Alter hängt hier kaum mit dem Wissenstest zusammen: Je Lebensjahr sagt das Modell nur 0,0041 Aufgaben mehr voraus, η²p ≈ 0,00068 (R: F(1, 193) = 0.131, p = 0.718, eta2p = 0.001).',
       'Bereinigen begründet keine Ursache. Hängt die Lernzeit ihrerseits mit dem Abschluss zusammen, nimmt die ANCOVA auch einen Teil des Unterschieds heraus, der zum Abschluss gehören könnte.',
     ],
   },
@@ -152,7 +152,7 @@ export const ancovaTabs: ConceptTabs = {
     },
     outputMap: [
       { match: 'F', atlas: 'Kovariate Lernzeit', step: 2, explain: 'F für die Lernzeit: Sie hängt mit dem Wissenstest zusammen, p < 0,001, mit η²p = 0,25.' },
-      { match: '0.718', atlas: 'p der Kovariate Alter', step: 2, explain: 'Das Alter hängt bei gleicher Lernzeit kaum mit dem Wissenstest zusammen: 0,0041 Aufgaben je Lebensjahr, η²p ≈ 0,001.' },
+      { match: '0.718', atlas: 'p der Kovariate Alter', step: 2, explain: 'Das Alter hängt bei gleicher Lernzeit kaum mit dem Wissenstest zusammen: 0,0041 Aufgaben je Lebensjahr, η²p ≈ 0,00068.' },
       { match: '1.499', atlas: 'F Schulabschluss, bereinigt', step: 3, explain: 'F für den Schulabschluss bei gleicher Lernzeit und gleichem Alter. Ohne Kovariaten wäre es 4,34.' },
       { match: '0.204', atlas: 'p Schulabschluss, bereinigt', step: 3, explain: 'Gäbe es bei gleicher Lernzeit und gleichem Alter keine Unterschiede, wären solche Gruppenunterschiede in etwa 20 von 100 Stichproben zu erwarten.' },
       { match: 'N', atlas: 'n', explain: 'Alle 200 Befragten haben gültige Werte in allen vier Variablen.' },

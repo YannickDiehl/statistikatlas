@@ -15,6 +15,7 @@ import { createSurvey } from '../../../domain/survey';
 import { conceptById } from '../../../domain/concepts';
 import { readSav } from '../../../sandbox/readSav';
 import { validValues } from '../../../tasks/kit/stats';
+import { tryOls } from '../../../tasks/kit/ols';
 import { applyOp } from '../../sample';
 import type { SampleCtx } from '../../types';
 import { b10Mittelwerte } from './index';
@@ -414,12 +415,19 @@ test('Normalverteilung prüfen: Schlafdauer und Einkommen wie in R', () => {
  *   atlas %>% levene_test(lernzeit, group = schulabschluss, center = median)
  *   # Error: `center` must be a character vector, not a function.
  *   full <- lm(wissenstest ~ factor(schulabschluss) + lernzeit + alter); coef(full)["alter"]   # 0.00409631
- *   # eta2p alter = SS(alter) / (SS(alter) + SSE) = 0.00068 (mariposa druckt eta2p = 0.001)
+ *   # eta2p alter = SS(alter) / (SS(alter) + SSE) = 0.0006786652 (car::Anova Typ III: 0.90 / (0.90 + 1326.98));
+ *   # im Text mit zwei gültigen Ziffern 0,00068, mariposa druckt eta2p = 0.001
  *   pf(2, 2, 6) - pf(0.5, 2, 6)   # 0.414: F(2, 6) schwankt unter H0 stark um 1
  */
 test('Fix-Runde 1: Meldung zu center = median und Altersteigung wie in R', () => {
   const tok = b10Mittelwerte.tabs.levene_test.r!.tokens!['"median"'];
   assert.match(tok.fehler, /`center` must be a character vector, not a function\./);
   const age = b10Mittelwerte.tabs.ancova.r!.outputMap.find(m => m.match === '0.718')!;
-  assert.match(age.explain, /0,0041 Aufgaben je Lebensjahr, η²p ≈ 0,001\./);
+  assert.match(age.explain, /0,0041 Aufgaben je Lebensjahr, η²p ≈ 0,00068\./);
+  assert.ok(ancova.genau.paragraphs.some(p => p.includes('η²p ≈ 0,00068 (R: F(1, 193) = 0.131, p = 0.718, eta2p = 0.001)')), 'η²p mit zwei gültigen Ziffern');
+  // η²p des Alters aus den Daten: Quadratsumme ohne und mit Alter im Modell mit Schulabschluss und Lernzeit.
+  const y = rows.map(r => r.values.wissenstest), g = rows.map(r => r.values.schulabschluss), lz = rows.map(r => r.values.lernzeit), al = rows.map(r => r.values.alter);
+  const dum = [1, 2, 3, 4].map(l => g.map(v => v === l ? 1 : 0));
+  const sseFull = tryOls(y, [...dum, lz, al])!.ssResidual, sseOhne = tryOls(y, [...dum, lz])!.ssResidual;
+  assert.ok(Math.abs((sseOhne - sseFull) / (sseOhne - sseFull + sseFull) - 0.0006786652) < 1e-8, 'η²p Alter wie in R');
 });
