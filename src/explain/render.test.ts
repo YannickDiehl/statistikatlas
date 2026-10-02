@@ -19,6 +19,7 @@ import { dummy } from './content/muster/dummy';
 import { modeStore } from './mode';
 import { ConceptInspector } from '../components/ConceptInspector';
 import { forgetTabs, kurzOf, tabList } from '../components/explain/ExplainTabs';
+import { KurzGesagt } from '../components/explain/basics';
 import { TAB_IDS, tabsFor } from './registry';
 import { applyOp } from './sample';
 import { columnById, createSurvey, defaultSelection, projectPairs, type ColumnSelection, type SurveyRow } from '../domain/survey';
@@ -248,11 +249,13 @@ test('tabs: four for sd, three for recode, Weiter for every concept with tabs, n
     const panels = [...full.matchAll(/role="tabpanel"[^>]*>/g)].map(m => m[0]);
     assert.equal(panels.length, names.length, `${id}: nicht alle Panels eingehängt`);
     assert.equal(panels.filter(p => !p.includes('hidden')).length, 1, `${id}: mehr als ein Panel sichtbar`);
-    // Kurz gesagt steht über den Reitern und nur einmal da.
+    // Kurz gesagt steht über den Reitern und nur einmal da. Gezählt werden Kästen „Kurz gesagt“ mit genau diesem Text,
+    // nicht Textanfänge: Ein Absatz unter „Genau genommen“ darf genauso beginnen (IB4).
     const kurz = kurzOf(explainFor(id));
     if (kurz) {
-      assert.ok(full.indexOf(kurz.text.slice(0, 40)) < full.indexOf('role="tablist"'), `${id}: Kurz gesagt steht nicht über den Reitern`);
-      assert.equal(full.split(kurz.text.slice(0, 40)).length, 2, `${id}: Kurz gesagt doppelt`);
+      const box = renderToStaticMarkup(createElement(KurzGesagt, { text: kurz.text })), head = box.slice(0, box.indexOf('</p>') + 4);
+      assert.ok(full.includes(head) && full.indexOf(head) < full.indexOf('role="tablist"'), `${id}: Kurz gesagt steht nicht über den Reitern`);
+      assert.equal(full.split(head).length, 2, `${id}: Kurz gesagt doppelt`);
     }
     assert.ok(text(panelOf(full, id, 'weiter')).includes('Als Nächstes'), `${id}: Weiter ohne Als Nächstes`);
   }

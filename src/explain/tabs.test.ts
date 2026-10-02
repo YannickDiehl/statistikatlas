@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { conceptById } from '../domain/concepts';
+import { conceptById, concepts } from '../domain/concepts';
 import { entryById } from '../domain/mariposaCatalog';
 import { analysisCode, initialRSettings } from '../domain/mariposa';
 import { RTOKENS } from '../domain/rTokens';
@@ -46,7 +46,9 @@ test('every registered explanation has tabs with Weiter, and the seven pilot con
   for (const id of Object.keys(EXPLANATIONS)) assert.ok(tabsFor(id)?.next, `${id}: Reiter „Weiter“ fehlt (tabs[id].next)`);
   for (const id of ['mean', 'variance', 'sd', 'covariance', 'pearson', 'se', 'p_value', 'dummy']) assert.ok(tabsFor(id)?.sample && tabsFor(id)?.r, `${id}: Reiter unvollständig`);
   assert.ok(tabsFor('recode')?.r && !tabsFor('recode')?.sample, 'recode: In R, aber kein Mit 200 Befragten');
-  assert.equal(tabsFor('median'), null);
+  // Ein Begriff ohne Erklärung hat keine Reiter; abgeleitet statt fest (IB20), sonst eine Kennung, die es nicht gibt.
+  const unexplained = concepts.map(c => c.id).find(id => !explainFor(id) && !tabsFor(id)) ?? 'ohne_erklaerung';
+  assert.equal(tabsFor(unexplained), null, unexplained);
   assert.equal(new Set(TAB_IDS).size, TAB_IDS.length);
 });
 
@@ -362,8 +364,9 @@ function predictionFails(id: string, tabs: ConceptTabs, s: SampleTab, t: ThinkSa
   const columnOf = (axis: 'x' | 'y') => s.kind === 'analysis' && s.columns?.[axis] ? s.columns[axis] : cols[axis];
   let measure: (d: SurveyRow[]) => number | null;
   if (s.kind === 'bridge') {
-    const w = workshopFor(s.workshop)!, b = bridgeFor(s.workshop)!;
-    measure = d => b.value(bridgeContext(w.compute, b.data, d, cols.x, cols.y, 0), s.variant);
+    // Eine eigene Zahl der Vorhersage (`expect.measure`) gilt auch in Brücken, sonst das Ergebnis der Brücke (IB22).
+    const w = workshopFor(s.workshop)!, b = bridgeFor(s.workshop)!, own = t.expect.measure, columns = { x: [cols.x], y: [cols.y] };
+    measure = own ? d => own({ rows: d, columns }) : d => b.value(bridgeContext(w.compute, b.data, d, cols.x, cols.y, 0), s.variant);
   } else {
     const columns = s.columns ? Object.fromEntries(Object.entries(s.columns).map(([k, v]) => [k, [v]])) : { x: [cols.x], y: [cols.y] };
     const m = t.expect.measure ?? s.value;
@@ -416,6 +419,13 @@ test('Mit 200 Befragten: every prediction keeps its marked answer, for every per
   const old = (expect: Expect): ThinkSample => ({ ...ps.think[2], question: 'Kann ein einziger Wert r bei 200 Befragten spürbar verändern?', options: ['nein, kaum', 'ja, deutlich'], correct: 1, expect });
   assert.ok(predictionFails('pearson', pearson, ps, old({ change: 'weaker' }), 2, () => {})?.includes('atLeast'), 'alte C2-Antwort ohne Untergrenze');
   assert.match(predictionFails('pearson', pearson, ps, old({ change: 'weaker', atLeast: 0.05 }), 2, () => {}) ?? '', /Person P003/, 'alte C2-Antwort mit Untergrenze');
+  // Gegenprobe IB22: In einer Brücke zählt expect.measure. „bleibt gleich“ für s stimmt beim Verschieben, für den Mittelwert nicht.
+  const sd = tabsFor('sd')!, sds = sd.sample!, shift = sds.think.findIndex(t => t.tryIt.op === 'shift');
+  assert.ok(shift >= 0, 'sd hat eine Vorhersage mit Verschieben');
+  const meanOf = (c: SampleCtx) => c.rows.reduce((a, r) => a + r.values[c.columns.x[0]], 0) / c.rows.length;
+  const same = { ...sds.think[shift], options: ['bleibt gleich', 'steigt'], correct: 0 };
+  assert.equal(predictionFails('sd', sd, sds, { ...same, expect: { change: 'same' } }, shift, () => {}), null, 'ohne measure: s bleibt gleich');
+  assert.match(predictionFails('sd', sd, sds, { ...same, expect: { change: 'same', measure: meanOf } }, shift, () => {}) ?? '', /stimmt nicht/, 'mit measure: der Mittelwert steigt');
 });
 
 test('bridges read right for every column they can use: no middle dot from column titles, direction from the sign', () => {

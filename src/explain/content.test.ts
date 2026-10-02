@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { conceptById } from '../domain/concepts';
+import { conceptById, concepts } from '../domain/concepts';
 import { txt, type AnySentence, type ConceptCard, type Ctx, type FNode, type TableTool, type Workshop } from './types';
 import { EXPLANATIONS, WORKSHOPS, explainFor, mergeAreas, stepCardFor, tabsFor, requestStep, takeStep } from './registry';
 import { styleProblems } from './style';
@@ -136,6 +136,17 @@ test('every workshop text resolves for every preset, variant and person and foll
   }
 });
 
+/**
+ * Werte, die ein Regler wirklich annehmen kann: min + k · step wie beim Schieberegler im Browser, beide Enden
+ * eingeschlossen, bei vielen Stufen jede n-te (rund 40). So probiert der Test bei ganzzahligen Reglern keine
+ * Zwischenwerte, die niemand einstellen kann (IB12).
+ */
+function sliderValues(r: { min: number; max: number; step: number }): number[] {
+  const n = Math.floor((r.max - r.min) / r.step + 1e-9), stride = Math.max(1, Math.ceil(n / 40)), ks = new Set([n]);
+  for (let k = 0; k <= n; k += stride) ks.add(k);
+  return [...ks].sort((a, b) => a - b).map(k => Number((r.min + k * r.step).toFixed(10)));
+}
+
 function checkCard(card: ConceptCard) {
   const l = `Begriffskarte ${card.concept}`;
   concept(l, card.concept);
@@ -159,7 +170,7 @@ function checkCard(card: ConceptCard) {
   if (card.regler) {
     const r = card.regler;
     clean(`${l} Regler`, r.label);
-    for (let v = r.min; v <= r.max + 1e-9; v += (r.max - r.min) / 40) { clean(`${l} Regler ${v}`, r.format(v)); clean(`${l} Regler ${v}`, r.describe(v)); }
+    for (const v of sliderValues(r)) { clean(`${l} Regler ${v}`, r.format(v)); clean(`${l} Regler ${v}`, r.describe(v)); }
     clean(`${l} Regler Start`, r.describe(r.initial));
   }
   const ch = card.check;
@@ -386,16 +397,31 @@ test('Formel als Satz and Werkzeug: Standardfehler and Rekodieren texts and chec
   assert.match(rekodieren.rCode('rev'), /mutate\(interesse = rec\(pa02a, rules = "rev"\)\) %>%\n  frequency\(interesse\)/);
 });
 
+test('slider probe: only values the slider can take, both ends included (IB12)', () => {
+  assert.deepEqual(sliderValues({ min: 1, max: 5, step: 1 }), [1, 2, 3, 4, 5]);
+  assert.deepEqual(sliderValues({ min: 0, max: 1, step: 0.25 }), [0, 0.25, 0.5, 0.75, 1]);
+  const many = sliderValues({ min: 2, max: 200, step: 1 });
+  assert.ok(many.every(Number.isInteger) && many[0] === 2 && many.at(-1) === 200 && many.length <= 42, `ganzzahlig, beide Enden, rund 40: ${many.length}`);
+  const cards = Object.values(EXPLANATIONS).flatMap(e => e.kind === 'begriff' && e.card.regler ? [e.card.regler] : []);
+  for (const r of cards.filter(r => Number.isInteger(r.step) && Number.isInteger(r.min))) assert.ok(sliderValues(r).every(Number.isInteger), `${r.label}: Zwischenwerte`);
+});
+
+/**
+ * Ein Begriff ohne Erklärung, Reiter und Schrittkarte, abgeleitet aus concepts.ts (früher fest „median“, IB20).
+ * Sind alle Begriffe erklärt, eine Kennung, die es nicht gibt: Auch dann muss die Zuordnung null liefern.
+ */
+const UNEXPLAINED = concepts.map(c => c.id).find(id => !explainFor(id) && !tabsFor(id) && !stepCardFor(id)) ?? 'ohne_erklaerung';
+
 test('registry: explanations, step cards with context and the step request', () => {
   for (const id of ['mean', 'variance', 'sd', 'covariance', 'pearson']) assert.equal(explainFor(id)?.kind, 'werkstatt', id);
   assert.equal(explainFor('se')?.kind, 'satz'); assert.equal(explainFor('recode')?.kind, 'werkzeug');
   assert.equal(explainFor('p_value')?.kind, 'begriff'); assert.equal(explainFor('dummy')?.kind, 'tabelle');
-  assert.equal(explainFor('median'), null); assert.equal(tabsFor('median'), null);
+  assert.equal(explainFor(UNEXPLAINED), null, UNEXPLAINED); assert.equal(tabsFor(UNEXPLAINED), null, UNEXPLAINED);
   assert.equal(stepCardFor('deviation')?.workshop.id, 'streuung');
   assert.equal(stepCardFor('deviation', 'pearson')?.workshop.id, 'zusammenhang');
   assert.deepEqual([stepCardFor('ss', 'variance')?.variant, stepCardFor('ss')?.variant, stepCardFor('ss')?.step], ['variance', 'sd', 4]);
   assert.deepEqual([stepCardFor('crossproduct_sum', 'covariance')?.variant, stepCardFor('sd_product')?.step], ['covariance', 6]);
-  assert.equal(stepCardFor('sum')?.workshop.id, 'mittel'); assert.equal(stepCardFor('median'), null);
+  assert.equal(stepCardFor('sum')?.workshop.id, 'mittel'); assert.equal(stepCardFor(UNEXPLAINED), null, UNEXPLAINED);
   requestStep('sd', 3); assert.equal(takeStep('variance'), null); assert.equal(takeStep('sd'), 3); assert.equal(takeStep('sd'), null);
   assert.equal(new Set(WORKSHOPS.map(w => w.id)).size, WORKSHOPS.length, 'Werkstatt-Kennungen sind eindeutig');
 });
