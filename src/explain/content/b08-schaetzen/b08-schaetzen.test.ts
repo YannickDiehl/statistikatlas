@@ -106,8 +106,8 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
 const rows = createSurvey();
 const allbusFile = process.env.ALLBUS_SAV;
 
-/** Gültige Werte einer ALLBUS-Variable (Codes im Bereich lo bis hi; fehlende Codes sind negativ) mit Gewicht und Gebiet. */
-function allbus(names: string[]) {
+/** Die ALLBUS-Datei (nur lesen): Zahl der Fälle und alle Werte einer Variable; fehlende Codes sind negativ. Nur für Aggregate. */
+function allbus() {
   const bytes = readFileSync(allbusFile!), sav = readSav(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
   return { n: sav.nCases, v: (name: string) => Array.from(sav.byName.get(name)!.values) };
 }
@@ -295,6 +295,7 @@ test('B8 confidence: Konfidenzintervalle für das Vertrauen in den Bundestag und
     '1,63 / √3.592 ≈ 1,63 / 59,93 ≈ 0,027.', 'Für 95 % und 3.591 Freiheitsgrade liefert die t-Verteilung t ≈ 1,96.',
     '1,96 · 0,027 ≈ 0,053. So weit reicht das Intervall nach jeder Seite.', '3,95 − 0,053 ≈ 3,89 und 3,95 + 0,053 ≈ 4,00.']);
   assert.match(confidence.think.explain, /von etwa 1,96 auf etwa 2,58/);
+  assert.match(confidence.compare(k), /^Das Intervall ist 0,11 Skalenpunkte breit\./);
   assert.equal(confidence.check.diagnose(0.98).slice(0, 5), 'Fast!');
   const l = lernzeitKi(ctx());
   assert.ok(close(l.lo, 7.300066098, 1e-8) && close(l.hi, 8.202933902, 1e-8) && close(l.width, 0.9028678044, 1e-9) && close(l.se, 0.2289269018, 1e-9), 'Lernzeit');
@@ -326,6 +327,8 @@ test('B8 prediction_interval: Vorhersage- und Konfidenzintervall der Geraden Wis
   assert.equal(w[1], 'h₀ = 1 / 200 + (10 − 7,75)² / 2.086 ≈ 0,0074.');
   assert.equal(w[2], '1,97 · 2,63 · √(1 + 0,0074) ≈ 5,21 Aufgaben nach jeder Seite.');
   assert.match(w[3], /√0,0074 ≈ 0,45\. Dieses Intervall reicht nur von 10,84 bis 11,74\.$/);
+  assert.equal(predictionInterval.compare(k), 'Für eine neue Person ist der Bereich 10,41 Aufgaben breit, für den Mittelwert vergleichbarer Personen nur 0,89.');
+  assert.deepEqual(predictionInterval.metrics.map(m => m.value(k)), ['11,29 Aufgaben', '6,08 bis 16,50', '10,84 bis 11,74']);
   const xy = (data = rows) => ({ rows: data, columns: { x: ['lernzeit'], y: ['wissenstest'] } }), d = vorhersageDaten(xy());
   assert.ok(close(2 * d.half, 10.40147064, 1e-7) && d.inside === 191, `Breite ${2 * d.half}, innerhalb ${d.inside}`);
   const s = predictionIntervalTabs.sample!;
@@ -339,7 +342,7 @@ test('B8 prediction_interval: Vorhersage- und Konfidenzintervall der Geraden Wis
 });
 
 test('B8: ALLBUS-Aggregate aus der Datei nachgerechnet (nur mit ALLBUS_SAV)', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, () => {
-  const a = allbus(['eastwest', 'wghtpew', 'pt03', 'pa02a', 'dh04']);
+  const a = allbus();
   const ew = a.v('eastwest'), w = a.v('wghtpew'), t3 = a.v('pt03'), pa = a.v('pa02a'), hh = a.v('dh04');
   assert.equal(a.n, ALLBUS.befragte);
   assert.equal(ew.filter(v => v === 2).length, ALLBUS.ost);
