@@ -23,7 +23,8 @@ import { tTestSentence, VERTRAUEN, welchFromSummary } from './t-test';
 import { paarWerkstatt, pairedStats } from './paired-difference';
 import { pairedDesign, sdForR, tForR, WISSEN } from './paired-design';
 import { anovaStats, anovaWerkstatt } from './anova';
-import { anovaFor } from './stats';
+import { anovaFor, factorialFor } from './stats';
+import { factorialAnova, TERME, ZELLEN } from './factorial-anova';
 import { pairedFor } from './stats';
 import { txt } from '../../types';
 
@@ -253,6 +254,38 @@ test('Einfaktorielle ANOVA: Lernzeit nach Schulabschluss im Reiter wie in R', ()
     assert.match(r.zusatz!, /zwischen 37 und 42 Befragte/);
   }
   if (gv.kind === 'analysis') assert.match(gv.result(c).kurz, /\(2\.085,82 h²\) liegen 313,98 h², also 15,1 %/);
+});
+
+/*
+ * Mehrfaktorielle ANOVA (Begriffskarte), Lernzeit nach Schulabschluss und Weiterbildung:
+ *   atlas %>% factorial_anova(dv = lernzeit, between = c(schulabschluss, weiterbildung), ss_type = 3) %>% summary()
+ *   # schulabschluss SS 299.740, F 8.558, Sig < .001, eta2p 0.153; weiterbildung SS 2.483, F 0.284, Sig .595, eta2p 0.001;
+ *   # schulabschluss * weiterbildung SS 105.026, F 2.999, Sig .020, eta2p 0.059; Error df 190; Levene F(9, 190) = 1.168, p = 0.317
+ *   # Zellmittel: 5.848 5.935 | 7.039 6.742 | 7.230 8.788 | 8.542 8.941 | 10.729 7.837; n je Zelle 12 bis 28
+ *   options(contrasts = c("contr.sum", "contr.poly")); m <- lm(lernzeit ~ factor(schulabschluss) * factor(weiterbildung))
+ *   drop1(m, . ~ ., test = "F")    # F 8.55782 (p 2.2692e-06), 0.28353 (p 0.595021), 2.99857 (p 0.019798); a:b Sum of Sq 105.025811
+ *   # mit 2 * lernzeit und mit 60 - lernzeit: a:b F 2.99857 wie vorher
+ */
+test('Mehrfaktorielle ANOVA: Zellmittel und Typ-III-Tests wie in R', () => {
+  const c = ctx({ x: 'lernzeit' }), f = factorialFor(c)!;
+  near(f.a.F, 8.55782, 1e-5, 'F Schulabschluss'); near(f.a.p, 2.2692e-6, 1e-9, 'p Schulabschluss');
+  near(f.b.F, 0.28353, 1e-5, 'F Weiterbildung'); near(f.b.p, 0.595021, 1e-6, 'p Weiterbildung');
+  near(f.ab.F, 2.99857, 1e-5, 'F Zusammenspiel'); near(f.ab.p, 0.019798, 1e-6, 'p Zusammenspiel'); near(f.ab.ss, 105.025811, 1e-5, 'SS Zusammenspiel');
+  assert.equal(f.dfError, 190);
+  for (const [k, z] of ZELLEN.entries()) { near(f.cells[k][0].mean, z.nein, 5e-4, `${z.label} ohne`); near(f.cells[k][1].mean, z.ja, 5e-4, `${z.label} mit`); assert.deepEqual([f.cells[k][0].n, f.cells[k][1].n], [z.nNein, z.nJa]); }
+  near(TERME.schule.F, f.a.F, 5e-4, 'Karte F Schule'); near(TERME.weiter.F, f.b.F, 5e-4, 'Karte F Weiter'); near(TERME.zusammen.F, f.ab.F, 5e-4, 'Karte F Zusammen');
+  near(TERME.zusammen.eta2p, f.ab.eta2p, 5e-4, 'η²p Zusammen'); near(TERME.schule.eta2p, f.a.eta2p, 5e-4, 'η²p Schule');
+  near(factorialFor(ctx({ x: 'lernzeit' }, applyOp(rows, 'lernzeit', 'double')))!.ab.F, 2.99857, 1e-5, 'doppelt');
+  near(factorialFor(ctx({ x: 'lernzeit' }, applyOp(rows, 'lernzeit', 'reverse')))!.ab.F, 2.99857, 1e-5, 'umgepolt');
+  assert.match(factorialAnova.stellDirVor.text, /10,73 Stunden gelernt, die mit Abitur und Weiterbildung 7,84 Stunden\. .* höchstens 1,56 Stunden/);
+  assert.match(factorialAnova.bausteine[1].rechnung!, /10,73 − 7,84 = 2,89 Stunden\. Mittlerer Abschluss: 7,23 − 8,79 = −1,56 Stunden/);
+  const sample = b10Mittelwerte.tabs.factorial_anova.sample!;
+  if (sample.kind === 'analysis') {
+    const r = sample.result(c);
+    assert.match(r.kurz, /ohne Weiterbildung im Schnitt 10,73 Stunden gelernt, mit Weiterbildung 7,84 Stunden\. .* überraschend \(p ≈ 0,02\)/);
+    assert.match(r.fachlich, /Schulabschluss F\(4, 190\) ≈ 8,56, p < 0,001; Weiterbildung F\(1, 190\) ≈ 0,28, p ≈ 0,6; Zusammenspiel F\(4, 190\) ≈ 3, p ≈ 0,02, η²p ≈ 0,06/);
+    assert.equal(r.zusatz, 'Je Zelle aus Abschluss und Weiterbildung zwischen 12 und 28 Befragte.');
+  }
 });
 
 // Damit der Import genutzt wird, auch wenn spätere Begriffe ihn brauchen.

@@ -5,6 +5,7 @@ import { tTestSentence, tTestTabs } from './t-test';
 import { paarWerkstatt, pairedDifferenceTabs } from './paired-difference';
 import { pairedDesign, pairedDesignTabs } from './paired-design';
 import { anovaWerkstatt, groupVariationTabs, onewayAnovaTabs } from './anova';
+import { factorialAnova, factorialAnovaTabs } from './factorial-anova';
 
 export const b10Mittelwerte: AreaIndex = {
   explanations: {
@@ -13,6 +14,7 @@ export const b10Mittelwerte: AreaIndex = {
     paired_design: { kind: 'begriff', card: pairedDesign },
     group_variation: { kind: 'werkstatt', workshop: anovaWerkstatt, variant: 'group_variation' },
     oneway_anova: { kind: 'werkstatt', workshop: anovaWerkstatt, variant: 'oneway_anova' },
+    factorial_anova: { kind: 'begriff', card: factorialAnova },
   },
   tabs: {
     t_test: tTestTabs,
@@ -20,5 +22,6 @@ export const b10Mittelwerte: AreaIndex = {
     paired_design: pairedDesignTabs,
     group_variation: groupVariationTabs,
     oneway_anova: onewayAnovaTabs,
+    factorial_anova: factorialAnovaTabs,
   },
 };

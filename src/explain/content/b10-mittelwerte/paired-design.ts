@@ -146,7 +146,7 @@ export const pairedDesignTabs: ConceptTabs = {
   r: {
     entry: 't_test', variant: 3,
     tokens: {
-      differenz: { sym: 'differenz', term: 'Gepaarte Differenzen', kurz: 'Die neue Spalte: für jede Person der zweite Test minus der erste. So bleibt jede Veränderung bei ihrer Person.', fehler: 'Schreibst du die Spalte in mutate() anders als in t_test(), meldet R: Objekt \'differenz\' nicht gefunden.' },
+      differenz: { sym: 'differenz', term: 'Gepaarte Differenzen', kurz: 'Die neue Spalte: für jede Person der zweite Test minus der erste. So bleibt jede Veränderung bei ihrer Person.', fehler: 'Schreibst du die Spalte in mutate() anders als in t_test(), meldet R: Column `differenz` doesn\'t exist.' },
     },
     outputMap: [
       { match: 'N', atlas: 'Personen', step: 1, explain: 'N = 200: Jede Person geht mit einer Differenz ein, nicht mit zwei Messungen.' },

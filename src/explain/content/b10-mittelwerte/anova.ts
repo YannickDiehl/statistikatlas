@@ -333,7 +333,7 @@ export const onewayAnovaTabs: ConceptTabs = {
   r: {
     entry: 'oneway_anova', variant: 0,
     tokens: {
-      oneway_anova: { sym: 'oneway_anova()', term: 'Einfaktorielle ANOVA', kurz: 'Vergleicht die Mittelwerte mehrerer Gruppen. summary() zeigt die Quadratsummen, F, die Welch-ANOVA und Effektgrößen.', fehler: 'Die Gruppenvariable muss Kategorien haben. Mit einer metrischen Gruppenvariable wie lernzeit bildet R für jeden Wert eine eigene Gruppe.' },
+      oneway_anova: { sym: 'oneway_anova()', term: 'Einfaktorielle ANOVA', kurz: 'Vergleicht die Mittelwerte mehrerer Gruppen. summary() zeigt die Quadratsummen, F, die Welch-ANOVA und Effektgrößen.', fehler: 'Ohne group = weiß mariposa nicht, welche Gruppen es vergleichen soll, und meldet: Argument `group` is missing, with no default.' },
     },
     outputMap: [
       { match: '313.983', atlas: 'SS_B', step: 2, explain: 'Sum of Squares in der Zeile Between Groups: die Quadratsumme zwischen den Gruppen aus Schritt 2.' },

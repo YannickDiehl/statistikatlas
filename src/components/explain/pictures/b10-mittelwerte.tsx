@@ -6,6 +6,7 @@ import { num, signed } from '../../../explain/format';
 import type { PairedStats } from '../../../explain/content/b10-mittelwerte/paired-difference';
 import { sdForR, tForR, WISSEN } from '../../../explain/content/b10-mittelwerte/paired-design';
 import { GRUPPEN, type AnovaStats } from '../../../explain/content/b10-mittelwerte/anova';
+import { ZELLEN } from '../../../explain/content/b10-mittelwerte/factorial-anova';
 import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Ganzzahlige Ticks von `from` bis `to` in Schritten von `by`. */
@@ -158,7 +159,35 @@ function GroupDots({ values, s, step, who, names, bounds, onChange, onWho }: {
   );
 }
 
+/** Mehrfaktorielle ANOVA: Zellmittel der Lernzeit nach Schulabschluss, je eine Linie ohne und mit Weiterbildung. */
+function InteractionPlot() {
+  const [box, W] = useWidth();
+  const left = 48, right = W - 20, top = 34, bottom = 214, X = (i: number) => left + 18 + i * (right - left - 36) / (ZELLEN.length - 1), Y = linear([4, 12], [bottom, top]);
+  const line = (key: 'nein' | 'ja') => ZELLEN.map((z, i) => `${X(i).toFixed(1)},${Y(z[key]).toFixed(1)}`).join(' ');
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={276} viewBox={`0 0 ${W} 276`} role="img"
+        aria-label={`Mittlere Lernzeit nach Schulabschluss, ohne Weiterbildung: ${ZELLEN.map(z => `${z.label} ${num(z.nein)}`).join(', ')}; mit Weiterbildung: ${ZELLEN.map(z => `${z.label} ${num(z.ja)}`).join(', ')} Stunden. Die Linien kreuzen sich.`}>
+        <Axis scale={Y} ticks={[4, 6, 8, 10, 12]} at={left} from={top} to={bottom} orient="left" labelGap={24} title="Stunden" />
+        {[4, 6, 8, 10, 12].map(v => <line key={v} className="xw-guide" x1={left} x2={right} y1={Y(v)} y2={Y(v)} />)}
+        <polyline className="b10-line" points={line('nein')} />
+        <polyline className="b10-line b10-line-ja" points={line('ja')} />
+        {ZELLEN.map((z, i) => <g key={z.label}>
+          <circle className="b10-dot" cx={X(i)} cy={Y(z.nein)} r={5} />
+          <rect className="b10-square" x={X(i) - 5} y={Y(z.ja) - 5} width={10} height={10} />
+          <text className="xw-t" x={X(i)} y={bottom + 22} textAnchor="middle">{z.label}</text>
+        </g>)}
+        <line className="xw-axis" x1={left} x2={right} y1={bottom} y2={bottom} />
+        <circle className="b10-dot" cx={left + 6} cy={252} r={5} /><text className="xw-t" x={left + 16} y={257}>ohne Weiterbildung</text>
+        <rect className="b10-square" x={left + Math.min(170, (W - left) / 2) - 5} y={247} width={10} height={10} /><text className="xw-t" x={left + Math.min(170, (W - left) / 2) + 10} y={257}>mit</text>
+        <text className="xw-t xw-strong" x={left} y={18}>Mittlere Lernzeit nach Schulabschluss</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b10-interaktion': forCard(() => <InteractionPlot />),
   'b10-anova': forWorkshop(p => <GroupDots values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b10-verbunden': forCard(p => <PairedSpread r={p.value ?? WISSEN.r} />),
   'b10-paare': forWorkshop(p => <PairsPicture data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
