@@ -3,7 +3,9 @@
 // den aktuellen Daten gerechnet. Alle Referenzwerte und R-Befehle stehen in b08-schaetzen.test.ts.
 import type { SampleCtx } from '../../types';
 import { num } from '../../format';
+import { describe } from '../../math';
 import { sampleColumn } from '../../sample';
+import { middleValues } from '../../../domain/descriptive';
 
 /** ALLBUS 2023 (ZA8831): Zahl der Befragten, davon in den neuen Bundesländern (eastwest = 2), Anteil Ost mit wghtpew. */
 export const ALLBUS = { befragte: 5246, ost: 1679, ostGewichtet: 0.1683825 } as const;
@@ -20,9 +22,9 @@ export const HAUSHALT_N = HAUSHALT.anzahl.reduce((a, b) => a + b, 0);
 
 // ---------- Kleine Rechnungen ----------
 
-export const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
-/** Standardabweichung mit n − 1 (wie sd() in R). */
-export const sd1 = (xs: readonly number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a, v) => a + (v - m) ** 2, 0) / (xs.length - 1)); };
+/** Mittelwert und Standardabweichung mit n − 1 (wie sd() in R) aus dem gemeinsamen Helfer `describe` (src/explain/math.ts). */
+export const mean = (xs: readonly number[]) => describe(xs).mean;
+export const sd1 = (xs: readonly number[]) => describe(xs).sd;
 /** Standardabweichung einer ganzen Grundgesamtheit (geteilt durch N), σ. */
 export const sdN = (xs: readonly number[]) => { const m = mean(xs); return Math.sqrt(xs.reduce((a, v) => a + (v - m) ** 2, 0) / xs.length); };
 /** Schiefe aus den Momenten der Werte selbst (g1 = m3 / m2^1,5); 0 bei konstanten Werten. */
@@ -30,10 +32,10 @@ export function skew(xs: readonly number[]): number {
   const m = mean(xs), m2 = mean(xs.map(v => (v - m) ** 2)), m3 = mean(xs.map(v => (v - m) ** 3));
   return m2 > 0 ? m3 / m2 ** 1.5 : 0;
 }
-/** Median (mittlerer Wert der Reihe nach; bei gerader Zahl das Mittel der beiden mittleren). */
+/** Median (mittlerer Wert der Reihe nach): Mittel der beiden mittleren Werte aus `middleValues` (src/domain/descriptive.ts). */
 export function median(xs: readonly number[]): number {
-  const s = [...xs].sort((a, b) => a - b), k = s.length >> 1;
-  return s.length % 2 ? s[k] : (s[k - 1] + s[k]) / 2;
+  const m = middleValues([...xs]);
+  return m ? (m[0] + m[1]) / 2 : NaN;
 }
 
 /** Spalte x der Auswertung (fest oder aus der Spaltenwahl). */

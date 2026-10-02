@@ -123,7 +123,7 @@ export const randomSampling: ConceptCard = {
   genau: {
     kurz: 'Gleiche Chancen für einzelne Personen reichen nicht für eine einfache Zufallsauswahl. Auch alle möglichen Gruppen müssen gleich wahrscheinlich sein.',
     paragraphs: [
-      `Ohne Zurücklegen sind die Ziehungen abhängig. Der Standardfehler des Mittelwerts schrumpft um den Faktor √(1 − n / N): SE = √(1 − n / N) · S / √n. Hier: √(1 − ${GELOST} / 200) · ${count(EINKOMMEN.sd)} / √${GELOST} ≈ ${count(se50)} €.`,
+      `Ohne Zurücklegen sind die Ziehungen abhängig. Gegenüber S / √n, mit S wie sd() in R über die 200 gerechnet, schrumpft der Standardfehler um den Faktor √(1 − n / N): SE = √(1 − n / N) · S / √n. Hier: √(1 − ${GELOST} / 200) · ${count(EINKOMMEN.sd)} / √${GELOST} ≈ ${count(se50)} €.`,
       'Bei kleinem Auswahlanteil n / N ist das Modell unabhängiger, identisch verteilter Beobachtungen eine gute Näherung. Für alle Erwachsenen in Deutschland ist der Anteil winzig.',
       'Viele Erhebungen ziehen mehrstufig: erst Gemeinden, dann Personen, oft mit ungleichen Chancen. Dann braucht die Auswertung Gewichte und Designverfahren.',
       'Zufallsauswahl von Personen und zufällige Zuweisung zu Versuchsgruppen erfüllen verschiedene Aufgaben. Die eine erlaubt Schlüsse auf die Grundgesamtheit, die andere Schlüsse auf Ursachen.',

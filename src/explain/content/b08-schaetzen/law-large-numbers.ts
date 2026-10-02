@@ -38,7 +38,7 @@ export const lawLargeNumbers: ConceptCard = {
   wofuer: 'Kleine Umfragen liefern oft erstaunliche Ergebnisse, große selten. Warum werden Anteile verlässlicher, je mehr Menschen du befragst?',
   kurz: 'Das Gesetz der großen Zahlen sagt: Je größer die Stichprobe, desto verlässlicher landet der Mittelwert nahe beim wahren Wert. Große Abweichungen werden immer unwahrscheinlicher.',
   stellDirVor: {
-    text: `${pct(WEITERBILDUNG.pi)} der 200 Befragten haben eine Weiterbildung gemacht. Stell dir vor, die 200 sind alle, und du ziehst zufällig Befragte, mit Zurücklegen. Bei 10 Gezogenen liegt der Anteil ${wieOft(p10)} mehr als 5 Prozentpunkte neben ${pct(WEITERBILDUNG.pi)}. Bei 100 Gezogenen nur noch ${wieOft(p100)}, bei 1.000 Gezogenen ${wieOft(p1000)}.`,
+    text: `${pct(WEITERBILDUNG.pi)} der 200 Befragten haben eine Weiterbildung gemacht. Ein Anteil ist auch ein Mittelwert: der Mittelwert aus Nullen (keine Weiterbildung) und Einsen (Weiterbildung). Stell dir vor, die 200 sind alle, und du ziehst zufällig Befragte, mit Zurücklegen. Bei 10 Gezogenen liegt der Anteil ${wieOft(p10)} mehr als 5 Prozentpunkte neben ${pct(WEITERBILDUNG.pi)}. Bei 100 Gezogenen nur noch ${wieOft(p100)}, bei 1.000 Gezogenen ${wieOft(p1000)}.`,
     figures: [
       { label: 'daneben bei 10 Gezogenen', value: pct(p10) },
       { label: 'daneben bei 100 Gezogenen', value: pct(p100) },
@@ -61,7 +61,7 @@ export const lawLargeNumbers: ConceptCard = {
       title: 'Die Stichprobe wachsen lassen',
       was: 'Mit mehr Befragten wird die Stichprobenverteilung schmaler. Immer weniger Stichproben landen außerhalb der Toleranz.',
       rechnung: `Mehr als 5 Prozentpunkte daneben: bei 10 Gezogenen ${pct(p10)}, bei 100 Gezogenen ${pct(p100)}, bei 1.000 Gezogenen ${pct(p1000, 2)}.`,
-      warum: 'Zufällige Abweichungen nach oben und unten gleichen sich in großen Stichproben immer besser aus.',
+      warum: 'In großen Stichproben zählt jede einzelne zufällige Abweichung nur wenig. Sie wird durch die vielen anderen Werte verdünnt, nicht ausgeglichen.',
       acht: 'Das Gesetz sagt nichts über eine einzelne weitere Person. Sie muss den Anteil nicht näher an 41 % bringen.',
       concept: 'sampling_distribution',
     },

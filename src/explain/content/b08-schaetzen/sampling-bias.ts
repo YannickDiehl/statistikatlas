@@ -61,7 +61,7 @@ export const samplingBias: ConceptCard = {
     },
     {
       title: 'Systematische Abweichung erkennen',
-      was: `Bei der Online-Umfrage machen vor allem Menschen mit, die viel lernen. Ihr Mittelwert liegt im Schnitt ${unit(BIAS, 'Stunde', 'Stunden')} zu hoch.`,
+      was: `Bei der Online-Umfrage machen vor allem Planende mit, und die lernen im Schnitt mehr. Ihr Mittelwert liegt deshalb ${unit(BIAS, 'Stunde', 'Stunden')} zu hoch.`,
       rechnung: `Verzerrung = ${num(PLANUNG.teil)} − ${num(PLANUNG.alle)} ≈ ${num(BIAS)} h`,
       warum: 'Die Abweichung kommt aus der Auswahl, nicht aus dem Zufall. Sie bleibt bei jeder Wiederholung gleich.',
       acht: 'Mehr Antworten machen eine verzerrte Umfrage genauer, aber nicht richtiger. Sie trifft dann sehr verlässlich den falschen Wert.',
@@ -71,7 +71,7 @@ export const samplingBias: ConceptCard = {
       title: 'Die Ursache finden',
       was: 'Verzerrung entsteht durch eine schiefe Auswahl, durch Menschen, die nicht teilnehmen, oder durch eine ungeeignete Rechenregel.',
       warum: 'Nur wer die Ursache kennt, kann gegensteuern: mit Zufallsauswahl, Gewichtung oder einer besseren Regel.',
-      acht: `Auch der ALLBUS 2023 wäre ungewichtet verzerrt, weil er den Osten mit Absicht stärker befragt. Das mittlere Vertrauen in den Bundestag läge dann bei ${num(VERTRAUEN.mean)} statt ${num(VERTRAUEN.gewichtet)}.`,
+      acht: `Auch der ALLBUS 2023 wäre ungewichtet verzerrt, weil er den Osten mit Absicht stärker befragt. Das mittlere Vertrauen in den Bundestag (Skala 1 bis 7) läge dann bei ${num(VERTRAUEN.mean)} statt ${num(VERTRAUEN.gewichtet)}.`,
       concept: 'missing_mechanisms',
     },
   ],
@@ -91,7 +91,7 @@ export const samplingBias: ConceptCard = {
     {
       question: 'Was hilft gegen die Verzerrung der Online-Umfrage?',
       options: ['mehr Antworten sammeln', 'die Teilnehmenden zufällig auswählen'], correct: 1, step: 3,
-      explain: 'Wenn der Zufall entscheidet, wer gefragt wird, kommen Planende und Nicht-Planende im richtigen Verhältnis vor. Dann trifft die Umfrage im Mittel.',
+      explain: 'Wenn der Zufall entscheidet, wer gefragt wird, kommen Planende und Nicht-Planende im Mittel im richtigen Verhältnis vor. Dann trifft die Umfrage im Mittel, solange die Gezogenen auch antworten.',
       kurz: 'Gegen Verzerrung hilft die Auswahl, nicht die Menge.',
     },
   ],

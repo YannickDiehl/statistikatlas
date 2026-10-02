@@ -56,7 +56,7 @@ export const sampling: ConceptCard = {
       title: 'Das Design mitdenken',
       was: 'Der ALLBUS wählt erst Gemeinden aus und darin Personen. Ostdeutschland ist mit Absicht stärker vertreten.',
       warum: 'So spart man Wege und hat genug Befragte für Vergleiche zwischen Ost und West. Die Auswertung muss diesen Plan berücksichtigen.',
-      acht: `Ungewichtet zählt der Osten zu stark. Beim Vertrauen in den Bundestag ergibt der ALLBUS 2023 ungewichtet im Mittel ${num(VERTRAUEN.mean)}, gewichtet ${num(VERTRAUEN.gewichtet)}.`,
+      acht: `Ungewichtet zählt der Osten zu stark. Beim Vertrauen in den Bundestag (Skala 1 bis 7) ergibt der ALLBUS 2023 ungewichtet im Mittel ${num(VERTRAUEN.mean)}, gewichtet ${num(VERTRAUEN.gewichtet)}.`,
       concept: 'weights',
     },
   ],

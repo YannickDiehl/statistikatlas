@@ -14,7 +14,7 @@ import { HAUSHALT, HAUSHALT_KENNWERTE, HAUSHALT_N, binomial, haushaltMittel, mid
 import { GLOCKE_N, centralLimit, centralLimitTabs, einkommenSchiefe, glockeText, schiefeMittel } from './central-limit';
 import { PLANUNG, VERZERRUNG_N, bereichText, bereiche, samplingBias, samplingBiasTabs, verzerrung } from './sampling-bias';
 import { EINKOMMEN, auswahl, auswahlText, moeglich, randomSampling, randomSamplingTabs, seOhne, zehnerPotenz } from './random-sampling';
-import { confidence, confidenceTabs, kritisch, lernzeitKi } from './confidence';
+import { confidence, confidenceTabs, intervall, kritisch, lernzeitKi } from './confidence';
 import { GERADE, predictionInterval, predictionIntervalTabs, vorhersage, vorhersageDaten } from './prediction-interval';
 import { gerade } from './daten';
 import { CATALOG_OUTPUT } from '../../catalogOutput';
@@ -53,6 +53,7 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
  *   e <- as.numeric(atlas$einkommen); g1 <- function(v) { m <- mean(v); mean((v - m)^3) / mean((v - m)^2)^1.5 }
  *   g1(e); g1(e) / sqrt(30); mean(e)                          # 0.7855733  0.1434254  3154.62 (gleich nach mal 2 und plus 100)
  *   range(sapply(1:200, function(k) { ee <- e; ee[k] <- 30000; g1(ee) - g1(e) }))   # +6.49 bis +6.76; nach mal 2: +1.46 bis +1.53
+ *   range(sapply(1:200, function(k) { ee <- e; ee[k] <- 30000; g1(ee) / sqrt(30) }))  # 1.328944 bis 1.377220: noch deutlich schief (P001: 7.302735 / 1.333291)
  *   atlas %>% describe(einkommen, show = c("mean", "skew"))   # Skewness 0.792 (mit Kleinstichprobenkorrektur)
  *   atlas %>% filter(lernplanung5 >= 4) %>% summarise(n = n(), m = mean(lernzeit))   # 88  8.670455 (Verzerrung +0.918955)
  *   s <- x[as.numeric(atlas$lernplanung5) >= 4]; sN <- function(v) sqrt(mean((v - mean(v))^2))
@@ -83,6 +84,10 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
  *   for (L in c(.8, .9, .95, .99)) print(3.946826 + c(-1, 1) * qt(1 - (1 - L) / 2, 3591) * se3)
  *   # 80 %: 3.912064 3.981588 (t 1.281787);  90 %: 3.902207 3.991445 (t 1.645278)
  *   # 95 %: 3.893654 3.999998 (t 1.960625);  99 %: 3.876933 4.016719 (t 2.577199);  qt(.975, 9) = 2.262157
+ *   # gewichtet 4.013856: bei 95 % knapp außerhalb (> 3.999998), bei 99 % knapp innerhalb (< 4.016719)
+ *   # n mal 4 (14368): 3.946826 + c(-1, 1) * qt(.975, 14367) * 1.625373 / sqrt(14368)   # 3.920247 3.973405
+ *   t.test(x)$conf.int                                         # 7.300066 8.202934 (wie oneSampleT)
+ *   sqrt(1.0201); sqrt(0.0201)                                  # 1.01  0.1417745 (Kontrollfrage Vorhersageintervall)
  *
  * ALLBUS 2023 (ZA8831_v1-3-0.sav, nur lesen, Pfad in ALLBUS_SAV), nur Aggregate:
  *   d <- haven::read_sav(Sys.getenv("ALLBUS_SAV"))
@@ -123,7 +128,7 @@ test('B8 sampling: ALLBUS-Aggregate, Kopien im Regler und die zwei Hälften wie 
     assert.ok(close(kopienSE(k), se, 1e-6), `Kopien ${k}: ${kopienSE(k)} ≠ R ${se}`);
   assert.match(sampling.stellDirVor.text, /5\.246 Menschen geantwortet, 1\.679 davon in Ostdeutschland\. Das sind 32 % der Befragten\./);
   assert.match(sampling.stellDirVor.text, /nur noch mit 16,8 %\./);
-  assert.match(sampling.bausteine[2].acht, /ungewichtet im Mittel 3,95, gewichtet 4,01\./);
+  assert.match(sampling.bausteine[2].acht, /Bundestag \(Skala 1 bis 7\) ergibt der ALLBUS 2023 ungewichtet im Mittel 3,95, gewichtet 4,01\./);
   assert.match(sampling.regler!.describe(1), /Standardfehler 0,013\./);
   assert.match(sampling.regler!.describe(2), /10\.450 Zeilen .*Standardfehler 0,0092 statt 0,013\./);
 
@@ -151,6 +156,8 @@ test('B8 population_parameter: Anteil der stark Interessierten und die 200 als g
     assert.match(r.kurz, /μ = 7,75 Stunden: die mittlere Lernzeit aller 200\. .* ersten 20 befragt, wäre deine Schätzung 7,43 Stunden\./);
     assert.match(r.fachlich, /P001 bis P020: x̄ = 7,43 h/);
     assert.match(r.zusatz!, /π = 41 % aller 200, aber 35 % unter den ersten 20/);
+    assert.match(r.kurz, /μ steht fest; die Schätzung hängt davon ab, wen du fragst\.$/);
+    assert.match(s.result(ctx(applyOp(rows, 'lernzeit', 'constant', 8))).kurz, /μ = 8 Stunden: .* hier trifft jede Stichprobe μ genau, weil alle gleich lange lernen\.$/);
   }
 });
 
@@ -202,6 +209,8 @@ test('B8 law_large_numbers: exakte Wahrscheinlichkeiten, mehr als 5 Prozentpunkt
   assert.equal(wieOft(daneben(2000)), 'in weniger als 1 von 100.000 Stichproben');
   assert.equal(wieOft(0), 'in keiner Stichprobe');
   assert.match(lawLargeNumbers.stellDirVor.text, /Bei 10 Gezogenen liegt der Anteil in etwa 75 von 100 Stichproben mehr als 5 Prozentpunkte neben 41 %\. Bei 100 Gezogenen nur noch in etwa 26 von 100 Stichproben, bei 1\.000 Gezogenen in etwa 1 von 1\.000 Stichproben\./);
+  assert.ok(!/gleichen sich .* aus/.test(lawLargeNumbers.bausteine[1].warum) && /verdünnt, nicht ausgeglichen/.test(lawLargeNumbers.bausteine[1].warum), 'Baustein 2 widerspricht Baustein 3 nicht');
+  assert.match(lawLargeNumbers.stellDirVor.text, /Ein Anteil ist auch ein Mittelwert/);
   assert.equal(lawLargeNumbers.bausteine[1].rechnung, 'Mehr als 5 Prozentpunkte daneben: bei 10 Gezogenen 75 %, bei 100 Gezogenen 26,3 %, bei 1.000 Gezogenen 0,12 %.');
   const wctx = (data = rows) => ({ rows: data, columns: { x: ['weiterbildung'] } });
   const g = gesetz(wctx());
@@ -239,7 +248,14 @@ test('B8 central_limit: exakte Verteilung der mittleren Haushaltsgröße und die
   assert.ok(close(e.skew, 0.7855733276, 1e-9) && close(e.skewMean, 0.1434254107, 1e-9) && close(e.mean, 3154.62, 1e-9), 'Schiefe der Einkommen');
   const s = centralLimitTabs.sample!;
   if (s.kind === 'analysis') {
-    assert.match(s.result(ectx()).kurz, /Schiefe von 0,79: .* nur noch eine Schiefe von 0,14\./);
+    assert.match(s.result(ectx()).kurz, /Schiefe von 0,79: .* nur noch eine Schiefe von 0,14\. Sie sind fast symmetrisch, wie eine Glocke\./);
+    // Nach der eigenen Vorhersage (Ausreißer 30.000 €) sind die Mittelwerte noch deutlich schief, für jede Person (R: 1,33 bis 1,38).
+    const nach = (k: number) => ectx(applyOp(rows, 'einkommen', 'outlier', 30000, k));
+    assert.ok(close(einkommenSchiefe(nach(0)).skewMean, 1.333290853, 1e-8) && close(einkommenSchiefe(nach(0)).skew, 7.302734759, 1e-8), 'P001 auf 30.000 € wie in R');
+    assert.match(s.result(nach(0)).kurz, /Schiefe von 7,3: .* Schiefe von 1,33\. Sie sind noch deutlich schief; die Glocke passt hier schlecht\.$/);
+    const all = rows.map((_, k) => einkommenSchiefe(nach(k)).skewMean);
+    assert.ok(close(Math.min(...all), 1.328943677, 1e-8) && close(Math.max(...all), 1.377220006, 1e-8), 'Spanne über alle 200 wie in R');
+    for (let k = 0; k < rows.length; k++) assert.ok(!/fast symmetrisch/.test(s.result(nach(k)).kurz), `Person ${k + 1}: Ergebnis behauptet Symmetrie`);
     assert.match(s.result(ectx()).zusatz!, /3\.155 € im Monat/);
   }
 });
@@ -289,7 +305,13 @@ test('B8 confidence: Konfidenzintervalle für das Vertrauen in den Bundestag und
   assert.ok(close(kritisch(95, 9), 2.262157163, 1e-8), 'qt(.975, 9)');
   const k = confidence.compute(confidence.initial);
   assert.equal(confidence.metrics[2].value(k), '3,89 bis 4,00');
-  assert.match(confidence.interpret(k).kurz, /zwischen 3,89 und 4,00\. Bei wiederholten Zufallsstichproben mit 3\.592 Befragten enthielten etwa 95 % solcher Intervalle den wahren Mittelwert\./);
+  assert.equal(confidence.interpret(k).kurz, 'Rechnet man den ALLBUS wie eine einfache Zufallsstichprobe, sind für das mittlere Vertrauen Werte zwischen 3,89 und 4,00 plausibel. Bei wiederholten Zufallsstichproben mit 3.592 Befragten enthielten etwa 95 % solcher Intervalle den wahren Mittelwert. Das Intervall erfasst nur den Zufallsfehler: Gewichtet liegt der Mittelwert bei 4,01, knapp außerhalb.');
+  assert.ok(VERTRAUEN.gewichtet > k.hi, 'gewichtet außerhalb des 95-%-Intervalls');
+  assert.match(confidence.interpret(confidence.compute({ ...confidence.initial, t: 99 })).kurz, /Gewichtet liegt der Mittelwert bei 4,01, hier knapp innerhalb\.$/);
+  const vier = confidence.compute(confidence.quick[0].apply(confidence.initial));
+  assert.ok(close(vier.lo, 3.920246943, 1e-7) && close(vier.hi, 3.973405057, 1e-7), 'n mal 4 wie in R');
+  assert.equal(confidence.interpret(vier).kurz, 'Rechnet man wie bei einer einfachen Zufallsstichprobe mit 14.368 Befragten, wären für das mittlere Vertrauen Werte zwischen 3,92 und 3,97 plausibel. Bei wiederholten Zufallsstichproben dieser Größe enthielten etwa 95 % solcher Intervalle den wahren Mittelwert.');
+  assert.match(confidence.genau.paragraphs[2], /4,01, also knapp außerhalb des Intervalls: Ein Konfidenzintervall misst nur den Zufallsfehler/);
   assert.match(confidence.interpret(k).fachlich, /3,95 ± 1,96 · 0,027, also von 3,89 bis 4,00\. t ist das 97,5-%-Quantil der t-Verteilung mit 3\.591 Freiheitsgraden\./);
   assert.deepEqual(confidence.worked(k).map(w => w.text), [
     '1,63 / √3.592 ≈ 1,63 / 59,93 ≈ 0,027.', 'Für 95 % und 3.591 Freiheitsgrade liefert die t-Verteilung t ≈ 1,96.',
@@ -297,7 +319,8 @@ test('B8 confidence: Konfidenzintervalle für das Vertrauen in den Bundestag und
   assert.match(confidence.think.explain, /von etwa 1,96 auf etwa 2,58/);
   assert.match(confidence.compare(k), /^Das Intervall ist 0,11 Skalenpunkte breit\./);
   assert.equal(confidence.check.diagnose(0.98).slice(0, 5), 'Fast!');
-  const l = lernzeitKi(ctx());
+  const l = lernzeitKi(ctx()), viaIntervall = intervall(l.m, { s: l.s, n: l.n, t: 95 });
+  assert.ok(close(l.lo, viaIntervall.lo, 1e-10) && close(l.hi, viaIntervall.hi, 1e-10), 'oneSampleT und intervall rechnen dasselbe');
   assert.ok(close(l.lo, 7.300066098, 1e-8) && close(l.hi, 8.202933902, 1e-8) && close(l.width, 0.9028678044, 1e-9) && close(l.se, 0.2289269018, 1e-9), 'Lernzeit');
   const s = confidenceTabs.sample!;
   if (s.kind === 'analysis') assert.match(s.result(ctx()).kurz, /zwischen 7,30 und 8,20 Stunden/);
@@ -320,7 +343,12 @@ test('B8 prediction_interval: Vorhersage- und Konfidenzintervall der Geraden Wis
     assert.ok(close(p.half, half, 1e-7) && close(p.ciHalf, ci, 1e-8), `n = ${n}`);
   }
   const k = predictionInterval.compute(predictionInterval.initial);
-  assert.match(predictionInterval.interpret(k).kurz, /mit 10 Stunden Lernzeit sind 6,08 bis 16,50 gelöste Aufgaben plausibel\. .* im Mittel 10,84 bis 11,74 Aufgaben/);
+  assert.equal(predictionInterval.interpret(k).kurz, 'Für eine neue Person mit 10 Stunden Lernzeit sind 6,08 bis 16,50 gelöste Aufgaben plausibel. Für den Mittelwert aller Personen mit dieser Lernzeit sind nur 10,84 bis 11,74 Aufgaben plausibel; jede einzelne streut viel weiter.');
+  assert.ok(close(predictionInterval.check.answer, Math.sqrt(1.0201), 1e-12) && close(Math.sqrt(0.0201), 0.1417744688, 1e-9), 'Kontrollfrage wie in R');
+  assert.match(predictionInterval.check.diagnose(1.0201), /^Fast! Das ist 1 \+ h₀/);
+  assert.match(predictionInterval.check.diagnose(0.14), /^Fast! Das ist √h₀ allein/);
+  assert.match(predictionInterval.check.diagnose(1.02), /^Fast! Das ist 1 \+ h₀/);
+  assert.match(predictionInterval.check.diagnose(1.14), /^Fast! Die 1 gehört unter die Wurzel/);
   assert.match(predictionInterval.interpret(predictionInterval.compute({ x: 18, n: 200, t: 95 })).kurz, /das Modell ist am Rand nur eine Näherung/);
   const w = predictionInterval.worked(k).map(x => x.text);
   assert.match(w[0], /^Die Gerade ŷ = 6,1 \+ 0,52 · x sagt für 10 Stunden 11,29 Aufgaben voraus/);
@@ -334,7 +362,7 @@ test('B8 prediction_interval: Vorhersage- und Konfidenzintervall der Geraden Wis
   const s = predictionIntervalTabs.sample!;
   if (s.kind === 'analysis') {
     const r = s.result(xy());
-    assert.match(r.kurz, /mit 7,75 Stunden Lernzeit sagt die Gerade 10,13 Aufgaben voraus\. Plausibel sind 4,92 bis 15,33 gelöste Aufgaben\. .* nur 9,76 bis 10,49\./);
+    assert.match(r.kurz, /mit 7,75 Stunden Lernzeit sagt die Gerade 10,13 Aufgaben voraus\. Plausibel sind 4,92 bis 15,33 gelöste Aufgaben\. Für den Mittelwert solcher Personen sind nur 9,76 bis 10,49 Aufgaben plausibel\./);
     assert.equal(r.zusatz, '191 von 200 Befragten liegen höchstens 5,20 Aufgaben neben ihrer eigenen Vorhersage.');
   }
   const out = CATALOG_OUTPUT['linear_regression:0'].output;

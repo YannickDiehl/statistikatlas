@@ -16,8 +16,8 @@ export const LERNZEIT = { n: 200, sum: 1550.3, mean: 7.7515, median: 7.6, s2: 10
 
 export const estimator: ConceptCard = {
   concept: 'estimator',
-  wofuer: 'Du willst wissen, wie lange Erwachsene typischerweise lernen. Die 200 Befragten des Lehrdatensatzes geben dir 200 Zahlen. Wie wird daraus eine einzige Zahl für alle?',
-  kurz: 'Ein Schätzer ist eine Rechenregel, die aus den Daten eine Zahl für den unbekannten Parameter macht. Die Zahl, die dabei herauskommt, heißt Schätzung.',
+  wofuer: 'Du willst wissen, wie lange Erwachsene typischerweise lernen. Stell dir vor, die 200 Befragten des Lehrdatensatzes wären eine Zufallsstichprobe aus allen Erwachsenen. Wie wird aus ihren 200 Zahlen eine einzige Zahl für alle?',
+  kurz: 'Ein Schätzer ist eine Rechenregel, die aus den Daten eine Zahl für eine unbekannte Größe aller Menschen macht, etwa ihren Mittelwert. Die Zahl, die dabei herauskommt, heißt Schätzung.',
   stellDirVor: {
     text: `Die Regel „alles zusammenzählen und durch die Zahl der Befragten teilen“ ergibt für die 200 Befragten ${unit(LERNZEIT.mean, 'Stunde', 'Stunden')} Lernzeit in den letzten sieben Tagen. Diese Regel ist der Schätzer, die ${num(LERNZEIT.mean)} Stunden sind die Schätzung. Eine andere Regel, der mittlere Wert der Reihe nach (Median), ergibt ${unit(LERNZEIT.median, 'Stunde', 'Stunden')}.`,
     figures: [
@@ -109,7 +109,7 @@ export const estimatorTabs: ConceptTabs = {
         zusatz: `Für die Streuung gibt es ebenfalls zwei Regeln: s² mit n − 1 ergibt ${num(e.s2)} h², die Quadratsumme durch n ${num(e.ssN)} h².`,
       };
     },
-    voraussetzung: 'Mittelwert und Median schätzen dieselbe Zielgröße nur, wenn die Lernzeiten in der Grundgesamtheit symmetrisch verteilt sind.',
+    voraussetzung: 'Ist die Lernzeit in der Grundgesamtheit symmetrisch verteilt, schätzen Mittelwert und Median dieselbe Zielgröße. Bei schiefer Verteilung schätzen sie Verschiedenes.',
     think: [
       {
         question: 'Eine Person lernt plötzlich 40 Stunden. Was macht die Schätzung nach der Regel Mittelwert?',
@@ -140,7 +140,7 @@ export const estimatorTabs: ConceptTabs = {
       { id: 'law_large_numbers', why: 'Mit mehr Befragten landet der Mittelwert immer verlässlicher beim Parameter.' },
     ],
     more: [
-      { id: 'median', why: 'Eine zweite Regel für die Mitte, robust gegen Ausreißer.' },
+      { id: 'median', why: 'Eine zweite Regel: der mittlere Wert der Reihe nach, robust gegen Ausreißer.' },
       { id: 'variance', why: 'Warum die Regel für die Streuung durch n − 1 teilt.' },
     ],
   },

@@ -10,6 +10,9 @@ const STARK = INTERESSE.stark / INTERESSE.n;
 /** Wie viele Befragte die gedachte kleine Stichprobe hat: die ersten 20 (P001 bis P020). */
 export const ERSTE = 20;
 
+/** Ob alle Befragten dieselbe Lernzeit haben (dann trifft jede Stichprobe μ genau). */
+const gleich = (c: SampleCtx) => { const x = columnX(c, 'lernzeit'); return x.every(v => Math.abs(v - x[0]) < 1e-9); };
+
 /** μ aller Befragten (gedachte Grundgesamtheit), x̄ der ersten 20 und die Anteile mit Weiterbildung. */
 export function parameter(c: SampleCtx) {
   const x = columnX(c, 'lernzeit'), w = sampleColumn(c.rows, 'weiterbildung');
@@ -24,7 +27,7 @@ export const populationParameter: ConceptCard = {
     text: `Im ALLBUS 2023 haben ${count(INTERESSE.n)} Menschen gesagt, wie stark sie sich für Politik interessieren. ${count(INTERESSE.stark)} von ihnen antworten „stark“ oder „sehr stark“, das sind ${pct(STARK)} (ungewichtet). Diese Zahl kennst du genau; sie gilt für die Befragten. Wissen willst du aber den Anteil unter allen Erwachsenen in Deutschland. Den kennt niemand, und die ${pct(STARK)} sind eine Schätzung dafür.`,
     figures: [
       { label: 'Befragte mit gültiger Antwort', value: count(INTERESSE.n) },
-      { label: 'Anteil in der Stichprobe, p', value: pct(STARK) },
+      { label: 'Anteil in der Stichprobe, p̂', value: pct(STARK) },
       { label: 'Anteil aller Erwachsenen, π', value: 'unbekannt' },
     ],
   },
@@ -44,7 +47,7 @@ export const populationParameter: ConceptCard = {
       title: 'Die Zielgröße benennen',
       was: 'Sag, welche Zahl über die Grundgesamtheit dich interessiert: ein Mittelwert μ, ein Anteil π, eine Streuung σ. Griechische Buchstaben stehen für Parameter.',
       warum: 'Erst die Zielgröße macht klar, worauf sich eine Schätzung oder eine Hypothese bezieht.',
-      acht: 'p und π klingen gleich, meinen aber Verschiedenes. p ist der Anteil in deiner Stichprobe, π der Anteil in der Grundgesamtheit.',
+      acht: 'p̂ und π sehen ähnlich aus, meinen aber Verschiedenes. p̂, sprich p Dach, ist der Anteil in deiner Stichprobe; das Dach heißt geschätzt. π ist der Anteil in der Grundgesamtheit.',
       concept: 'hypothesis',
     },
     {
@@ -58,8 +61,8 @@ export const populationParameter: ConceptCard = {
   ausprobieren: [
     {
       question: 'Ein anderes Team befragt im selben Jahr eine neue Zufallsstichprobe. Was ändert sich?',
-      options: ['der Parameter π', 'der Anteil p in der Stichprobe', 'beides'], correct: 1, step: 3,
-      explain: 'π gehört zu allen Erwachsenen und steht fest. p hängt davon ab, wer zufällig in die Stichprobe kommt, und fällt etwas anders aus.',
+      options: ['der Parameter π', 'der Anteil p̂ in der Stichprobe', 'beides'], correct: 1, step: 3,
+      explain: 'π gehört zu allen Erwachsenen und steht fest. p̂ hängt davon ab, wer zufällig in die Stichprobe kommt, und fällt etwas anders aus.',
       kurz: 'Neue Stichprobe, neue Schätzung, gleicher Parameter.',
     },
     {
@@ -111,7 +114,7 @@ export const populationParameterTabs: ConceptTabs = {
     result: c => {
       const p = parameter(c);
       return {
-        kurz: `Dann ist μ = ${unit(p.mu, 'Stunde', 'Stunden')}: die mittlere Lernzeit aller ${p.N}. Hättest du nur die ersten ${ERSTE} befragt, wäre deine Schätzung ${unit(p.xbar, 'Stunde', 'Stunden')}. μ steht fest; die Schätzung hängt davon ab, wen du fragst.`,
+        kurz: `Dann ist μ = ${unit(p.mu, 'Stunde', 'Stunden')}: die mittlere Lernzeit aller ${p.N}. Hättest du nur die ersten ${ERSTE} befragt, wäre deine Schätzung ${unit(p.xbar, 'Stunde', 'Stunden')}. ${Math.abs(p.xbar - p.mu) < 0.005 && gleich(c) ? 'μ steht fest; hier trifft jede Stichprobe μ genau, weil alle gleich lange lernen.' : 'μ steht fest; die Schätzung hängt davon ab, wen du fragst.'}`,
         fachlich: `Parameter der gedachten Grundgesamtheit: μ = ${num(p.mu)} h. Statistik der Stichprobe P001 bis ${p.last}: x̄ = ${num(p.xbar)} h.`,
         zusatz: `Genauso beim Anteil mit Weiterbildung: π = ${pct(p.pi)} aller ${p.N}, aber ${pct(p.p)} unter den ersten ${ERSTE}.`,
       };

@@ -4,6 +4,7 @@
 import type { ConceptTabs, SampleCtx, SentenceTemplate } from '../../types';
 import { close, count, fixed, num, unit } from '../../format';
 import { qt } from '../../../tasks/kit/dist';
+import { oneSampleT } from '../../../tasks/kit/means';
 import { VERTRAUEN, columnX, mean, sd1, small } from './daten';
 
 export type KiValues = { s: number; n: number; t: number };
@@ -18,19 +19,25 @@ export function intervall(m: number, v: KiValues): KiStats {
   return { ...v, se, tq, df, moe, lo: m - moe, hi: m + moe, width: 2 * moe };
 }
 
-/** Konfidenzintervall der mittleren Lernzeit (Spalte x) aus den aktuellen Daten, 95 %. */
+/**
+ * Konfidenzintervall der mittleren Lernzeit (Spalte x) aus den aktuellen Daten, 95 %: Grenzen aus dem gemeinsamen
+ * `oneSampleT` (src/tasks/kit/means.ts), SE und t für den Text aus `intervall`. `intervall` selbst bleibt, weil die
+ * Formel als Satz mit gedachten Werten für s, n und Niveau rechnet, nicht mit Daten.
+ */
 export function lernzeitKi(c: SampleCtx) {
-  const x = columnX(c, 'lernzeit'), m = mean(x);
-  return { m, ...intervall(m, { s: sd1(x), n: x.length, t: 95 }) };
+  const x = columnX(c, 'lernzeit'), m = mean(x), k = intervall(m, { s: sd1(x), n: x.length, t: 95 }), t = oneSampleT(x);
+  return t ? { ...k, m: t.mean, lo: t.ci[0], hi: t.ci[1], width: t.ci[1] - t.ci[0] } : { ...k, m };
 }
 
 const START: KiValues = { s: VERTRAUEN.sd, n: VERTRAUEN.n, t: 95 };
+/** Ob die Regler noch auf den ALLBUS-Werten stehen (Streuung und Fallzahl); nur dann gilt der Vergleich mit dem gewichteten Mittel. */
+const allbusWerte = (v: KiValues) => Math.abs(v.s - START.s) < 1e-9 && v.n === START.n;
 
 export const confidence: SentenceTemplate<KiValues, KiStats> = {
   concept: 'confidence',
   picture: 'b08-intervall',
   wofuer: `Wie sehr vertrauen die Menschen in Deutschland dem Bundestag? Im ALLBUS 2023 haben ${count(VERTRAUEN.n)} Menschen auf einer Skala von 1 (gar kein Vertrauen) bis 7 (großes Vertrauen) geantwortet, im Mittel mit ${num(VERTRAUEN.mean)} (ungewichtet). Welche Werte sind für alle Erwachsenen plausibel?`,
-  kurz: 'Ein Konfidenzintervall ist ein Bereich plausibler Werte für die unbekannte Zahl in der Grundgesamtheit. Je schmaler es ist, desto genauer kennst du sie.',
+  kurz: 'Ein Konfidenzintervall ist ein Bereich plausibler Werte für eine unbekannte Zahl über alle, die dich interessieren, etwa ihren Mittelwert. Je schmaler es ist, desto genauer kennst du sie.',
   fachlich: 'Ein Bereich, den ein Schätzverfahren mit festgelegter langfristiger Überdeckungsrate erzeugt: Bei 95 % enthalten 95 % solcher Intervalle den festen Parameter, wenn Modell und Verfahren stimmen.',
   initial: START,
   compute: v => intervall(VERTRAUEN.mean, v),
@@ -89,7 +96,9 @@ export const confidence: SentenceTemplate<KiValues, KiStats> = {
       : 'Noch nicht ganz. Nimm den kritischen Wert 1,96 mal den Standardfehler.',
   },
   interpret: s => ({
-    kurz: `Plausible Werte für das mittlere Vertrauen aller Erwachsenen liegen zwischen ${fixed(s.lo)} und ${fixed(s.hi)}. Bei wiederholten Zufallsstichproben mit ${count(s.n)} Befragten enthielten etwa ${num(s.t)} % solcher Intervalle den wahren Mittelwert.`,
+    kurz: allbusWerte(s)
+      ? `Rechnet man den ALLBUS wie eine einfache Zufallsstichprobe, sind für das mittlere Vertrauen Werte zwischen ${fixed(s.lo)} und ${fixed(s.hi)} plausibel. Bei wiederholten Zufallsstichproben mit ${count(s.n)} Befragten enthielten etwa ${num(s.t)} % solcher Intervalle den wahren Mittelwert. Das Intervall erfasst nur den Zufallsfehler: Gewichtet liegt der Mittelwert bei ${num(VERTRAUEN.gewichtet)}, ${VERTRAUEN.gewichtet > s.hi ? 'knapp außerhalb' : 'hier knapp innerhalb'}.`
+      : `Rechnet man wie bei einer einfachen Zufallsstichprobe mit ${count(s.n)} Befragten, wären für das mittlere Vertrauen Werte zwischen ${fixed(s.lo)} und ${fixed(s.hi)} plausibel. Bei wiederholten Zufallsstichproben dieser Größe enthielten etwa ${num(s.t)} % solcher Intervalle den wahren Mittelwert.`,
     fachlich: `${num(s.t)}-%-Konfidenzintervall: x̄ ± t · SE = ${num(VERTRAUEN.mean)} ± ${num(s.tq)} · ${small(s.se)}, also von ${fixed(s.lo)} bis ${fixed(s.hi)}. t ist das ${num(50 + s.t / 2, 1)}-%-Quantil der t-Verteilung mit ${count(s.df)} Freiheitsgraden.`,
   }),
   think: {
@@ -104,7 +113,7 @@ export const confidence: SentenceTemplate<KiValues, KiStats> = {
     paragraphs: [
       'Das konkrete Intervall gibt dem festen Parameter keine nachträgliche Wahrscheinlichkeit von 95 %. Die 95 % beschreiben das Verfahren: Über viele Stichproben enthalten etwa 95 % der so gebauten Intervalle den wahren Wert.',
       'Der kritische Wert kommt aus der t-Verteilung mit n − 1 Freiheitsgraden, weil s aus den Daten geschätzt ist. Bei vielen Befragten ist er fast 1,96, der Wert der Standardnormalverteilung.',
-      `Hier ungewichtet und wie eine einfache Zufallsstichprobe gerechnet. Der ALLBUS zieht erst Gemeinden und befragt den Osten stärker; gewichtet liegt der Mittelwert bei ${num(VERTRAUEN.gewichtet)}, und der echte Standardfehler ist etwas größer.`,
+      `Hier ungewichtet und wie eine einfache Zufallsstichprobe gerechnet. Gewichtet liegt der Mittelwert bei ${num(VERTRAUEN.gewichtet)}, also knapp außerhalb des Intervalls: Ein Konfidenzintervall misst nur den Zufallsfehler, nicht die Verzerrung durch den Stichprobenplan. Der echte Standardfehler ist wegen der Gemeindeauswahl außerdem etwas größer.`,
       'Symmetrische Intervalle sind nur eine Form. Für Anteile nahe 0 oder 1 und für umgerechnete Größen gibt es Intervalle, die nicht symmetrisch um die Schätzung liegen.',
     ],
   },
@@ -123,7 +132,7 @@ export const confidenceTabs: ConceptTabs = {
         zusatz: `Das Intervall ist ${unit(k.width, 'Stunde', 'Stunden')} breit. Mit viermal so vielen Befragten wäre es etwa halb so breit.`,
       };
     },
-    voraussetzung: 'Die Befragten sind unabhängig, und der Mittelwert ist annähernd normalverteilt. Bei 200 Befragten ohne extreme Ausreißer ist das hier erfüllt.',
+    voraussetzung: 'Die Befragten sind unabhängig, und der Mittelwert ist annähernd normalverteilt. Bei 200 Befragten ist das meist erfüllt; ein einzelner extremer Wert wie 40 Stunden kann es stören.',
     think: [
       {
         question: 'Alle lernen eine Stunde mehr. Was macht die Breite des Intervalls?',
@@ -188,7 +197,7 @@ export const confidenceTabs: ConceptTabs = {
     ],
     more: [
       { id: 'effect', why: 'Ein Intervall zeigt, wie groß ein Effekt plausibel ist, nicht nur ob es ihn gibt.' },
-      { id: 'power', why: 'Wer genauer schätzen will, plant mehr Befragte ein.' },
+      { id: 'power', why: 'Wie viele Befragte ein Test braucht, um einen Effekt verlässlich zu finden; mit mehr Befragten wird auch das Intervall schmaler.' },
     ],
   },
 };

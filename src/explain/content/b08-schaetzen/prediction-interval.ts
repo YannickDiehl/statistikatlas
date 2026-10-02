@@ -88,16 +88,18 @@ export const predictionInterval: SentenceTemplate<PiValues, PiStats> = {
   ],
   compare: s => `Für eine neue Person ist der Bereich ${num(s.hi - s.lo)} Aufgaben breit, für den Mittelwert vergleichbarer Personen nur ${num(s.ciHi - s.ciLo)}.`,
   check: {
-    question: 'Unter der Wurzel steht 1 + h₀. Was kommt bei h₀ = 0,44 heraus, wenn du die Wurzel ziehst?',
-    answer: 1.2, tolerance: 0.0011,
-    right: 'Genau, 1,2: √(1 + 0,44) = √1,44 = 1,2.',
-    diagnose: v => close(v, 1.44, 0.0011) ? 'Fast! Das ist 1 + h₀. Jetzt noch die Wurzel ziehen.'
-      : close(v, Math.sqrt(0.44), 0.0011) ? 'Fast! Das ist √h₀ allein, wie beim Konfidenzintervall. Beim Vorhersageintervall kommt die 1 unter die Wurzel.'
-      : close(v, 1 + Math.sqrt(0.44), 0.0011) ? 'Fast! Die 1 gehört unter die Wurzel: erst 1 + 0,44, dann die Wurzel.'
-      : 'Noch nicht ganz. Rechne erst 1 + 0,44 und ziehe dann die Wurzel.',
+    question: 'Unter der Wurzel steht 1 + h₀. Was kommt bei h₀ = 0,0201 heraus, wenn du die Wurzel ziehst? Zwei Nachkommastellen reichen.',
+    // Fehlantworten mit zwei Nachkommastellen (1,02; 0,14; 1,14) erkennt die Diagnose mit 0,005 Spielraum.
+    answer: 1.01, tolerance: 0.0011,
+    right: 'Genau, 1,01: √(1 + 0,0201) = √1,0201 = 1,01. Die 1 bestimmt fast alles; √h₀ allein wäre nur etwa 0,14.',
+    diagnose: v => close(v, 1.0201, 0.005) ? 'Fast! Das ist 1 + h₀. Jetzt noch die Wurzel ziehen.'
+      : close(v, Math.sqrt(0.0201), 0.005) ? 'Fast! Das ist √h₀ allein, wie beim Konfidenzintervall. Beim Vorhersageintervall kommt die 1 unter die Wurzel.'
+      : close(v, 1 + Math.sqrt(0.0201), 0.005) ? 'Fast! Die 1 gehört unter die Wurzel: erst 1 + 0,0201, dann die Wurzel.'
+      : close(v, 1, 0.0011) ? 'Fast! Fast richtig, nur zu stark gerundet. Mit zwei Nachkommastellen ist es 1,01.'
+      : 'Noch nicht ganz. Rechne erst 1 + 0,0201 und ziehe dann die Wurzel.',
   },
   interpret: s => ({
-    kurz: `Für eine neue Person mit ${unit(s.x, 'Stunde', 'Stunden')} Lernzeit sind ${fixed(s.lo)} bis ${fixed(s.hi)} gelöste Aufgaben plausibel. Personen mit dieser Lernzeit lösen im Mittel ${fixed(s.ciLo)} bis ${fixed(s.ciHi)} Aufgaben, aber jede einzelne streut viel weiter.${s.hi > 20 || s.lo < 0 ? ' Der Test hat 0 bis 20 Aufgaben; das Modell ist am Rand nur eine Näherung.' : ''}`,
+    kurz: `Für eine neue Person mit ${unit(s.x, 'Stunde', 'Stunden')} Lernzeit sind ${fixed(s.lo)} bis ${fixed(s.hi)} gelöste Aufgaben plausibel. Für den Mittelwert aller Personen mit dieser Lernzeit sind nur ${fixed(s.ciLo)} bis ${fixed(s.ciHi)} Aufgaben plausibel; jede einzelne streut viel weiter.${s.hi > 20 || s.lo < 0 ? ' Der Test hat 0 bis 20 Aufgaben; das Modell ist am Rand nur eine Näherung.' : ''}`,
     fachlich: `${num(s.t)}-%-Vorhersageintervall: ŷ₀ ± t · sₑ · √(1 + h₀) = ${num(s.yhat)} ± ${num(s.half)}. Unter dem Modell enthalten etwa ${num(s.t)} % solcher Intervalle den Wert einer neuen, unabhängigen Person. Das Konfidenzintervall für den bedingten Mittelwert nutzt √h₀ und reicht von ${fixed(s.ciLo)} bis ${fixed(s.ciHi)}.`,
   }),
   think: {
@@ -127,7 +129,7 @@ export const predictionIntervalTabs: ConceptTabs = {
     result: c => {
       const p = vorhersageDaten(c);
       return {
-        kurz: `Für eine neue Person mit ${unit(p.mx, 'Stunde', 'Stunden')} Lernzeit sagt die Gerade ${num(p.yhat)} Aufgaben voraus. Plausibel sind ${fixed(p.lo)} bis ${fixed(p.hi)} gelöste Aufgaben. Für den Mittelwert solcher Personen wären es nur ${fixed(p.ciLo)} bis ${fixed(p.ciHi)}.`,
+        kurz: `Für eine neue Person mit ${unit(p.mx, 'Stunde', 'Stunden')} Lernzeit sagt die Gerade ${num(p.yhat)} Aufgaben voraus. Plausibel sind ${fixed(p.lo)} bis ${fixed(p.hi)} gelöste Aufgaben. Für den Mittelwert solcher Personen sind nur ${fixed(p.ciLo)} bis ${fixed(p.ciHi)} Aufgaben plausibel.`,
         fachlich: `ŷ₀ ± t · sₑ · √(1 + h₀) = ${num(p.yhat)} ± ${num(p.tq)} · ${num(p.se)} · √(1 + 1 / ${p.N}) ≈ ${num(p.yhat)} ± ${fixed(p.half)}; an der Stelle x₀ = x̄ ist h₀ = 1 / n.`,
         zusatz: `${p.inside} von ${p.N} Befragten liegen höchstens ${fixed(p.half)} Aufgaben neben ihrer eigenen Vorhersage.`,
       };
@@ -153,7 +155,7 @@ export const predictionIntervalTabs: ConceptTabs = {
       {
         question: 'Eine Person löst plötzlich alle 20 Aufgaben. Was passiert mit der Breite des Vorhersageintervalls?',
         options: ['steigt', 'bleibt genau gleich', 'sinkt'], correct: 0,
-        explain: 'Die Person liegt weiter über der Geraden als vorher. Damit wächst sₑ, die Streuung um die Gerade, und das Intervall wird breiter.',
+        explain: 'Die Person liegt jetzt weiter von der Geraden entfernt als vorher. Damit wächst sₑ, die Streuung um die Gerade, und das Intervall wird breiter.',
         kurz: 'Mehr Streuung um die Gerade, breitere Vorhersage.',
         tryIt: { label: 'die gewählte Person auf 20 Aufgaben', op: 'outlier', column: 'y', value: 20 },
         expect: { change: 'up' },
@@ -163,7 +165,7 @@ export const predictionIntervalTabs: ConceptTabs = {
   r: {
     entry: 'linear_regression', variant: 0,
     outputMap: [
-      { match: 'Mean', atlas: 'ȳ, mittlerer Wissenstest', explain: 'Die Befragten lösen im Mittel 10,13 Aufgaben. Für eine Person mit durchschnittlicher Lernzeit sagt die Gerade genau diesen Wert voraus.' },
+      { match: 'Mean', atlas: 'ȳ, mittlerer Wissenstest', explain: 'Die Befragten lösen im Mittel 10,13 Aufgaben. Die Gerade aus „Verstehen“ sagt für eine Person mit durchschnittlicher Lernzeit genau diesen Wert voraus.' },
       { match: 'R Square', atlas: 'erklärter Anteil R²', explain: 'Wie viel der Unterschiede im Wissenstest das Modell erfasst. Der Rest ist die Streuung um die Gerade, die das Vorhersageintervall breit macht.' },
       { match: 'Std. Error of the Estimate', atlas: 'sₑ', explain: 'Daneben steht sₑ, die Streuung der Befragten um ihre Vorhersage. Dieses Modell nimmt das Alter dazu; ohne Alter sind es 2,63 Aufgaben.' },
       { match: '9.180750', atlas: 'ŷ für P001', explain: 'predict() rechnet für jede Person die Vorhersage aus, für P001 rund 9,18 Aufgaben. Um so einen Wert legt das Vorhersageintervall seinen Bereich.' },

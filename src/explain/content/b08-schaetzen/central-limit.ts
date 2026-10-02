@@ -13,12 +13,22 @@ export const GEMITTELT = 30;
 /** Schiefe der Mittelwerte aus n unabhängigen Ziehungen: Schiefe der Einzelwerte geteilt durch √n. */
 export const schiefeMittel = (n: number, g = H.skew) => g / Math.sqrt(n);
 
-/** Wie gut die Glocke passt, in Worten, nach der Schiefe der Mittelwerte. */
+/**
+ * Wie gut die Glocke zu Mittelwerten mit der Schiefe g passt, in Worten; eine Schwelle für Bild, Regler und Reiter.
+ * Ab 0,5: noch deutlich schief; ab 0,25: recht gut; darunter: fast symmetrisch. `bars` spricht von den Balken des Bildes.
+ */
+export function glockeUrteil(g: number, bars: boolean): string {
+  const a = Math.abs(g);
+  if (a >= 0.5) return bars ? 'Die Verteilung ist noch deutlich schief.' : 'Sie sind noch deutlich schief; die Glocke passt hier schlecht.';
+  if (a >= 0.25) return `Die Glocke passt schon recht gut; ${g > 0 ? 'rechts' : 'links'} bleibt ein kleiner Überhang.`;
+  return bars ? 'Die Balken folgen fast genau der Glockenkurve.' : 'Sie sind fast symmetrisch, wie eine Glocke.';
+}
+
+/** Text zum Regler: Schiefe der Mittelwerte aus n Befragten und wie gut die Glocke passt. */
 export function glockeText(n: number): string {
   if (n === 1) return `Mit einer Person siehst du die Haushaltsgrößen selbst: Die Schiefe beträgt ${num(H.skew)}, rechts hängt ein langer Ausläufer. Die Glockenkurve passt schlecht.`;
   const g = schiefeMittel(n);
-  const verdict = g >= 0.5 ? 'Die Verteilung ist noch deutlich schief.' : g >= 0.25 ? 'Die Glocke passt schon recht gut; rechts bleibt ein kleiner Überhang.' : 'Die Balken folgen fast genau der Glockenkurve.';
-  return `Mittelwerte aus ${n} Befragten haben eine Schiefe von ${num(H.skew)} / √${n} ≈ ${num(g)}. ${verdict}`;
+  return `Mittelwerte aus ${n} Befragten haben eine Schiefe von ${num(H.skew)} / √${n} ≈ ${num(g)}. ${glockeUrteil(g, true)}`;
 }
 
 /** Schiefe des Haushaltseinkommens (Spalte x) und der Mittelwerte aus 30 Ziehungen, aus den aktuellen Daten. */
@@ -130,7 +140,7 @@ export const centralLimitTabs: ConceptTabs = {
     result: c => {
       const e = einkommenSchiefe(c);
       return {
-        kurz: `Die einzelnen Einkommen haben eine Schiefe von ${num(e.skew)}: Rechts zieht sich ein Ausläufer zu hohen Einkommen. Mittelwerte aus ${GEMITTELT} Befragten haben nur noch eine Schiefe von ${num(e.skewMean)}. Sie sind fast symmetrisch, wie eine Glocke.`,
+        kurz: `Die einzelnen Einkommen haben eine Schiefe von ${num(e.skew)}: Rechts zieht sich ein Ausläufer zu hohen Einkommen. Mittelwerte aus ${GEMITTELT} Befragten haben nur noch eine Schiefe von ${num(e.skewMean)}. ${glockeUrteil(e.skewMean, false)}`,
         fachlich: `Schiefe des Mittelwerts aus n unabhängigen Ziehungen = Schiefe der Einzelwerte / √n = ${num(e.skew)} / √${GEMITTELT} ≈ ${num(e.skewMean)}.`,
         zusatz: `0 hieße ganz symmetrisch. Das mittlere Einkommen der ${e.N} beträgt ${count(e.mean)} € im Monat.`,
       };

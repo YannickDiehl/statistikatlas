@@ -43,7 +43,7 @@ export const samplingDistribution: ConceptCard = {
   },
   heisst: {
     sym: 'X̄', say: 'X quer',
-    fach: 'Die Stichprobenverteilung ist die Verteilung eines Schätzers über alle möglichen Stichproben desselben Umfangs aus demselben Modell oder Erhebungsdesign. Bei unabhängigen Beobachtungen gilt E(X̄) = μ und Var(X̄) = σ² / n.',
+    fach: 'Die Stichprobenverteilung ist die Verteilung eines Schätzers über alle möglichen Stichproben desselben Umfangs aus demselben Modell oder Erhebungsdesign. Bei unabhängigen Beobachtungen gilt E(X̄) = μ und Var(X̄) = σ² / n. Bei einem Anteil ist X̄ der Mittelwert einer Ja-nein-Variable mit 0 und 1.',
   },
   bausteine: [
     {

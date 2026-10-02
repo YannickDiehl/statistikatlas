@@ -86,7 +86,7 @@ function GlockeVerteilung({ n }: { n: number }) {
   const bell = (v: number) => step * Math.exp(-0.5 * ((v - H.mu) / sd) ** 2) / (sd * Math.sqrt(2 * Math.PI));
   return <Verteilung bars={bars} step={step} domain={domain} ticks={niceTicks(domain[0], domain[1], 5)} format={v => num(v)}
     curve={bell} marks={[{ x: H.mu, label: `μ = ${num(H.mu)}` }]}
-    legend="Linie: Glockenkurve mit gleicher Mitte und Streuung"
+    legend="Linie: Glocke mit gleicher Mitte und Streuung"
     title={n === 1 ? 'Haushaltsgröße einer Person' : `mittlere Haushaltsgröße von ${n} Befragten`}
     label={`Exakte Verteilung ${n === 1 ? 'der Haushaltsgröße' : `der mittleren Haushaltsgröße von ${n} Befragten`} im ALLBUS 2023 mit Glockenkurve. Schiefe ${num(schiefeMittel(n))}${n === 1 ? ': rechts ein langer Ausläufer.' : '.'}`} />;
 }
