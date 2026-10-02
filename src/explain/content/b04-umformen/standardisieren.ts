@@ -254,7 +254,7 @@ export const standardisieren: Workshop<number[], ZStats> = {
           'Im Atlas teilt man durch die korrigierte Stichproben-Standardabweichung mit n − 1. Dann haben die z-Werte genau die Standardabweichung 1. Manche Lehrbücher teilen durch die Standardabweichung mit n; die z-Werte liegen dann etwas weiter von der 0 entfernt.',
           'Ein z-Wert hängt von der Gruppe ab. Dieselben 10 Stunden sind in einer Gruppe, die viel lernt, unterdurchschnittlich. Wer z-Werte zweier Gruppen vergleicht, vergleicht Lagen, keine Stunden.',
           'Nur wenn die Werte annähernd normalverteilt sind, lässt sich aus z ein Anteil ablesen, etwa: Unter z = 1 liegen dann rund 84 %. Ohne diese Annahme geht das nicht; die Form der Verteilung bleibt beim Standardisieren erhalten.',
-          'In R: std(lernzeit, method = "sd", suffix = "_z"). "2sd" teilt durch zwei Standardabweichungen, "gmd" durch die Gini-Mitteldifferenz. "mad" zieht statt der Mitte den Median ab, den mittleren Wert der Reihe nach, und teilt durch den Median der Abstände zu ihm (mal 1,4826).',
+          'In R: std(lernzeit, method = "sd", suffix = "_z"). "2sd" teilt durch zwei Standardabweichungen, "gmd" durch die Gini-Mitteldifferenz. "mad" zieht statt der Mitte den Median ab, den mittleren Wert der Reihe nach. Geteilt wird durch den Median der Abstände ohne Vorzeichen, mal rund 1,48.',
         ],
       },
     },

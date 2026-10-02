@@ -308,7 +308,7 @@ export const bridgeReihe: Bridge<Reihe> = {
   },
   lines: [
     {
-      all: c => `Alle ${N(c)} Werte von „${c.col.title}“ der Reihe nach: Platz 1 hat ${c.u(c.s.sorted[0])}, Platz ${N(c)} hat ${c.u(c.s.sorted[N(c) - 1])}.`,
+      all: c => `Alle ${N(c)} Werte von „${c.col.title}“ stehen jetzt der Reihe nach. Auf Platz 1 steht der kleinste Wert, ${c.u(c.s.sorted[0])}, auf Platz ${N(c)} der größte, ${c.u(c.s.sorted[N(c) - 1])}.`,
       person: c => `${PB(c)} hat ${c.u(c.values[c.who])} und steht der Reihe nach auf ${placeOf(c)}.`,
     },
     {
