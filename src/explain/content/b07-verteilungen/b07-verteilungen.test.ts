@@ -78,7 +78,7 @@ test('B7 Standardnormalverteilung: z, Fläche und die z-Werte der 200 wie in R',
   const { standardnormal, standardTabs, zFit, Z_START } = await import('./standard-normal');
   const s = standardnormal.compute(Z_START);
   ok(s.z, -1.926829, 'z'); assert.equal(s.zr, -1.93); ok(s.area, 0.02680342, 'Φ(−1,93)'); assert.equal(s.count, 7, 'höchstens 5,5 h');
-  assert.match(standardnormal.interpret(s).kurz, /^Laut Modell schlafen etwa 2,7 % der Menschen höchstens 5,5 Stunden pro Nacht\. 5,5 Stunden liegen 1,93 Standardabweichungen unter der Mitte\. Bei den 200 Befragten sind es 7 von 200\.$/);
+  assert.match(standardnormal.interpret(s).kurz, /^Laut Modell liegen etwa 2,7 % der Schlafdauern bei höchstens 5,5 Stunden pro Nacht\. 5,5 Stunden liegen 1,93 Standardabweichungen unter der Mitte\. Bei den 200 Befragten sind es 7 von 200\.$/);
   assert.equal(standardnormal.worked(s)[1].text, '(−1,58) / 0,82 ≈ −1,93. Das sind 1,93 Standardabweichungen unter der Mitte.');
   const two = standardnormal.compute(standardnormal.quick[0].apply(Z_START));
   assert.deepEqual([two.x, two.zr], [8.72, 2]); ok(two.area, 0.9772499, 'Φ(2)');

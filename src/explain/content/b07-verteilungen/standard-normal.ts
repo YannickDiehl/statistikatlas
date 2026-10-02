@@ -81,8 +81,8 @@ export const standardnormal: SentenceTemplate<ZValues, ZStats> = {
   },
   interpret: s => ({
     kurz: Math.abs(s.diff) < 0.005
-      ? `${num(s.x)} Stunden liegen genau auf der Mitte. Laut Modell schläft die Hälfte der Menschen höchstens so lange. Bei den 200 Befragten sind es ${s.count} von ${s.n}.`
-      : `Laut Modell schlafen ${aboutArea(s.area)} der Menschen höchstens ${num(s.x)} Stunden pro Nacht. ${num(s.x)} Stunden liegen ${unit(Math.abs(s.zr), 'Standardabweichung', 'Standardabweichungen')} ${side(s.zr)} der Mitte. Bei den 200 Befragten sind es ${s.count} von ${s.n}.`,
+      ? `${num(s.x)} Stunden liegen genau auf der Mitte. Laut Modell liegt die Hälfte der Schlafdauern bei höchstens diesem Wert. Bei den 200 Befragten sind es ${s.count} von ${s.n}.`
+      : `Laut Modell liegen ${aboutArea(s.area)} der Schlafdauern bei höchstens ${num(s.x)} Stunden pro Nacht. ${num(s.x)} Stunden liegen ${unit(Math.abs(s.zr), 'Standardabweichung', 'Standardabweichungen')} ${side(s.zr)} der Mitte. Bei den 200 Befragten sind es ${s.count} von ${s.n}.`,
     fachlich: `z = (x − μ) / σ = (${num(s.x)} − ${num(s.mu)}) / ${num(s.sigma)} ${eq(s.z)} ${num(s.z)}, P(X ≤ x) = Φ(${num(s.zr)}) ≈ ${areaText(s.area)}. Zwischen z = −1,96 und z = 1,96 liegen 95 % der Fläche.`,
   }),
   think: {
