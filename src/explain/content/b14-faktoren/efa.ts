@@ -1,8 +1,8 @@
 // Begriffskarte „Komponenten- & Faktorenanalyse“ (efa): der Ablauf von den Korrelationen bis zur Deutung, am Beispiel
 // der fünf Fragen zur Methoden-Zuversicht im Lehrdatensatz. Zahlen aus R: b14-faktoren.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
-import { num, pct } from '../../format';
-import { aboveOne, FRAGE, methodenPca, SPALTEN } from './rechnen';
+import { num } from '../../format';
+import { aboveOne, FRAGE, methodenPca, pct1, SPALTEN } from './rechnen';
 import { PCA_TOKENS } from './r-zeichen';
 
 /** Hauptkomponenten der fünf Fragen im Lehrdatensatz (R: efa(…, extraction = "pca", n_factors = 1)). */
@@ -34,11 +34,11 @@ export const efa: ConceptCard = {
   wofuer: 'Fünf Fragen sollen zusammen die Methoden-Zuversicht messen. Steckt hinter den Antworten wirklich eine gemeinsame Sache, oder mehrere? Die Komponenten- und Faktorenanalyse sucht in den Zusammenhängen der Fragen nach einer gemeinsamen Struktur.',
   kurz: 'Die Faktorenanalyse fasst viele Fragen, die eng zusammenhängen, zu wenigen gemeinsamen Größen zusammen. Sie zeigt, welche Fragen zusammengehören und wie viel sie gemeinsam haben.',
   stellDirVor: {
-    text: `Im Lehrdatensatz haben 200 Befragte fünf Aussagen zur Methoden-Zuversicht bewertet, etwa „Ich kann ein statistisches Ergebnis erklären.“ Je zwei Fragen korrelieren zwischen ${num(M.rMin)} und ${num(M.rMax)}. Die Hauptkomponentenanalyse in R findet eine Komponente, die ${pct(M.eigen[0] / 5)} der gesamten Streuung bündelt. Alle fünf Fragen laden stark auf ihr, zwischen ${num(Math.min(...M.loadings))} und ${num(Math.max(...M.loadings))}.`,
+    text: `Im Lehrdatensatz haben 200 Befragte fünf Aussagen zur Methoden-Zuversicht bewertet, etwa „Ich kann ein statistisches Ergebnis erklären.“ Je zwei Fragen korrelieren zwischen ${num(M.rMin)} und ${num(M.rMax)}. Die Hauptkomponentenanalyse in R findet eine Komponente, die ${pct1(M.eigen[0] / 5)} der gesamten Streuung bündelt. Alle fünf Fragen laden stark auf ihr, zwischen ${num(Math.min(...M.loadings))} und ${num(Math.max(...M.loadings))}.`,
     figures: [
       { label: 'Fragen', value: '5' },
       { label: 'Korrelationen', value: `${num(M.rMin)} bis ${num(M.rMax)}` },
-      { label: 'erste Komponente', value: pct(M.eigen[0] / 5) },
+      { label: 'erste Komponente', value: pct1(M.eigen[0] / 5) },
       { label: 'Ladungen', value: `${num(Math.min(...M.loadings))} bis ${num(Math.max(...M.loadings))}` },
     ],
   },
@@ -56,7 +56,7 @@ export const efa: ConceptCard = {
     {
       title: 'Das Gemeinsame herausziehen',
       was: 'Die Analyse sucht eine neue Größe, die möglichst viel von der Streuung aller fünf Fragen auf einmal erfasst. Das ist die erste Komponente.',
-      rechnung: `Erster Eigenwert ${num(M.eigen[0])} von 5: ${num(M.eigen[0])} / 5 ≈ ${pct(M.eigen[0] / 5)}.`,
+      rechnung: `Erster Eigenwert ${num(M.eigen[0])} von 5: ${num(M.eigen[0])} / 5 ≈ ${pct1(M.eigen[0] / 5)}.`,
       warum: 'Fünf standardisierte Fragen haben zusammen eine Streuung von 5, eine je Frage. Die erste Komponente fasst davon 3,56 zusammen.',
       acht: 'Hauptkomponenten und gemeinsame Faktoren sind zwei verschiedene Modelle. In R wählst du mit extraction = "pca" oder "ml" ausdrücklich eins davon.',
       concept: 'factor_model',
@@ -137,8 +137,8 @@ export const efaTabs: ConceptTabs = {
       if (!p) return NO_PCA;
       const L = p.loadings.map(r => r[0]), n = aboveOne(p.values);
       return {
-        kurz: `Eine Komponente bündelt ${pct(p.share[0])} der Streuung aller fünf Fragen. ${loadingSentence(L)}`,
-        fachlich: `Hauptkomponentenanalyse der Korrelationsmatrix: erster Eigenwert ${num(p.values[0])} von 5, also ${pct(p.share[0])}. Der zweite Eigenwert ist ${num(p.values[1])}; ${n === 1 ? 'nur eine Komponente liegt' : `${n} Komponenten liegen`} über 1.`,
+        kurz: `Eine Komponente bündelt ${pct1(p.share[0])} der Streuung aller fünf Fragen. ${loadingSentence(L)}`,
+        fachlich: `Hauptkomponentenanalyse der Korrelationsmatrix: erster Eigenwert ${num(p.values[0])} von 5, also ${pct1(p.share[0])}. Der zweite Eigenwert ist ${num(p.values[1])}; ${n === 1 ? 'nur eine Komponente liegt' : `${n} Komponenten liegen`} über 1.`,
         zusatz: `Die Ladungen: ${loadingList(L)}.`,
       };
     },

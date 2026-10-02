@@ -5,6 +5,7 @@
 import type { SampleCtx } from '../../types';
 import type { SurveyRow } from '../../../domain/survey';
 import { reliability, symEigen, omegaOneFactor } from '../../../tasks/kit/reliability';
+import { fixed } from '../../format';
 
 /** Die fünf Fragen zur Methoden-Zuversicht im Lehrdatensatz (Likert, 1 bis 7). */
 export const METHODEN = ['methoden1', 'methoden2', 'methoden3', 'methoden4', 'methoden5'] as const;
@@ -139,3 +140,5 @@ export function methodenPca(c: SampleCtx | readonly SurveyRow[], m = 1): Pca | n
 }
 /** Zahl der Komponenten mit Eigenwert über 1 (Kaiser-Kriterium). */
 export const aboveOne = (values: readonly number[]) => values.filter(v => v > 1).length;
+/** Anteil als Prozent mit einer festen Nachkommastelle wie in R („64,0 %“ für Variance explained: 64.0%). */
+export const pct1 = (share: number) => `${fixed(share * 100, 1)} %`;

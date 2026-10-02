@@ -7,6 +7,7 @@ import { txt, type Ctx, type SampleCtx } from '../../types';
 import { cronbach, itemColumns, methodenPca, methodenR, mlOneFactor, pca, varimax, SPALTEN } from './rechnen';
 import { alphaStats, alphaWerkstatt, KAUM, reliabilityTabs, shiftAll, ZUSAMMEN, type AlphaStats } from './reliability';
 import { efa, efaTabs, METHODEN_PCA } from './efa';
+import { beideModelle, factorModel, factorModelTabs, METHODEN_ML } from './factor-model';
 
 /*
  * Referenzwerte des Bereichs B14, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -43,6 +44,13 @@ import { efa, efaTabs, METHODEN_PCA } from './efa';
  *   atlas %>% efa(methoden1, methoden2, methoden3, methoden4, methoden5, extraction = "pca", n_factors = 1, rotation = "none", use = "complete")
  *   # KMO = 0.891, Variance explained: 71.2%; summary(): Ladungen 0.852 0.840 0.829 0.857 0.841, Kommunalitäten 0.726 0.705 0.687 0.734 0.708
  *   e <- eigen(cor(Mr)); e$values; e$vectors[, 1] * sqrt(e$values[1])     # dieselben Eigenwerte; Ladung von methoden1 −0.852
+ *
+ * Gemeinsamer Faktor (factor_model):
+ *   ml <- atlas %>% efa(methoden1, methoden2, methoden3, methoden4, methoden5, extraction = "ml", n_factors = 1, rotation = "none", use = "complete")
+ *   # Variance explained: 64.0%; Extraction Sums 3.201 (64.024 %); Goodness of fit Chi² 2.827, df 5, p .727
+ *   unclass(ml$loadings)       # 0.8126905 0.7954346 0.7761573 0.8202676 0.7954613
+ *   ml$communalities           # 0.6604671 0.6327186 0.6024152 0.6728405 0.6327587; uniquenesses 1 minus diese
+ *   atlas %>% efa(…, extraction = "ml", n_factors = 3)   # `n_factors` = 3 is too many for ML extraction with 5 variables.
  */
 
 const rows = createSurvey();
@@ -143,4 +151,19 @@ test('B14 Komponenten- & Faktorenanalyse: die Zahlen der Karte und der Reiter wi
   assert.match(s.result(ctx(rev)).kurz, /Frage 1 \(−0,85\) lädt negativ/);
   assert.ok(close(s.value!(ctx(rev))!, s.value!(ctx())!, 1e-12), 'umgepolt: gleicher Anteil');
   assert.equal(s.result(ctx(applyOp(rows, 'methoden2', 'constant', 4))).kurz.startsWith('Mindestens eine Frage streut nicht'), true);
+});
+
+test('B14 Komponenten & Faktoren: PCA gegen ML wie in R', () => {
+  const b = beideModelle(ctx())!;
+  METHODEN_ML.loadings.forEach((v, i) => assert.ok(close(b.ml.loadings[i], v, 1e-5), `ML-Ladung ${i + 1}`));
+  METHODEN_ML.communalities.forEach((v, i) => assert.ok(close(b.ml.communalities[i], v, 1e-5), `ML-Kommunalität ${i + 1}`));
+  assert.ok(close(b.ml.share * 5, METHODEN_ML.ss, 1e-5) && close(METHODEN_ML.share, METHODEN_ML.ss / 5, 1e-6), 'ML: 3,20 von 5');
+  assert.match(factorModel.stellDirVor.text, /bündelt 71,2 % .* erklärt 64,0 %\. Bei Frage 1 sind es 73 % gegen 66 %: Den Rest von 34 %/);
+  assert.match(factorModel.bausteine[1].rechnung!, /3,20 von 5, also 64,0 %/);
+  assert.match(factorModel.bausteine[2].rechnung!, /Komponente 0,83 bis 0,86, des Faktors 0,78 bis 0,82/);
+  const s = factorModelTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = s.result(ctx());
+  assert.match(r.kurz, /bündelt 71,2 % der Streuung, der gemeinsame Faktor erklärt 64,0 %\./);
+  assert.match(r.zusatz!, /Komponente 73 % .* Faktor 66 %; ihr eigener Rest im Faktorenmodell ist 0,34\./);
 });
