@@ -7,11 +7,12 @@ import { MISCHEN, asFarAs, mixCount } from '../../../explain/content/b09-testlog
 import { SEITEN, sideOf } from '../../../explain/content/b09-testlogik/seiten';
 import { ANTEIL } from '../../../explain/content/b09-testlogik/alpha';
 import type { CStats } from '../../../explain/content/b09-testlogik/kritisch';
+import { betaFor, percent } from '../../../explain/content/b09-testlogik/fehlerarten';
 import { MU0, SCHLAF, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
 import { baseSurvey } from '../../../explain/sample';
 import { count, num } from '../../../explain/format';
-import { AreaUnder, Axis, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
+import { AreaUnder, Axis, Curve, forCard, forSentence, GridCell, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Dichte der t-Verteilung mit df Freiheitsgraden (für sehr viele Freiheitsgrade praktisch die Normalverteilung). */
 const tDensity = (t: number, df: number) => df > 1e5 ? Math.exp(-t * t / 2) / Math.sqrt(2 * Math.PI)
@@ -175,7 +176,31 @@ function Kritisch({ s }: { s: CStats }) {
   );
 }
 
+/** Vierfeldertafel: Wirklichkeit (kein Unterschied oder eine Stunde) mal Entscheidung des Tests, mit α und β für das gewählte α. */
+function Fehlerarten({ a }: { a: number }) {
+  const [box, W] = useWidth();
+  const b = betaFor(a), cw = (W - 24) / 2, x0 = 8, x1 = 16 + cw;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={256} viewBox={`0 0 ${W} 256`} role="img"
+        aria-label={`Vierfeldertafel bei α = ${num(a, 3)}. Gibt es keinen Unterschied, behält der Test H₀ in ${percent(1 - a)} der Studien (richtig) und verwirft sie in ${percent(a)} (Fehler erster Art). Gibt es eine Stunde Unterschied, behält er H₀ grob gerechnet in ${percent(b)} der Studien (Fehler zweiter Art) und erkennt den Unterschied in ${percent(1 - b)}.`}>
+        <text className="xw-t xw-strong" x={x0 + cw / 2} y={16} textAnchor="middle">Test behält H₀</text>
+        <text className="xw-t xw-strong" x={x1 + cw / 2} y={16} textAnchor="middle">Test verwirft H₀</text>
+        <text className="xw-t" x={x0} y={42}>In Wahrheit: kein Unterschied</text>
+        <GridCell x={x0} y={50} w={cw} h={60} text="richtig" sub={`1 − α = ${percent(1 - a)}`} tone="pos" />
+        <GridCell x={x1} y={50} w={cw} h={60} text="Fehlalarm" sub={`α = ${percent(a)}`} tone="neg" />
+        <text className="xw-t" x={x0} y={134}>In Wahrheit: eine Stunde Unterschied</text>
+        <GridCell x={x0} y={142} w={cw} h={60} text="übersehen" sub={`β ≈ ${percent(b)}`} tone="neg" />
+        <GridCell x={x1} y={142} w={cw} h={60} text="erkannt" sub={`1 − β ≈ ${percent(1 - b)}`} tone="pos" />
+        <text className="xw-t" x={x0} y={226}>Fehlalarm: Fehler erster Art</text>
+        <text className="xw-t" x={x0} y={246}>übersehen: Fehler zweiter Art</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-fehlerarten': forCard(p => <Fehlerarten a={p.value ?? 0.05} />),
   'b09-kritisch': forSentence(p => <Kritisch s={p.s as CStats} />),
   'b09-alpha': forCard(p => <Alpha a={p.value ?? 0.05} />),
   'b09-seiten': forCard(p => <Seiten value={p.value ?? 1} />),

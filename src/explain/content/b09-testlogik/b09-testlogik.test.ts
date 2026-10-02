@@ -12,6 +12,7 @@ import { MISCHEN, asFarAs, nullverteilung } from './nullverteilung';
 import { SEITEN, seiten } from './seiten';
 import { ANTEIL, alpha } from './alpha';
 import { kritisch } from './kritisch';
+import { betaFor, fehlerarten } from './fehlerarten';
 
 /*
  * Referenzwerte des Bereichs B9, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -41,6 +42,11 @@ import { kritisch } from './kritisch';
  *   set.seed(1); perm <- replicate(100000, { g <- sample(wb); mean(lz[g == 0]) - mean(lz[g == 1]) })
  *   sd(perm); quantile(perm, c(.025, .975)); mean(abs(perm) >= 0.0728193)  # 0.4654806; -0.9172592, 0.9161430; 0.87694
  *   # Der Atlas mischt mit einer festen Folge (mulberry32, Startwert 2026): 183 von 200, 1.743 von 2.000 (0,87).
+ *   # Fehlerarten: grob mit der Normalverteilung, wahrer Unterschied 1 h, Standardfehler der Daten (Welch):
+ *   pw <- function(a, se = w$stderr) pnorm(1/se - qnorm(1 - a/2)) + pnorm(-1/se - qnorm(1 - a/2))
+ *   1 - pw(c(.001, .01, .05, .1))     # beta: 0.8733287, 0.6655171, 0.4253030, 0.3072655
+ *   pnorm(1/0.47 - 1.96)              # 0.5665744 (mit den sichtbaren Zahlen, gerundet 0,57)
+ *   w2 <- t.test(2 * lz ~ wb); 1 - pw(.05, w2$stderr)   # stderr 0.9309868, beta 0.8109404
  *   t.test(lz ~ wb, alternative = "greater")$p.value; t.test(lz ~ wb, alternative = "less")$p.value   # 0.4379349, 0.5620651
  *   atlas %>% t_test(lernzeit, group = weiterbildung, alternative = "greater")  # t(175.8) = 0.156, p = 0.438
  *
@@ -56,7 +62,7 @@ const tabs = (id: string): ConceptTabs => b09Testlogik.tabs[id];
 const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.ok(s?.kind === 'analysis', `${id}: Auswertung`); const cols = Object.fromEntries(Object.entries(s.columns ?? {}).map(([k, v]) => [k, [v]])); return s.result({ rows: data, columns: cols }); };
 
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
-  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value'];
+  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors'];
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -176,4 +182,18 @@ test('B9 Kritischer Wert: Quantile der t-Verteilung wie in R', () => {
   assert.match(result('critical_value').kurz, /t ≈ 1,42\. Die Grenze bei α = 0,05 liegt bei ±1,97\. t liegt zwischen den Grenzen/);
   assert.match(result('critical_value').fachlich, /läge die Grenze bei 1,65\./);
   assert.match(result('critical_value', applyOp(rows, 'schlafdauer', 'shift', 0.1)).kurz, /t ≈ 3,15\. .*t liegt im Ablehnungsbereich: Du verwirfst H₀\./);
+});
+
+test('B9 Fehlerarten: Übersehen einer Stunde Unterschied wie in R', () => {
+  for (const [a, beta] of [[0.001, 0.8733287], [0.01, 0.6655171], [0.05, 0.4253030], [0.1, 0.3072655]]) assert.ok(close(betaFor(a), beta, 1e-6), `α ${a}: β ${betaFor(a)} ≠ R ${beta}`);
+  assert.match(fehlerarten.stellDirVor.text, /R meldet p = 0\.876\. .*Bei 82 und 118 Befragten passiert das grob gerechnet in 43 % der Studien\./);
+  assert.equal(fehlerarten.bausteine[2].rechnung, 'α = 0,05: β ≈ 0,43; α = 0,01: β ≈ 0,67');
+  assert.match(fehlerarten.ausprobieren[2].explain, /in etwa 67 statt 43 von 100 Studien\./);
+  assert.match(fehlerarten.regler!.describe(0.05), /in etwa 5 % der Studien .*in 43 % der Studien/);
+  assert.match(fehlerarten.regler!.describe(0.001), /in etwa 0,1 % der Studien .*in 87 % der Studien/);
+  assert.match(fehlerarten.genau.paragraphs[0], /Φ\(1 \/ 0,47 − 1,96\) ≈ 0,57, also β ≈ 0,43\./);
+  assert.match(result('type_errors').kurz, /0,47 Stunden, übersähe .* in 43 % der Studien\./);
+  const doubled = gruppenTest({ rows: applyOp(rows, 'lernzeit', 'double'), columns: { x: ['lernzeit'], group: ['weiterbildung'] } })!;
+  assert.ok(close(doubled.se, 0.9309868, 1e-6) && close(betaFor(0.05, doubled.se), 0.8109404, 1e-6), 'verdoppelt wie R');
+  assert.match(result('type_errors', applyOp(rows, 'lernzeit', 'double')).fachlich, /Φ\(1 \/ 0,93 − 1,96\) ≈ 0,19, also β ≈ 0,81/);
 });

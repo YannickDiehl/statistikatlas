@@ -8,6 +8,7 @@ import { nullverteilung, nullverteilungTabs } from './nullverteilung';
 import { seiten, seitenTabs } from './seiten';
 import { alpha, alphaTabs } from './alpha';
 import { kritisch, kritischTabs } from './kritisch';
+import { fehlerarten, fehlerartenTabs } from './fehlerarten';
 
 export const b09Testlogik: AreaIndex = {
   explanations: {
@@ -17,6 +18,7 @@ export const b09Testlogik: AreaIndex = {
     test_sides: { kind: 'begriff', card: seiten },
     alpha_level: { kind: 'begriff', card: alpha },
     critical_value: { kind: 'satz', template: kritisch },
+    type_errors: { kind: 'begriff', card: fehlerarten },
   },
   tabs: {
     hypothesis: hypotheseTabs,
@@ -25,5 +27,6 @@ export const b09Testlogik: AreaIndex = {
     test_sides: seitenTabs,
     alpha_level: alphaTabs,
     critical_value: kritischTabs,
+    type_errors: fehlerartenTabs,
   },
 };
