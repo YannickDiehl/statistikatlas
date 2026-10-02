@@ -21,6 +21,7 @@ import { b10Mittelwerte } from './index';
 import { dfText, lilliefors, often, pText, sig3, welchFor } from './stats';
 import { tTestSentence, VERTRAUEN, welchFromSummary } from './t-test';
 import { paarWerkstatt, pairedStats } from './paired-difference';
+import { pairedDesign, sdForR, tForR, WISSEN } from './paired-design';
 import { pairedFor } from './stats';
 import { txt } from '../../types';
 
@@ -161,6 +162,40 @@ test('Gepaarte Differenzen: die 200 Befragten wie in R', () => {
     assert.match(r.kurz, /im Schnitt \+0,75 Aufgaben im Vergleich zum ersten\. Die Veränderungen streuen mit s ≈ 1,89 Aufgaben, der Standardfehler ist 0,134\. .*in weniger als 1 von 1\.000 Stichproben zu erwarten \(p < 0,001\)/);
     assert.equal(r.zusatz, '115 Befragte lösen beim zweiten Test mehr Aufgaben, 53 weniger, 32 gleich viele.');
     assert.match(r.fachlich, /t\(199\) ≈ 5,6, p < 0,001/);
+  }
+});
+
+/*
+ * Verbundene Messungen (Begriffskarte), Lehrdatensatz:
+ *   x <- atlas$wissenstest; y <- atlas$wissenstest_t2
+ *   c(mean(x), mean(y), sd(x), sd(y), sd(y - x), cor(x, y))   # 10.125 10.875 3.11575265 3.48714437 1.893522 0.8413497
+ *   t.test(y, x, paired = TRUE)$statistic                     # 5.601519
+ *   t.test(y, x)                                              # Welch: t = 2.268145, df = 393.0573, p = 0.02386226
+ *   sapply(c(0, 0.5, 0.84, 0.95), function(r) sqrt(sd(x)^2 + sd(y)^2 - 2 * r * sd(x) * sd(y)))
+ *   # 4.676333 3.317079 1.901251 1.106544
+ *   sapply(c(0, 0.5, 0.84, 0.95), function(r) mean(y - x) / (sqrt(sd(x)^2 + sd(y)^2 - 2 * r * sd(x) * sd(y)) / sqrt(200)))
+ *   # 2.268145 3.197573 5.578747 9.585341
+ *   t.test((y - 1) - x)$statistic                             # -1.867173 (zweiter Test eine Aufgabe weniger; mariposa: t(199) = -1.867)
+ */
+test('Verbundene Messungen: Zahlen der Karte, Regler und Reiter wie in R', () => {
+  const p = pairedFor(ctx({ x: 'wissenstest', y: 'wissenstest_t2' }));
+  for (const [mine, data, label] of [[WISSEN.m1, p.mx, 'erster Test'], [WISSEN.m2, p.my, 'zweiter Test'], [WISSEN.s1, p.sx, 's₁'], [WISSEN.s2, p.sy, 's₂'], [WISSEN.sd, p.sdD, 's der Differenzen'],
+    [WISSEN.r, p.r, 'r'], [WISSEN.tPaired, p.t, 't gepaart'], [WISSEN.tWelch, p.tU, 't Welch'], [WISSEN.dfWelch, p.dfU, 'df Welch'], [WISSEN.pWelch, p.pU, 'p Welch']] as const) {
+    near(mine, data, 1e-4, `${label} (Karte gegen Daten)`);
+  }
+  for (const [r, sd, t] of [[0, 4.676333, 2.268145], [0.5, 3.317079, 3.197573], [0.84, 1.901251, 5.578747], [0.95, 1.106544, 9.585341]]) {
+    near(sdForR(r), sd, 1e-6, `s bei r = ${r}`); near(tForR(r), t, 1e-6, `t bei r = ${r}`);
+  }
+  near(tForR(WISSEN.r), WISSEN.tPaired, 1e-5, 'Regler am Start = gepaartes t');
+  assert.match(pairedDesign.regler!.describe(WISSEN.r), /^Bei r = 0,84 streuen die Veränderungen um 1,89 Aufgaben\. Die mittlere Veränderung von \+0,75 Aufgaben ist dann 5,6 Standardfehler groß\.$/);
+  assert.match(pairedDesign.regler!.describe(0), /um 4,68 Aufgaben\. .* 2,27 Standardfehler groß\. So rechnet auch, wer die Paare übersieht\./);
+  assert.match(pairedDesign.stellDirVor.text, /im Mittel 10,13 von 20 Aufgaben, beim zweiten 10,88\. .* s ≈ 3,12 und 3,49 Aufgaben\. .* s ≈ 1,89 Aufgaben\. .*\(r ≈ 0,84\)/);
+  near(pairedFor(ctx({ x: 'wissenstest', y: 'wissenstest_t2' }, applyOp(rows, 'wissenstest_t2', 'shift', -1))).t, -1.867173, 1e-6, 't nach zweitem Test −1');
+  const sample = b10Mittelwerte.tabs.paired_design.sample!;
+  if (sample.kind === 'analysis') {
+    const r = sample.result(ctx({ x: 'wissenstest', y: 'wissenstest_t2' }));
+    assert.match(r.kurz, /von \+0,75 Aufgaben 5,6 Standardfehler groß\. Als zwei fremde Gruppen gerechnet sind es nur 2,27/);
+    assert.match(r.fachlich, /t\(199\) ≈ 5,6, p < 0,001\. .* t ≈ 2,27 bei 393,1 Freiheitsgraden, p ≈ 0,024\. .* r ≈ 0,84/);
   }
 });
 

@@ -4,7 +4,8 @@
 import type { Pairs } from '../../../explain/math';
 import { num, signed } from '../../../explain/format';
 import type { PairedStats } from '../../../explain/content/b10-mittelwerte/paired-difference';
-import { Axis, clamp, DragPoint, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
+import { sdForR, tForR, WISSEN } from '../../../explain/content/b10-mittelwerte/paired-design';
+import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Ganzzahlige Ticks von `from` bis `to` in Schritten von `by`. */
 const ticks = (from: number, to: number, by: number) => Array.from({ length: Math.floor((to - from) / by) + 1 }, (_, k) => from + k * by);
@@ -74,6 +75,33 @@ function PairsPicture({ data, s, step, who, names, bounds, onChange, onWho }: {
   );
 }
 
+/**
+ * Verbundene Messungen: Streuung der beiden Tests und Streuung der Veränderungen bei dem Zusammenhang r, den der Regler
+ * einstellt; darunter, wie viele Standardfehler die mittlere Veränderung dann groß ist.
+ */
+function PairedSpread({ r }: { r: number }) {
+  const [box, W] = useWidth();
+  const left = 150, right = W - 70, X = linear([0, 5], [left, right]), sd = sdForR(r), t = tForR(r);
+  const rows: { label: string; v: number; tone: 'plain' | 'pos' }[] = [
+    { label: 'erster Test', v: WISSEN.s1, tone: 'plain' }, { label: 'zweiter Test', v: WISSEN.s2, tone: 'plain' }, { label: 'Veränderung', v: sd, tone: 'pos' },
+  ];
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={196} viewBox={`0 0 ${W} 196`} role="img"
+        aria-label={`Streuung in Aufgaben: erster Test ${num(WISSEN.s1)}, zweiter Test ${num(WISSEN.s2)}, Veränderung ${num(sd)} bei r = ${num(r)}. Die mittlere Veränderung ist ${num(t)} Standardfehler groß.`}>
+        <text className="xw-t xw-strong" x={8} y={16}>Streuung s in Aufgaben</text>
+        {rows.map((row, i) => <g key={row.label}>
+          <text className="xw-t" x={8} y={44 + i * 34}>{row.label}</text>
+          <Bar x={left} y={30 + i * 34} width={X(row.v) - left} height={20} tone={row.tone} label={num(row.v)} />
+        </g>)}
+        <Axis scale={X} ticks={[0, 1, 2, 3, 4, 5]} at={136} from={left} to={right} labelGap={18} />
+        <text className="xw-t xw-strong" x={8} y={186}>{`t als Paare ≈ ${num(t)}`}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b10-verbunden': forCard(p => <PairedSpread r={p.value ?? WISSEN.r} />),
   'b10-paare': forWorkshop(p => <PairsPicture data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
 };
