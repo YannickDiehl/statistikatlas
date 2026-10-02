@@ -4,16 +4,19 @@ import type { AreaIndex } from '../../types';
 import { labels, labelsTabs } from './labels';
 import { conversion, conversionTabs } from './conversion';
 import { missingTools, missingToolsTabs } from './missing-tools';
+import { dataExport, dataExportTabs } from './data-export';
 
 export const b02Datenwerkzeuge: AreaIndex = {
   explanations: {
     labels: { kind: 'tabelle', tool: labels },
     conversion: { kind: 'tabelle', tool: conversion },
     missing_tools: { kind: 'tabelle', tool: missingTools },
+    data_export: { kind: 'tabelle', tool: dataExport },
   },
   tabs: {
     labels: labelsTabs,
     conversion: conversionTabs,
     missing_tools: missingToolsTabs,
+    data_export: dataExportTabs,
   },
 };

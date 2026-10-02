@@ -11,6 +11,7 @@ import { ALLBUS, FUENF } from './daten';
 import { LABELS_MITTEL, labels, labelsTabs } from './labels';
 import { CONVERSION_MITTEL, conversion, conversionTabs } from './conversion';
 import { EINKOMMEN, missingMittel, missingTools, missingToolsTabs, mitCode } from './missing-tools';
+import { FORMATE, dataExport } from './data-export';
 
 /*
  * Referenzwerte des Bereichs B2, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -156,6 +157,28 @@ test('Missing-Codes: Mittelwerte der fünf und der 200 wie in R', () => {
   assert.match(r.zusatz!, /um 15,78 € nach unten/);
   const out = CATALOG_OUTPUT['missing_tools:0'].output;
   assert.match(out, /einkommen  3147\.613  1426\.790  199        1/);
+});
+
+/*
+ * Weitergeben (P001 bis P005 mit erwerbstaetig und einkommen, P001 = -9 mit set_na() markiert), schreiben und wieder einlesen:
+ *   five <- five %>% select(id, erwerbstaetig, einkommen) %>% mutate(einkommen = replace(einkommen, id == "P001", -9)) %>% set_na(einkommen = -9)
+ *   five %>% write_spss("g.sav");  z <- read_spss("g.sav")      # 5 Personen mit Wertelabel, Variablenlabel da, na_frequencies: -9
+ *   five %>% write_stata("g.dta"); z <- read_stata("g.dta")     # 5 mit Wertelabel, Variablenlabel da, Code .a
+ *   five %>% write_xpt("g.xpt", version = 8, name = "atlas"); z <- read_xpt("g.xpt")   # 0 mit Wertelabel, Variablenlabel da, Code .a
+ *   five %>% write_xlsx("g.xlsx"); z <- read_xlsx("g.xlsx")     # 5 mit Wertelabel, Variablenlabel da, Code -9 (Blätter Data, Labels)
+ *   In allen vier Formaten bleiben 4 gültige Einkommen. atlas %>% write_xpt(…) in Version 5 bricht ab:
+ *   SAS transport version 5 allows variable names of up to 8 characters; … methoden1 -> methoden …
+ *   atlas %>% write_spss("ohne")                                 # `path` must end in ".sav" or ".zsav".
+ *   Eine vorhandene atlas.sav oder atlas.xlsx wird ohne Rückfrage überschrieben.
+ *   atlas %>% describe(lernzeit, show = mean)                    # `show` must be a character vector of statistic names.
+ *   atlas %>% frequency(erwerbstaetig) %>% write_xlsx("haeufigkeit.xlsx")   # geht
+ */
+test('Weitergeben: was nach dem Wiedereinlesen ankommt, wie in R', () => {
+  assert.deepEqual(Object.entries(FORMATE).map(([k, f]) => [k, f.wertelabels, f.code]), [['sav', true, '−9'], ['dta', true, '.a'], ['xpt', false, '.a'], ['xlsx', true, '−9']]);
+  assert.deepEqual(dataExport.options.map(o => dataExport.check.answer(o.id)), [5, 5, 0, 5]);
+  assert.deepEqual(dataExport.apply(dataExport.rows, 'xpt').rows.map(r => [r.erwerbstaetig, r.einkommen]), [[1, 'NA (.a)'], [1, 3850], [0, 2762], [1, 4604], [1, 1868]]);
+  assert.deepEqual(dataExport.apply(dataExport.rows, 'sav').rows.map(r => r.erwerbstaetig), ['1 [Ja]', '1 [Ja]', '0 [Nein]', '1 [Ja]', '1 [Ja]']);
+  assert.match(dataExport.rCode('xpt'), /write_xpt\("atlas\.xpt", version = 8, name = "atlas"\)/);
 });
 
 // ALLBUS 2023 nur, wenn die eigene GESIS-Datei da ist (ALLBUS_SAV); die Aggregate stehen fest in ./daten.ts.
