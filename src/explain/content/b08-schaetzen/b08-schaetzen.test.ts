@@ -14,6 +14,8 @@ import { HAUSHALT, HAUSHALT_KENNWERTE, HAUSHALT_N, binomial, haushaltMittel, mid
 import { GLOCKE_N, centralLimit, centralLimitTabs, einkommenSchiefe, glockeText, schiefeMittel } from './central-limit';
 import { PLANUNG, VERZERRUNG_N, bereichText, bereiche, samplingBias, samplingBiasTabs, verzerrung } from './sampling-bias';
 import { EINKOMMEN, auswahl, auswahlText, moeglich, randomSampling, randomSamplingTabs, seOhne, zehnerPotenz } from './random-sampling';
+import { confidence, confidenceTabs, kritisch, lernzeitKi } from './confidence';
+import { CATALOG_OUTPUT } from '../../catalogOutput';
 import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft } from './law-large-numbers';
 
 /*
@@ -61,6 +63,15 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
  *   for (n in c(10, 50, 100, 150, 190, 200)) print(sqrt(1 - n / 200) * sd(e) / sqrt(n))   # 439.72 174.73 100.88 58.24 23.14 0
  *   sqrt(mean((e - mean(e))^2)) / sqrt(50)                    # 201.2532 (mit Zurücklegen)
  *   range(sapply(1:200, function(k) { ee <- e; ee[k] <- 30000; sd(ee) - sd(e) }))   # +917.4 bis +948.0: SE steigt immer
+ *   se <- sd(x) / sqrt(200); mean(x) + c(-1, 1) * qt(.975, 199) * se   # 7.300066 8.202934, Breite 0.902868, SE 0.228927
+ *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; 2 * qt(.975, 199) * (sd(xx) - sd(x)) / sqrt(200) }))   # +0.18 bis +0.20
+ *   g <- x[as.numeric(atlas$schulabschluss) == 0]; length(g); mean(g); sd(g) / sqrt(42)   # 42  5.883333  0.474016
+ *   mean(g) + c(-1, 1) * qt(.975, 41) * sd(g) / sqrt(42)      # 4.926038 6.840628, qt(.975, 41) = 2.019541
+ *   atlas %>% oneway_anova(lernzeit, group = schulabschluss) %>% summary()   # Ohne Schulabschluss: 5.883 0.474 4.926 6.841
+ * Vertrauen in den Bundestag (ALLBUS 2023, Aggregat oben): se3 <- 1.625373 / sqrt(3592)    # 0.0271197
+ *   for (L in c(.8, .9, .95, .99)) print(3.946826 + c(-1, 1) * qt(1 - (1 - L) / 2, 3591) * se3)
+ *   # 80 %: 3.912064 3.981588 (t 1.281787);  90 %: 3.902207 3.991445 (t 1.645278)
+ *   # 95 %: 3.893654 3.999998 (t 1.960625);  99 %: 3.876933 4.016719 (t 2.577199);  qt(.975, 9) = 2.262157
  *
  * ALLBUS 2023 (ZA8831_v1-3-0.sav, nur lesen, Pfad in ALLBUS_SAV), nur Aggregate:
  *   d <- haven::read_sav(Sys.getenv("ALLBUS_SAV"))
@@ -256,6 +267,31 @@ test('B8 random_sampling: Zahl der möglichen Stichproben und der Standardfehler
   assert.match(randomSampling.genau.paragraphs[0], /√\(1 − 50 \/ 200\) · 1\.427 \/ √50 ≈ 175 €\./);
   const s = randomSamplingTabs.sample!;
   if (s.kind === 'analysis') assert.match(s.result(ectx()).fachlich, /≈ 175 €\. Mit Zurücklegen wären es σ \/ √50 ≈ 201 €\./);
+});
+
+test('B8 confidence: Konfidenzintervalle für das Vertrauen in den Bundestag und die Lernzeit wie in R', () => {
+  const R: Record<number, [number, number, number]> = { 80: [1.281787362, 3.912064312, 3.981587688], 90: [1.645278067, 3.902206553, 3.991445447], 95: [1.960624819, 3.893654444, 3.999997556], 99: [2.577199119, 3.876933134, 4.016718866] };
+  for (const [L, [t, lo, hi]] of Object.entries(R)) {
+    const k = confidence.compute({ s: 1.625373, n: 3592, t: Number(L) });
+    assert.ok(close(k.tq, t, 1e-8) && close(k.lo, lo, 1e-6) && close(k.hi, hi, 1e-6) && close(k.se, 0.02711969976, 1e-9), `${L} %: ${JSON.stringify(k)}`);
+  }
+  assert.ok(close(kritisch(95, 9), 2.262157163, 1e-8), 'qt(.975, 9)');
+  const k = confidence.compute(confidence.initial);
+  assert.equal(confidence.metrics[2].value(k), '3,89 bis 4,00');
+  assert.match(confidence.interpret(k).kurz, /zwischen 3,89 und 4,00\. Bei wiederholten Zufallsstichproben mit 3\.592 Befragten enthielten etwa 95 % solcher Intervalle den wahren Mittelwert\./);
+  assert.match(confidence.interpret(k).fachlich, /3,95 ± 1,96 · 0,027, also von 3,89 bis 4,00\. t ist das 97,5-%-Quantil der t-Verteilung mit 3\.591 Freiheitsgraden\./);
+  assert.deepEqual(confidence.worked(k).map(w => w.text), [
+    '1,63 / √3.592 ≈ 1,63 / 59,93 ≈ 0,027.', 'Für 95 % und 3.591 Freiheitsgrade liefert die t-Verteilung t ≈ 1,96.',
+    '1,96 · 0,027 ≈ 0,053. So weit reicht das Intervall nach jeder Seite.', '3,95 − 0,053 ≈ 3,89 und 3,95 + 0,053 ≈ 4,00.']);
+  assert.match(confidence.think.explain, /von etwa 1,96 auf etwa 2,58/);
+  assert.equal(confidence.check.diagnose(0.98).slice(0, 5), 'Fast!');
+  const l = lernzeitKi(ctx());
+  assert.ok(close(l.lo, 7.300066098, 1e-8) && close(l.hi, 8.202933902, 1e-8) && close(l.width, 0.9028678044, 1e-9) && close(l.se, 0.2289269018, 1e-9), 'Lernzeit');
+  const s = confidenceTabs.sample!;
+  if (s.kind === 'analysis') assert.match(s.result(ctx()).kurz, /zwischen 7,30 und 8,20 Stunden/);
+  const out = CATALOG_OUTPUT['oneway_anova:0'].output;
+  assert.match(out, /Ohne Schulabschluss +42 +5\.883 +3\.072 +0\.474 +4\.926 +6\.841/, 'erfasste Ausgabe wie in R');
+  assert.ok(close(5.883333333 - 2.01954097 * 0.4740160867, 4.926038426, 1e-8), 'untere Grenze aus t(41)');
 });
 
 test('B8: ALLBUS-Aggregate aus der Datei nachgerechnet (nur mit ALLBUS_SAV)', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, () => {

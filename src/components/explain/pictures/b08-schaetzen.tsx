@@ -1,13 +1,15 @@
 // Bilder des Bereichs B8 „Stichprobe und Schätzen“ für alle Vorlagen. Schlüssel = `picture` der Erklärung, Bausteine und
 // `forWorkshop`/`forCard`/`forSentence`/`forTable` aus ./kit.tsx.
 // Eigene Stile in src/explain/areas/b08-schaetzen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
-import { count, num, pct } from '../../../explain/format';
+import { count, fixed, num, pct } from '../../../explain/format';
+import { VERTRAUEN } from '../../../explain/content/b08-schaetzen/daten';
+import type { KiStats } from '../../../explain/content/b08-schaetzen/confidence';
 import { HAUSHALT_KENNWERTE, binomial, haushaltMittel, middle95, stufe } from '../../../explain/content/b08-schaetzen/daten';
 import { GLOCKE_N, schiefeMittel } from '../../../explain/content/b08-schaetzen/central-limit';
 import { ANTEIL_N, WEITERBILDUNG } from '../../../explain/content/b08-schaetzen/sampling-distribution';
 import { GESETZ_N, daneben, wieOft } from '../../../explain/content/b08-schaetzen/law-large-numbers';
 import { PLANUNG, VERZERRUNG_N, bereiche } from '../../../explain/content/b08-schaetzen/sampling-bias';
-import { Axis, Curve, forCard, linear, MarkLine, useWidth, type Picture } from './kit';
+import { Axis, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
 import { niceTicks } from './sample';
 
 type Tone = 'pos' | 'neg' | 'plain';
@@ -118,9 +120,42 @@ function VerzerrungBild({ n }: { n: number }) {
   );
 }
 
+/**
+ * Konfidenzintervall auf der Skala des Vertrauens (1 bis 7) unter dem Bereich, in dem grob die einzelnen Antworten
+ * liegen (x̄ ± s): Das Intervall gehört zum Mittelwert, nicht zu den einzelnen Menschen.
+ */
+function IntervallBild({ s }: { s: KiStats }) {
+  const [box, W] = useWidth();
+  const left = 26, right = W - 28, base = 196, H = 252;
+  const X = linear([1, 7], [left, right]), mid = X(VERTRAUEN.mean);
+  const clip = (v: number) => Math.min(7, Math.max(1, v));
+  const x0 = X(clip(s.lo)), x1 = X(clip(s.hi)), apart = x1 - x0 > 110;
+  const yA = 62, yK = 138;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Einzelne Antworten liegen grob zwischen ${num(clip(VERTRAUEN.mean - s.s))} und ${num(clip(VERTRAUEN.mean + s.s))}. Das ${num(s.t)}-%-Konfidenzintervall für den Mittelwert reicht von ${fixed(s.lo)} bis ${fixed(s.hi)}.`}>
+        <MarkLine x={mid} from={yA - 4} to={base} />
+        <text className="xw-t xw-halo" x={left} y={yA - 12}>Einzelne Antworten, grob x̄ ± s</text>
+        <rect className="xw-bar-plain" x={X(clip(VERTRAUEN.mean - s.s))} y={yA} width={Math.max(2, X(clip(VERTRAUEN.mean + s.s)) - X(clip(VERTRAUEN.mean - s.s)))} height={18} />
+        <text className="xw-t xw-halo" x={left} y={yK - 34}>{num(s.t)}-%-Konfidenzintervall, {count(s.n)} Befragte</text>
+        <line className="xw-pos" strokeWidth={3} x1={x0} x2={x1} y1={yK} y2={yK} />
+        <line className="xw-pos" strokeWidth={3} x1={x0} x2={x0} y1={yK - 11} y2={yK + 11} />
+        <line className="xw-pos" strokeWidth={3} x1={x1} x2={x1} y1={yK - 11} y2={yK + 11} />
+        {apart
+          ? <><text className="xw-t xw-halo" x={x0} y={yK - 16} textAnchor="middle">{fixed(s.lo)}</text><text className="xw-t xw-halo" x={x1} y={yK - 16} textAnchor="middle">{fixed(s.hi)}</text></>
+          : <text className="xw-t xw-halo" x={Math.min(right - 60, Math.max(left + 60, mid))} y={yK - 16} textAnchor="middle">{fixed(s.lo)} bis {fixed(s.hi)}</text>}
+        <text className="xw-t xw-strong xw-halo" x={Math.min(right - 30, Math.max(left + 30, mid))} y={yK + 32} textAnchor="middle">x̄ = {num(VERTRAUEN.mean)}</text>
+        <Axis scale={X} ticks={[1, 2, 3, 4, 5, 6, 7]} at={base} from={left} to={right} labelGap={20} title="Vertrauen in den Bundestag, 1 bis 7" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b08-anteil': forCard(p => <AnteilVerteilung n={stufe(ANTEIL_N, p.value ?? ANTEIL_N.indexOf(50))} />),
   'b08-gesetz': forCard(p => <GesetzVerteilung n={stufe(GESETZ_N, p.value ?? 0)} />),
   'b08-glocke': forCard(p => <GlockeVerteilung n={stufe(GLOCKE_N, p.value ?? 0)} />),
+  'b08-intervall': forSentence(p => <IntervallBild s={p.s as KiStats} />),
   'b08-verzerrung': forCard(p => <VerzerrungBild n={stufe(VERZERRUNG_N, p.value ?? VERZERRUNG_N.indexOf(100))} />),
 };
