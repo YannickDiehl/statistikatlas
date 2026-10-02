@@ -1,0 +1,11 @@
+/* Bereich B10 „Mittelwerte vergleichen“: Stile der Bilder in src/components/explain/pictures/b10-mittelwerte.tsx. */
+.b10-dot{fill:var(--ink);stroke:var(--paper);stroke-width:1}
+.b10-dot.sel{fill:var(--green)}
+.b10-group{fill:var(--wash);opacity:.55}
+.b10-dev{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:3 3}
+.b10-dev.sel{stroke:var(--ink);stroke-width:2.5;stroke-dasharray:none}
+.b10-line{fill:none;stroke:var(--ink);stroke-width:2}
+.b10-line-ja{stroke:var(--green);stroke-dasharray:6 4}
+.b10-square{fill:var(--green);stroke:var(--paper);stroke-width:1}
+.b10-shift{stroke:var(--muted);stroke-width:2.5}
+.b10-label{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
