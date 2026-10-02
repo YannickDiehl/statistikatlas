@@ -7,6 +7,7 @@ import { txt, type Ctx, type SampleCtx } from '../../types';
 import { mannWhitney, midRanks } from './rank';
 import { mannWhitneyTabs, mannWhitneyWorkshop as mwW, mwSample, MW_START, MW_TIES } from './mann-whitney';
 import { wilcoxonTabs, wilcoxonWorkshop as wxW, wxSample, WX_START, WX_TIES } from './wilcoxon';
+import { friedmanTabs, friedmanWorkshop as frW, frSample, FR_START, FR_TIES, FR_SAME_ORDER } from './friedman';
 import { kruskalWallisTabs, kruskalWallisWorkshop as kwW, kwMeanRank, kwSample, KW_EVEN, KW_START, KW_TIES } from './kruskal-wallis';
 
 /*
@@ -249,4 +250,77 @@ test('B11 Wilcoxon, verbunden: 200 Befragte und In R wie in R', () => {
   const map = Object.fromEntries(wilcoxonTabs.r!.outputMap.map(o => [o.match, o.explain]));
   assert.match(map.r, /168 Paaren .* 5,36 \/ √168 ≈ 0,41/);
   assert.ok(near(5.358338 / Math.sqrt(168), 0.413405), 'r = |Z| / √168');
+});
+
+/*
+ * Friedman, Werkstatt (fünf Personen, Wissenstest dreimal):
+ *   m1 <- matrix(c(8,10,12, 11,10,14, 6,9,8, 12,15,16, 9,13,11), ncol = 3, byrow = TRUE)
+ *   t(apply(m1, 1, rank)); colSums(t(apply(m1, 1, rank)))                   # Ränge 1 2 3 / 2 1 3 / 1 3 2 / 1 2 3 / 1 3 2; Summen 6 11 13
+ *   as_tibble(m1, .name_repair = ~c("t1", "t2", "t3")) %>% friedman_test(t1, t2, t3)   # chi² = 5.2, p = 0.074274, W = 0.52
+ *   rank(as.vector(t(m1)))                                                  # gemeinsam geordnet: 2.5 6.5 10.5 / 8.5 6.5 13 / …
+ *   m2 <- matrix(c(8,10,10, 11,10,14, 9,9,8, 12,15,16, 9,13,11), ncol = 3, byrow = TRUE)
+ *   colSums(t(apply(m2, 1, rank)))                                          # 7.5 11 11.5
+ *   … %>% friedman_test(t1, t2, t3)                                         # chi² = 2.111111, p = 0.347999, W = 0.211111; ohne Korrektur 12 / 60 * 9.5 = 1.9
+ *   m3 <- m1; m3[4, 3] <- 20 und pmin(m1 + 3, 20)                           # chi² = 5.2 (beide)
+ *   matrix(c(8,10,12, 10,11,14, 6,8,9, 12,15,16, 9,11,13), …)               # chi² = 10, W = 1
+ * Friedman, Lehrdatensatz:
+ *   atlas %>% friedman_test(wissenstest, wissenstest_t2, wissenstest_t3) %>% summary()
+ *     # Mean Rank 1.56 2.0475 2.3925; chi² = 78.083682, df = 2, p = 1.1075e-17, W = 0.195209
+ *   atlas %>% mutate(wissenstest = wissenstest + 1) %>% friedman_test(…)    # chi² = 18.368499; Mean Rank 1.9275 1.85 2.2225
+ *   atlas %>% mutate(wissenstest_t2 = wissenstest_t2 - 1) %>% friedman_test(…)   # chi² = 88.741477; Mean Rank 1.7575 1.7325 2.51
+ *   atlas %>% mutate(wissenstest = wissenstest + 1, wissenstest_t2 = wissenstest_t2 - 1) %>% friedman_test(…)   # Mean Rank 2.13 1.53 2.34
+ *   atlas %>% friedman_test(wissenstest, wissenstest_t2)                    # Fehler: Friedman test requires at least 3 related measurements.
+ */
+test('B11 Friedman: Werkstatt wie in R', () => {
+  const s = frW.compute(FR_START);
+  assert.deepEqual([s.ranks, s.R, s.dev, s.ss], [[[1, 2, 3], [2, 1, 3], [1, 3, 2], [1, 2, 3], [1, 3, 2]], [6, 11, 13], [-4, 1, 3], 26]);
+  assert.ok(near(s.Q, 5.2) && near(s.p, 0.074274) && near(s.W, 0.52) && near(s.Qraw, 5.2), `Q ${s.Q}`);
+  assert.deepEqual(s.global[0], [2.5, 6.5, 10.5]);
+  const t = frW.compute(FR_TIES);
+  assert.deepEqual(t.R, [7.5, 11, 11.5]);
+  assert.ok(near(t.Qraw, 1.9) && near(t.Q, 2.111111) && near(t.p, 0.347999) && near(t.W, 0.211111), `Q ${t.Q}`);
+  for (const k of [0, 1]) assert.ok(near(frW.compute(frW.think[k].tryIt!.apply(FR_START)).Q, 5.2), `Denkfrage ${k + 1}: Q bleibt`);
+  const one = frW.compute(FR_SAME_ORDER);
+  assert.ok(near(one.Q, 10) && near(one.W, 1), 'gleiche Reihenfolge: W = 1');
+  const c = at(frW, FR_START, 1), v = frW.variants.friedman_test;
+  assert.equal(txt(frW.steps[0].rechnung, c), 'Person B: 11, 10 und 14 Aufgaben. Ränge: 2, 1 und 3.');
+  assert.equal(txt(frW.steps[1].rechnung, c), 'Test 1: R₁ = 1 + 2 + 1 + 1 + 1 = 6. Test 2: R₂ = 2 + 1 + 3 + 2 + 3 = 11. Test 3: R₃ = 3 + 3 + 2 + 3 + 2 = 13.');
+  assert.equal(txt(frW.steps[2].rechnung, c), 'Test 1: 6 − 10 = −4; Test 2: 11 − 10 = +1; Test 3: 13 − 10 = +3.');
+  assert.equal(txt(frW.steps[3].rechnung, c), '(−4)² + 1² + 3² = 16 + 1 + 9 = 26.');
+  assert.equal(txt(frW.steps[4].rechnung, c), 'Q = 12 / (5 · 3 · 4) · 26 = 0,2 · 26 = 5,2.');
+  assert.equal(txt(frW.steps[5].rechnung, c), 'W = 5,2 / (5 · 2) ≈ 0,52');
+  assert.match(txt(frW.steps[4].rechnung, at(frW, FR_TIES)), /= 1,9\. Wegen der Gleichstände innerhalb der Personen korrigiert R und meldet Q ≈ 2,11\./);
+  assert.equal(txt(frW.steps[0].rechnung, at(frW, FR_TIES)), 'Person A: 8, 10 und 10 Aufgaben. Ränge: 1; 2,5 und 2,5. Gleiche Ergebnisse teilen sich ihre Plätze.');
+  assert.equal(v.interpret(c).kurz, 'Der dritte Test schneidet mit der Rangsumme 13 am besten ab, der erste mit 6 am schwächsten. Ohne Unterschied hätte jeder Test etwa 10.');
+  assert.match(v.interpret(c).fachlich, /^Q ≈ 5,2 bei 2 Freiheitsgraden, p ≈ 0,07 .*in etwa 7 von 100 .*nicht signifikant; Kendalls W ≈ 0,52 ist nach der Faustregel stark\.$/);
+  assert.match(v.genau.paragraphs(at(frW, FR_TIES))[1], /von 1,9 auf 2,11/);
+  assert.match(frW.steps[0].check.diagnose(at(frW, FR_START, 0), 10.5)!, /allen 15 Werten/);
+  assert.match(frW.steps[1].check.diagnose(c, 46)!, /gelösten Aufgaben/);
+  assert.match(frW.steps[1].check.diagnose(c, 1.2)!, /mittlere Rang/);
+  assert.match(frW.steps[2].check.diagnose(c, 4)!, /Seite/);
+  assert.match(frW.steps[2].check.diagnose(c, 4)!, /^Fast!/);
+  assert.match(frW.steps[3].check.diagnose(c, 8)!, /ohne Vorzeichen/);
+  assert.match(frW.steps[5].check.diagnose(c, 5.2)!, /noch Q/);
+});
+
+test('B11 Friedman: 200 Befragte und In R wie in R', () => {
+  const columns = { x: ['wissenstest'], y: ['wissenstest_t2'], z: ['wissenstest_t3'] };
+  const f = frSample(ctx(rows, columns));
+  assert.ok(near(f.Q, 78.083682) && near(f.W, 0.195209) && near(f.p, 1.1075e-17, 1e-20), `Q ${f.Q}`);
+  assert.ok(f.meanRanks.every((m, j) => near(m, [1.56, 2.0475, 2.3925][j])) && near(f.R[0], 312) && near(f.R[2], 478.5));
+  const x1 = frSample(ctx(applyOp(rows, 'wissenstest', 'shift', 1), columns)), y1 = frSample(ctx(applyOp(rows, 'wissenstest_t2', 'shift', -1), columns));
+  assert.ok(near(x1.Q, 18.368499) && x1.meanRanks.every((m, j) => near(m, [1.9275, 1.85, 2.2225][j])), 'erster Test + 1');
+  assert.ok(near(y1.Q, 88.741477) && y1.meanRanks.every((m, j) => near(m, [1.7575, 1.7325, 2.51][j])), 'zweiter Test − 1');
+  const both = frSample(ctx(applyOp(applyOp(rows, 'wissenstest', 'shift', 1), 'wissenstest_t2', 'shift', -1), columns));
+  assert.ok(both.meanRanks.every((m, j) => near(m, [2.13, 1.53, 2.34][j])), 'beide Änderungen');
+  const s = friedmanTabs.sample!;
+  if (s.kind !== 'analysis') return assert.fail('Auswertung erwartet');
+  const r = s.result(ctx(rows, columns));
+  assert.equal(r.kurz, 'Ordnet jede Person ihre drei Testergebnisse, liegt der erste Test im Schnitt auf Rang 1,56, der zweite auf 2,05, der dritte auf 2,39. Gäbe es keinen Unterschied zwischen den Zeitpunkten, käme ein so großes Q in weniger als 1 von 1.000 Stichproben vor (p < 0,001). Die Befragten sind sich in der Reihenfolge nach der Faustregel nur schwach einig (W ≈ 0,2).');
+  assert.equal(r.fachlich, 'Friedman-Test: χ² = Q ≈ 78,08 bei 2 Freiheitsgraden, p < 0,001, Kendalls W ≈ 0,2. Bei α = 0,05 ist das signifikant; die Übereinstimmung ist nach der Faustregel schwach.');
+  assert.equal(r.zusatz, 'Rangsummen: erster Test 312, zweiter 409,5, dritter 478,5; ohne Unterschied hätte jeder 400.');
+  assert.match(s.think[0].explain, /von 78,08 auf 18,37/);
+  assert.match(s.think[1].explain, /von 2,05 auf 1,73/);
+  const map = Object.fromEntries(friedmanTabs.r!.outputMap.map(o => [o.match, o.explain]));
+  assert.match(map["Kendall's W"], /78,08 \/ 400 ≈ 0,2/);
 });

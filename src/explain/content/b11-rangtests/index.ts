@@ -4,16 +4,19 @@ import type { AreaIndex } from '../../types';
 import { mannWhitneyTabs, mannWhitneyWorkshop } from './mann-whitney';
 import { kruskalWallisTabs, kruskalWallisWorkshop } from './kruskal-wallis';
 import { wilcoxonTabs, wilcoxonWorkshop } from './wilcoxon';
+import { friedmanTabs, friedmanWorkshop } from './friedman';
 
 export const b11Rangtests: AreaIndex = {
   explanations: {
     mann_whitney: { kind: 'werkstatt', workshop: mannWhitneyWorkshop, variant: 'mann_whitney' },
     kruskal_wallis: { kind: 'werkstatt', workshop: kruskalWallisWorkshop, variant: 'kruskal_wallis' },
     wilcoxon_test: { kind: 'werkstatt', workshop: wilcoxonWorkshop, variant: 'wilcoxon_test' },
+    friedman_test: { kind: 'werkstatt', workshop: friedmanWorkshop, variant: 'friedman_test' },
   },
   tabs: {
     mann_whitney: mannWhitneyTabs,
     kruskal_wallis: kruskalWallisTabs,
     wilcoxon_test: wilcoxonTabs,
+    friedman_test: friedmanTabs,
   },
 };

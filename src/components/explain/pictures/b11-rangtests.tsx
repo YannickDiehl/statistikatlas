@@ -6,6 +6,7 @@ import { num } from '../../../explain/format';
 import { MW_GROUP, type MwStats } from '../../../explain/content/b11-rangtests/mann-whitney';
 import { KW_GROUP, KW_LABELS, type KwStats } from '../../../explain/content/b11-rangtests/kruskal-wallis';
 import type { WxStats } from '../../../explain/content/b11-rangtests/wilcoxon';
+import type { FrStats } from '../../../explain/content/b11-rangtests/friedman';
 import type { Pairs } from '../../../explain/math';
 import { Axis, clamp, DragPoint, forWorkshop, GridCell, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
@@ -24,12 +25,14 @@ function DotRows({ rows, bounds, axisTitle, who, onPick, onChange, label, tickSt
 }) {
   const [box, W] = useWidth();
   const left = 40, right = W - 92, X = linear([bounds.min, bounds.max], [left, right]);
-  const heads = rows.filter(r => r.head).length, ROW = 30, HEAD = 24;
+  // Mehrere Punkte je Zeile stehen leicht versetzt übereinander, damit nahe Werte lesbar bleiben.
+  const heads = rows.filter(r => r.head).length, HEAD = 24, SHIFT = 10;
   const ys: number[] = [];
   let y = 22;
-  rows.forEach(r => { if (r.head) y += HEAD; ys.push(y); y += ROW; });
+  rows.forEach(r => { const half = (r.points.length - 1) * SHIFT / 2; if (r.head) y += HEAD; y += half; ys.push(y); y += 30 + half; });
+  const py = (row: number, j: number) => ys[row] + (j - (rows[row].points.length - 1) / 2) * SHIFT;
   const AXIS = y - 6, H = AXIS + 50;
-  const flat = rows.flatMap((r, k) => r.points.map(p => ({ ...p, row: k })));
+  const flat = rows.flatMap((r, k) => r.points.map((p, j) => ({ ...p, row: k, j })));
   const { svg, start, handlers } = useDrag((i, p) => { const pt = flat[i]; const v = clamp(X.invert(p.x), bounds); if (v !== pt.value) onChange(pt.at, v); });
   const key = (e: KeyboardEvent, i: number) => {
     const pt = flat[i], next = keyStep(e, pt.value, bounds);
@@ -47,14 +50,14 @@ function DotRows({ rows, bounds, axisTitle, who, onPick, onChange, label, tickSt
             <line className="xw-guide" x1={left - 8} x2={right + 8} y1={ys[k]} y2={ys[k]} />
             <text className={`xw-t${k === who ? ' xw-strong' : ''}`} x={6} y={ys[k] + 5}>{r.name}</text>
             {r.arrow && r.points.length === 2 && Math.abs(r.points[1].value - r.points[0].value) > 1e-9 && (
-              <line className={r.tone === 'neg' ? 'xw-neg' : 'xw-pos'} strokeWidth={k === who ? 4.5 : 3} x1={X(r.points[0].value)} x2={X(r.points[1].value)} y1={ys[k]} y2={ys[k]} />
+              <line className={r.tone === 'neg' ? 'xw-neg' : 'xw-pos'} strokeWidth={k === who ? 4.5 : 3} x1={X(r.points[0].value)} x2={X(r.points[1].value)} y1={py(k, 0)} y2={py(k, 1)} />
             )}
             {r.note && <text className={`xw-t${k === who ? ' xw-strong' : ''}`} x={right + 22} y={ys[k] + 5}>{r.note}</text>}
           </g>
         ))}
         <Axis scale={X} ticks={ticks} at={AXIS} from={left} to={right} labelGap={20} title={axisTitle} />
         {flat.map((pt, i) => (
-          <DragPoint key={`p${i}`} x={X(pt.value)} y={ys[pt.row]} label={pt.name} selected={pt.row === who} valueNow={pt.value} bounds={bounds}
+          <DragPoint key={`p${i}`} x={X(pt.value)} y={py(pt.row, pt.j)} label={pt.name} selected={pt.row === who} valueNow={pt.value} bounds={bounds}
             onPointerDown={(e: PointerEvent) => { onPick(pt.row); start(i, e); }} onKeyDown={e => key(e, i)}>{pt.label}</DragPoint>
         ))}
       </svg>
@@ -207,8 +210,47 @@ function WilcoxonPicture({ data, s, step, who, setData, pickWho, names }: { data
   </>;
 }
 
+// Friedman ------------------------------------------------------------------------------
+
+/** Rangsummen der drei Tests als Balken, ab Schritt 3 mit der Erwartung, ab Schritt 4 mit den Quadraten der Abstände. */
+function TimeSums({ s, step }: { s: FrStats; step: number }) {
+  const [box, W] = useWidth();
+  const top = s.N * s.k, left = 60, right = step >= 4 ? W - 110 : W - 50, X = linear([0, top], [left, right]);
+  const Y = (j: number) => 26 + j * 36, H = 26 + s.k * 36 + 34;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Rangsummen der drei Tests: ${s.R.map(r => num(r)).join(', ')}; ohne Unterschied hätte jeder ${num(s.E)}.`}>
+        {s.R.map((r, j) => <g key={j}>
+          <text className="xw-t" x={4} y={Y(j) + 15}>Test {j + 1}</text>
+          <rect className="xw-bar-plain" x={left} y={Y(j)} width={Math.max(2, X(r) - left)} height={20} />
+          <text className="xw-t" x={X(r) + 6} y={Y(j) + 15}>{num(r)}</text>
+          {step >= 4 && <text className="xw-t" x={right + 30} y={Y(j) + 15}>({s.dev[j] < 0 ? '−' : s.dev[j] > 0 ? '+' : ''}{num(Math.abs(s.dev[j]))})² = {num(s.sq[j])}</text>}
+        </g>)}
+        {step >= 3 && <MarkLine x={X(s.E)} from={14} to={Y(s.k - 1) + 28} />}
+        {step >= 3 && <text className="xw-t" x={X(s.E)} y={H - 8} textAnchor="middle">Erwartung {num(s.E)}</text>}
+      </svg>
+    </div>
+  );
+}
+
+function FriedmanPicture({ data, s, step, who, setData, pickWho, names }: { data: number[][]; s: FrStats; step: number; who: number; setData: (d: number[][]) => void; pickWho: (i: number) => void; names: readonly string[] }) {
+  const rows: Row[] = data.map((r, i) => ({
+    name: names[i],
+    points: r.map((v, j) => ({ value: v, label: String(j + 1), name: `Person ${names[i]}, Test ${j + 1}, gelöste Aufgaben`, at: 3 * i + j })),
+    note: `R: ${s.ranks[i].map(x => num(x)).join('; ')}`,
+  }));
+  const change = (at: number, v: number) => setData(data.map((r, i) => i === Math.floor(at / 3) ? r.map((x, j) => j === at % 3 ? v : x) : r));
+  return <>
+    <DotRows rows={rows} bounds={{ min: 0, max: 20 }} tickStep={5} axisTitle="gelöste Aufgaben im Wissenstest (von 20)" who={who} onPick={pickWho}
+      onChange={change} label="Drei Tests der fünf Beispielpersonen, je Zeile eine Person" />
+    {step >= 2 && <TimeSums s={s} step={step} />}
+  </>;
+}
+
 export const pictures: Record<string, Picture> = {
   'b11-kw': forWorkshop(p => <KruskalWallisPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
   'b11-wilcoxon': forWorkshop(p => <WilcoxonPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
+  'b11-friedman': forWorkshop(p => <FriedmanPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
   'b11-mw': forWorkshop(p => <MannWhitneyPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
 };
