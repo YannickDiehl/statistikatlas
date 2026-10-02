@@ -8,6 +8,9 @@ import type { SampleCtx, SampleTab } from '../../types';
 import { FUENF } from './shared';
 import { series, seriesTabs } from './series';
 import { pairs, pairsTabs, R_FUENF } from './pairs';
+import { metric, metricTabs } from './metric';
+import { surveyColumns } from '../../../domain/survey';
+import { styleProblems } from '../../style';
 
 /*
  * Referenzwerte des Bereichs B1 „Messen und Skalen“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand)
@@ -32,6 +35,13 @@ import { pairs, pairsTabs, R_FUENF } from './pairs';
  *   cor(x, y); cor(sort(x), sort(y))        # 0.5391689; 0.9878151
  *   cor(x + 1, y)                           # 0.5391689 (Verschieben ändert r nicht)
  *   atlas %>% pearson_cor(lernzeit, wissenstest, use = "listwise", conf.level = .95)   # r = 0.539, p < 0.001 ***, N = 200
+ *
+ * Metrisches Skalenniveau (metric):
+ *   mean(x); sd(x); x[2] - x[1]; x[4] / x[1]          # 7.7515; 3.237515; 2.3; 1.75
+ *   atlas %>% filter(id == "P002") %>% select(lernzeit, schulabschluss, berufsabschluss)   # 8.3, 3, 1
+ *   sapply(c("lernplanung5", "schulabschluss", "erwerbstaetig", "berufsabschluss"), function(v) mean(as.numeric(atlas[[v]])))
+ *   #   3.26 1.985 0.685 3.81   (frequency(schulabschluss) druckt mean=1.99)
+ *   atlas %>% describe(lernzeit, einkommen, show = "all")      # Mean 7.752, Median 7.600, SD 3.238, N 200
  */
 
 const rows = createSurvey();
@@ -83,4 +93,23 @@ test('B1 Wertepaare: r der fünf wie erhoben und getrennt sortiert, die 200 wie 
   assert.ok(close(tab.value!(ctx(applyOp(rows, 'lernzeit', 'shift', 1))) as number, 0.5391689, 1e-6), 'r nach dem Verschieben wie in R');
   // Umgepolt (20 − Aufgaben) liest die Deutung die Richtung aus dem Vorzeichen.
   assert.match(tab.result(ctx(applyOp(rows, 'wissenstest', 'reverse'))).kurz, /löst eher weniger Aufgaben: r ≈ −0,54/);
+});
+
+test('B1 metrisch: Deutung je Skalenniveau mit den Mittelwerten aus R, für jede Spalte im Ton des Leitfadens', () => {
+  assert.deepEqual([rows[1].values.lernzeit, rows[1].values.schulabschluss, rows[1].values.berufsabschluss], [8.3, 3, 1]);
+  assert.match(metric.stellDirVor.text, /Code 3 \(Fachhochschulreife\), ihr Berufsabschluss den Code 1 \(Duale Berufsausbildung\)/);
+  assert.match(metric.bausteine[2].rechnung!, /^10,5 \/ 6 = 1,75$/);
+  const tab = analysis(metricTabs.sample);
+  const at = (x: string) => tab.result(ctx(rows, { x: [x] }));
+  assert.match(at('lernzeit').kurz, /„Lernzeit“ ist metrisch.*Mittelwert 7,75 h/);
+  assert.match(at('lernzeit').fachlich, /s ≈ 3,24 h/);
+  assert.match(at('lernzeit').zusatz!, /P001 und P002 liegen 2,3 h auseinander/);
+  assert.match(at('lernplanung5').kurz, /Zustimmungsstufen\. Den Mittelwert 3,26 darfst du nur deuten/);
+  assert.match(at('schulabschluss').kurz, /ordinal.*Mittelwert der Codes, 1,99, ist deshalb/, 'gerundet wie R (mean=1.99)');
+  assert.match(at('erwerbstaetig').kurz, /Anteil der Antworten „Ja“: 68,5 %/);
+  assert.match(at('berufsabschluss').kurz, /nominal.*Mittelwert der Codes, 3,81, bedeutet nichts/);
+  for (const c of surveyColumns) for (const [k, t] of Object.entries(at(c.id))) {
+    assert.deepEqual(styleProblems(t!, { maxWords: 25, maxSentences: k === 'kurz' ? 3 : undefined }), [], `${c.id} ${k}: ${t}`);
+    assert.ok(!/NaN|undefined/.test(t!), `${c.id} ${k}`);
+  }
 });

@@ -17,6 +17,9 @@ export const FUENF = [
 
 export const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
+/** Wie num(), aber Gleitkomma-Halbe wie in der Ausgabe von R aufgerundet: 1,985 → „1,99“ (num() zeigte „1,98“). */
+export const numR = (v: number, digits = 2) => num(v + Math.sign(v) * 1e-9, digits);
+
 /** Pearson-r zweier gleich langer Reihen; null, wenn eine nicht streut. */
 export function pearson(xs: readonly number[], ys: readonly number[]): number | null {
   const mx = mean(xs), my = mean(ys);
