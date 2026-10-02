@@ -295,7 +295,7 @@ export const gerade: Workshop<Pairs, Fit> = {
     },
     prediction: {
       lastStep: 4,
-      kurz: 'Der lineare Prädiktor setzt Startwert und Gewicht zu einer Vorhersage zusammen: Startwert plus Gewicht mal Lernzeit. So bekommt jede Person die Zahl, die die Gerade für sie erwartet.',
+      kurz: 'Der lineare Prädiktor setzt Startwert und Steigung zu einer Vorhersage zusammen: Startwert plus Steigung mal Lernzeit. So bekommt jede Person die Zahl, die die Gerade für sie erwartet.',
       fachlich: 'Die gewichtete Summe ηᵢ = b₀ + Σ bⱼ · xᵢⱼ der Prädiktorwerte einer Person. In der linearen Regression ist der vorhergesagte Wert ŷᵢ = ηᵢ.',
       symbolic: [{ part: ['ŷᵢ'], m: 4 }, ' = ', { part: ['b₀'], m: 3 }, ' + ', { part: ['b₁'], m: 2 }, { part: [' · xᵢ'], m: 4 }],
       aria: 'y Dach i gleich b null plus b eins mal x i',
@@ -313,10 +313,10 @@ export const gerade: Workshop<Pairs, Fit> = {
       },
       next: { id: 'residuals', label: 'Weiter zu den Residuen' },
       genau: {
-        kurz: 'Mit mehreren Prädiktoren bekommt jeder sein eigenes Gewicht. In der logistischen Regression wird der lineare Prädiktor erst noch in eine Wahrscheinlichkeit umgerechnet.',
+        kurz: 'Mit mehreren Prädiktoren bekommt jeder seinen eigenen Koeffizienten, seine Steigung. In der logistischen Regression wird der lineare Prädiktor erst noch in eine Wahrscheinlichkeit umgerechnet.',
         paragraphs: () => [
-          'Mit Lernzeit und Alter schätzt R für die 200 Befragten ŷ = 5,82 + 0,52 · Lernzeit + 0,006 · Alter. Jedes Gewicht beschreibt den Zusammenhang, wenn die anderen Prädiktoren gleich bleiben.',
-          'Kategorien ohne Rangfolge gehen als Dummyvariablen ein: Jede Gruppe bekommt ihr eigenes Gewicht im Vergleich zur Vergleichsgruppe.',
+          'Mit Lernzeit und Alter schätzt R für die 200 Befragten ŷ = 5,82 + 0,52 · Lernzeit + 0,006 · Alter. Jeder Koeffizient (jede Steigung) beschreibt den Zusammenhang, wenn die anderen Prädiktoren gleich bleiben.',
+          'Kategorien ohne Rangfolge gehen als Dummyvariablen ein: Jede Gruppe bekommt ihren eigenen Koeffizienten im Vergleich zur Vergleichsgruppe.',
           'In der logistischen Regression ist ηᵢ ein Logit. Erst die logistische Funktion 1 / (1 + e^(−η)) macht daraus eine Wahrscheinlichkeit zwischen 0 und 1.',
           'Vorhersagen weit außerhalb der beobachteten Werte sind unsicher: Die Gerade weiß nicht, ob der Zusammenhang dort noch gerade verläuft.',
         ],

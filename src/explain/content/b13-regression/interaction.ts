@@ -49,7 +49,7 @@ export const interaktion: ConceptCard = {
       title: 'Zwei Prädiktoren malnehmen',
       was: 'Für jede Person bilden wir das Produkt aus Lernzeit und Weiterbildung. Ohne Weiterbildung ist es 0, mit Weiterbildung gleich der Lernzeit.',
       rechnung: 'P001 hat 6 Stunden gelernt und eine Weiterbildung gemacht: 6 · 1 = 6. Ohne Weiterbildung wäre es 6 · 0 = 0.',
-      warum: 'So kann das Modell der Lernzeit in den beiden Gruppen ein verschiedenes Gewicht geben.',
+      warum: 'So kann das Modell der Lernzeit in den beiden Gruppen eine verschiedene Steigung geben.',
       acht: 'In R schreibst du lernzeit * weiterbildung. Das Sternchen nimmt beide Variablen und ihr Produkt ins Modell.',
       concept: 'multiply',
     },
@@ -81,12 +81,12 @@ export const interaktion: ConceptCard = {
   ausprobieren: [
     {
       question: 'Setz b₃ auf 0. Wie verlaufen die beiden Geraden?', options: ['parallel', 'sie kreuzen sich', 'beide waagerecht'], correct: 0, step: 2,
-      explain: 'Ohne Interaktion bekommt die Lernzeit in beiden Gruppen dasselbe Gewicht. Die Weiterbildung schiebt die Gerade dann nur nach oben oder unten.',
+      explain: 'Ohne Interaktion bekommt die Lernzeit in beiden Gruppen dieselbe Steigung. Die Weiterbildung schiebt die Gerade dann nur nach oben oder unten.',
       kurz: 'b₃ = 0 heißt: gleiche Steigung, parallele Geraden.',
     },
     {
       question: 'Ein Modell nur mit Lernzeit und Weiterbildung, ohne Produkt: Können die beiden Geraden verschieden steil sein?', options: ['ja', 'nein'], correct: 1, step: 1,
-      explain: 'Ohne Produkt hat die Lernzeit ein einziges Gewicht für alle. Erst das Produkt erlaubt jeder Gruppe ihre eigene Steigung.',
+      explain: 'Ohne Produkt hat die Lernzeit eine einzige Steigung für alle. Erst das Produkt erlaubt jeder Gruppe ihre eigene Steigung.',
       kurz: 'Verschiedene Steigungen brauchen einen Interaktionsterm.',
     },
     {
@@ -183,7 +183,7 @@ export const interaktionTabs: ConceptTabs = {
     next: { id: 'multicollinearity', why: 'Produktterme hängen eng mit ihren Bestandteilen zusammen. Was das für die Koeffizienten heißt, zeigt der VIF.' },
     before: [
       { id: 'linear_regression', why: 'Die Gerade, deren Steigung sich hier je Gruppe unterscheiden darf.' },
-      { id: 'prediction', why: 'Das Produkt geht als weiteres Gewicht in den linearen Prädiktor ein.' },
+      { id: 'prediction', why: 'Das Produkt geht mit eigenem Koeffizienten in den linearen Prädiktor ein.' },
       { id: 'dummy', why: 'Gruppen gehen als 0/1-Spalten in das Produkt ein.' },
     ],
     after: [

@@ -133,14 +133,14 @@ export const predictionTabs: ConceptTabs = {
     outputMap: [
       { match: '9.180750', atlas: 'ŷ von P001', step: 4, explain: 'predict() zeigt die Vorhersage jeder Person. P001 lernt 6 Stunden und ist 41: 5,82 + 0,52 · 6 + 0,006 · 41 ≈ 9,19, mit allen Nachkommastellen 9,18 Aufgaben.' },
       { match: '5.822', atlas: 'b₀', step: 3, explain: 'Der Startwert des linearen Prädiktors in der Zeile (Intercept).' },
-      { match: '0.518', atlas: 'b₁ der Lernzeit', step: 2, explain: 'Das Gewicht der Lernzeit: Es wird mit den Stunden einer Person malgenommen.' },
-      { match: '0.006', atlas: 'b₂ des Alters', explain: 'Das Gewicht des Alters: Es wird mit den Lebensjahren einer Person malgenommen.' },
+      { match: '0.518', atlas: 'b₁ der Lernzeit', step: 2, explain: 'Die Steigung der Lernzeit: Sie wird mit den Stunden einer Person malgenommen.' },
+      { match: '0.006', atlas: 'b₂ des Alters', explain: 'Die Steigung des Alters: Sie wird mit den Lebensjahren einer Person malgenommen.' },
     ],
     check: {
       question: 'Welche Zahl ist die Vorhersage für die erste Person, P001? Tippe sie an.', correct: '9.180750',
       wrong: {
         '5.822': 'Fast! Das ist der Startwert b₀. Die Vorhersage für P001 steht ganz unten, unter der 1.',
-        '0.518': 'Fast! Das ist das Gewicht der Lernzeit. Die Vorhersage für P001 steht ganz unten, unter der 1.',
+        '0.518': 'Fast! Das ist die Steigung der Lernzeit. Die Vorhersage für P001 steht ganz unten, unter der 1.',
       },
     },
   },
@@ -152,12 +152,12 @@ export const predictionTabs: ConceptTabs = {
     ],
     after: [
       { id: 'logit', why: 'In der logistischen Regression ist der lineare Prädiktor ein Logit.' },
-      { id: 'interaction', why: 'Ein Produkt zweier Prädiktoren als weiteres Gewicht.' },
+      { id: 'interaction', why: 'Ein Produkt zweier Prädiktoren mit eigenem Koeffizienten.' },
       { id: 'prediction_interval', why: 'Wie weit eine neue Person um ihre Vorhersage streuen kann.' },
     ],
     more: [
       { id: 'overfitting', why: 'Gute Vorhersagen für die eigenen Daten sind noch keine guten für neue Personen.' },
-      { id: 'marginal_effects', why: 'Übersetzt Gewichte eines Logitmodells in Prozentpunkte.' },
+      { id: 'marginal_effects', why: 'Übersetzt Koeffizienten eines Logitmodells in Prozentpunkte.' },
     ],
   },
 };

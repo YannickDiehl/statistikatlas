@@ -170,7 +170,7 @@ export const logistischeRegressionTabs: ConceptTabs = {
     before: [
       { id: 'logit', why: 'Die Skala, auf der das Modell eine Gerade ist.' },
       { id: 'likelihood', why: 'Das Prinzip, nach dem die Koeffizienten geschätzt werden.' },
-      { id: 'prediction', why: 'Startwert plus Gewichte mal Prädiktoren, hier als Logit.' },
+      { id: 'prediction', why: 'Startwert plus Koeffizienten mal Prädiktoren, hier als Logit.' },
     ],
     after: [{ id: 'confidence', why: 'Intervalle zeigen, wie genau die Odds Ratios geschätzt sind.' }],
     more: [
