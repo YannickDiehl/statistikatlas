@@ -1,5 +1,9 @@
 import type { ReactNode } from 'react';
-export const fmt=(value:number,digits=3)=>Number.isFinite(value)?value.toLocaleString('de-DE',{maximumFractionDigits:digits}).replace('-','−'):'nicht definiert';
+/**
+ * Zahl deutsch (Sprachleitfaden, Regeln 9 und 11): höchstens zwei Nachkommastellen, kleine Werte unter 0,1 mit zwei
+ * gültigen Ziffern, echtes Minus. `digits` legt die Nachkommastellen fest, etwa für Prozente oder Achsen.
+ */
+export const fmt=(value:number,digits?:number)=>Number.isFinite(value)?value.toLocaleString('de-DE',{maximumFractionDigits:digits??(value!==0&&Math.abs(value)<.1?Math.min(4,1-Math.floor(Math.log10(Math.abs(value)))):2)}).replace(/-/g,'−'):'nicht definiert';
 // Ein Label ohne for beschriftet sein erstes beschriftbares Kind, hier das <output>; deshalb trägt der Regler seinen Namen selbst.
 export function Slider({label,value,onChange,min,max,step=1}:{label:string;value:number;onChange:(v:number)=>void;min:number;max:number;step?:number}){return <label className="foundation-slider"><span>{label}<output>{fmt(value)}</output></span><input type="range" aria-label={label} aria-valuetext={fmt(value)} min={min} max={max} step={step} value={value} onChange={e=>onChange(+e.target.value)}/></label>;}
 export function Plot({points,shade,title,xLabel='Wert',bars=false,markers=[],yLabel}:{points:{x:number;y:number;left?:number;right?:number}[];shade?:(x:number)=>boolean;title:string;xLabel?:string;bars?:boolean;markers?:{x:number;label:string}[];yLabel?:string}){

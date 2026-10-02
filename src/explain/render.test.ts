@@ -29,7 +29,7 @@ import { entryById } from '../domain/mariposaCatalog';
 import { eligible } from '../domain/mariposaRoles';
 import { initialRSettings, rolesFor, startBlock, type RSettings } from '../domain/mariposa';
 import { CATALOG_OUTPUT } from './catalogOutput';
-import { styleProblems } from './style';
+import { ALLOWED_TERMS, BANNED_WORDS, styleProblems } from './style';
 
 const noop = () => {};
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
@@ -457,6 +457,28 @@ test('tabs: one reset button in the sample tab, step cards keep h1 → h2 → h3
   // Schrittkarten ohne Reiter „Mit 200 Befragten“: In „Weitere Übung“ stehen Spaltenwahl, Rechnung mit Daten und Deutung (Korrekturrunde M1).
   const add = panelOf(inspector('add'), 'add', 'verstehen'), practice = add.slice(add.indexOf('xw-practice'));
   for (const part of ['Mit welchen Variablen?', 'Mit deinen Daten', 'class="interpretation"', 'Mit den Daten experimentieren']) assert.ok(practice.includes(part), `add: „${part}“ fehlt in „Weitere Übung“`);
+});
+
+test('previous labs and texts under the new explanations: no „·“ separator beside numbers, at most two decimals, no belittling words (M3)', () => {
+  // Jedes Labor der „Weiteren Übung“ einmal (Verteilung, Wahrscheinlichkeit, Stichproben, Test, exakt, beobachtet, Regression, Überanpassung, Konfundierung, Messung, Faktoren).
+  const labs = ['normal_distribution', 'binomial_distribution', 'probability', 'sampling_distribution', 'null_distribution', 'exact_asymptotic', 'empirical_distribution', 'outliers_influence', 'overfitting', 'confounding', 'measurement_error', 'loadings'];
+  for (const id of labs) {
+    const v = panelOf(inspector(id), id, 'verstehen'), results = [...v.matchAll(/class="lab-result"[^>]*>(.*?)<\/div>/g)].map(m => text(m[1]));
+    assert.ok(results.length > 0, `${id}: keine Laboranzeige`);
+    for (const r of results) {
+      assert.doesNotMatch(r, /[\d)]\s·\s\p{L}|\p{L}\s·\s[\p{L}\d]/u, `${id}: „·“ als Trenner in „${r}“`);
+      assert.doesNotMatch(r, /(?<![\d.,])(?:[1-9]\d*|0),(?!0)\d{3}|-\d/, `${id}: mehr als zwei Nachkommastellen oder Bindestrich-Minus in „${r}“`);
+    }
+  }
+  // Regel 5 in allen bisherigen Texten, die eine Karte zeigt (Einordnung, Fachlich nachlesen, Labore), außer den Fachbegriffen.
+  const banned = new RegExp(`(^|[^\\p{L}])(${BANNED_WORDS.join('|')})`, 'giu');
+  for (const c of Object.values(conceptById)) {
+    const t = text(inspector(c.id));
+    for (const m of t.matchAll(banned)) {
+      const at = (m.index ?? 0) + m[1].length, rest = t.slice(at);
+      assert.ok(ALLOWED_TERMS.some(a => a.test(rest)), `${c.id}: „${t.slice(Math.max(0, at - 40), at + 40)}“`);
+    }
+  }
 });
 
 test('tabs: rank routes (Spearman through Pearson with ranks) keep the old layout with rank-based numbers', () => {

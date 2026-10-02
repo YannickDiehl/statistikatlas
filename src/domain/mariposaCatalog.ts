@@ -291,7 +291,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "formula": "SS_B = Σ nⱼ([[x̄ⱼ − x̄|mean|Gruppenmittel minus Gesamtmittel]])²; SS_W = ΣΣ([[xᵢⱼ − x̄ⱼ|deviation|Abstand zum eigenen Gruppenmittel]])²",
   "requires": [],
   "notes": [
-   "Bei der klassischen einfaktoriellen ANOVA gilt SS_Total = SS_B + SS_W. Bei Typ-III-Termtests gilt diese einfache Addition nicht."
+   "Bei der klassischen einfaktoriellen ANOVA gilt SS_Total = SS_B + SS_W. Bei Typ-III-Termtests geht diese Summe nicht auf."
   ],
   "output": "Die mittleren Quadratsummen entstehen nach Division durch k − 1 beziehungsweise N − k.",
   "variants": [],
@@ -1105,7 +1105,7 @@ export const mariposaEntries:AtlasEntry[]=[
   ],
   "notes": [
    "Nur Typ III ist implementiert. Typ II löst eine Warnung aus und fällt auf III zurück.",
-   "Zellen müssen besetzt und Effekte schätzbar sein. Typ-III-Quadratsummen summieren sich nicht einfach zur Modellquadratsumme."
+   "Zellen müssen besetzt und Effekte schätzbar sein. Typ-III-Quadratsummen ergeben zusammen nicht unbedingt die Modellquadratsumme."
   ],
   "output": "Termtests, Parameter, Modellgüte und partielle Effektgrößen.",
   "variants": [
@@ -1634,7 +1634,7 @@ export const mariposaEntries:AtlasEntry[]=[
   ],
   "notes": [
    "Klassische gemeinsame Fehlervarianz; studentisierte Spannweitenverteilung. Kein Welch-Post-hoc.",
-   "Nach factorial_anova passt die ungewichtete Paketmethode pro Faktor ein eigenes One-way-Modell an; keine adjustierten Randmittel oder einfachen Interaktionseffekte."
+   "Nach factorial_anova passt die ungewichtete Paketmethode pro Faktor ein eigenes One-way-Modell an; keine adjustierten Randmittel und keine bedingten Effekte innerhalb einer Interaktion."
   ],
   "output": "Vergleichspaare und korrigierte p-Werte; Tukey und Scheffé ergänzen simultane Intervalle.",
   "variants": [
@@ -2351,7 +2351,7 @@ export const mariposaEntries:AtlasEntry[]=[
   "notes": [
    "0 = kein Ereignis, 1 = Ereignis. Bei einem Faktor nimmt das Paket die erste Stufe als 0 und die zweite als 1.",
    "Immer listwise, kein use-Argument. Beide Klassen müssen vorhanden sein; Separation und instabile Schätzungen prüfen.",
-   "Kontinuierliche Prädiktoren wirken im einfachen Modell linear auf den Logit. Ein großer Hosmer–Lemeshow-p-Wert beweist keine gute Passung."
+   "Ohne Zusatzterme hängen kontinuierliche Prädiktoren linear mit dem Logit zusammen. Ein großer Hosmer–Lemeshow-p-Wert beweist keine gute Passung."
   ],
   "output": "Logitkoeffizienten, Odds Ratios und Modellgüte; Pseudo-R² nicht als erklärten Varianzanteil deuten.",
   "variants": [

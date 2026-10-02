@@ -424,7 +424,7 @@ export const foundationEntries:AtlasEntry[]=[
     ],
     "notes": [
       "C(n,k) zählt die möglichen Anordnungen von k Erfolgen.",
-      "Verschiedene Erfolgswahrscheinlichkeiten oder abhängige Antworten passen nicht zu diesem einfachen Binomialmodell."
+      "Verschiedene Erfolgswahrscheinlichkeiten oder abhängige Antworten passen nicht zu diesem Binomialmodell."
     ],
     "output": "Erwartungswert np und Varianz np(1−p) verändern sich mit n und p.",
     "variants": [],
@@ -886,7 +886,7 @@ export const foundationEntries:AtlasEntry[]=[
     "requires": [],
     "notes": [
       "Im linearen Modell ist r die Zahl linear unabhängiger Modellspalten einschließlich eines vorhandenen Achsenabschnitts; es ist keine Zahl von Rangplätzen.",
-      "Beispiele: einfache Regression mit Achsenabschnitt n−2; klassische ANOVA k−1 und N−k; r×c-Kreuztabelle (r−1)(c−1).",
+      "Beispiele: einfache lineare Regression mit Achsenabschnitt n−2; klassische ANOVA k−1 und N−k; r×c-Kreuztabelle (r−1)(c−1).",
       "Approximative Freiheitsgrade, etwa bei Welch, können nicht ganzzahlig sein. n−1 ist keine allgemeine Formel für jeden Test."
     ],
     "output": "Prüfgröße und passendes Modell bestimmen gemeinsam die Freiheitsgrade der Referenzverteilung.",
@@ -1194,7 +1194,7 @@ export const foundationEntries:AtlasEntry[]=[
     "formula": "A ⟂ ([[Y(0), Y(1)|causality|Potenzielle Ergebnisse unter beiden Bedingungen]])",
     "requires": [],
     "notes": [
-      "Die Formel beschreibt einfache zufällige Zuweisung: A ist unabhängig von den potenziellen Ergebnissen. Bei stratifizierter Randomisierung gilt die entsprechende Aussage innerhalb der Strata.",
+      "Die Formel beschreibt eine Zuweisung rein nach Los, ohne Schichten: A ist unabhängig von den potenziellen Ergebnissen. Bei stratifizierter Randomisierung gilt die entsprechende Aussage innerhalb der Strata.",
       "Randomisierung erzeugt Vergleichbarkeit im Zuweisungsverfahren, aber nicht zwingend exakt gleiche Gruppen in einer konkreten kleinen Stichprobe.",
       "Zufällige Stichprobenziehung betrifft die Auswahl aus einer Population; zufällige Zuweisung betrifft Versuchsbedingungen. Ausfälle oder Abweichungen von der Zuweisung verlangen zusätzliche Überlegungen."
     ],
@@ -1246,7 +1246,7 @@ export const foundationEntries:AtlasEntry[]=[
     "notes": [
       "Die Varianzzerlegung setzt Cov(T,E)=0 voraus. Im klassischen Modell ist T der Erwartungswert einer Person über gedachte Wiederholungen derselben Messung; E hat Erwartungswert 0.",
       "Dieser „wahre Wert“ ist keine Garantie, dass das beabsichtigte Konstrukt korrekt getroffen wird: gleichbleibende Verzerrungen können in T enthalten sein.",
-      "Unabhängiger klassischer Messfehler kann einfache Korrelationen abschwächen. Für systematische Fehler oder mehrere fehlerbehaftete Prädiktoren gibt es keine allgemeine Abschwächungsregel."
+      "Unabhängiger klassischer Messfehler kann die Korrelation zweier Variablen abschwächen. Für systematische Fehler oder mehrere fehlerbehaftete Prädiktoren gibt es keine allgemeine Abschwächungsregel."
     ],
     "output": "Mehr Personen vermindern Stichprobenunsicherheit, beseitigen aber nicht automatisch Fehler des Messverfahrens.",
     "variants": [],
@@ -1382,7 +1382,7 @@ export const foundationEntries:AtlasEntry[]=[
     "requires": [],
     "notes": [
       "vₖ ist ein Eigenvektor mit Länge 1; dₖ ist der zugehörige Eigenwert. Bei PCA aus einer Korrelationsmatrix mit p streuenden Variablen gilt Σdₖ = p.",
-      "Die Aussage über Varianzanteile betrifft PCA. Die Eigenwerte der ursprünglichen Korrelationsmatrix sind nicht einfach die erklärten Varianzen eines beliebigen gemeinsamen Faktorenmodells.",
+      "Die Aussage über Varianzanteile betrifft PCA. Die Eigenwerte der ursprünglichen Korrelationsmatrix sind nicht ohne Weiteres die erklärten Varianzen eines beliebigen gemeinsamen Faktorenmodells.",
       "Die Regel dₖ > 1 ist eine Heuristik, keine automatische Bestimmung der Dimensionalität. Negative Eigenwerte einer vermeintlichen Korrelationsmatrix können auf eine inkonsistente Matrix hinweisen."
     ],
     "output": "Beurteile Größe und Verlauf der Eigenwerte gemeinsam mit dem Analyseziel.",
@@ -1456,7 +1456,7 @@ export const foundationEntries:AtlasEntry[]=[
     "notes": [
       "M bezeichnet das Fehlmuster; Y_obs alle beobachteten und Y_mis alle fehlenden Angaben. MCAR bedeutet Unabhängigkeit von beiden; unter MAR darf das Fehlen von den beobachteten Angaben abhängen.",
       "MNAR liegt vor, wenn das Fehlen auch nach Berücksichtigung der beobachteten Angaben von fehlenden Werten abhängt. Beispiel: Fehlendes Einkommen hängt zusätzlich von der nicht angegebenen Einkommenshöhe ab.",
-      "MAR und MNAR lassen sich aus den beobachteten Daten allein im Allgemeinen nicht unterscheiden. MAR rechtfertigt weder pauschal vollständige Fälle noch einfaches Ersetzen durch den Mittelwert; passende Modelle und Sensitivitätsanalysen bleiben nötig."
+      "MAR und MNAR lassen sich aus den beobachteten Daten allein im Allgemeinen nicht unterscheiden. MAR rechtfertigt weder pauschal vollständige Fälle noch das Ersetzen durch den Mittelwert; passende Modelle und Sensitivitätsanalysen bleiben nötig."
     ],
     "output": "Dokumentiere Gründe und Muster des Fehlens und mache die Annahmen der gewählten Behandlung sichtbar.",
     "variants": [],
