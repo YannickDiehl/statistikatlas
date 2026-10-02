@@ -12,7 +12,8 @@
  *   SIZES       Breiten in px, durch Komma getrennt (Standard: 1440,390; Höhe 900, bei 390 px 844)
  *   MODE        „kompakt“ prüft die Erklärungen in der Ansicht Kompakt (Standard: Ausführlich)
  *   SHOTS=1     zusätzlich je Reiter und Breite ein Bildschirmfoto nach OUT/shots
- *   PLAYWRIGHT  Pfad zum Playwright-Paket (Standard: das npx-Paket dieses Rechners)
+ *   PLAYWRIGHT  Pfad zum Playwright-Paket. Ohne Angabe: playwright, wie Node es vom Projekt aus findet
+ *               (require.resolve), zuletzt das npx-Paket des Rechners, auf dem das Skript entstand.
  *
  * Je Begriff und Breite: öffnet den Begriff über die Suche der Karte (`/?ansicht=karte`, Suchfeld „Begriff im
  * Netzwerk finden“; findet die Suche ihn nicht eindeutig, über das Atlas-Werkzeug `open_atlas_concept`, das steht
@@ -43,7 +44,13 @@ const path = require('node:path');
 const BASE = process.env.BASE, OUT = process.env.OUT;
 const IDS = (process.env.IDS || '').split(',').map(s => s.trim()).filter(Boolean);
 const SIZES = (process.env.SIZES || '1440,390').split(',').map(Number).filter(Boolean);
-const PLAYWRIGHT = process.env.PLAYWRIGHT || '/Users/yannickdiehl/.npm/_npx/9833c18b2d85bc59/node_modules/playwright';
+/** Playwright: PLAYWRIGHT, sonst das Paket, das Node vom Projekt aus findet, zuletzt das npx-Paket des Entwicklungsrechners. */
+function playwrightPath() {
+  if (process.env.PLAYWRIGHT) return process.env.PLAYWRIGHT;
+  try { return require.resolve('playwright'); } catch { /* nicht installiert: weiter unten */ }
+  return '/Users/yannickdiehl/.npm/_npx/9833c18b2d85bc59/node_modules/playwright';
+}
+const PLAYWRIGHT = playwrightPath();
 const MIN_FONT = 13;
 if (!BASE || !OUT || !IDS.length) {
   console.error('Aufruf: BASE=http://127.0.0.1:<port> IDS=mean,sd OUT=<ordner> node scripts/check-explanations.cjs');

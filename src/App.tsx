@@ -2,7 +2,7 @@ import { LearningPath } from './components/LearningPath';
 import { BookOpen, Network } from 'lucide-react';
 import { flushSync } from 'react-dom';
 import { registerAtlasTools, type AtlasToolContext } from './domain/atlasTools';
-import { entryById, functionToConcept } from './domain/mariposaCatalog';
+import { entryById, functionToConcept, mariposaEntries } from './domain/mariposaCatalog';
 import { initialRSettings, rolesFor, eligible, packageSearch, type RSettings } from './domain/mariposa';
 import { memo, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useStableActions } from './components/useStableActions';
@@ -16,7 +16,7 @@ import { ref, keyOf, lessonContext, titleFor, outputRef, type Ref, type Route, t
 import { routeAfterSelection } from './domain/network';
 import { initialExploration, visit, step, type ExplorationView } from './domain/exploration';
 import { gravityLayout, type MapLayout } from './domain/mapLayout';
-import { mapConcepts, detailIds } from './domain/visibleNetwork';
+import { mapConcepts, mapIds, detailIds } from './domain/visibleNetwork';
 import { NetworkMap, type CameraRequest } from './components/NetworkMap';
 import { ConceptInspector } from './components/ConceptInspector';
 import { explainFor, tabsFor } from './explain/registry';
@@ -26,6 +26,11 @@ import { useViewportWidth, useWorkbenchWidth, WorkbenchHandle } from './componen
 import { fitWidth, standardWidth, workbenchStore } from './explain/workbench';
 const MemoConceptInspector=memo(ConceptInspector);
 const searchIndex=concepts.map(c=>({concept:c,text:`${titleFor(ref(c.id))} ${c.title} ${c.short} ${packageSearch(c.id)}`.toLocaleLowerCase('de')}));
+/**
+ * Notiz unten in der Karte: Die mariposa-Funktionen sind keine eigenen Punkte, sie stecken in den Begriffen mit
+ * R-Aufruf (alle Katalogbegriffe liegen im Netz). Beide Zahlen kommen aus den Daten.
+ */
+const withR=mariposaEntries.filter(e=>mapIds.has(e.id)),MAP_NOTE=`${mapConcepts.length} Begriffe im Netz; ${withR.length} davon führen zu den ${new Set(withR.flatMap(e=>e.variants.map(v=>v.fn))).size} mariposa-Funktionen`;
 const storageKey='statistikatlas.survey.v1';
 function storedStudy():{rows:SurveyRow[];selection:ColumnSelection}{try{const value=JSON.parse(localStorage.getItem(storageKey)||'null');const migrated=migrateSurvey(value?.rows);if(migrated){const s=value.selection;return {rows:migrated,selection:s&&columnById[s.x]&&columnById[s.y]&&typeof s.likertMetric==='boolean'?reconcileColumns('series',s):{...defaultSelection}};}}catch{}return {rows:createSurvey(),selection:{...defaultSelection}};}
 
@@ -105,7 +110,7 @@ function AtlasWorkspace({conceptRequest,visible,toolApi}:{conceptRequest:{id:str
    {explainWide&&<WorkbenchHandle width={benchWidth} viewport={viewportWidth} onWidth={changeBench} onReset={resetBench}/>}
    {selected&&view.panelOpen&&<MemoConceptInspector contextAnchor={view.contextAnchor} rows={survey} rSettings={view.rSettings?.[selected.id]} selected={selected} context={context} selection={selection} columnNotice={columnNotice} highlight={highlight} resetRevision={resetRevision} trace={view.trace} experimentRequest={experimentRequest} experimentOpen={experimentOpen} {...inspectorActions}/>}
    {selected&&!view.panelOpen&&<button className="reopen-inspector" onClick={()=>{setHistory(h=>({...h,present:{...h.present,panelOpen:true}}));setCamera(c=>({id:c.id+1,kind:'ensure'}));}}>{titleFor(selected)}<ChevronUp size={17}/><span>Erklärung öffnen</span></button>}
-   <div className="network-map-note" aria-live="polite">{selected?<><span className="selected-dot"/>{view.gravity?(view.trace?'Voraussetzungen herangezogen':'Direkte Bezüge herangezogen'):view.trace?'Voraussetzungen werden verfolgt':'Direkte Bezüge hervorgehoben'}<button onClick={wholeMap}>Ganze Karte</button></>:<><span>{mapConcepts.length} Begriffe im Netz (mit 80 mariposa-Funktionen)</span><span>Bausteine · Verfahren · Einordnung</span></>}</div>
+   <div className="network-map-note" aria-live="polite">{selected?<><span className="selected-dot"/>{view.gravity?(view.trace?'Voraussetzungen herangezogen':'Direkte Bezüge herangezogen'):view.trace?'Voraussetzungen werden verfolgt':'Direkte Bezüge hervorgehoben'}<button onClick={wholeMap}>Ganze Karte</button></>:<><span>{MAP_NOTE}</span><span>Bausteine · Verfahren · Einordnung</span></>}</div>
   </main>{dataOpen&&<SurveyData rows={survey} selection={selection} caseId={view.caseId} procedure={selected?.basis==='ranks'?'spearman':selected?outputRef(selected).id:'series'} onCase={caseId=>setHistory(h=>({...h,present:{...h.present,caseId}}))} onChange={rows=>{if(validSurvey(rows))setSurvey(rows);}} onSelection={changeColumns} onReset={resetSurvey} onClose={()=>setDataOpen(false)}/>}<footer className="network-footer"><div className="network-legend"><span><i/>Aufbau</span><span><i className="condition"/>Voraussetzung</span><span><i className="optional"/>Ergänzender Bezug</span><span><i className="meaning"/>Einordnung</span></div>{storageError?<span role="status">Daten können gerade nur für diese Sitzung behalten werden.</span>:<span>200 synthetische Befragte · lokal gespeichert</span>}<a href={typeof location!=='undefined'&&location.protocol==='file:'?location.href:'./Statistikatlas-offline.html'} download="Statistikatlas-offline.html">Offline öffnen</a></footer>
  </div>;
 }
