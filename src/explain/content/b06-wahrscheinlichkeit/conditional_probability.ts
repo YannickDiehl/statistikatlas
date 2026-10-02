@@ -2,7 +2,7 @@
 // und die umgekehrte Bedingung (19 von 82). Zahlen in R nachgerechnet, siehe b06-wahrscheinlichkeit.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { pct } from '../../format';
-import { ABSCHLUSS, column } from './gemeinsam';
+import { ABSCHLUSS, column, eqSign } from './gemeinsam';
 
 const A = ABSCHLUSS;
 const P_W_ABI = A.mit[4] / A.count[4], P_ABI_W = A.mit[4] / A.mitWeiterbildung, P_W = A.mitWeiterbildung / A.n, P_BEIDE = A.mit[4] / A.n;
@@ -115,8 +115,8 @@ export const conditionalProbabilityTabs: ConceptTabs = {
         : `Umgekehrt haben von den ${k.weiter} mit Weiterbildung ${k.beide} Abitur: ${pct(k.abiGivenW)}.`;
       return {
         kurz: `Von den ${k.abi} Befragten mit Abitur haben ${k.beide} eine Weiterbildung gemacht, also ${pct(k.wGivenAbi)}. Unter allen ${k.n} sind es ${pct(k.w)}. ${rev}`,
-        fachlich: `P(Weiterbildung | Abitur) = ${k.beide} / ${k.abi} ≈ ${pct(k.wGivenAbi)}; P(Weiterbildung) = ${k.weiter} / ${k.n} ≈ ${pct(k.w)}.`,
-        zusatz: `P(Abitur und Weiterbildung) = ${k.beide} / ${k.n} ≈ ${pct(k.beide / k.n)}: Dort stehen alle ${k.n} im Nenner.`,
+        fachlich: `P(Weiterbildung | Abitur) = ${k.beide} / ${k.abi} ${eqSign(k.wGivenAbi, 3)} ${pct(k.wGivenAbi)}; P(Weiterbildung) = ${k.weiter} / ${k.n} ${eqSign(k.w, 3)} ${pct(k.w)}.`,
+        zusatz: `P(Abitur und Weiterbildung) = ${k.beide} / ${k.n} ${eqSign(k.beide / k.n, 3)} ${pct(k.beide / k.n)}: Dort stehen alle ${k.n} im Nenner.`,
       };
     },
     voraussetzung: 'Die Anteile beschreiben diese 200 Befragten. Als Schätzung für alle Erwachsenen bräuchte es eine Zufallsstichprobe.',

@@ -453,7 +453,7 @@ export const populationVarianceTabs: ConceptTabs = {
       },
       {
         question: 'Die gewählte Person lernt plötzlich 40 Stunden. Was macht σ²?', options: ['bleibt fast gleich', 'steigt', 'sinkt'], correct: 1, step: 4,
-        explain: 'Ihr Abstand zu μ wird groß, und das Quadrat macht ihn riesig (Schritt 4). Auch mit der kleinen Chance 1 / 200 steigt σ² dadurch spürbar, während μ nur ein wenig steigt.',
+        explain: 'Ihr Abstand zu μ wird groß, und das Quadrat macht ihn riesig (Schritt 4). Auch mit der kleinen Chance 1 / 200 wächst σ² in den Ausgangsdaten dadurch um fast die Hälfte, während μ nur ein wenig steigt.',
         kurz: 'Wer weit weg ist, zählt im Quadrat viel mehr.',
         tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
         expect: { change: 'up' },

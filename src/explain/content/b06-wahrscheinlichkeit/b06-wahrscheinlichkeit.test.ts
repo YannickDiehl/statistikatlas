@@ -79,6 +79,7 @@ test('B6 probability: Abitur 40 von 200, Gegenereignis, Ausprobieren und Auswert
   assert.equal(r.kurz, '40 von 200 Befragten haben Abitur. Ziehst du eine Person zufällig, ist die Wahrscheinlichkeit dafür 0,2, also 20 %. Für kein Abitur bleiben 0,8.');
   assert.match(r.zusatz!, /81 von 200, das ist eine Wahrscheinlichkeit von 40,5 %/);
   assert.equal(tab.value!(ctxFor(tab)), 0.2);
+  assert.match(r.fachlich, /^P\(Abitur\) = 40 \/ 200 = 0,2 und P\(nicht Abitur\) = 1 − P\(Abitur\) = 0,8,/);
 });
 
 /*
@@ -113,7 +114,7 @@ test('B6 stochastic_independence: fast gleiche Anteile ohne Abschluss, Produktre
   const card = stochasticIndependence;
   assert.deepEqual(card.stellDirVor.figures!.map(f => f.value), ['21 %', '20,7 %', '23,2 %', '17,8 %']);
   assert.equal(card.bausteine[1].rechnung, 'Erwartet: P(Abitur) · P(Weiterbildung) = 20 % · 41 % = 8,2 %, also 16,4 von 200. Beobachtet: 19 von 200.');
-  assert.match(card.check.diagnose[3]!, /12 von 200, also 6 %/);
+  assert.match(card.check.diagnose[3]!, /= 0,3 · 0,2 = 0,06: 12 von 200 haben beides/);
   const tab = stochasticIndependenceTabs.sample!;
   if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const r = tab.result(ctxFor(tab));
@@ -244,6 +245,9 @@ test('B6 density_function: Fläche und Höhe der Dichte der Schlafdauer wie in R
   assert.equal(r.kurz, 'Im Normalmodell mit μ = 7,08 h und σ = 0,82 h hat der Bereich von 7 bis 8 Stunden die Fläche 0,41, also 40,9 %. In den Daten schlafen 90 von 200 so lange.');
   assert.ok(close(tab.value!(ctxFor(tab))!, 0.4085611, 1e-6));
   assert.ok(close(tab.think[1].expect.measure!(ctxFor(tab))!, 1, 1e-9), 'Gesamtfläche 1 wie integrate in R');
+  // 1 / (s * sqrt(2 * pi)) = 0.4866584: Gipfel bei μ, etwas höher als die 0,48 bei 7 Stunden
+  assert.match(r.zusatz!, /bei μ = 7,08 h, mit 0,49 pro Stunde/);
+  assert.match(r.fachlich, /≈ 0,41 für X ∼ N\(7,08; 0,82²\); beobachtet 45 %/);
 });
 
 /*

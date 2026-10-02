@@ -2,7 +2,7 @@
 // ziehen; Ereignis „hat Abitur“ (40 von 200). Zahlen in R nachgerechnet, siehe b06-wahrscheinlichkeit.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num, pct } from '../../format';
-import { ABSCHLUSS, column, countIf } from './gemeinsam';
+import { ABSCHLUSS, column, countIf, eqSign } from './gemeinsam';
 
 const A = ABSCHLUSS;
 
@@ -113,7 +113,7 @@ export const probabilityTabs: ConceptTabs = {
       const xs = column(c, 'x', 'schulabschluss'), n = xs.length, k = countIf(xs, v => v === 4), p = k / n, hi = countIf(xs, v => v >= 3);
       return {
         kurz: `${k} von ${n} Befragten haben Abitur. Ziehst du eine Person zufällig, ist die Wahrscheinlichkeit dafür ${num(p)}, also ${pct(p)}. Für kein Abitur bleiben ${num(1 - p)}.`,
-        fachlich: `P(Abitur) = ${k} / ${n} ≈ ${num(p)} und P(nicht Abitur) = 1 − P(Abitur) ≈ ${num(1 - p)}, bei einer Ziehung mit gleichen Chancen aus diesen ${n} Befragten.`,
+        fachlich: `P(Abitur) = ${k} / ${n} ${eqSign(p)} ${num(p)} und P(nicht Abitur) = 1 − P(Abitur) ${eqSign(1 - p)} ${num(1 - p)}, bei einer Ziehung mit gleichen Chancen aus diesen ${n} Befragten.`,
         zusatz: `Mindestens Fachhochschulreife haben ${hi} von ${n}, das ist eine Wahrscheinlichkeit von ${pct(hi / n)}.`,
       };
     },

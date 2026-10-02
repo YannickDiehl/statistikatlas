@@ -60,3 +60,5 @@ export const column = (c: SampleCtx, role: string, fallback: string) => sampleCo
 /** Wie viele Werte die Bedingung erfüllen. */
 export const countIf = (xs: readonly number[], ok: (v: number) => boolean) => xs.filter(ok).length;
 
+/** „=“, wenn die Zahl mit `decimals` Nachkommastellen genau angezeigt wird, sonst „≈“ (für Anteile als Prozent: 3). */
+export const eqSign = (v: number, decimals = 2) => Math.abs(Math.round(v * 10 ** decimals) / 10 ** decimals - v) > 1e-9 ? '≈' : '=';

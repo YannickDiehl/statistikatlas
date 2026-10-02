@@ -2,7 +2,7 @@
 // gezogenen Person; P002 hat 9 gelöst. Zahlen in R nachgerechnet, siehe b06-wahrscheinlichkeit.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num, pct } from '../../format';
-import { WISSEN, column } from './gemeinsam';
+import { WISSEN, column, eqSign } from './gemeinsam';
 
 const W = WISSEN;
 /** Beobachteter Wert im Beispiel: P002 hat 9 Aufgaben gelöst. */
@@ -114,7 +114,7 @@ export const randomVariableTabs: ConceptTabs = {
       const m = modal(c);
       return {
         kurz: `Möglich sind 0 bis 20 gelöste Aufgaben; bei den ${m.n} Befragten kommen ${m.distinct} verschiedene Werte vor. Am wahrscheinlichsten zieht man jemanden mit ${m.value} Aufgaben: ${m.count} von ${m.n}, also ${pct(m.p)}.`,
-        fachlich: `X = gelöste Aufgaben bei Ziehung mit gleichen Chancen; P(X = ${m.value}) = ${m.count} / ${m.n} ≈ ${num(m.p)}. Beobachtet reicht X von ${m.min} bis ${m.max}.`,
+        fachlich: `X = gelöste Aufgaben bei Ziehung mit gleichen Chancen; P(X = ${m.value}) = ${m.count} / ${m.n} ${eqSign(m.p)} ${num(m.p)}. Beobachtet reicht X von ${m.min} bis ${m.max}.`,
         zusatz: `Jede gezogene Person liefert genau einen Wert x; vorher ist nur die Verteilung bekannt.`,
       };
     },

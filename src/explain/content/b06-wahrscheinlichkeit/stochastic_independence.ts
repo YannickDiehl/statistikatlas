@@ -27,7 +27,7 @@ export const stochasticIndependence: ConceptCard = {
   wofuer: 'Hängt die Weiterbildung mit dem Schulabschluss zusammen? Wenn nicht, wäre der Anteil mit Weiterbildung in jeder Abschlussgruppe gleich. Genau das meint stochastische Unabhängigkeit: Das eine verrät nichts über das andere.',
   kurz: 'Zwei Ereignisse sind unabhängig, wenn das Wissen über das eine nichts an der Wahrscheinlichkeit des anderen ändert. Dann ist der Anteil in jeder Teilgruppe derselbe.',
   stellDirVor: {
-    text: `Unter allen ${A.n} Befragten haben ${pct(A.count[0] / A.n)} keinen Schulabschluss. Unter den ${A.mitWeiterbildung} mit Weiterbildung sind es ${pct(A.mit[0] / A.mitWeiterbildung)}, unter den ${A.ohneWeiterbildung} ohne Weiterbildung ${pct(A.ohne[0] / A.ohneWeiterbildung)}. Das ist fast dasselbe: Für „ohne Schulabschluss“ verrät die Weiterbildung kaum etwas. Beim Abitur ist das anders, mit ${pct(A.mit[4] / A.mitWeiterbildung)} gegenüber ${pct(A.ohne[4] / A.ohneWeiterbildung)}.`,
+    text: `Unter allen ${A.n} Befragten haben ${pct(A.count[0] / A.n)} keinen Schulabschluss. Unter den ${A.mitWeiterbildung} mit Weiterbildung sind es ${pct(A.mit[0] / A.mitWeiterbildung)}, unter den ${A.ohneWeiterbildung} ohne Weiterbildung ${pct(A.ohne[0] / A.ohneWeiterbildung)}. Die drei Anteile liegen keinen Prozentpunkt auseinander: Für „ohne Schulabschluss“ verrät die Weiterbildung fast nichts. Beim Abitur ist das anders, mit ${pct(A.mit[4] / A.mitWeiterbildung)} gegenüber ${pct(A.ohne[4] / A.ohneWeiterbildung)}.`,
     figures: [
       { label: 'P(ohne Abschluss)', value: pct(A.count[0] / A.n) },
       { label: 'P(ohne Abschluss | Weiterbildung)', value: pct(A.mit[0] / A.mitWeiterbildung) },
@@ -96,7 +96,7 @@ export const stochasticIndependence: ConceptCard = {
     diagnose: {
       1: 'Noch nicht ganz. Unabhängig heißt: gleiche Anteile mit und ohne Bedingung. Ob sie unter 50 % liegen, spielt keine Rolle.',
       2: 'Fast! Aus Anteilen in Beobachtungsdaten folgt keine Wirkung. Die Daten zeigen nur, dass Abschluss und Weiterbildung zusammenhängen.',
-      3: `Fast! Malnehmen darfst du nur bei Unabhängigkeit, und mit der bedingten Wahrscheinlichkeit wäre es ohnehin falsch. Beides zusammen haben ${A.mit[1]} von ${A.n}, also ${pct(A.mit[1] / A.n)}.`,
+      3: `Fast! 0,3 ist schon eine bedingte Wahrscheinlichkeit. Richtig ist P(Weiterbildung | Hauptschule) · P(Hauptschule) = ${num(A.mit[1] / A.count[1])} · ${num(A.count[1] / A.n)} = ${num(A.mit[1] / A.n)}: ${A.mit[1]} von ${A.n} haben beides.`,
     },
   },
   fuerDich: 'Wenn eine Studie sagt, zwei Merkmale hängen nicht zusammen, frag nach: Sind die Anteile in allen Gruppen ähnlich? Und wurden die Menschen unabhängig voneinander befragt oder ganze Familien, Klassen, Haushalte?',
