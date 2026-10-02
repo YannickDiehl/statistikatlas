@@ -6,6 +6,9 @@ import { unabhaengigkeit, chiSquareTabs } from './chi-square';
 import { binomialTest, binomialTabs } from './binomial-test';
 import { fisherTest, fisherTabs } from './fisher-test';
 import { mcnemarTest, mcnemarTabs } from './mcnemar-test';
+import { confounding, confoundingTabs } from './confounding';
+import { causality, causalityTabs } from './causality';
+import { randomAssignment, randomAssignmentTabs } from './random-assignment';
 
 export const b12KategorialDesign: AreaIndex = {
   explanations: {
@@ -14,6 +17,9 @@ export const b12KategorialDesign: AreaIndex = {
     binomial_test: { kind: 'begriff', card: binomialTest },
     fisher_test: { kind: 'begriff', card: fisherTest },
     mcnemar_test: { kind: 'satz', template: mcnemarTest },
+    confounding: { kind: 'begriff', card: confounding },
+    causality: { kind: 'begriff', card: causality },
+    random_assignment: { kind: 'begriff', card: randomAssignment },
   },
   tabs: {
     chisq_gof: gofTabs,
@@ -21,5 +27,8 @@ export const b12KategorialDesign: AreaIndex = {
     binomial_test: binomialTabs,
     fisher_test: fisherTabs,
     mcnemar_test: mcnemarTabs,
+    confounding: confoundingTabs,
+    causality: causalityTabs,
+    random_assignment: randomAssignmentTabs,
   },
 };

@@ -10,6 +10,9 @@ import { binomialTabs, binomialTest, pBinom, WEITERBILDUNG } from './binomial-te
 import { dFisher, FISHER, fisherSample, fisherTabs, fisherTest, pFisher } from './fisher-test';
 import { KURS, mcnemarTabs, mcnemarTest, mcSample, mcStats } from './mcnemar-test';
 import { applyOp } from '../../sample';
+import { confounding, PLANUNG } from './confounding';
+import { causality, LERNEN } from './causality';
+import { coinGroups, randomAssignment, TYPISCH } from './random-assignment';
 
 /*
  * Referenzwerte des Bereichs B12, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -210,4 +213,79 @@ test('B12 McNemar: Wechsel, χ² mit und ohne Korrektur, exakter p-Wert und die 
     assert.ok(near(v.value!({ ...ctx, rows: applyOp(applyOp(rows, 'kurs_vor', 'constant', 0), 'kurs_nach', 'constant', 1) })!, 198.005), 'beides');
     assert.match(v.result(ctx).kurz, /^46 Befragte trauen sich .*; 9 andersherum\. .*weniger als 1 von 1\.000 Stichproben vor \(p < 0,001\)/);
   }
+});
+
+/*
+ * Confounding und Kausalität (Lehrdatensatz):
+ *   plan <- as.numeric(atlas$lernplanung5); wiss <- as.numeric(atlas$wissenstest); lern <- as.numeric(atlas$lernzeit)
+ *   cor(plan, wiss); cor(plan, lern); cor(lern, wiss)      # 0.1625442706; 0.3408014766; 0.5391688537
+ *   atlas %>% pearson_cor(lernplanung5, wissenstest)       # r = 0.163, p = 0.021 *, N = 200
+ *   atlas %>% partial_cor(lernplanung5, wissenstest, controls = lernzeit)   # partial r = -0.027, p = 0.707 (zero-order r = 0.163)
+ *   planer <- plan >= 4; sum(planer)                       # 88 (andere 112)
+ *   tapply(wiss, planer, mean); tapply(lern, planer, mean) # 9.75 / 10.60227273; 7.029464286 / 8.670454545
+ *   viel <- lern > median(lern); median(lern)              # 7.6
+ *   tapply(wiss, list(planer, viel), mean)                 # bis 7,6 h: 9.34375 (32) gegen 9.014492754 (69); über: 11.32142857 (56) gegen 10.93023256 (43)
+ *   tapply(wiss, viel, mean); table(viel)                  # 9.118811881 (101), 11.15151515 (99)
+ *   atlas %>% filter(id == "P002") %>% select(lernzeit, wissenstest)   # 8.3, 9
+ *   tapply(lern, atlas$weiterbildung, mean)                # 7.781355932 (ohne), 7.708536585 (mit)
+ */
+test('B12 Confounding und Kausalität: Zusammenhänge und Vergleiche im Lehrdatensatz wie in R', () => {
+  const plan = rows.map(r => r.values.lernplanung5), wiss = rows.map(r => r.values.wissenstest), lern = rows.map(r => r.values.lernzeit);
+  const avg = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  const cor = (x: number[], y: number[]) => { const mx = avg(x), my = avg(y); let sxy = 0, sxx = 0, syy = 0; x.forEach((v, i) => { sxy += (v - mx) * (y[i] - my); sxx += (v - mx) ** 2; syy += (y[i] - my) ** 2; }); return sxy / Math.sqrt(sxx * syy); };
+  const r12 = cor(plan, wiss), r13 = cor(plan, lern), r23 = cor(wiss, lern), partial = (r12 - r13 * r23) / Math.sqrt((1 - r13 ** 2) * (1 - r23 ** 2));
+  assert.ok(near(r12, PLANUNG.r) && near(r13, PLANUNG.rPlanLern) && near(r23, PLANUNG.rLernWiss) && near(partial, PLANUNG.partial), `${r12} ${partial}`);
+  const planer = (i: number) => plan[i] >= 4, pick = (f: (i: number) => boolean, xs: number[]) => xs.filter((_, i) => f(i));
+  assert.equal(pick(planer, wiss).length, PLANUNG.nPlaner);
+  assert.ok(near(avg(pick(planer, wiss)), PLANUNG.wissPlaner) && near(avg(pick(i => !planer(i), wiss)), PLANUNG.wissAndere));
+  assert.ok(near(avg(pick(planer, lern)), PLANUNG.lernPlaner) && near(avg(pick(i => !planer(i), lern)), PLANUNG.lernAndere));
+  const viel = (i: number) => lern[i] > 7.6;
+  assert.ok(near(avg(pick(i => planer(i) && !viel(i), wiss)), PLANUNG.wenig.planer) && near(avg(pick(i => !planer(i) && !viel(i), wiss)), PLANUNG.wenig.andere));
+  assert.ok(near(avg(pick(i => planer(i) && viel(i), wiss)), PLANUNG.viel.planer) && near(avg(pick(i => !planer(i) && viel(i), wiss)), PLANUNG.viel.andere));
+  assert.ok(near(avg(pick(viel, wiss)), LERNEN.viel) && near(avg(pick(i => !viel(i), wiss)), LERNEN.wenig) && pick(viel, wiss).length === LERNEN.nViel);
+  const p002 = rows.find(r => r.id === 'P002')!.values;
+  assert.deepEqual([p002.lernzeit, p002.wissenstest], [LERNEN.p002.lernzeit, LERNEN.p002.wissenstest]);
+  assert.match(confounding.stellDirVor.text, /88 Befragte .* 10,6 Aufgaben, die übrigen 112 nur 9,75\. .* 8,67 statt 7,03 Stunden/);
+  assert.match(confounding.bausteine[2].rechnung!, /9,34 gegen 9,01 .* 11,32 gegen 10,93\. .*: −0,03\./);
+  assert.ok(PLANUNG.wenig.planer - PLANUNG.wenig.andere < (PLANUNG.wissPlaner - PLANUNG.wissAndere) / 2 && PLANUNG.viel.planer - PLANUNG.viel.andere < (PLANUNG.wissPlaner - PLANUNG.wissAndere) / 2, 'schrumpft auf weniger als die Hälfte');
+  assert.match(causality.stellDirVor.text, /r = 0,54\. Die 99 Befragten mit mehr als 7,6 Stunden .* 11,15 Aufgaben, die übrigen 101 nur 9,12\./);
+  assert.match(causality.ausprobieren[1].question, /7,71 Stunden, die ohne 7,78/);
+});
+
+/*
+ * Zufällige Zuweisung: Münzwurf mit dem Zufallsgenerator des Lehrdatensatzes (LCG aus src/domain/survey.ts), in R:
+ *   coin <- function(seed, k = 200) { state <- seed %% 2^32; g <- integer(k)
+ *     for (i in 1:k) { state <- (1664525 * state + 1013904223) %% 2^32; g[i] <- as.integer(state / 2^32 < 0.5) }; g }
+ *   for (v in 1:10) { g <- coin(v); c(sum(g == 1), mean(lern[g == 1]), mean(lern[g == 0]), mean(alter[g == 1]), mean(alter[g == 0]),
+ *                                    mean(sa[g == 1] == 4), mean(sa[g == 0] == 4)) }
+ *     # v = 1: 101 7.795050 7.707071 47.287129 46.828283 0.178218 0.222222
+ *     # v = 4: 106 7.369811 8.181915 49.094340 44.765957 0.188679 0.212766
+ *     # v = 7: 102 7.396078 8.121429 ...; v = 10: 103 7.669903 7.838144
+ *   sd(lern) * sqrt(2 / 100); sd(lern) * sqrt(2 / 1000)    # 0.4578538037; 0.1447860855
+ */
+test('B12 Zufällige Zuweisung: Münzwürfe und typische Zufallsunterschiede wie in R', () => {
+  const R: [number, number, number, number, number, number, number, number][] = [
+    [1, 101, 7.795050, 7.707071, 47.287129, 46.828283, 0.178218, 0.222222],
+    [2, 89, 7.667416, 7.818919, 49.078652, 45.441441, 0.224719, 0.180180],
+    [3, 99, 7.732323, 7.770297, 47.444444, 46.683168, 0.232323, 0.168317],
+    [4, 106, 7.369811, 8.181915, 49.094340, 44.765957, 0.188679, 0.212766],
+    [5, 115, 7.634783, 7.909412, 47.400000, 46.600000, 0.191304, 0.211765],
+    [6, 102, 7.861765, 7.636735, 46.088235, 48.071429, 0.176471, 0.224490],
+    [7, 102, 7.396078, 8.121429, 47.176471, 46.938776, 0.215686, 0.183673],
+    [8, 107, 7.438318, 8.111828, 46.514019, 47.688172, 0.168224, 0.236559],
+    [9, 109, 7.511927, 8.038462, 46.541284, 47.681319, 0.229358, 0.164835],
+    [10, 103, 7.669903, 7.838144, 46.233010, 47.938144, 0.213592, 0.185567],
+  ];
+  for (const [v, nA, lA, lB, aA, aB, bA, bB] of R) {
+    const g = coinGroups(v);
+    assert.ok(g.a.n === nA && g.b.n === 200 - nA, `Münzwurf ${v}: Gruppengröße`);
+    for (const [mine, r] of [[g.a.lernzeit, lA], [g.b.lernzeit, lB], [g.a.alter, aA], [g.b.alter, aB], [g.a.abitur, bA], [g.b.abitur, bB]]) assert.ok(near(mine, r, 1e-5), `Münzwurf ${v}: ${mine} ≠ R ${r}`);
+  }
+  const s = rows.map(r => r.values.lernzeit), m = s.reduce((a, b) => a + b, 0) / s.length, sd = Math.sqrt(s.reduce((a, x) => a + (x - m) ** 2, 0) / (s.length - 1));
+  assert.ok(near(sd, TYPISCH.sd) && near(sd * Math.sqrt(2 / 100), TYPISCH.n100) && near(sd * Math.sqrt(2 / 1000), TYPISCH.n1000));
+  assert.match(randomAssignment.stellDirVor.text, /7,8 und 7,71 Stunden\. .* 8,67 und 7,03 Stunden/);
+  assert.match(randomAssignment.bausteine[1].rechnung!, /101 und 99 Befragte; Lernzeit 7,8 und 7,71 h; Alter 47,29 und 46,83 Jahre; Abitur 17,8 % und 22,2 %/);
+  assert.match(randomAssignment.regler!.describe(4), /106 Befragte, Gruppe B 94\. .* 7,37 und 8,18 Stunden, ein Unterschied von 0,81 Stunden.* 1,64 Stunden\./);
+  assert.match(randomAssignment.ausprobieren[0].explain, /etwa 0,46 Stunden/);
+  assert.match(randomAssignment.ausprobieren[1].explain, /von 0,46 auf 0,14 Stunden/);
 });

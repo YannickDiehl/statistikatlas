@@ -6,6 +6,8 @@ import type { FourStats } from '../../../explain/content/b12-kategorial-design/c
 import { partText } from '../../../explain/content/b12-kategorial-design/chi-gemeinsam';
 import { pBinom } from '../../../explain/content/b12-kategorial-design/binomial-test';
 import { dFisher, FISHER, pFisher } from '../../../explain/content/b12-kategorial-design/fisher-test';
+import { PLANUNG } from '../../../explain/content/b12-kategorial-design/confounding';
+import { coinGroups } from '../../../explain/content/b12-kategorial-design/random-assignment';
 import { dbinom, pText } from '../../../explain/content/b12-kategorial-design/rechnen';
 import { num, signed } from '../../../explain/format';
 import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, GridCell, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
@@ -105,6 +107,66 @@ export function Tails({ from, to, prob, marked, obs, expected, p, ticks, title, 
   );
 }
 
+/** Pfeil von (x1, y1) nach (x2, y2) mit Spitze; gestrichelt für eine vermutete Wirkung. */
+function Arrow({ x1, y1, x2, y2, dashed = false }: { x1: number; y1: number; x2: number; y2: number; dashed?: boolean }) {
+  const a = Math.atan2(y2 - y1, x2 - x1), h = 9, tip = (s: number) => `${x2 - h * Math.cos(a + s)},${y2 - h * Math.sin(a + s)}`;
+  return <g>
+    <line className={dashed ? 'xw-mean' : 'xw-axis'} x1={x1} y1={y1} x2={x2} y2={y2} />
+    <polygon className="b12-arrow" points={`${x2},${y2} ${tip(0.45)} ${tip(-0.45)}`} />
+  </g>;
+}
+
+/** Gemeinsame Ursache: Lernzeit (C) hängt mit Lernplanung (A) und Wissenstest (Y) zusammen; der Weg von A zu Y ist offen. */
+function CommonCause() {
+  const [box, W] = useWidth();
+  const bw = Math.min(150, (W - 24) / 2), bh = 34, cx = W / 2, top = 10, low = 112, lx = 4, rx = W - 4 - bw;
+  const node = (x: number, y: number, label: string) => <g><rect className="xw-cell xw-cell-plain" x={x} y={y} width={bw} height={bh} rx={6} /><text className="xw-t xw-strong" x={x + bw / 2} y={y + 22} textAnchor="middle">{label}</text></g>;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={196} viewBox={`0 0 ${W} 196`} role="img"
+        aria-label={`Lernzeit hängt mit Lernplanung (r = ${num(PLANUNG.rPlanLern)}) und mit dem Wissenstest (r = ${num(PLANUNG.rLernWiss)}) zusammen. Zwischen Lernplanung und Wissenstest: r = ${num(PLANUNG.r)}, bei gleicher Lernzeit ${num(PLANUNG.partial)}.`}>
+        {node(cx - bw / 2, top, 'Lernzeit (C)')}
+        {node(lx, low, 'Lernplanung (A)')}
+        {node(rx, low, 'Wissenstest (Y)')}
+        <Arrow x1={cx - 20} y1={top + bh} x2={lx + bw / 2} y2={low - 2} />
+        <Arrow x1={cx + 20} y1={top + bh} x2={rx + bw / 2} y2={low - 2} />
+        <Arrow x1={lx + bw} y1={low + bh / 2} x2={rx - 2} y2={low + bh / 2} dashed />
+        <text className="xw-t" x={(cx - 20 + lx + bw / 2) / 2 - 6} y={(top + bh + low) / 2} textAnchor="end">r = {num(PLANUNG.rPlanLern)}</text>
+        <text className="xw-t" x={(cx + 20 + rx + bw / 2) / 2 + 6} y={(top + bh + low) / 2}>r = {num(PLANUNG.rLernWiss)}</text>
+        <text className="xw-t" x={cx} y={low + bh + 24} textAnchor="middle">A und Y: r = {num(PLANUNG.r)}</text>
+        <text className="xw-t" x={cx} y={low + bh + 44} textAnchor="middle">bei gleicher Lernzeit: {num(PLANUNG.partial)}</text>
+      </svg>
+    </div>
+  );
+}
+
+/** Mittlere Lernzeit zweier Gruppen: per Münzwurf gebildet (oben) und nach eigener Lernplanung (unten). */
+function Balance({ seed }: { seed: number }) {
+  const [box, W] = useWidth();
+  const g = coinGroups(seed), X = linear([6, 9.5], [24, W - 24]), axis = 168;
+  const pair = (y: number, a: number, b: number, la: string, lb: string) => {
+    const leftFirst = a <= b;
+    return <g>
+      <line className="xw-axis" x1={X(Math.min(a, b))} x2={X(Math.max(a, b))} y1={y} y2={y} />
+      <circle className="b12-dot" cx={X(a)} cy={y} r={7} /><circle className="b12-dot" cx={X(b)} cy={y} r={7} />
+      <text className="xw-t" x={X(a) + (leftFirst ? -12 : 12)} y={y + 5} textAnchor={leftFirst ? 'end' : 'start'}>{la} {num(a)}</text>
+      <text className="xw-t" x={X(b) + (leftFirst ? 12 : -12)} y={y + 5} textAnchor={leftFirst ? 'start' : 'end'}>{lb} {num(b)}</text>
+    </g>;
+  };
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={226} viewBox={`0 0 ${W} 226`} role="img"
+        aria-label={`Mittlere Lernzeit: Münzwurf ${seed}, Gruppe A ${num(g.a.lernzeit)} und Gruppe B ${num(g.b.lernzeit)} Stunden; nach eigener Lernplanung ${num(PLANUNG.lernPlaner)} und ${num(PLANUNG.lernAndere)} Stunden.`}>
+        <text className="xw-t xw-strong" x={24} y={18}>Münzwurf {seed}: Gruppen A und B</text>
+        {pair(52, g.a.lernzeit, g.b.lernzeit, 'A', 'B')}
+        <text className="xw-t xw-strong" x={24} y={100}>Nach eigener Lernplanung</text>
+        {pair(134, PLANUNG.lernPlaner, PLANUNG.lernAndere, 'ja', 'nein')}
+        <Axis scale={X} ticks={[6, 7, 8, 9]} at={axis} from={24} to={W - 24} labelGap={22} format={v => num(v)} title="mittlere Lernzeit in Stunden" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b12-anpassung': forWorkshop(p => <GofBars data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} setData={p.setData} pickWho={p.pickWho} />),
   'b12-unabhaengigkeit': forWorkshop(p => <FourGrid s={p.s} step={p.step} who={p.who} />),
@@ -118,4 +180,6 @@ export const pictures: Record<string, Picture> = {
     return <Tails from={40} to={72} prob={dFisher} marked={k => dFisher(k) <= d0} obs={v} expected={FISHER.expected} p={pFisher(v)}
       ticks={[40, 48, 56, 64, 72]} title="Erwerbstätige unter den 82 Befragten mit Weiterbildung, wenn es keinen Zusammenhang gäbe" axis="Erwerbstätige mit Weiterbildung" what="Erwerbstätige" />;
   }),
+  'b12-confounding': forCard(() => <CommonCause />),
+  'b12-zuweisung': forCard(p => <Balance seed={p.value ?? 1} />),
 };
