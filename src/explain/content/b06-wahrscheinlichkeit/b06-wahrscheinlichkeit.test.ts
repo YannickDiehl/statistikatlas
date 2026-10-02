@@ -14,6 +14,7 @@ import { theoreticalDistribution, theoreticalDistributionTabs } from './theoreti
 import { discreteContinuous, discreteContinuousTabs } from './discrete_continuous';
 import { probabilityMass, probabilityMassTabs, massUpTo } from './probability_mass';
 import { densityFunction, densityFunctionTabs, areaAround7 } from './density_function';
+import { cumulativeProbability, cumulativeProbabilityTabs, observedUpTo } from './cumulative_probability';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -241,4 +242,28 @@ test('B6 density_function: Fläche und Höhe der Dichte der Schlafdauer wie in R
   assert.equal(r.kurz, 'Im Normalmodell mit μ = 7,08 h und σ = 0,82 h hat der Bereich von 7 bis 8 Stunden die Fläche 0,41, also 40,9 %. In den Daten schlafen 90 von 200 so lange.');
   assert.ok(close(tab.value!(ctxFor(tab))!, 0.4085611, 1e-6));
   assert.ok(close(tab.think[1].expect.measure!(ctxFor(tab))!, 1, 1e-9), 'Gesamtfläche 1 wie integrate in R');
+});
+
+/*
+ *   pnorm(6, m, s); pnorm(8, m, s); 1 - pnorm(8, m, s); pnorm(8, m, s) - pnorm(6, m, s)   # 0.09333222 0.8684795 0.1315205 0.7751472
+ *   pnorm(7, m, s)                                                                        # 0.4599184
+ *   mean(h <= 2); mean(h <= 1); 1 - mean(h <= 2); 1 - mean(h <= 3)                         # 0.425 0.235 0.575 0.4
+ *   sum(sl <= 6); sum(sl < 6); sum(sl - 1 <= 6); sum(sl + 1 <= 6)                          # 22 18 99 0
+ */
+test('B6 cumulative_probability: F(6), F(8), Bereiche und Fₙ(6) wie in R', () => {
+  const card = cumulativeProbability;
+  assert.deepEqual(card.stellDirVor.figures!.map(f => f.value), ['9,3 %', '86,8 %', '77,5 %']);
+  assert.equal(card.bausteine[1].rechnung, 'P(X > 8) = 1 − F(8) ≈ 13,2 %; P(6 < X ≤ 8) = F(8) − F(6) ≈ 77,5 %');
+  assert.equal(card.bausteine[2].rechnung, 'P(X ≤ 2) = 42,5 %, aber P(X < 2) = P(X ≤ 1) = 23,5 %');
+  assert.match(card.bausteine[2].acht, /1 − F\(2\) = 57,5 %, nicht 1 − F\(3\) = 40 %/);
+  assert.match(card.ausprobieren[0].question, /F\(7\) ist etwa 46 %/);
+  assert.equal(observedUpTo(6), 22, 'höchstens 6 Stunden');
+  assert.equal(card.regler!.describe(6), 'F(6) ≈ 9,3 %: Im Modell schlafen so viele höchstens 6 Stunden, 90,7 % länger. In den Daten sind es 22 von 200, also 11 %.');
+  assert.match(card.genau.paragraphs[2], /liegen 4 Befragte genau bei 6,0: Höchstens 6 Stunden schlafen 22, weniger als 6 nur 18\./);
+  const tab = cumulativeProbabilityTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, '22 von 200 Befragten schlafen höchstens 6 Stunden, also Fₙ(6) = 11 %. Das Normalmodell mit μ = 7,08 h und σ = 0,82 h sagt F(6) ≈ 9,3 %.');
+  assert.equal(tab.value!(ctxFor(tab)), 0.11);
+  assert.equal(count(col('schlafdauer'), v => v - 1 <= 6 + 1e-9), 99, 'eine Stunde kürzer: 99 höchstens 6 Stunden');
 });

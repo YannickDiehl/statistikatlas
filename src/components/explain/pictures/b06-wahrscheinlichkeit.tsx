@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import { num, pct } from '../../../explain/format';
 import { baseSurvey, sampleColumn } from '../../../explain/sample';
-import { HAUSHALT, SCHLAF, dnorm, sleepMu } from '../../../explain/content/b06-wahrscheinlichkeit/gemeinsam';
+import { HAUSHALT, SCHLAF, dnorm, schlafModell, sleepMu } from '../../../explain/content/b06-wahrscheinlichkeit/gemeinsam';
 import { massOf, massUpTo } from '../../../explain/content/b06-wahrscheinlichkeit/probability_mass';
 import { areaAround7 } from '../../../explain/content/b06-wahrscheinlichkeit/density_function';
 import { AreaUnder, Axis, Bar, Curve, forCard, linear, MarkLine, useWidth, type Picture } from './kit';
@@ -85,7 +85,38 @@ function Dichte({ h }: { h: number }) {
   );
 }
 
+/**
+ * Kumulierte Wahrscheinlichkeit: oben die Dichte mit der Fläche links von x, unten die Verteilungsfunktion F mit dem
+ * Punkt (x, F(x)). Beide Teile teilen sich die Achse der Schlafdauer; die Fläche oben ist die Höhe unten.
+ */
+function Kumuliert({ cut }: { cut: number }) {
+  const [box, W] = useWidth();
+  const left = 44, right = W - 16, lo = 4.5, hi = 9.7, F = schlafModell.F(cut);
+  const x = linear([lo, hi], [left, right]);
+  const yd = linear([0, 0.52], [150, 44]), yF = linear([0, 1], [300, 196]);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={358} viewBox={`0 0 ${W} 358`} role="img"
+        aria-label={`Oben die Dichte der Schlafdauer im Normalmodell, die Fläche bis ${num(cut)} Stunden markiert. Unten die Verteilungsfunktion F; bei ${num(cut)} Stunden ist F gleich ${pct(F)}.`}>
+        <text className="xw-t xw-strong" x={left} y={16}>F({num(cut)}) = Fläche links ≈ {pct(F)}</text>
+        <AreaUnder f={sleepDensity} from={lo} to={Math.min(hi, cut)} x={x} y={yd} tone="pos" />
+        <Curve f={sleepDensity} from={lo} to={hi} x={x} y={yd} />
+        <line className="xw-axis" x1={left} x2={right} y1={150} y2={150} />
+        <text className="xw-t" x={left} y={176}>Dichte f</text>
+        <Curve f={schlafModell.F} from={lo} to={hi} x={x} y={yF} />
+        <MarkLine y={yF(F)} from={left} to={x(cut)} />
+        <MarkLine x={x(cut)} from={yd(sleepDensity(cut))} to={300} />
+        <circle className="xw-s-dot" cx={x(cut)} cy={yF(F)} r={5} />
+        <Axis scale={yF} ticks={[0, 0.5, 1]} at={left} from={300} to={196} orient="left" labelGap={24} format={v => num(v)} />
+        <Axis scale={x} ticks={[5, 6, 7, 8, 9]} at={300} from={left} to={right} labelGap={22} title="Schlafdauer pro Nacht in Stunden" />
+        <text className="xw-t" x={right} y={206} textAnchor="end">Verteilungsfunktion F</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b06-kumuliert': forCard(p => <Kumuliert cut={p.value ?? 6} />),
   'b06-dichte': forCard(p => <Dichte h={p.value ?? 0.5} />),
   'b06-masse': forCard(p => <Masse k={p.value ?? 2} />),
   'b06-modell': forCard(p => <Modell mu={sleepMu(p.value ?? SCHLAF.mean)} />),
