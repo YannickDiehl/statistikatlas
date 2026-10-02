@@ -1,0 +1,4 @@
+/* Bereich B12 „Kategoriale Tests, Design, Rechenbausteine“: Pfeilspitzen und Punkte der Bilder. Farben aus der Atlas-Palette. */
+.b12-arrow{fill:var(--muted);stroke:none}
+.b12-dot{fill:var(--wash);stroke:var(--green);stroke-width:2}
+.b12-band{fill:var(--xw-neg-fill);stroke:none;opacity:.6}
