@@ -1,10 +1,13 @@
 // Bilder des Bereichs B9 „Testlogik“ für alle Vorlagen. Schlüssel = `picture` der Erklärung, Bausteine und
 // `forWorkshop`/`forCard`/`forSentence`/`forTable` aus ./kit.tsx.
 // Eigene Stile in src/explain/areas/b09-testlogik.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
-import { num } from '../../../explain/format';
 import { lgamma } from '../../../tasks/kit/dist';
-import { MU0, SCHLAF, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import type { TStats } from '../../../explain/content/b09-testlogik/pruefgroesse';
+import { MISCHEN, asFarAs, mixCount } from '../../../explain/content/b09-testlogik/nullverteilung';
+import { MU0, SCHLAF, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
+import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
+import { baseSurvey } from '../../../explain/sample';
+import { count, num } from '../../../explain/format';
 import { AreaUnder, Axis, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Dichte der t-Verteilung mit df Freiheitsgraden (für sehr viele Freiheitsgrade praktisch die Normalverteilung). */
@@ -67,7 +70,38 @@ function Pruefgroesse({ s }: { s: TStats }) {
   );
 }
 
+/**
+ * Nullverteilung durch Mischen: Säulen zählen die Unterschiede „ohne minus mit Weiterbildung“ der ersten k Mischungen
+ * (Klassen zu 0,1 h); die Kurve ist die Normalverteilung mit derselben Standardabweichung; markiert ist der beobachtete
+ * Unterschied in beide Richtungen.
+ */
+function Nullverteilung({ value }: { value: number }) {
+  const [box, W] = useWidth();
+  const k = mixCount(value), diffs = mischen(baseSurvey(), k), lim = 1.6, width = 0.1, bins = Math.round(2 * lim / width);
+  const counts = new Array<number>(bins).fill(0);
+  for (const d of diffs) { const b = Math.floor((d + lim) / width); if (b >= 0 && b < bins) counts[b]++; }
+  const normalPeak = k * width / (MISCHEN.sd * Math.sqrt(2 * Math.PI)), top = Math.max(...counts, normalPeak);
+  const x = linear([-lim, lim], [24, W - 24]), base = 160, y = linear([0, top], [base, 44]);
+  const f = (v: number) => k * width * Math.exp(-v * v / (2 * MISCHEN.sd ** 2)) / (MISCHEN.sd * Math.sqrt(2 * Math.PI));
+  const far = asFarAs(k);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={216} viewBox={`0 0 ${W} 216`} role="img"
+        aria-label={`Säulen: Unterschiede der Lernzeit nach ${count(k)}-maligem Mischen der Weiterbildungsangaben, von −1,6 bis +1,6 Stunden, gehäuft um 0. Die Kurve zeigt die Glockenform mit der Standardabweichung ${num(MISCHEN.sd)} Stunden. Markiert ist der beobachtete Unterschied von ${num(LW.diff)} Stunden in beide Richtungen; ${count(far)} der ${count(k)} Mischungen liegen mindestens so weit von 0 entfernt.`}>
+        <text className="xw-t xw-strong" x={24} y={16}>{count(k)}-mal gemischt</text>
+        {counts.map((c, i) => <rect key={i} className="xw-bar-plain" x={x(-lim + i * width) + 0.5} y={y(c)} width={Math.max(1, x(width) - x(0) - 1)} height={base - y(c)} />)}
+        <Curve f={f} from={-lim} to={lim} x={x} y={y} />
+        <MarkLine x={x(LW.diff)} from={38} to={base} className="xw-mean b09-reject" />
+        <MarkLine x={x(-LW.diff)} from={38} to={base} className="xw-mean b09-reject" />
+        <text className="xw-t" x={x(0)} y={34} textAnchor="middle">±{num(LW.diff)} h beobachtet</text>
+        <Axis scale={x} ticks={[-1.5, -1, -0.5, 0, 0.5, 1, 1.5]} at={base} from={24} to={W - 24} labelGap={20} format={v => num(v)} title="Unterschied ohne minus mit, in Stunden" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-nullverteilung': forCard(p => <Nullverteilung value={p.value ?? 200} />),
   'b09-pruefgroesse': forSentence(p => <Pruefgroesse s={p.s as TStats} />),
   'b09-hypothese': forCard(p => <Hypothese mu0={p.value ?? MU0} />),
 };

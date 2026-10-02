@@ -4,14 +4,17 @@
 import type { AreaIndex } from '../../types';
 import { hypothese, hypotheseTabs } from './hypothese';
 import { pruefgroesse, pruefgroesseTabs } from './pruefgroesse';
+import { nullverteilung, nullverteilungTabs } from './nullverteilung';
 
 export const b09Testlogik: AreaIndex = {
   explanations: {
     hypothesis: { kind: 'begriff', card: hypothese },
     test_statistic: { kind: 'satz', template: pruefgroesse },
+    null_distribution: { kind: 'begriff', card: nullverteilung },
   },
   tabs: {
     hypothesis: hypotheseTabs,
     test_statistic: pruefgroesseTabs,
+    null_distribution: nullverteilungTabs,
   },
 };
