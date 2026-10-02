@@ -11,7 +11,8 @@ import { betaFor, percent } from '../../../explain/content/b09-testlogik/fehlera
 import type { PStats } from '../../../explain/content/b09-testlogik/teststaerke';
 import { dfOf } from '../../../explain/content/b09-testlogik/freiheitsgrade';
 import { nOf, vergleich } from '../../../explain/content/b09-testlogik/exakt';
-import { MU0, SCHLAF, dbinom, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
+import { mOf } from '../../../explain/content/b09-testlogik/mehrfach';
+import { MU0, SCHLAF, dbinom, familyError, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
 import { baseSurvey } from '../../../explain/sample';
 import { count, num } from '../../../explain/format';
@@ -284,7 +285,28 @@ function Exakt({ value }: { value: number }) {
   );
 }
 
+/** Chance auf mindestens einen Fehlalarm bei 1 bis 30 unabhängigen Tests (α = 0,05 je Test), die gewählte Zahl hervorgehoben. */
+function Mehrfach({ value }: { value: number }) {
+  const [box, W] = useWidth();
+  const m = mOf(value), ms = Array.from({ length: 30 }, (_, i) => i + 1), base = 170;
+  const x = linear([0.5, 30.5], [52, W - 12]), y = linear([0, 1], [base, 40]), bw = Math.max(2, x(1) - x(0) - 2);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={226} viewBox={`0 0 ${W} 226`} role="img"
+        aria-label={`Säulen: Chance auf mindestens einen Fehlalarm bei 1 bis 30 unabhängigen Tests, wenn es nirgends einen Unterschied gibt. Bei ${m} ${m === 1 ? 'Test' : 'Tests'} sind es etwa ${Math.round(familyError(m) * 100)} %. Die Linie bei 5 % zeigt, was Bonferroni und Holm für die ganze Familie einhalten.`}>
+        <text className="xw-t xw-strong" x={12} y={16}>{m} {m === 1 ? 'Test' : 'Tests'}: etwa {Math.round(familyError(m) * 100)} % Fehlalarm-Chance</text>
+        {ms.map(k => <rect key={k} className={k === m ? 'xw-bar-neg sel' : 'xw-bar-plain'} x={x(k) - bw / 2} y={y(familyError(k))} width={bw} height={base - y(familyError(k))} />)}
+        <MarkLine y={y(0.05)} from={52} to={W - 12} />
+        <text className="xw-t b09-halo" x={W - 14} y={y(0.05) - 6} textAnchor="end">mit Korrektur: 5 %</text>
+        <Axis scale={y} ticks={[0, 0.25, 0.5, 0.75, 1]} at={52} from={base} to={40} orient="left" labelGap={24} format={v => `${Math.round(v * 100)} %`} />
+        <Axis scale={x} ticks={[1, 5, 10, 15, 20, 25, 30]} at={base} from={52} to={W - 12} labelGap={20} title="Zahl der Tests" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-mehrfach': forCard(p => <Mehrfach value={p.value ?? 10} />),
   'b09-exakt': forCard(p => <Exakt value={p.value ?? 200} />),
   'b09-freiheitsgrade': forCard(p => <Freiheitsgrade value={p.value ?? 4} />),
   'b09-teststaerke': forSentence(p => <Teststaerke s={p.s as PStats} />),

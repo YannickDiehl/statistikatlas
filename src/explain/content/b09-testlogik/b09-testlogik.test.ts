@@ -5,7 +5,7 @@ import { close } from '../../format';
 import { applyOp } from '../../sample';
 import type { ConceptTabs, SampleCtx } from '../../types';
 import { b09Testlogik } from './index';
-import { SCHLAF, anteilTest, binomApprox, binomExact, dbinom, gruppenTest, mischen, schlafP, schlafTest } from './rechnen';
+import { SCHLAF, anteilTest, binomApprox, binomExact, dbinom, dunn, familyError, gruppenTest, mischen, schlafP, schlafTest } from './rechnen';
 import { hypothese } from './hypothese';
 import { pruefgroesse, T_START } from './pruefgroesse';
 import { MISCHEN, asFarAs, nullverteilung } from './nullverteilung';
@@ -16,6 +16,7 @@ import { betaFor, fehlerarten } from './fehlerarten';
 import { teststaerke } from './teststaerke';
 import { DF, freiheitsgrade } from './freiheitsgrade';
 import { exakt, vergleich } from './exakt';
+import { DUNN, mehrfach } from './mehrfach';
 
 /*
  * Referenzwerte des Bereichs B9, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -63,6 +64,16 @@ import { exakt, vergleich } from './exakt';
  *   t.test(lz ~ wb, alternative = "greater")$p.value; t.test(lz ~ wb, alternative = "less")$p.value   # 0.4379349, 0.5620651
  *   atlas %>% t_test(lernzeit, group = weiterbildung, alternative = "greater")  # t(175.8) = 0.156, p = 0.438
  *
+ * D. Mehrere Vergleiche: finanzielle Lage nach Schulabschluss
+ *   k <- atlas %>% kruskal_wallis(finanzlage, group = schulabschluss)   # H(4) = 11.585, p = 0.021 *
+ *   kruskal.test(as.numeric(finanzlage) ~ as.numeric(schulabschluss), data = atlas)$p.value   # 0.02071547
+ *   (k %>% dunn_test(p_adjust = "holm"))$results[, c("z", "p", "p_adj")]
+ *   # z: -1.8104515, 0.0830916, -2.7466949, -1.5550907, 1.8357118, -0.9136140, 0.2523024, -2.7419887, -1.5883731, 1.1674690
+ *   # p_adj: 0.5312024, 1, 0.0601991, 0.6732119, 0.5312024, 1, 1, 0.0601991, 0.6732119, 0.9720840
+ *   2 * pnorm(-2.7466949)                                                # 0.0060199 (kleinstes unkorrigiertes p)
+ *   atlas %>% kruskal_wallis(finanzlage, group = schulabschluss) %>% dunn_test(p_adjust = "holm")   # 10 comparisons, 0 significant
+ *   1 - 0.95^c(2, 3, 10, 20, 30); 0.05 / c(3, 7)                         # 0.0975, 0.142625, 0.4012631, 0.6415141, 0.7853612; 0.0166667, 0.0071429
+ *
  * C. Weiterbildung gegen 50 % (82 von 200)
  *   binom.test(82, 200, 0.5)$p.value                                      # 0.013130356
  *   atlas %>% binomial_test(weiterbildung, p = .5)                        # prop = 0.410 vs 0.500, p = 0.013 *, N = 200
@@ -80,7 +91,7 @@ const tabs = (id: string): ConceptTabs => b09Testlogik.tabs[id];
 const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.ok(s?.kind === 'analysis', `${id}: Auswertung`); const cols = Object.fromEntries(Object.entries(s.columns ?? {}).map(([k, v]) => [k, [v]])); return s.result({ rows: data, columns: cols }); };
 
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
-  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power', 'general_df', 'exact_asymptotic'];
+  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power', 'general_df', 'exact_asymptotic', 'multiplicity'];
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -263,4 +274,25 @@ test('B9 Exakt und genähert: Binomialtest gegen Normalnäherung wie in R', () =
   assert.match(exakt.genau.paragraphs[0], /≈ 2,47 ergibt p ≈ 0,013, fast wie exakt\./);
   assert.match(result('exact_asymptotic').kurz, /Exakt ergibt sich p ≈ 0,013, mit der Normalverteilung genähert p ≈ 0,011\. Bei 200 Befragten liegen beide nah beieinander\./);
   assert.match(result('exact_asymptotic').fachlich, /z = \(82 − 100\) \/ √50 ≈ −2,55, p ≈ 0,011\./);
+});
+
+test('B9 Mehrere Vergleiche: Dunn ohne und mit Holm wie in R', () => {
+  const d = dunn(ctx({ x: 'finanzlage', group: 'schulabschluss' }));
+  const z = [-1.8104515, 0.0830916, -2.7466949, -1.5550907, 1.8357118, -0.9136140, 0.2523024, -2.7419887, -1.5883731, 1.1674690];
+  const adj = [0.5312024, 1, 0.0601991, 0.6732119, 0.5312024, 1, 1, 0.0601991, 0.6732119, 0.9720840];
+  d.pairs.forEach((p, i) => { assert.ok(close(p.z, z[i], 1e-6), `z ${i}: ${p.z}`); assert.ok(close(p.holm, adj[i], 1e-6), `Holm ${i}: ${p.holm}`); });
+  assert.deepEqual([d.pairs.length, d.raw, d.holmCount], [DUNN.m, DUNN.raw, DUNN.holm]);
+  assert.ok(close(Math.min(...d.pairs.map(p => p.p)), DUNN.minP, 1e-7) && close(Math.min(...d.pairs.map(p => p.holm)), DUNN.minHolm, 1e-7), 'kleinste p-Werte');
+  for (const [m, f] of [[2, 0.0975], [3, 0.142625], [10, 0.4012631], [20, 0.6415141], [30, 0.7853612]]) assert.ok(close(familyError(m), f, 1e-6), `m ${m}`);
+  assert.match(mehrfach.stellDirVor.text, /zwei davon bei p ≈ 0,006, .*p ≈ 0,06: Bei α = 0,05 ist kein Vergleich mehr signifikant\./);
+  assert.equal(mehrfach.bausteine[1].rechnung, '1 − 0,95¹⁰ ≈ 0,4');
+  assert.match(mehrfach.bausteine[1].was, /auf etwa 40 %\./);
+  assert.equal(mehrfach.bausteine[2].rechnung, 'Holm: 0,006 · 10 ≈ 0,06 > 0,05');
+  assert.match(mehrfach.ausprobieren[0].explain, /bei etwa 64 %\./);
+  assert.match(mehrfach.regler!.describe(10), /in etwa 40 von 100 Studien .*p < 0,005\./);
+  assert.match(mehrfach.regler!.describe(3), /in etwa 14 von 100 .*p < 0,017\./);
+  assert.match(mehrfach.regler!.describe(7), /p < 0,0071\./);
+  assert.match(mehrfach.genau.paragraphs[2], /p ≈ 0,021 bei α = 0,05/);
+  assert.match(result('multiplicity').kurz, /Von 10 Paarvergleichen .* ohne Korrektur 2 unter 0,05, nach Holm 0\. .*von 0,006 auf 0,06\./);
+  assert.match(result('multiplicity', applyOp(rows, 'finanzlage', 'reverse')).kurz, /ohne Korrektur 2 unter 0,05, nach Holm 0\./);
 });
