@@ -1,10 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSurvey } from '../../../domain/survey';
-import { bridgeContext, sampleColumn } from '../../sample';
+import { applyOp, bridgeContext, sampleColumn } from '../../sample';
 import { close } from '../../format';
 import { txt, type SampleCtx, type SampleTab } from '../../types';
-import { ABSCHLUSS, HAUSHALT, SCHLAF, WISSEN, meanSd } from './gemeinsam';
+import { ABSCHLUSS, HAUSHALT, SCHLAF, WISSEN, cdf, schlafModell } from './gemeinsam';
+import { series } from '../../math';
+import { CATALOG_OUTPUT } from '../../catalogOutput';
+import { liveOutput, locate } from '../../rRead';
 import { probability, probabilityTabs } from './probability';
 import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
 import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic_independence';
@@ -16,7 +19,7 @@ import { probabilityMass, probabilityMassTabs, massUpTo } from './probability_ma
 import { densityFunction, densityFunctionTabs, areaAround7 } from './density_function';
 import { cumulativeProbability, cumulativeProbabilityTabs, observedUpTo } from './cumulative_probability';
 import { theoreticalQuantile, theoreticalQuantileTabs } from './theoretical_quantile';
-import { bridgeErwartung, erwartung } from './erwartung';
+import { bridgeErwartung, erwartung, expectationTabs } from './erwartung';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -49,7 +52,7 @@ test('B6: die gemeinsamen Zahlen stimmen mit dem Lehrdatensatz und mit R überei
   assert.deepEqual([count(w, v => v === 1), count(w, v => v === 0)], [ABSCHLUSS.mitWeiterbildung, ABSCHLUSS.ohneWeiterbildung], 'Weiterbildung');
   const h = col('haushaltsgroesse');
   assert.deepEqual(HAUSHALT.values.map(k => count(h, v => v === k)), [...HAUSHALT.count], 'Haushaltsgröße');
-  const sl = col('schlafdauer'), m = meanSd(sl);
+  const sl = col('schlafdauer'), m = series(sl);
   assert.ok(close(m.mean, SCHLAF.mean, 1e-9) && close(m.sd, SCHLAF.sd, 1e-7), `Schlafdauer ${m.mean} ${m.sd}`);
   assert.deepEqual([Math.min(...sl), Math.max(...sl), new Set(sl).size], [SCHLAF.min, SCHLAF.max, SCHLAF.distinct], 'Schlafdauer Spanne');
   assert.deepEqual([count(sl, v => v < 6), count(sl, v => v <= 6), count(sl, v => v >= 7 && v <= 8)], [SCHLAF.below6, SCHLAF.atMost6, SCHLAF.from7to8], 'Schlafdauer Zählungen');
@@ -334,4 +337,65 @@ test('B6 Werkstatt Erwartung: μ, σ² und s² der fünf Personen und der 200 Be
   assert.equal(br.metrics(bc, 'population_variance').at(-1)!.value, '10,43 h²');
   assert.equal(br.interpret(bc, 'expectation').kurz, 'Ziehst du sehr oft zufällig eine der 200 Befragten, kommen im Mittel 7,75 Stunden Lernzeit heraus. Das ist genau ihr Mittelwert.');
   assert.ok(close(10.48 * 199 / 200, 10.43, 0.005), 'Rechnung im R-Reiter mit den sichtbaren Zahlen');
+});
+
+/*
+ * Fix-Runde 1 (Review B6): neue und bisher nur kommentierte Zahlen.
+ *   pnorm(8.05, m, s) - pnorm(6.95, m, s)                         # 0.4452474 (gerundete Daten 7,0 bis 8,0)
+ *   dnorm(7, m, s) / 3600; 0.48 / 3600                             # 0.0001345; 0.0001333 (auf die Sekunde genau)
+ *   pnorm(6, m + 1, s)                                             # 0.005536561 (von gut 9 % auf unter 1 %)
+ *   x <- c(1, 2, 2, 3, 5); min(x - mean(x)); min(x - mean(x))^2    # -1.6, 2.56
+ *   range(sapply(1:200, function(k) { x <- l; x[k] <- 40; pv(x) / pv(l) - 1 }))   # 0.4431076 0.4961079 (um fast die Hälfte)
+ *   atlas %>% crosstab(row = schulabschluss, col = weiterbildung, percentages = "row")   # 47.5% (Abitur, Ja), 41.0% (Total, Ja)
+ *   atlas %>% crosstab(row = schulabschluss, col = weiterbildung, percentages = "col")   # erste Zeile 21.2% 20.7% 21.0%
+ *   atlas %>% normality_test(schlafdauer)                          # KS = 0.051, p = 0.238
+ *   atlas %>% frequency(schulabschluss, show_unused = TRUE)        # mittlerer Abschluss: 37 | 18.50 | 59.50; FHR Cum. 80.00
+ */
+test('B6 Fix-Runde 1: geänderte Texte und ihre Zahlen wie in R', () => {
+  // C1, I1
+  assert.match(discreteContinuous.bausteine[2].warum, /^Bei einer stetigen Größe verteilt sich die Wahrscheinlichkeit lückenlos über einen ganzen Bereich\./);
+  assert.match(discreteContinuous.ausprobieren[2].question, /ohne jede Rundung/);
+  assert.match(discreteContinuous.ausprobieren[2].explain, /0,48 \/ 3600 ≈ 0,00013\.$/);
+  assert.ok(close(0.48 / 3600, 0.000133, 5e-7) && close(schlafModell.f(7) / 3600, 0.0001345, 5e-8), 'eine Sekunde im Modell');
+  // I3: alle mit Weiterbildung, gleich großer Anteil
+  const ind = stochasticIndependenceTabs.sample!;
+  if (ind.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const allW = applyOp(rows, 'weiterbildung', 'constant', 1);
+  assert.equal(ind.result(ctxFor(ind, allW)).kurz, 'In jeder Abschlussgruppe ist der Anteil mit Weiterbildung gleich groß: 100 %. Weiterbildung und Abschluss sind in diesen Daten unabhängig.');
+  // I4, M5, M6, M7 und die Denkfragen der Werkstatt (I2, M16)
+  const a = { s: erwartung.compute([1, 2, 2, 3, 5]), who: 0, names: erwartung.names };
+  assert.match(erwartung.variants.population_variance.interpret(a).kurz, /^Der gewichtete Durchschnitt der Abstandsquadrate, jede Person mit ihrer Chance 0,2, ist 1,84 Personen²\. Seine Wurzel σ ≈ 1,36 Personen/);
+  assert.equal(txt(erwartung.steps[3].acht, a), 'Im Taschenrechner Klammern setzen: (−1,6)² = 2,56. Ohne Klammern zeigt er −2,56.');
+  assert.doesNotMatch(String(erwartung.think[1].explain), /σ²/);
+  assert.equal(erwartung.think[1].tryIt, undefined, 'kein Ausprobieren, das auf der Karte Erwartungswert μ statt der Abstände zeigt');
+  assert.equal(erwartung.think[2].questionFor?.expectation, 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?');
+  assert.doesNotMatch(String(erwartung.think[2].explain), /n − 1|s²/);
+  assert.doesNotMatch(erwartung.mut, /fünf kleinen Schritten/);
+  assert.equal(erwartung.steps[4].title, 'Die Quadrate gewichtet zusammenzählen');
+  const bc = bridgeContext(erwartung.compute, 'series', rows, 'lernzeit', '', 1);
+  assert.match(bridgeErwartung.interpret(bc, 'population_variance').kurz, /^Der gewichtete Durchschnitt der Abstandsquadrate, jede Person mit der Chance 1 \/ 200, ist 10,43 h²\./);
+  assert.equal(bridgeErwartung.interpret(bc, 'population_variance').zusatz, 'σ² ist s² mal 199 / 200, also ein wenig kleiner.');
+  assert.equal(bridgeErwartung.interpret(bc, 'expectation').zusatz, 'Wären die 200 eine Zufallsstichprobe aus allen Erwachsenen, wäre ihr Mittelwert nur eine Schätzung für den Erwartungswert dort.');
+  // M10, M13
+  assert.match(densityFunction.genau.paragraphs[3], /Dafür sagt das Modell 44,5 %, fast genau die beobachteten 45 %\./);
+  assert.ok(close(schlafModell.F(8.05) - schlafModell.F(6.95), 0.4452474, 1e-6), 'rundungstreuer Bereich wie in R');
+  assert.match(theoreticalQuantile.stellDirVor.text, /6,03 Stunden: Im Modell schlafen 10 % höchstens so lange\./);
+  // M14: größte Änderung des Erwartungswerts durch einen Ausreißer ist genau 0,2 h; σ² steigt um 44,3 % bis 49,6 %
+  const lz = col('lernzeit'), mu = series(lz).mean, pv = (xs: number[]) => { const mm = series(xs).mean; return xs.reduce((s2, v) => s2 + (v - mm) ** 2, 0) / xs.length; };
+  const rises = lz.map((_, k) => series(lz.map((v, i) => i === k ? 40 : v)).mean - mu);
+  assert.ok(close(Math.min(...rises), 0.108, 1e-9) && close(Math.max(...rises), 0.2, 1e-9), 'μ steigt um 0,108 bis 0,2 h');
+  const rel = lz.map((_, k) => pv(lz.map((v, i) => i === k ? 40 : v)) / pv(lz) - 1);
+  assert.ok(close(Math.min(...rel), 0.4431076, 1e-6) && close(Math.max(...rel), 0.4961079, 1e-6), 'σ² steigt um fast die Hälfte');
+  assert.equal(expectationTabs.sample!.think[2].expect.change, 'up');
+  // Erklärungen der Vorhersagen
+  assert.ok(schlafModell.F(6) > 0.09 && cdf(6, SCHLAF.mean + 1, SCHLAF.sd) < 0.01, 'von gut 9 % auf unter 1 %');
+  assert.deepEqual([count(col('schlafdauer'), v => v - 1 <= 6 + 1e-9), count(col('schlafdauer'), v => v <= 6 + 1e-9)], [99, 22], 'fast die Hälfte statt gut einem Zehntel');
+  assert.equal(count(col('schulabschluss'), v => v === 4), 40, '40 von 40 mit Abitur');
+  // K2: Zahlen der R-Zuordnungen in den erfassten Ausgaben
+  const text = (key: string, m: string) => locate(CATALOG_OUTPUT[key].output, m)?.text;
+  assert.deepEqual([text('crosstab:0', '47.5%'), text('crosstab:0', '41.0%')], ['47.5%', '41.0%']);
+  assert.match(CATALOG_OUTPUT['crosstab:1'].output, /Ohne Schulabschluss +\| +25 \| +17 \| +42 \|\n\| +col % +\| +21\.2% \| +20\.7% \| +21\.0% \|/);
+  assert.deepEqual([text('normality_test:0', 'KS'), text('normality_test:0', 'p')], ['0.051', '0.238']);
+  assert.match(CATALOG_OUTPUT['frequency:0'].output, /Mittlerer Abschluss +\| +37 \| +18\.50 \| +18\.50 \| +59\.50 \|/);
+  assert.equal(locate(liveOutput({ fn: 'describe', show: ['mean', 'var'] }, rows, 'lernzeit'), 'Variance')?.text, '10.482');
 });

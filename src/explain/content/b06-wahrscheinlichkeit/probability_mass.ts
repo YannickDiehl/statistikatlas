@@ -87,7 +87,7 @@ export const probabilityMass: ConceptCard = {
     correct: 0,
     right: `Genau. 100 % − ${pct(massOf(1))} − ${pct(massOf(2))} − ${pct(massOf(3))} − ${pct(massOf(4))} = ${pct(massOf(5))}.`,
     diagnose: {
-      1: 'Noch nicht ganz. Die Balken müssen nicht gleich hoch sein. Rechne 100 % minus die vier anderen.',
+      1: 'Fast! Die Balken müssen nicht gleich hoch sein. p(5) ist der Rest: 100 % minus die vier anderen.',
       2: `Fast! ${pct(massUpTo(4))} sind die vier anderen zusammen. p(5) ist der Rest bis 100 %.`,
       3: 'Fast! 100 % ist die Summe aller Balken. Für p(5) ziehst du die anderen vier davon ab.',
     },
@@ -136,6 +136,22 @@ export const probabilityMassTabs: ConceptTabs = {
         expect: { change: 'equals', value: 1 },
       },
     ],
+  },
+  r: {
+    entry: 'frequency', variant: 0,
+    outputMap: [
+      { match: '18.50', atlas: 'p(2) in Prozent, X = Schulabschluss', step: 2, explain: 'Ist X der Schulabschluss einer zufällig gezogenen Person, ist jeder Anteil eine Masse: p(2) = 37 / 200 = 18,5 % für den mittleren Abschluss.' },
+      { match: '37', atlas: 'Anzahl mit dem Wert 2', step: 2, explain: '37 Befragte haben einen mittleren Abschluss. Geteilt durch alle 200 ergibt das die Masse dieses Werts.' },
+      { match: '59.50', atlas: 'P(X ≤ 2), kumuliert', step: 3, explain: 'Die Spalte ganz rechts zählt die Balken von oben zusammen: 21 + 20 + 18,5 = 59,5 %.' },
+      { match: 'Total', atlas: 'Summe aller Balken', step: 3, explain: 'In der Zeile Total ergeben alle Anteile zusammen 100 %, also 1.' },
+    ],
+    check: {
+      question: 'Welche Zahl ist die Masse p(2) des mittleren Abschlusses, in Prozent? Tippe sie an.', correct: '18.50',
+      wrong: {
+        '59.50': 'Fast! Das ist kumuliert, P(X ≤ 2): alle Balken bis zum mittleren Abschluss zusammen. Die Masse eines einzelnen Werts steht weiter links.',
+        '37': 'Fast! 37 ist die Anzahl der Befragten mit mittlerem Abschluss. Die Masse ist ihr Anteil an allen 200.',
+      },
+    },
   },
   next: {
     next: { id: 'binomial_distribution', why: 'Ein Modell, das die Masse für die Zahl der Treffer aus einer Formel liefert.' },

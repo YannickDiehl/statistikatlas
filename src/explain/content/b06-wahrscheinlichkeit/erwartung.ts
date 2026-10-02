@@ -5,6 +5,7 @@
 import type { Bridge, BridgeCtx, ConceptTabs, Ctx, FNode, TokenNote, Workshop } from '../../types';
 import { num, signed, paren, close, unit, pct } from '../../format';
 import { sumNodes } from '../../sample';
+import { eqSign as eq } from './gemeinsam';
 import { ref, titleFor } from '../../../domain/learning';
 
 /** Kennwerte der Ziehung mit gleichen Chancen aus den Werten `xs`. */
@@ -61,7 +62,6 @@ type B = BridgeCtx<Erw>;
 const N = (c: B) => c.values.length;
 const BP = (c: B) => c.names[c.who];
 const lernzeit = (c: B) => c.col.id === 'lernzeit';
-const eq = (v: number) => Math.abs(Math.round(v * 100) / 100 - v) > 1e-9 ? '≈' : '=';
 const toMu = (c: B, d: number) => Math.abs(d) < 0.005 ? 'genau auf μ' : `${c.u(Math.abs(d))} ${d > 0 ? 'über' : 'unter'} μ`;
 const share = (part: number, whole: number) => whole <= 0 ? '0 %' : part / whole * 100 < 0.005 ? 'weniger als 0,01 %' : `${num(part / whole * 100)} %`;
 const binary = (c: B) => c.values.every(v => v === 0 || v === 1);
@@ -117,16 +117,16 @@ export const bridgeErwartung: Bridge<Erw> = {
     if (variant === 'population_variance') {
       if (c.s.sigma2 < 1e-12) return { kurz: 'Alle haben denselben Wert. Es gibt keine Streuung, σ² ist 0.', fachlich: `Die Populationsvarianz von „${c.col.title}“ ist 0.` };
       return {
-        kurz: `Mit der Chance 1 / ${N(c)} gewichtet ist ein Abstandsquadrat ${c.u(c.s.sigma2, { squared: true })} groß. Mit n − 1 statt n käme s² ${eq(c.s.s2)} ${c.u(c.s.s2, { squared: true })} heraus, fast dasselbe.`,
+        kurz: `Der gewichtete Durchschnitt der Abstandsquadrate, jede Person mit der Chance 1 / ${N(c)}, ist ${c.u(c.s.sigma2, { squared: true })}. Mit n − 1 statt n käme s² ${eq(c.s.s2)} ${c.u(c.s.s2, { squared: true })} heraus, fast dasselbe.`,
         fachlich: `σ² = Σ(xᵢ − μ)² / ${N(c)} ${eq(c.s.sigma2)} ${c.u(c.s.sigma2, { squared: true })} und σ ≈ ${c.u(c.s.sigma)} für „${c.col.title}“; die Stichprobenvarianz teilt durch ${N(c) - 1}: s² ${eq(c.s.s2)} ${c.u(c.s.s2, { squared: true })}.`,
-        zusatz: `σ² ist um den Faktor ${N(c) - 1} / ${N(c)} kleiner als s².`,
+        zusatz: `σ² ist s² mal ${N(c) - 1} / ${N(c)}, also ein wenig kleiner.`,
       };
     }
     return {
       kurz: lernzeit(c) ? `Ziehst du sehr oft zufällig eine der ${N(c)} Befragten, kommen im Mittel ${unit(c.s.mu, 'Stunde', 'Stunden')} Lernzeit heraus. Das ist genau ihr Mittelwert.`
         : `Ziehst du sehr oft zufällig eine der ${N(c)} Befragten, liegt „${c.col.title}“ im Mittel bei ${c.u(c.s.mu)}. Das ist genau der Mittelwert der ${N(c)}.`,
       fachlich: `E(X) = Σ xᵢ · 1/${N(c)} ${eq(c.s.mu)} ${c.u(c.s.mu)} für X = „${c.col.title}“ einer zufällig gezogenen Person.`,
-      zusatz: `Als Stichprobe aus allen Erwachsenen liefern die ${N(c)} nur eine Schätzung für den Erwartungswert in der Bevölkerung.`,
+      zusatz: `Wären die ${N(c)} eine Zufallsstichprobe aus allen Erwachsenen, wäre ihr Mittelwert nur eine Schätzung für den Erwartungswert dort.`,
     };
   },
   voraussetzung: c => `Jede Person hat dieselbe Chance, gezogen zu werden. ${scaleNote(c)}`,
@@ -140,7 +140,7 @@ export const erwartung: Workshop<number[], Erw> = {
   id: 'erwartung',
   bridge: bridgeErwartung,
   wofuer: 'Du ziehst aus fünf Personen eine blind heraus, wie bei einer Verlosung. Wie viele Menschen leben im Mittel in ihrem Haushalt? Das beantwortet der Erwartungswert. Die Populationsvarianz sagt dazu, wie weit die Haushaltsgrößen um ihn herum streuen.',
-  mut: 'Die Formel sieht nach Wahrscheinlichkeitsrechnung aus. Sie besteht aber nur aus fünf kleinen Schritten, die du kennst: teilen, malnehmen, zusammenzählen, abziehen und quadrieren. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
+  mut: 'Die Formel sieht nach Wahrscheinlichkeitsrechnung aus. Sie besteht aber nur aus kleinen Schritten, die du kennst: teilen, malnehmen und zusammenzählen, für die Streuung noch abziehen und quadrieren. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'b06-erwartung',
   dataNote: 'Fünf Beispielpersonen mit ihrer Haushaltsgröße. Die Punkte im Bild lassen sich mit Maus oder Pfeiltasten verschieben.',
   names: NAMES,
@@ -157,7 +157,7 @@ export const erwartung: Workshop<number[], Erw> = {
     { sym: 'μ', say: 'mü', term: 'Erwartungswert', plain: 'der Wert, der im Mittel herauskommt', step: 2 },
     { sym: 'E(X)', say: 'E von X', term: 'Erwartungswert', plain: 'eine andere Schreibweise für μ', step: 2 },
     { sym: '( )²', say: 'hoch zwei', term: 'Quadrat', plain: 'mit sich selbst malnehmen', step: 4 },
-    { sym: 'σ²', say: 'sigma Quadrat', term: 'Populationsvarianz', plain: 'das mit den Chancen gewichtete Abstandsquadrat', step: 5 },
+    { sym: 'σ²', say: 'sigma Quadrat', term: 'Populationsvarianz', plain: 'der mit den Chancen gewichtete Durchschnitt der Abstandsquadrate', step: 5 },
   ],
   steps: [
     {
@@ -229,9 +229,9 @@ export const erwartung: Workshop<number[], Erw> = {
       fach: 'Die quadrierte Abweichung (xᵢ − μ)² ist nie negativ und lässt große Abstände besonders stark zählen.',
       warum: 'Ohne Quadrat würden sich Plus und Minus zu 0 aufheben. Und wer weit von μ weg ist, zählt stärker.',
       acht: c => {
-        const d = c.s.dev.reduce((a, b) => Math.abs(b) > Math.abs(a) ? b : a, 0);
-        return Math.abs(d) < 1e-9 ? 'Hier liegen alle genau auf μ, jedes Quadrat ist 0. Sonst gilt: Klammern setzen, ein Quadrat ist nie negativ.'
-          : `Im Taschenrechner Klammern setzen: (${num(-Math.abs(d))})² = ${num(d * d)}. Ohne Klammern zeigt er −${num(d * d)}.`;
+        const d = Math.min(...c.s.dev);
+        return d > -1e-9 ? 'Hier liegen alle genau auf μ, jedes Quadrat ist 0. Sonst gilt: Klammern setzen, ein Quadrat ist nie negativ.'
+          : `Im Taschenrechner Klammern setzen: (${num(d)})² = ${num(d * d)}. Ohne Klammern zeigt er −${num(d * d)}.`;
       },
       check: {
         question: c => `Was kommt heraus, wenn du ${paren(c.s.dev[c.who])} mit sich selbst malnimmst?`,
@@ -246,7 +246,7 @@ export const erwartung: Workshop<number[], Erw> = {
       },
     },
     {
-      button: 'Σ ( )² · pᵢ', title: 'Gewichtet zusammenzählen', sym: 'σ²', say: 'sigma Quadrat', concept: 'population_variance', perPerson: false,
+      button: 'Σ ( )² · pᵢ', title: 'Die Quadrate gewichtet zusammenzählen', sym: 'σ²', say: 'sigma Quadrat', concept: 'population_variance', perPerson: false,
       was: 'Jedes Quadrat zählt mit der Chance seiner Person, hier 0,2. Zusammengezählt ergibt das die Populationsvarianz σ².',
       rechnung: c => `(${c.s.sq.map(q => num(q)).join(' + ')}) · 0,2 = ${num(c.s.ss)} / 5 = ${num(c.s.sigma2)}. Die Wurzel daraus: σ ≈ ${num(c.s.sigma)}.`,
       fach: 'Die Populationsvarianz ist der Erwartungswert der quadrierten Abweichung: σ² = E[(X − μ)²]. Bei n gleich wahrscheinlichen Werten ist das Σ(xᵢ − μ)² / n.',
@@ -288,13 +288,13 @@ export const erwartung: Workshop<number[], Erw> = {
     2: 'Die gestrichelte Linie ist μ: der Wert, der im Mittel herauskommt.',
     3: 'Die Pfeile zeigen die Abstände zu μ: grün darüber, braunrot darunter.',
     4: 'Rechts steht das Quadrat jedes Abstands.',
-    5: 'σ² ist das mit den Chancen gewichtete Abstandsquadrat; σ ist seine Wurzel.',
+    5: 'σ² ist der mit den Chancen gewichtete Durchschnitt der Abstandsquadrate; σ ist seine Wurzel.',
   },
   think: [
     {
       question: 'Alle Haushalte bekommen eine Person mehr. Was passiert mit μ?',
       options: ['steigt um 1', 'bleibt gleich', 'verdoppelt sich'], correct: 0, step: 2,
-      explain: 'Jeder Wert steigt um 1, die Chancen bleiben 0,2. Zusammen kommt genau 5 · 0,2 · 1 = 1 dazu.',
+      explain: 'Jeder Wert steigt um 1, die Chancen bleiben 0,2. Zusammen kommt 5 · 0,2 · 1 = 1 dazu, solange niemand schon bei der Obergrenze 8 liegt.',
       kurz: 'Verschieben verschiebt den Erwartungswert um genau so viel.',
       tryIt: { label: 'alle eine Person mehr', apply: d => d.map(x => Math.min(8, x + 1)) },
     },
@@ -302,14 +302,14 @@ export const erwartung: Workshop<number[], Erw> = {
       question: 'Alle Haushalte bekommen eine Person mehr. Was passiert mit σ²?',
       questionFor: { expectation: 'Alle Haushalte bekommen eine Person mehr. Was passiert mit dem Abstand jeder Person zu μ?' },
       options: ['wird um 1 größer', 'ändert sich nicht', 'verdoppelt sich'], correct: 1, step: 3, stepFor: { expectation: 2 },
-      explain: 'μ steigt mit um 1. Im Abstand hebt sich die 1 auf: (xᵢ + 1) − (μ + 1) = xᵢ − μ. Deshalb bleibt auch σ² gleich.',
+      explain: 'μ steigt mit um 1. Im Abstand hebt sich die 1 auf: (xᵢ + 1) − (μ + 1) = xᵢ − μ. Die Lage verschiebt sich, die Streuung um μ bleibt gleich.',
       kurz: 'Verschieben ändert die Lage, nicht die Streuung.',
-      tryIt: { label: 'alle eine Person mehr', apply: d => d.map(x => Math.min(8, x + 1)) },
     },
     {
       question: 'Warum teilst du hier durch 5 und nicht durch 4 wie bei der Stichprobenvarianz s²?',
-      options: ['weil die fünf die ganze Gruppe sind, aus der gezogen wird', 'weil 5 die größere Zahl ist'], correct: 0, step: 5, stepFor: { expectation: 2 },
-      explain: NEN,
+      questionFor: { expectation: 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?' },
+      options: ['weil die fünf die ganze Gruppe sind, aus der gezogen wird', 'weil das Ergebnis dann kleiner wird'], correct: 0, step: 5, stepFor: { expectation: 1 },
+      explain: 'Gezogen wird aus genau diesen fünf, jede mit der Chance 1 / 5. Du kennst die ganze Gruppe; es gibt nichts zu schätzen.',
       kurz: 'Ganze Gruppe: durch n. Schätzung aus einer Stichprobe: durch n − 1.',
     },
   ],
@@ -337,14 +337,14 @@ export const erwartung: Workshop<number[], Erw> = {
     },
     population_variance: {
       lastStep: 5,
-      kurz: 'Die Populationsvarianz sagt dir, wie weit die Werte im Modell um den Erwartungswert streuen. Sie ist das mit den Wahrscheinlichkeiten gewichtete Abstandsquadrat.',
+      kurz: 'Die Populationsvarianz sagt dir, wie weit die Werte im Modell um den Erwartungswert streuen. Sie ist der mit den Wahrscheinlichkeiten gewichtete Durchschnitt der Abstandsquadrate.',
       fachlich: 'Der Erwartungswert der quadrierten Abweichung vom Erwartungswert: σ² = E[(X − μ)²], bei N gleich wahrscheinlichen Werten Σ(xᵢ − μ)² / N.',
       symbolic: ['σ² = ', { big: 'Σ', m: 5 }, { part: ['('], m: 4 }, { part: ['x', { sub: 'i' }, ' −'], m: 3 }, ' ', { part: ['μ'], m: 2 }, { part: [')²'], m: 4 }, ' · ', { part: ['p', { sub: 'i' }], m: 1 }],
       aria: 'sigma Quadrat gleich Summe über alle Personen i von x i minus mü, zum Quadrat, mal p i',
       metrics: [{ label: 'Erwartungswert μ', value: c => num(c.s.mu) }, { label: 'Populationsvarianz σ²', value: c => num(c.s.sigma2) }],
       interpret: c => ({
         kurz: c.s.sigma2 < 1e-12 ? 'Alle fünf leben in gleich großen Haushalten. Es gibt keine Streuung, σ² ist 0.'
-          : `Mit den Chancen gewichtet ist ein Abstandsquadrat ${num(c.s.sigma2)} groß. Seine Wurzel σ ≈ ${num(c.s.sigma)} sagt grob, wie weit ein Haushalt von μ = ${num(c.s.mu)} entfernt liegt.`,
+          : `Der gewichtete Durchschnitt der Abstandsquadrate, jede Person mit ihrer Chance 0,2, ist ${unit(c.s.sigma2, 'Person²', 'Personen²')}. Seine Wurzel σ ≈ ${people(c.s.sigma)} sagt grob, wie weit ein Haushalt von μ = ${num(c.s.mu)} entfernt liegt.`,
         fachlich: `σ² = Σ(xᵢ − μ)² / 5 = ${num(c.s.ss)} / 5 = ${num(c.s.sigma2)}, σ ≈ ${num(c.s.sigma)}. Teilst du durch n − 1 = 4, erhältst du s² = ${num(c.s.s2)}: die Schätzung, wenn die fünf eine Stichprobe aus einer größeren Gruppe wären.`,
       }),
       next: { id: 'variance', label: 'Weiter zur Stichprobenvarianz s²' },
@@ -402,7 +402,7 @@ export const expectationTabs: ConceptTabs = {
         explain: 'Ihr Wert zählt nur mit der Chance 1 / 200. Der Erwartungswert steigt deshalb um (40 − alter Wert) / 200, höchstens um 0,2 Stunden.',
         kurz: 'Bei 200 gleichen Chancen fällt ein einzelner Wert wenig ins Gewicht.',
         tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
-        expect: { change: 'up', atMost: 0.25 },
+        expect: { change: 'up', atMost: 0.2 + 1e-9 },
       },
     ],
   },
@@ -464,7 +464,7 @@ export const populationVarianceTabs: ConceptTabs = {
     entry: 'variance', variant: 0, live: { fn: 'describe', show: ['mean', 'var'] },
     tokens: { describe: DESCRIBE, '"mean"': MEAN_VALUE, '"var"': VAR_VALUE },
     outputMap: [
-      { match: 'Variance', atlas: 's², nicht σ²', step: 5, explain: 'R teilt durch n − 1 und meldet s². Für σ² der 200 nimmst du diese Zahl mal 199 / 200: 10,48 · 199 / 200 ≈ 10,43.' },
+      { match: 'Variance', atlas: 's², nicht σ²', step: 5, explain: 'R teilt durch n − 1 und meldet s². Für σ² der 200 nimmst du diese Zahl mal 199 / 200.' },
       { match: 'Mean', atlas: 'μ', step: 2, explain: 'Bei einer Ziehung mit gleichen Chancen aus den 200 ist der Mittelwert der Erwartungswert μ, von dem aus die Abstände gemessen werden.' },
       N_MAP, MISSING_MAP,
     ],

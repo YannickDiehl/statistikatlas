@@ -92,11 +92,11 @@ export const stochasticIndependence: ConceptCard = {
       `Die Wahrscheinlichkeit für beides ist ${num(P_W)} · ${num(A.mit[1] / A.count[1])}.`,
     ],
     correct: 0,
-    right: `Genau. ${pct(A.mit[1] / A.count[1])} sind nicht ${pct(P_W)}: Der Abschluss ändert in diesen Daten den Anteil. Ob das über den Zufall hinausgeht, ist eine zweite Frage.`,
+    right: `Genau. ${pct(A.mit[1] / A.count[1])} sind nicht ${pct(P_W)}: Je nach Abschluss ist der Anteil in diesen Daten ein anderer. Ob das über den Zufall hinausgeht, ist eine zweite Frage.`,
     diagnose: {
       1: 'Noch nicht ganz. Unabhängig heißt: gleiche Anteile mit und ohne Bedingung. Ob sie unter 50 % liegen, spielt keine Rolle.',
       2: 'Fast! Aus Anteilen in Beobachtungsdaten folgt keine Wirkung. Die Daten zeigen nur, dass Abschluss und Weiterbildung zusammenhängen.',
-      3: `Fast! 0,3 ist schon eine bedingte Wahrscheinlichkeit. Richtig ist P(Weiterbildung | Hauptschule) · P(Hauptschule) = ${num(A.mit[1] / A.count[1])} · ${num(A.count[1] / A.n)} = ${num(A.mit[1] / A.n)}: ${A.mit[1]} von ${A.n} haben beides.`,
+      3: `Fast! 0,3 ist schon eine bedingte Wahrscheinlichkeit. Richtig ist P(Weiterbildung | Hauptschulabschluss) · P(Hauptschulabschluss) = ${num(A.mit[1] / A.count[1])} · ${num(A.count[1] / A.n)} = ${num(A.mit[1] / A.n)}: ${A.mit[1]} von ${A.n} haben beides.`,
     },
   },
   fuerDich: 'Wenn eine Studie sagt, zwei Merkmale hängen nicht zusammen, frag nach: Sind die Anteile in allen Gruppen ähnlich? Und wurden die Menschen unabhängig voneinander befragt oder ganze Familien, Klassen, Haushalte?',
@@ -120,7 +120,7 @@ export const stochasticIndependenceTabs: ConceptTabs = {
       const list = g.groups.map(x => `${A.labels[x.code]} ${pct(x.share)}`).join(', ');
       return {
         kurz: g.gap < 0.05
-          ? `In jeder Abschlussgruppe haben gleich viele eine Weiterbildung gemacht, ${pct(g.all)}. Weiterbildung und Abschluss sind in diesen Daten unabhängig.`
+          ? `In jeder Abschlussgruppe ist der Anteil mit Weiterbildung gleich groß: ${pct(g.all)}. Weiterbildung und Abschluss sind in diesen Daten unabhängig.`
           : `Insgesamt haben ${pct(g.all)} eine Weiterbildung gemacht. Am weitesten davon entfernt ist die Gruppe ${label} mit ${pct(g.biggest.share)}, also ${num(g.gap, 1)} Prozentpunkte. Exakt unabhängig sind die beiden Merkmale in diesen Daten nicht.`,
         fachlich: `P(Weiterbildung | Abschluss): ${list}; P(Weiterbildung) = ${pct(g.all)}. Bei Unabhängigkeit wären alle gleich.`,
         zusatz: g.abi ? `Bei Unabhängigkeit erwartet man unter den ${g.abi} mit Abitur ${num(g.abi * g.all)} mit Weiterbildung; beobachtet sind es ${g.beide}.` : undefined,

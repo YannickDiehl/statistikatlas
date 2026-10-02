@@ -7,6 +7,8 @@ import { HAUSHALT, SCHLAF, column, schlafModell } from './gemeinsam';
 const H = HAUSHALT, S = SCHLAF;
 const p = (k: number) => H.count[k - 1] / H.n;
 const P78 = schlafModell.F(8) - schlafModell.F(7);
+/** Höhe der Dichte bei 7 Stunden, wie angezeigt gerundet (0,48). */
+const F7_SHOWN = Math.round(schlafModell.f(7) * 100) / 100;
 
 /** Zahl verschiedener Werte in beiden Spalten der Auswertung. */
 function distinct(c: SampleCtx) {
@@ -50,7 +52,7 @@ export const discreteContinuous: ConceptCard = {
       title: 'Stetig: Bereiche',
       was: 'Bei der Schlafdauer fragst du nach Bereichen, etwa zwischen 7 und 8 Stunden. Die Wahrscheinlichkeit ist die Fläche unter einer Dichtekurve.',
       rechnung: `Im Normalmodell der Schlafdauer: P(7 ≤ X ≤ 8) ≈ ${pct(P78)}`,
-      warum: 'Bei unendlich vielen möglichen Werten kann kein einzelner Wert ein Stück der Wahrscheinlichkeit für sich haben. Ein einzelner exakter Wert hat die Wahrscheinlichkeit 0.',
+      warum: 'Bei einer stetigen Größe verteilt sich die Wahrscheinlichkeit lückenlos über einen ganzen Bereich. Ein einzelner Punkt hat keine Breite und bekommt deshalb nichts ab: Ein exakter Wert hat die Wahrscheinlichkeit 0.',
       acht: 'Gemessen wird trotzdem gerundet, etwa auf eine Nachkommastelle. „7,2 Stunden“ meint dann den Bereich von 7,15 bis 7,25, und der hat eine Wahrscheinlichkeit.',
       concept: 'density_function',
     },
@@ -69,9 +71,9 @@ export const discreteContinuous: ConceptCard = {
       kurz: 'Bei sehr vielen Werten nimmt man oft ein stetiges Modell.',
     },
     {
-      question: 'Wie wahrscheinlich schläft jemand im Modell genau 7 Stunden, auf die Sekunde?',
+      question: 'Wie wahrscheinlich schläft jemand im Modell genau 7 Stunden, also 7,000… ohne jede Rundung?',
       options: ['etwa 0,5', 'etwa 40 %', '0'], correct: 2, step: 3,
-      explain: 'Ein einzelner Punkt hat keine Breite und damit keine Fläche. Erst ein Bereich, etwa 6,5 bis 7,5 Stunden, hat eine Wahrscheinlichkeit.',
+      explain: `Ein einzelner Punkt hat keine Breite und damit keine Fläche. Schon „auf die Sekunde genau“ wäre ein Bereich, mit etwa ${num(F7_SHOWN)} / 3600 ≈ ${num(F7_SHOWN / 3600, 5)}.`,
       kurz: 'Stetig: Einzelne Werte haben die Wahrscheinlichkeit 0.',
     },
   ],
@@ -87,7 +89,7 @@ export const discreteContinuous: ConceptCard = {
     right: 'Genau. Stetig heißt: Die Wahrscheinlichkeit steckt in Bereichen, nicht in einzelnen Punkten.',
     diagnose: {
       1: 'Fast! Diskret ist nicht nominal. Die Haushaltsgröße ist diskret und metrisch; Mittelwert und Varianz sind sinnvoll.',
-      2: 'Noch nicht ganz. Eine stetige Variable hat unendlich viele mögliche Werte; jeder einzelne hat die Wahrscheinlichkeit 0.',
+      2: 'Fast! Bei einer stetigen Variable hat ein einzelner Wert keine Breite, also die Wahrscheinlichkeit 0.',
       3: 'Fast! Diskret und stetig beschreiben die möglichen Werte. Das Skalenniveau sagt, was Abstände zwischen ihnen bedeuten.',
     },
   },

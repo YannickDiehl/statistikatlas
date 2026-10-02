@@ -91,7 +91,7 @@ export const randomVariable: ConceptCard = {
     diagnose: {
       1: 'Fast! Das ist ein beobachteter Wert, ein kleines x. X ist die Lernzeit der Person, die erst noch gezogen wird.',
       2: 'Fast! Der Mittelwert ist ein Kennwert der Daten. X kann viele Werte annehmen, jeden mit seiner Wahrscheinlichkeit.',
-      3: 'Noch nicht ganz. Wie lange jemand gelernt hat, steht fest. Zufällig ist, wen du ziehst.',
+      3: 'Fast! Wie lange jemand gelernt hat, steht fest. Zufällig ist nur, wen du ziehst.',
     },
   },
   fuerDich: 'Wenn in Formeln großes X und kleines x stehen, ist das kein Tippfehler. Großes X meint „was herauskommen könnte“, kleines x „was herausgekommen ist“.',

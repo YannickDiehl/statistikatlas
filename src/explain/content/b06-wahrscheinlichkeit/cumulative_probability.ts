@@ -2,21 +2,21 @@
 // dazwischen; diskret die Haushaltsgröße. Der Regler schiebt die Grenze x. Zahlen in R nachgerechnet, siehe
 // b06-wahrscheinlichkeit.test.ts. Bild: 'b06-kumuliert' in src/components/explain/pictures/b06-wahrscheinlichkeit.tsx.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
+import { series } from '../../math';
 import { num, pct } from '../../format';
-import { baseSurvey, sampleColumn } from '../../sample';
-import { HAUSHALT, SCHLAF, cdf, column, countIf, meanSd, schlafModell } from './gemeinsam';
+import { baseSurvey, countWithin, sampleColumn } from '../../sample';
+import { HAUSHALT, SCHLAF, cdf, column, countIf, schlafModell } from './gemeinsam';
 
 const S = SCHLAF, M = schlafModell, H = HAUSHALT;
 const F6 = M.F(6), F8 = M.F(8);
 const hp = (k: number) => H.count[k - 1] / H.n;
 
-let observed: number[] | null = null;
 /** Wie viele der 200 Befragten (Ausgangsdaten) höchstens x Stunden schlafen. */
-export const observedUpTo = (x: number) => countIf(observed ??= sampleColumn(baseSurvey(), 'schlafdauer'), v => v <= x + 1e-9);
+export const observedUpTo = (x: number) => countWithin(sampleColumn(baseSurvey(), 'schlafdauer'), -Infinity, x);
 
 /** Fₙ(6) der aktuellen Daten und F(6) des Normalmodells aus x̄ und s. */
 function upTo6(c: SampleCtx) {
-  const xs = column(c, 'x', 'schlafdauer'), { mean, sd } = meanSd(xs), k = countIf(xs, v => v <= 6 + 1e-9);
+  const xs = column(c, 'x', 'schlafdauer'), { mean, sd } = series(xs), k = countIf(xs, v => v <= 6 + 1e-9);
   return { n: xs.length, k, share: k / xs.length, model: sd > 0 ? cdf(6, mean, sd) : null, mean, sd };
 }
 
@@ -146,6 +146,21 @@ export const cumulativeProbabilityTabs: ConceptTabs = {
         expect: { change: 'down' },
       },
     ],
+  },
+  r: {
+    entry: 'frequency', variant: 0,
+    outputMap: [
+      { match: '59.50', atlas: 'F(2) = P(X ≤ mittlerer Abschluss)', step: 3, explain: 'Diskret, X = Schulabschluss: Die Spalte ganz rechts ist F. Bis einschließlich mittlerem Abschluss sind es 59,5 %.' },
+      { match: '18.50', atlas: 'p(2), nur dieser Wert', step: 3, explain: 'Ein einzelner Balken: 18,5 % haben genau einen mittleren Abschluss. F zählt die Balken darüber mit.' },
+      { match: '80.00', atlas: 'F(3)', step: 3, explain: 'Bis einschließlich Fachhochschulreife: 80 %. Mehr als Fachhochschulreife, also Abitur, haben 1 − F(3) = 20 %.' },
+    ],
+    check: {
+      question: 'Welche Zahl ist F für den mittleren Abschluss, also P(X ≤ mittlerer Abschluss)? Tippe sie an.', correct: '59.50',
+      wrong: {
+        '18.50': 'Fast! Das ist nur der Balken des mittleren Abschlusses. F sammelt alle Werte bis dorthin: 59,5 %.',
+        '80.00': 'Fast! Das ist F eine Stufe weiter, bis zur Fachhochschulreife. Gesucht ist die Grenze beim mittleren Abschluss.',
+      },
+    },
   },
   next: {
     next: { id: 'theoretical_quantile', why: 'Die umgekehrte Frage: Bis zu welcher Grenze liegt ein bestimmter Anteil?' },

@@ -47,13 +47,6 @@ export const schlafModell = {
   q: (p: number) => quant(p, SCHLAF.mean, SCHLAF.sd),
 };
 
-/** Mittelwert und Standardabweichung (n − 1) einer Liste; sd 0 bei weniger als zwei Werten. */
-export function meanSd(xs: readonly number[]): { mean: number; sd: number } {
-  const n = xs.length, mean = xs.reduce((a, b) => a + b, 0) / n;
-  const sd = n > 1 ? Math.sqrt(xs.reduce((a, v) => a + (v - mean) ** 2, 0) / (n - 1)) : 0;
-  return { mean, sd };
-}
-
 /** Werte einer Spalte der Auswertung: die Spalte der Rolle `role`, sonst `fallback`. */
 export const column = (c: SampleCtx, role: string, fallback: string) => sampleColumn(c.rows, c.columns[role]?.[0] ?? fallback);
 

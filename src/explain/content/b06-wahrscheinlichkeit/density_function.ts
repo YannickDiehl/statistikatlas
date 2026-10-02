@@ -2,8 +2,9 @@
 // verbreitert einen Bereich um 7 Stunden, das Bild zeigt seine Fläche. Zahlen in R nachgerechnet, siehe
 // b06-wahrscheinlichkeit.test.ts. Bild: 'b06-dichte' in src/components/explain/pictures/b06-wahrscheinlichkeit.tsx.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
+import { series } from '../../math';
 import { num, pct } from '../../format';
-import { SCHLAF, cdf, column, countIf, dnorm, meanSd, schlafModell } from './gemeinsam';
+import { SCHLAF, cdf, column, countIf, dnorm, schlafModell } from './gemeinsam';
 
 const S = SCHLAF, M = schlafModell;
 /** Höhe der Dichte bei 7 Stunden, wie angezeigt gerundet (Rechnungen gehen mit den sichtbaren Zahlen auf). */
@@ -14,7 +15,7 @@ export const areaAround7 = (h: number) => M.F(7 + h) - M.F(7 - h);
 
 /** Modell aus den aktuellen Daten und die Fläche zwischen 7 und 8 Stunden darin. */
 function model(c: SampleCtx) {
-  const xs = column(c, 'x', 'schlafdauer'), { mean, sd } = meanSd(xs);
+  const xs = column(c, 'x', 'schlafdauer'), { mean, sd } = series(xs);
   return { n: xs.length, mean, sd, area: sd > 0 ? cdf(8, mean, sd) - cdf(7, mean, sd) : null, obs: countIf(xs, v => v >= 7 && v <= 8) };
 }
 /** Gesamtfläche unter der Dichte des Modells, numerisch über μ ± 10 σ (Trapezregel). */
@@ -111,7 +112,7 @@ export const densityFunction: ConceptCard = {
     diagnose: {
       0: 'Fast! Die Höhe ist keine Wahrscheinlichkeit. Genau 7 Stunden haben im Modell die Wahrscheinlichkeit 0; erst ein Bereich hat eine.',
       2: `Fast! Das wäre die kumulierte Wahrscheinlichkeit F(7), die Fläche links von 7. Sie liegt bei ${pct(M.F(7))}.`,
-      3: 'Noch nicht ganz. Eine Dichte hat keine solche Obergrenze; sie darf sogar über 1 liegen. Nur ihre Gesamtfläche ist immer 1.',
+      3: 'Fast! Eine Dichte hat keine solche Obergrenze; sie darf sogar über 1 liegen. Nur ihre Gesamtfläche ist immer 1.',
     },
   },
   fuerDich: 'Siehst du eine Glockenkurve, lies nicht die Höhe als Prozentzahl. Frag stattdessen: Wie groß ist die Fläche über dem Bereich, der mich interessiert?',
@@ -121,6 +122,7 @@ export const densityFunction: ConceptCard = {
       'Eine Dichtehöhe darf größer als 1 sein. Entscheidend ist: f(x) ≥ 0 überall und die gesamte Fläche ist 1.',
       'Bei einer Verteilung mit Dichte hat ein einzelner exakter Wert die Wahrscheinlichkeit 0. Das ist keine Aussage über ein gerundetes Messintervall: „7,0 Stunden“ in den Daten meint den Bereich von 6,95 bis 7,05.',
       'Schmale Bereiche können hohe Dichten und trotzdem kleine Wahrscheinlichkeiten haben. Für kleine Breiten gilt P(x ≤ X ≤ x + Δ) ≈ f(x) · Δ.',
+      `Weil die Daten auf 0,1 Stunden gerundet sind, meinen „7 bis 8 Stunden“ dort den Bereich 6,95 bis 8,05. Dafür sagt das Modell ${pct(M.F(8.05) - M.F(6.95))}, fast genau die beobachteten ${pct(S.from7to8 / S.n)}.`,
     ],
   },
 };

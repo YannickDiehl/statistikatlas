@@ -2,15 +2,16 @@
 // σ = 0,82 h) im Vergleich mit den beobachteten Werten; der Regler verschiebt μ. Zahlen in R nachgerechnet, siehe
 // b06-wahrscheinlichkeit.test.ts. Bild: 'b06-modell' in src/components/explain/pictures/b06-wahrscheinlichkeit.tsx.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
+import { series } from '../../math';
 import { num, pct } from '../../format';
-import { SCHLAF, cdf, column, countIf, meanSd, schlafModell, sleepMu } from './gemeinsam';
+import { SCHLAF, cdf, column, countIf, schlafModell, sleepMu } from './gemeinsam';
 
 const S = SCHLAF;
 const M6 = schlafModell.F(6), OBS6 = S.below6 / S.n;
 
 /** Modell aus den aktuellen Daten: Normalverteilung mit x̄ und s der Schlafdauer; Anteil unter 6 Stunden im Modell und beobachtet. */
 function model(c: SampleCtx) {
-  const xs = column(c, 'x', 'schlafdauer'), { mean, sd } = meanSd(xs);
+  const xs = column(c, 'x', 'schlafdauer'), { mean, sd } = series(xs);
   return { n: xs.length, mean, sd, model6: sd > 0 ? cdf(6, mean, sd) : null, obs6: countIf(xs, v => v < 6) / xs.length };
 }
 
@@ -64,7 +65,7 @@ export const theoreticalDistribution: ConceptCard = {
       kurz: 'Ein Modell kennt auch Werte, die noch niemand beobachtet hat.',
     },
     {
-      question: `Du vergrößerst σ von ${num(S.sd)} auf 1,5 Stunden. Was passiert mit der Kurve?`,
+      question: `Stell dir vor, σ wäre 1,5 statt ${num(S.sd)} Stunden. Was passiert mit der Kurve?`,
       options: ['wird breiter und flacher', 'rückt nach rechts', 'wird schmaler und höher'], correct: 0, step: 2,
       explain: 'σ ist die Streuung des Modells. Ein größeres σ verteilt dieselbe Gesamtfläche 1 auf einen breiteren Bereich, deshalb wird die Kurve flacher.',
       kurz: 'μ verschiebt, σ verbreitert.',

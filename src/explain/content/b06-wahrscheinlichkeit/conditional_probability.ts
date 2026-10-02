@@ -17,7 +17,7 @@ function counts(c: SampleCtx) {
 
 export const conditionalProbability: ConceptCard = {
   concept: 'conditional_probability',
-  wofuer: 'Machen Menschen mit Abitur häufiger eine Weiterbildung als andere? Um das zu beantworten, schaust du nur auf eine Teilgruppe: die Befragten mit Abitur. Genau das macht eine bedingte Wahrscheinlichkeit.',
+  wofuer: 'Machen Befragte mit Abitur häufiger eine Weiterbildung als die Befragten insgesamt? Um das zu beantworten, schaust du nur auf eine Teilgruppe: die Befragten mit Abitur. Genau das macht eine bedingte Wahrscheinlichkeit.',
   kurz: 'Eine bedingte Wahrscheinlichkeit sagt dir, wie wahrscheinlich etwas ist, wenn du schon weißt, dass etwas anderes zutrifft. Du rechnest dann nur noch in dieser Teilgruppe.',
   stellDirVor: {
     text: `Von den ${A.n} Befragten haben ${A.count[4]} Abitur. Von diesen ${A.count[4]} haben ${A.mit[4]} in den letzten zwölf Monaten eine Weiterbildung gemacht, also ${pct(P_W_ABI)}. Unter allen ${A.n} sind es ${A.mitWeiterbildung}, also ${pct(P_W)}. Weißt du, dass die gezogene Person Abitur hat, rechnest du mit ${pct(P_W_ABI)} statt mit ${pct(P_W)}.`,

@@ -2,9 +2,10 @@
 // kritische Werte als Quantile der Standardnormalverteilung (1,96). Der Regler wählt den Anteil p. Zahlen in R
 // nachgerechnet, siehe b06-wahrscheinlichkeit.test.ts. Bild: 'b06-quantil' in src/components/explain/pictures/b06-wahrscheinlichkeit.tsx.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
+import { series } from '../../math';
 import { num, pct, signed } from '../../format';
 import { qnorm } from '../../../tasks/kit/dist';
-import { HAUSHALT, SCHLAF, column, meanSd, quant, schlafModell } from './gemeinsam';
+import { HAUSHALT, SCHLAF, column, quant, schlafModell } from './gemeinsam';
 
 const S = SCHLAF, M = schlafModell, H = HAUSHALT;
 const Q10 = M.q(0.1), Q90 = M.q(0.9), Z10 = qnorm(0.1);
@@ -14,7 +15,7 @@ const hF = (k: number) => H.count.slice(0, k).reduce((a, b) => a + b, 0) / H.n;
 
 /** 10-%-Quantil des Normalmodells aus x̄ und s der aktuellen Daten. */
 function q10(c: SampleCtx) {
-  const xs = column(c, 'x', 'schlafdauer'), { mean, sd } = meanSd(xs), sorted = [...xs].sort((a, b) => a - b);
+  const xs = column(c, 'x', 'schlafdauer'), { mean, sd } = series(xs), sorted = [...xs].sort((a, b) => a - b);
   return { n: xs.length, mean, sd, q: sd > 0 ? quant(0.1, mean, sd) : null, below: (q: number) => sorted.filter(v => v <= q + 1e-9).length };
 }
 
@@ -22,9 +23,9 @@ export const theoreticalQuantile: ConceptCard = {
   concept: 'theoretical_quantile',
   picture: 'b06-quantil',
   wofuer: 'Unter welcher Schlafdauer liegen die 10 % mit den kürzesten Nächten? In einem Modell beantwortet das ein theoretisches Quantil. Dieselbe Frage steckt in jedem kritischen Wert eines Tests.',
-  kurz: 'Ein theoretisches Quantil ist die Grenze, unter der ein bestimmter Anteil der Modellwahrscheinlichkeit liegt. Es dreht die Frage der kumulierten Wahrscheinlichkeit um: Anteil rein, Grenze raus.',
+  kurz: 'Ein theoretisches Quantil ist die Grenze, unter der im Modell ein bestimmter Anteil liegt. Es dreht die Frage nach dem Anteil unter einer Grenze um: Anteil rein, Grenze raus.',
   stellDirVor: {
-    text: `Im Normalmodell der Schlafdauer mit μ = ${num(S.mean)} h und σ = ${num(S.sd)} h liegt das 10-%-Quantil bei ${num(Q10)} Stunden: 10 % der Modellwahrscheinlichkeit liegen darunter. Das 90-%-Quantil liegt bei ${num(Q90)} Stunden. Zwischen beiden liegen 80 %.`,
+    text: `Im Normalmodell der Schlafdauer mit μ = ${num(S.mean)} h und σ = ${num(S.sd)} h liegt das 10-%-Quantil bei ${num(Q10)} Stunden: Im Modell schlafen 10 % höchstens so lange. Das 90-%-Quantil liegt bei ${num(Q90)} Stunden. Zwischen beiden liegen 80 %.`,
     figures: [
       { label: '10-%-Quantil', value: `${num(Q10)} h` },
       { label: '90-%-Quantil', value: `${num(Q90)} h` },
@@ -100,7 +101,7 @@ export const theoreticalQuantile: ConceptCard = {
     correct: 0,
     right: `Genau. Das Quantil ist die Grenze; links davon liegen 97,5 %, rechts die restlichen 2,5 %.`,
     diagnose: {
-      1: 'Noch nicht ganz. Bei einer stetigen Verteilung hat kein einzelner Wert eine Wahrscheinlichkeit. Das Quantil ist eine Grenze.',
+      1: 'Fast! Bei einer stetigen Verteilung hat kein einzelner Wert eine Wahrscheinlichkeit. Das Quantil ist eine Grenze.',
       2: 'Fast! Andersherum: Das p-Quantil hat den Anteil p links von sich. Rechts liegen nur 2,5 %.',
       3: 'Fast! Quantile beschreiben die Referenzverteilung. Wie wahrscheinlich eine Hypothese ist, sagen sie nicht.',
     },
