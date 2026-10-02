@@ -32,7 +32,7 @@ import { entryById, mariposaEntries } from '../domain/mariposaCatalog';
 import { eligible } from '../domain/mariposaRoles';
 import { initialRSettings, rolesFor, startBlock, type RSettings } from '../domain/mariposa';
 import { CATALOG_OUTPUT } from './catalogOutput';
-import { ALLOWED_TERMS, BANNED_WORDS, styleProblems } from './style';
+import { ALLOWED_TERMS, BANNED_WORDS, sentences, styleProblems } from './style';
 
 const noop = () => {};
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
@@ -205,7 +205,9 @@ test('the header line „In der Fachsprache“ is words only, like the approved 
   assert.match(fach('expectation'), /pendelt sich der Durchschnitt vieler Ziehungen auf lange Sicht ein\.$/);
   assert.match(fach('population_variance'), /durch die Zahl der Werte, nicht durch eins weniger\.$/);
   assert.match(fach('phi'), /Teilt man Chi-Quadrat durch die Fallzahl und zieht die Wurzel, erhält man seinen Betrag\.$/);
-  assert.match(fach('standard_normal'), /Fläche links von einem z-Wert, also die Wahrscheinlichkeit, höchstens so weit zu kommen\.$/);
+  assert.match(fach('standard_normal'), /Fläche links von einem z-Wert an: die Wahrscheinlichkeit, höchstens diesen Wert zu erreichen\.$/);
+  // Leitfaden: Sätze der Kopfzeile mit höchstens etwa 20 Wörtern.
+  for (const s of sentences(fach('standard_normal'))) assert.ok(s.split(/\s+/).length <= 20, `standard_normal: Satz zu lang: ${s}`);
   assert.notEqual(fach('standard_normal').split('. ')[0], kurzOf(explainFor('standard_normal'))?.text.split('. ')[0], 'standard_normal: Fachsprache wiederholt „Kurz gesagt“');
   assert.match(fach('pomps'), /^POMPS rechnet Antworten in Prozent der größtmöglichen Spanne um,/);
   assert.equal(kurzOf(explainFor('weights'))?.fach, 'Der gewichtete Mittelwert zählt jede Antwort mit dem Gewicht ihrer Person und teilt durch die Summe der Gewichte. Designgewichte gleichen ungleiche Auswahlwahrscheinlichkeiten aus.');
