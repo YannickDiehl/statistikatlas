@@ -352,7 +352,7 @@ export const erwartung: Workshop<number[], Erw> = {
         kurz: 'σ² beschreibt die Streuung im Modell; s² mit n − 1 schätzt sie aus einer Stichprobe. Für eine ganz bekannte Gruppe teilst du durch N.',
         paragraphs: () => [
           NEN,
-          'σ² = E[(X − μ)²] ist der Erwartungswert der quadrierten Abweichung. Seine Wurzel σ heißt Standardabweichung der Population; sie ist kein durchschnittlicher Abstand, weil große Abstände im Quadrat stärker zählen.',
+          'σ² = E[(X − μ)²] ist der Erwartungswert der quadrierten Abweichung und hat die quadrierte Einheit der Daten. Seine Wurzel σ, die Standardabweichung der Population, hat wieder die Einheit der Daten; sie ist kein durchschnittlicher Abstand, weil große Abstände im Quadrat stärker zählen.',
           'Eine endliche Varianz setzt voraus, dass E(X²) endlich ist. Bei Modellen mit sehr dicken Rändern kann σ² unendlich sein.',
         ],
       },
