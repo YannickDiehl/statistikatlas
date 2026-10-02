@@ -14,6 +14,8 @@ import { FINANZ, ordinal, ordinalTabs } from './ordinal';
 import { OP, operationalization, operationalizationTabs } from './operationalization';
 import { pearson } from './shared';
 import { attenuation, measurementError, measurementErrorTabs, MF } from './measurement-error';
+import { VAL, validity, validityTabs } from './validity';
+import { CATALOG_OUTPUT } from '../../catalogOutput';
 import { surveyColumns } from '../../../domain/survey';
 import { styleProblems } from '../../style';
 
@@ -75,6 +77,10 @@ import { styleProblems } from '../../style';
  *   cor(x + 1, y); mean(x + 1)                      # 0.5391689; 8.7515 (systematischer Fehler +1 h)
  *   rel <- atlas %>% reliability(methoden1, methoden2, methoden3, methoden4, methoden5, na.rm = TRUE); summary(rel)
  *   #   Cronbach's Alpha 0.898, N (listwise) 200, Corrected Item-Total (methoden1) 0.761
+ *
+ * Validität (validity):
+ *   cor(m, y); cor(x, y); cor(x, 20 - y); cor(x, y + 1)   # 0.0211; 0.5391689; -0.5391689; 0.5391689
+ *   (Cronbach's Alpha der fünf Methodenfragen: 0.898, siehe oben)
  */
 
 const rows = createSurvey();
@@ -206,4 +212,16 @@ test('B1 Messfehler: Messmodell, Regler und Reiter wie in R', () => {
   assert.match(r.kurz, /Wer mehr lernt, löst im Wissenstest eher mehr Aufgaben: r ≈ 0,54\. .* nur bei etwa 0,46\./);
   assert.match(r.zusatz!, /von 7,75 h auf 8,75 h\./);
   assert.ok(close(tab.value!(ctx(applyOp(rows, 'lernzeit', 'shift', 1))) as number, MF.r, 1e-6), 'r nach +1 h wie in R');
+});
+
+test('B1 Validität: Alpha, Zuversicht und Lernzeit gegen den Wissenstest wie in R', () => {
+  assert.match(CATALOG_OUTPUT['reliability:0'].output, /Cronbach's Alpha:\s+0\.898/, 'Alpha wie in R');
+  assert.ok(close(VAL.rLernzeit, MF.r, 1e-12) && close(VAL.rMethoden, OP.rMethodenWissen, 1e-12), 'dieselben Referenzwerte wie oben');
+  assert.match(validity.stellDirVor.text, /Cronbach-Alpha 0,9\. .* r ≈ 0,02\. Die Lernzeit dagegen schon: r ≈ 0,54\./);
+  const tab = analysis(validityTabs.sample);
+  assert.equal(tab.result(ctx()).kurz, 'Wer mehr lernt, löst im Wissenstest eher mehr Aufgaben: r ≈ 0,54. Das passt zur Deutung „Der Test misst Wissen“. Mit der Methoden-Zuversicht hängt der Wissenstest kaum zusammen (r ≈ 0,02).');
+  const reversed = tab.result(ctx(applyOp(rows, 'wissenstest', 'reverse')));
+  assert.match(reversed.kurz, /eher niedrigere Werte: r ≈ −0,54\. Das passt nicht/);
+  assert.match(reversed.kurz, /kaum zusammen \(r ≈ −0,02\)/);
+  assert.ok(close(tab.value!(ctx(applyOp(rows, 'wissenstest', 'shift', 1))) as number, VAL.rLernzeit, 1e-6), 'r nach +1 Aufgabe wie in R');
 });
