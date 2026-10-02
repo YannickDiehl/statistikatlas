@@ -8,6 +8,7 @@ import { ABSCHLUSS, HAUSHALT, SCHLAF, WISSEN, meanSd } from './gemeinsam';
 import { probability, probabilityTabs } from './probability';
 import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
 import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic_independence';
+import { randomVariable, randomVariableTabs } from './random_variable';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -112,4 +113,20 @@ test('B6 stochastic_independence: fast gleiche Anteile ohne Abschluss, Produktre
   assert.match(r.fachlich, /ohne Schulabschluss 40,5 %, Hauptschulabschluss 30 %, mittlerer Abschluss 45,9 %, Fachhochschulreife 41,5 %, Abitur 47,5 %/);
   assert.equal(r.zusatz, 'Bei Unabhängigkeit erwartet man unter den 40 mit Abitur 16,4 mit Weiterbildung; beobachtet sind es 19.');
   assert.ok(close(tab.value!(ctxFor(tab))!, 11, 1e-9), 'größter Abstand 11 Prozentpunkte');
+});
+
+/*
+ *   wt[atlas$id == "P002"]; mean(wt == 11); length(unique(wt)); range(wt)   # 9, 0.16, 17 Werte, 0 bis 18
+ */
+test('B6 random_variable: P(X = 11) = 0,16, P002 mit 9 Aufgaben, Auswertung wie in R', () => {
+  const p002 = rows.find(r => r.id === 'P002')!.values.wissenstest;
+  assert.equal(p002, 9, 'P002 hat 9 Aufgaben gelöst');
+  assert.match(randomVariable.stellDirVor.text, /32 von 200 Befragten haben so viele gelöst, also 0,16\. Ziehst du dann P002 und sie hat 9 gelöst, ist x = 9/);
+  assert.equal(randomVariable.bausteine[2].rechnung, 'Vorher: P(X = 11) = 32 / 200 = 0,16. Nachher: x = 9 bei P002.');
+  const tab = randomVariableTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, 'Möglich sind 0 bis 20 gelöste Aufgaben; bei den 200 Befragten kommen 17 verschiedene Werte vor. Am wahrscheinlichsten zieht man jemanden mit 11 Aufgaben: 32 von 200, also 16 %.');
+  assert.match(r.fachlich, /von 0 bis 18\./);
+  assert.equal(tab.value!(ctxFor(tab)), 0.16);
 });

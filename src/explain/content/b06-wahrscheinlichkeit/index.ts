@@ -4,16 +4,19 @@ import type { AreaIndex } from '../../types';
 import { probability, probabilityTabs } from './probability';
 import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
 import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic_independence';
+import { randomVariable, randomVariableTabs } from './random_variable';
 
 export const b06Wahrscheinlichkeit: AreaIndex = {
   explanations: {
     probability: { kind: 'begriff', card: probability },
     conditional_probability: { kind: 'begriff', card: conditionalProbability },
     stochastic_independence: { kind: 'begriff', card: stochasticIndependence },
+    random_variable: { kind: 'begriff', card: randomVariable },
   },
   tabs: {
     probability: probabilityTabs,
     conditional_probability: conditionalProbabilityTabs,
     stochastic_independence: stochasticIndependenceTabs,
+    random_variable: randomVariableTabs,
   },
 };
