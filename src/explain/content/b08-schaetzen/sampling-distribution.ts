@@ -25,7 +25,7 @@ const se50 = seAnteil(50), mitte50 = middle95(50, WEITERBILDUNG.pi);
 /** Text zum Regler: Standardfehler in Prozentpunkten und die mittleren 95 % der Anteile (exakt binomial). */
 export function anteilText(n: number): string {
   const m = middle95(n, WEITERBILDUNG.pi);
-  return `Mit ${count(n)} Gezogenen schwankt der Anteil typischerweise um etwa ${num(seAnteil(n) * 100)} Prozentpunkte um ${pct(WEITERBILDUNG.pi)}. In etwa ${Math.round(m.prob * 100)} von 100 Stichproben liegt er zwischen ${pct(m.lo)} und ${pct(m.hi)}.`;
+  return `Mit ${count(n)} Gezogenen schwankt der Anteil typischerweise um etwa ${num(seAnteil(n) * 100, 1)} Prozentpunkte um ${pct(WEITERBILDUNG.pi)}. In etwa ${Math.round(m.prob * 100)} von 100 Stichproben liegt er zwischen ${pct(m.lo)} und ${pct(m.hi)}.`;
 }
 
 export const samplingDistribution: ConceptCard = {
@@ -38,7 +38,7 @@ export const samplingDistribution: ConceptCard = {
     figures: [
       { label: 'Anteil aller 200', value: pct(WEITERBILDUNG.pi) },
       { label: 'Gezogene je Stichprobe', value: '50' },
-      { label: 'Standardfehler', value: `${num(se50 * 100)} Prozentpunkte` },
+      { label: 'Standardfehler', value: `${num(se50 * 100, 1)} Prozentpunkte` },
     ],
   },
   heisst: {
@@ -63,7 +63,7 @@ export const samplingDistribution: ConceptCard = {
     {
       title: 'Die Breite messen',
       was: `Die Standardabweichung der Stichprobenverteilung heißt Standardfehler. Bei 50 Gezogenen sind es knapp ${count(se50 * 100)} Prozentpunkte.`,
-      rechnung: `SE = √(${num(WEITERBILDUNG.pi)} · ${num(1 - WEITERBILDUNG.pi)} / 50) ≈ ${fixed(se50, 3)}, also ${num(se50 * 100)} Prozentpunkte`,
+      rechnung: `SE = √(${num(WEITERBILDUNG.pi)} · ${num(1 - WEITERBILDUNG.pi)} / 50) ≈ ${fixed(se50, 3)}, also ${num(se50 * 100, 1)} Prozentpunkte`,
       warum: 'Mit mehr Befragten wird die Verteilung schmaler. Viermal so viele Befragte halbieren den Standardfehler.',
       acht: 'Der Standardfehler beschreibt, wie stark die Schätzung schwankt. Wie verschieden die Befragten untereinander sind, beschreibt die Standardabweichung.',
       concept: 'se',
@@ -73,7 +73,7 @@ export const samplingDistribution: ConceptCard = {
     {
       question: 'Du ziehst 200 statt 50 Befragte. Was passiert mit der Breite der Stichprobenverteilung?',
       options: ['sie wird schmaler', 'sie bleibt gleich', 'sie wird breiter'], correct: 0, step: 3,
-      explain: `Viermal so viele Befragte halbieren den Standardfehler: von etwa ${num(se50 * 100)} auf ${num(seAnteil(200) * 100)} Prozentpunkte. Schieb den Regler auf 200.`,
+      explain: `Viermal so viele Befragte halbieren den Standardfehler: von etwa ${num(se50 * 100, 1)} auf ${num(seAnteil(200) * 100, 1)} Prozentpunkte. Schieb den Regler auf 200.`,
       kurz: 'Mehr Befragte, schmalere Verteilung.',
     },
     {
@@ -129,7 +129,7 @@ export const samplingDistributionTabs: ConceptTabs = {
     result: c => {
       const m = mittelwerte(c);
       return {
-        kurz: `Die Mittelwerte dieser Stichproben schwanken um ${unit(m.mu, 'Stunde', 'Stunden')}, den Mittelwert aller ${m.N}. Typischerweise liegen sie etwa ${unit(m.se, 'Stunde', 'Stunden')} daneben: Das ist der Standardfehler.`,
+        kurz: `Die Mittelwerte dieser Stichproben schwanken um ${unit(m.mu, 'Stunde', 'Stunden')}, den Mittelwert aller ${m.N}, typischerweise um etwa ${unit(m.se, 'Stunde', 'Stunden')}. Diese Schwankung ist der Standardfehler.`,
         fachlich: `Bei ${ZUEGE} unabhängigen Ziehungen hat die Stichprobenverteilung von x̄ den Erwartungswert μ = ${num(m.mu)} h und die Standardabweichung σ / √${ZUEGE} = ${num(m.sigma)} / 5 ≈ ${num(m.se)} h.`,
         zusatz: `Grob gesagt streuen einzelne Befragte um ${unit(m.sigma, 'Stunde', 'Stunden')}, Mittelwerte aus ${ZUEGE} Befragten nur um ${unit(m.se, 'Stunde', 'Stunden')}.`,
       };

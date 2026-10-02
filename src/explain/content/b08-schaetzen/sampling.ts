@@ -86,7 +86,7 @@ export const sampling: ConceptCard = {
     format: v => { const k = Math.round(v); return k === 1 ? 'einmal' : `${k}-mal`; },
     describe: v => {
       const k = Math.max(1, Math.round(v)), se1 = kopienSE(1);
-      if (k === 1) return `Jede der ${count(INTERESSE.n)} Personen steht einmal da. Für das politische Interesse meldet R dann den Standardfehler ${small(se1)}. So genau ist der Mittelwert wirklich.`;
+      if (k === 1) return `Jede der ${count(INTERESSE.n)} Personen steht einmal da. Für das politische Interesse meldet R dann den Standardfehler ${small(se1)}. So genau wäre der Mittelwert bei unabhängigen Befragten.`;
       return `Jetzt stehen ${count(k * INTERESSE.n)} Zeilen in den Daten. R meldet den Standardfehler ${small(kopienSE(k))} statt ${small(se1)}. Neue Menschen sind aber nicht dazugekommen: Die Genauigkeit bleibt die von ${count(INTERESSE.n)} Befragten.`;
     },
   },

@@ -180,16 +180,16 @@ test('B8 sampling_distribution: exakte Binomialverteilung der Anteile und SE der
   }
   assert.ok(close(binomial(10, 0.41)[4], 0.2503034, 1e-7), 'dbinom(4, 10, 0.41) = 0.2503034');
   assert.match(samplingDistribution.stellDirVor.text, /In etwa 96 von 100 Stichproben liegt er zwischen 28 % und 54 %\./);
-  assert.equal(anteilText(50), 'Mit 50 Gezogenen schwankt der Anteil typischerweise um etwa 6,96 Prozentpunkte um 41 %. In etwa 96 von 100 Stichproben liegt er zwischen 28 % und 54 %.');
-  assert.match(anteilText(1000), /etwa 1,56 Prozentpunkte .* In etwa 95 von 100 Stichproben liegt er zwischen 38 % und 44,1 %\./);
-  assert.equal(samplingDistribution.bausteine[2].rechnung, 'SE = √(0,41 · 0,59 / 50) ≈ 0,070, also 6,96 Prozentpunkte');
-  assert.match(samplingDistribution.ausprobieren[0].explain, /von etwa 6,96 auf 3,48 Prozentpunkte/);
+  assert.equal(anteilText(50), 'Mit 50 Gezogenen schwankt der Anteil typischerweise um etwa 7 Prozentpunkte um 41 %. In etwa 96 von 100 Stichproben liegt er zwischen 28 % und 54 %.');
+  assert.match(anteilText(1000), /etwa 1,6 Prozentpunkte .* In etwa 95 von 100 Stichproben liegt er zwischen 38 % und 44,1 %\./);
+  assert.equal(samplingDistribution.bausteine[2].rechnung, 'SE = √(0,41 · 0,59 / 50) ≈ 0,070, also 7 Prozentpunkte');
+  assert.match(samplingDistribution.ausprobieren[0].explain, /von etwa 7 auf 3,5 Prozentpunkte/);
   assert.match(samplingDistribution.fuerDich, /≈ 0,031, also gut 3 Prozentpunkte/);
   const m = mittelwerte(ctx());
   assert.ok(close(m.sigma, 3.229411363, 1e-8) && close(m.se, 0.6458822726, 1e-9), 'σ und SE der Mittelwerte');
   const s = samplingDistributionTabs.sample!;
   if (s.kind === 'analysis') {
-    assert.match(s.result(ctx()).kurz, /schwanken um 7,75 Stunden, den Mittelwert aller 200\. Typischerweise liegen sie etwa 0,65 Stunden daneben/);
+    assert.match(s.result(ctx()).kurz, /schwanken um 7,75 Stunden, den Mittelwert aller 200, typischerweise um etwa 0,65 Stunden\. Diese Schwankung ist der Standardfehler\./);
     assert.match(s.result(ctx()).fachlich, /σ \/ √25 = 3,23 \/ 5 ≈ 0,65 h/);
   }
 });
@@ -272,9 +272,9 @@ test('B8 random_sampling: Zahl der möglichen Stichproben und der Standardfehler
     assert.ok(close(seOhne(n, EINKOMMEN.N, EINKOMMEN.sd), se, 1e-6), `n = ${n}`);
   const ectx = (data = rows) => ({ rows: data, columns: { x: ['einkommen'] } }), a = auswahl(ectx());
   assert.ok(close(a.mean, EINKOMMEN.mean, 1e-9) && close(a.sd, EINKOMMEN.sd, 1e-6) && close(a.se, 174.7277553, 1e-6) && close(a.mit, 201.2532055, 1e-6), 'aus den Daten');
-  assert.match(randomSampling.stellDirVor.text, /Wahrscheinlichkeit 50 \/ 200 = 25 % .* rund 4,54 · 10⁴⁷ verschiedene Gruppen .* etwa 175 € neben dem aller 200, das 3\.155 € im Monat beträgt\./);
+  assert.match(randomSampling.stellDirVor.text, /Wahrscheinlichkeit 50 \/ 200 = 25 % .* rund 4,54 · 10⁴⁷ verschiedene Gruppen .* schwankt typischerweise um etwa 175 € um das aller 200, das 3\.155 € im Monat beträgt\./);
   assert.equal(auswahlText(200), 'Jede Person kommt mit der Wahrscheinlichkeit 200 / 200 = 100 % in die Stichprobe. Wer alle zieht, kennt den Mittelwert genau: Der Standardfehler ist 0.');
-  assert.match(auswahlText(10), /= 5 % .* etwa 440 € neben/);
+  assert.match(auswahlText(10), /= 5 % .* um etwa 440 € um das aller 200\./);
   assert.match(randomSampling.genau.paragraphs[0], /√\(1 − 50 \/ 200\) · 1\.427 \/ √50 ≈ 175 €\./);
   const s = randomSamplingTabs.sample!;
   if (s.kind === 'analysis') assert.match(s.result(ectx()).fachlich, /≈ 175 €\. Mit Zurücklegen wären es σ \/ √50 ≈ 201 €\./);
@@ -319,7 +319,7 @@ test('B8 prediction_interval: Vorhersage- und Konfidenzintervall der Geraden Wis
     assert.ok(close(p.half, half, 1e-7) && close(p.ciHalf, ci, 1e-8), `n = ${n}`);
   }
   const k = predictionInterval.compute(predictionInterval.initial);
-  assert.match(predictionInterval.interpret(k).kurz, /mit 10 Stunden Lernzeit sind 6,08 bis 16,5 gelöste Aufgaben plausibel\. .* im Mittel 10,84 bis 11,74 Aufgaben/);
+  assert.match(predictionInterval.interpret(k).kurz, /mit 10 Stunden Lernzeit sind 6,08 bis 16,50 gelöste Aufgaben plausibel\. .* im Mittel 10,84 bis 11,74 Aufgaben/);
   assert.match(predictionInterval.interpret(predictionInterval.compute({ x: 18, n: 200, t: 95 })).kurz, /das Modell ist am Rand nur eine Näherung/);
   const w = predictionInterval.worked(k).map(x => x.text);
   assert.match(w[0], /^Die Gerade ŷ = 6,1 \+ 0,52 · x sagt für 10 Stunden 11,29 Aufgaben voraus/);
@@ -332,7 +332,7 @@ test('B8 prediction_interval: Vorhersage- und Konfidenzintervall der Geraden Wis
   if (s.kind === 'analysis') {
     const r = s.result(xy());
     assert.match(r.kurz, /mit 7,75 Stunden Lernzeit sagt die Gerade 10,13 Aufgaben voraus\. Plausibel sind 4,92 bis 15,33 gelöste Aufgaben\. .* nur 9,76 bis 10,49\./);
-    assert.equal(r.zusatz, '191 von 200 Befragten liegen höchstens 5,2 Aufgaben neben ihrer eigenen Vorhersage.');
+    assert.equal(r.zusatz, '191 von 200 Befragten liegen höchstens 5,20 Aufgaben neben ihrer eigenen Vorhersage.');
   }
   const out = CATALOG_OUTPUT['linear_regression:0'].output;
   assert.match(out, /Std\. Error of the Estimate +2\.635/); assert.match(out, /wissenstest +10\.125/); assert.match(out, / 9\.180750 /);

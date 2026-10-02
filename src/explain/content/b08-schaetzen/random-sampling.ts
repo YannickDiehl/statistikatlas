@@ -33,7 +33,7 @@ export function auswahlText(n: number): string {
   const se = seOhne(n, EINKOMMEN.N, EINKOMMEN.sd);
   const base = `Jede Person kommt mit der Wahrscheinlichkeit ${n} / ${EINKOMMEN.N} = ${pct(n / EINKOMMEN.N)} in die Stichprobe.`;
   if (n >= EINKOMMEN.N) return `${base} Wer alle zieht, kennt den Mittelwert genau: Der Standardfehler ist 0.`;
-  return `${base} Das mittlere Haushaltseinkommen der Gelosten liegt typischerweise etwa ${count(se)} € neben dem aller ${EINKOMMEN.N}.`;
+  return `${base} Das mittlere Haushaltseinkommen der Gelosten schwankt typischerweise um etwa ${count(se)} € um das aller ${EINKOMMEN.N}.`;
 }
 
 const se50 = seOhne(GELOST, EINKOMMEN.N, EINKOMMEN.sd);
@@ -43,7 +43,7 @@ export const randomSampling: ConceptCard = {
   wofuer: 'Damit eine Stichprobe für alle sprechen kann, darf nicht die Bequemlichkeit entscheiden, wer gefragt wird. Wie sieht eine echte Zufallsauswahl aus?',
   kurz: 'Bei einer Zufallsauswahl entscheidet ein festgelegtes Losverfahren, wer in die Stichprobe kommt. Bei der einfachen Zufallsauswahl ist jede mögliche Gruppe gleich wahrscheinlich.',
   stellDirVor: {
-    text: `Lose ${GELOST} der 200 Befragten aus, etwa mit nummerierten Losen. Jede Person kommt mit der Wahrscheinlichkeit ${GELOST} / 200 = ${pct(GELOST / 200)} in die Stichprobe. Es gibt rund ${zehnerPotenz(moeglich(200, GELOST))} verschiedene Gruppen von ${GELOST} Personen, und jede ist gleich wahrscheinlich. Das mittlere Haushaltseinkommen der Gelosten liegt typischerweise etwa ${count(se50)} € neben dem aller 200, das ${count(EINKOMMEN.mean)} € im Monat beträgt.`,
+    text: `Lose ${GELOST} der 200 Befragten aus, etwa mit nummerierten Losen. Jede Person kommt mit der Wahrscheinlichkeit ${GELOST} / 200 = ${pct(GELOST / 200)} in die Stichprobe. Es gibt rund ${zehnerPotenz(moeglich(200, GELOST))} verschiedene Gruppen von ${GELOST} Personen, und jede ist gleich wahrscheinlich. Das mittlere Haushaltseinkommen der Gelosten schwankt typischerweise um etwa ${count(se50)} € um das aller 200, das ${count(EINKOMMEN.mean)} € im Monat beträgt.`,
     figures: [
       { label: 'Chance je Person', value: pct(GELOST / 200) },
       { label: 'mögliche Stichproben', value: `rund ${zehnerPotenz(moeglich(200, GELOST))}` },
@@ -140,7 +140,7 @@ export const randomSamplingTabs: ConceptTabs = {
     result: c => {
       const a = auswahl(c);
       return {
-        kurz: `Alle ${a.N} haben im Schnitt ${count(a.mean)} € im Monat. Der Mittelwert von ${GELOST} zufällig Gelosten liegt typischerweise etwa ${count(a.se)} € daneben.`,
+        kurz: `Alle ${a.N} haben im Schnitt ${count(a.mean)} € im Monat. Der Mittelwert von ${GELOST} zufällig Gelosten schwankt typischerweise um etwa ${count(a.se)} € um diesen Wert.`,
         fachlich: `Einfache Zufallsauswahl ohne Zurücklegen: SE = √(1 − ${GELOST} / ${a.N}) · ${count(a.sd)} / √${GELOST} ≈ ${count(a.se)} €. Mit Zurücklegen wären es σ / √${GELOST} ≈ ${count(a.mit)} €.`,
         zusatz: `Jede Person kommt mit der Wahrscheinlichkeit ${pct(GELOST / a.N)} in die Stichprobe.`,
       };

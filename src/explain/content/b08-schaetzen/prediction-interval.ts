@@ -2,7 +2,7 @@
 // eine neue Person mit x₀ Stunden. ŷ₀ ± t · sₑ · √(1 + h₀) gegen das Konfidenzintervall mit √h₀. Regler: x₀, Fallzahl,
 // Niveau. Bild 'b08-vorhersage'. Reiter: dieselbe Rechnung bei x₀ = x̄ der aktuellen Daten; In R linear_regression().
 import type { ConceptTabs, SampleCtx, SentenceTemplate } from '../../types';
-import { close, count, num, unit } from '../../format';
+import { close, count, fixed, num, unit } from '../../format';
 import { sampleColumn } from '../../sample';
 import { gerade, small } from './daten';
 import { kritisch } from './confidence';
@@ -40,13 +40,13 @@ export const predictionInterval: SentenceTemplate<PiValues, PiStats> = {
   compute: v => vorhersage(v),
   metrics: [
     { label: 'Vorhersage ŷ₀', value: s => `${num(s.yhat)} Aufgaben` },
-    { label: 'Vorhersageintervall', value: s => `${num(s.lo)} bis ${num(s.hi)}` },
-    { label: 'Konfidenzintervall für den Mittelwert', value: s => `${num(s.ciLo)} bis ${num(s.ciHi)}` },
+    { label: 'Vorhersageintervall', value: s => `${fixed(s.lo)} bis ${fixed(s.hi)}` },
+    { label: 'Konfidenzintervall für den Mittelwert', value: s => `${fixed(s.ciLo)} bis ${fixed(s.ciHi)}` },
   ],
   glyphs: [
     { key: 'yhat', sym: 'ŷ₀', say: 'y Dach null', term: 'Linearer Prädiktor', plain: 'die Vorhersage der Geraden für die neue Person', concept: 'prediction' },
     { key: 't', sym: 't', say: 't', term: 'Kritischer Wert & Ablehnungsbereich', plain: 'wie viele Streuungseinheiten man nach jeder Seite geht; bei 95 % knapp 2', concept: 'critical_value' },
-    { key: 'se', sym: 'sₑ', say: 's e', term: 'Standardfehler der Schätzung', plain: 'wie weit die Befragten typischerweise neben der Geraden liegen' },
+    { key: 'se', sym: 'sₑ', say: 's e', term: 'Standardfehler der Schätzung', plain: 'wie stark die Befragten um die Gerade streuen' },
     { key: 'eins', sym: '1', say: 'eins', term: 'Streuung der neuen Person', plain: 'die neue Person streut um die Gerade wie alle anderen' },
     { key: 'h', sym: 'h₀', say: 'h null', term: 'Hebelwert', plain: 'wie unsicher die Gerade an der Stelle x₀ ist; wächst mit dem Abstand zur Mitte' },
     { key: 'x', sym: 'x₀', say: 'x null', term: 'Lernzeit der neuen Person', plain: 'die Stelle, für die du vorhersagst' },
@@ -61,7 +61,7 @@ export const predictionInterval: SentenceTemplate<PiValues, PiStats> = {
   numeric: s => [
     { part: [num(s.yhat)], m: 'yhat' }, ' ± ', { part: [num(s.tq)], m: 't' }, ' · ', { part: [num(GERADE.se)], m: 'se' }, ' · √(',
     { part: ['1'], m: 'eins' }, ' + ', { part: [small(s.h)], m: 'h' }, `) ≈ ${num(s.yhat)} ± ${num(s.half)}`, { br: true },
-    `= ${num(s.lo)} bis ${num(s.hi)} Aufgaben`,
+    `= ${fixed(s.lo)} bis ${fixed(s.hi)} Aufgaben`,
   ],
   sentence: [
     'Das Vorhersageintervall reicht von ', { m: 'yhat', t: 'der Vorhersage der Geraden' }, ' aus um ', { m: 't', t: 'den kritischen Wert' }, ' mal ',
@@ -73,7 +73,7 @@ export const predictionInterval: SentenceTemplate<PiValues, PiStats> = {
     { title: 'Die Vorhersage ablesen', text: `Die Gerade ŷ = ${num(GERADE.a)} + ${num(GERADE.b)} · x sagt für ${unit(s.x, 'Stunde', 'Stunden')} ${num(s.yhat)} Aufgaben voraus, mit allen Nachkommastellen gerechnet.` },
     { title: 'Den Hebelwert ausrechnen', text: `h₀ = 1 / ${count(s.n)} + (${num(s.x)} − ${num(GERADE.mx)})² / ${count(s.ssx)} ≈ ${small(s.h)}.` },
     { title: 'Die halbe Breite ausrechnen', text: `${num(s.tq)} · ${num(GERADE.se)} · √(1 + ${small(s.h)}) ≈ ${num(s.half)} Aufgaben nach jeder Seite.` },
-    { title: 'Mit dem Konfidenzintervall vergleichen', text: `Für den Mittelwert aller Personen mit ${unit(s.x, 'Stunde', 'Stunden')} fällt die 1 weg: ${num(s.tq)} · ${num(GERADE.se)} · √${small(s.h)} ≈ ${num(s.ciHalf)}. Dieses Intervall reicht nur von ${num(s.ciLo)} bis ${num(s.ciHi)}.` },
+    { title: 'Mit dem Konfidenzintervall vergleichen', text: `Für den Mittelwert aller Personen mit ${unit(s.x, 'Stunde', 'Stunden')} fällt die 1 weg: ${num(s.tq)} · ${num(GERADE.se)} · √${small(s.h)} ≈ ${num(s.ciHalf)}. Dieses Intervall reicht nur von ${fixed(s.ciLo)} bis ${fixed(s.ciHi)}.` },
   ],
   fehler: 'Das Vorhersageintervall ist nicht das Konfidenzintervall. Für den Mittelwert vieler Personen wird der Bereich mit mehr Befragten immer schmaler; für eine einzelne neue Person bleibt er breit, weil sie selbst streut.',
   sliders: [
@@ -97,8 +97,8 @@ export const predictionInterval: SentenceTemplate<PiValues, PiStats> = {
       : 'Noch nicht ganz. Rechne erst 1 + 0,44 und ziehe dann die Wurzel.',
   },
   interpret: s => ({
-    kurz: `Für eine neue Person mit ${unit(s.x, 'Stunde', 'Stunden')} Lernzeit sind ${num(s.lo)} bis ${num(s.hi)} gelöste Aufgaben plausibel. Personen mit dieser Lernzeit lösen im Mittel ${num(s.ciLo)} bis ${num(s.ciHi)} Aufgaben, aber jede einzelne streut viel weiter.${s.hi > 20 || s.lo < 0 ? ' Der Test hat 0 bis 20 Aufgaben; das Modell ist am Rand nur eine Näherung.' : ''}`,
-    fachlich: `${num(s.t)}-%-Vorhersageintervall: ŷ₀ ± t · sₑ · √(1 + h₀) = ${num(s.yhat)} ± ${num(s.half)}. Unter dem Modell enthalten etwa ${num(s.t)} % solcher Intervalle den Wert einer neuen, unabhängigen Person. Das Konfidenzintervall für den bedingten Mittelwert nutzt √h₀ und reicht von ${num(s.ciLo)} bis ${num(s.ciHi)}.`,
+    kurz: `Für eine neue Person mit ${unit(s.x, 'Stunde', 'Stunden')} Lernzeit sind ${fixed(s.lo)} bis ${fixed(s.hi)} gelöste Aufgaben plausibel. Personen mit dieser Lernzeit lösen im Mittel ${fixed(s.ciLo)} bis ${fixed(s.ciHi)} Aufgaben, aber jede einzelne streut viel weiter.${s.hi > 20 || s.lo < 0 ? ' Der Test hat 0 bis 20 Aufgaben; das Modell ist am Rand nur eine Näherung.' : ''}`,
+    fachlich: `${num(s.t)}-%-Vorhersageintervall: ŷ₀ ± t · sₑ · √(1 + h₀) = ${num(s.yhat)} ± ${num(s.half)}. Unter dem Modell enthalten etwa ${num(s.t)} % solcher Intervalle den Wert einer neuen, unabhängigen Person. Das Konfidenzintervall für den bedingten Mittelwert nutzt √h₀ und reicht von ${fixed(s.ciLo)} bis ${fixed(s.ciHi)}.`,
   }),
   think: {
     question: 'Mit 100-mal so vielen Befragten: Was passiert mit dem Vorhersageintervall?',
@@ -127,9 +127,9 @@ export const predictionIntervalTabs: ConceptTabs = {
     result: c => {
       const p = vorhersageDaten(c);
       return {
-        kurz: `Für eine neue Person mit ${unit(p.mx, 'Stunde', 'Stunden')} Lernzeit sagt die Gerade ${num(p.yhat)} Aufgaben voraus. Plausibel sind ${num(p.lo)} bis ${num(p.hi)} gelöste Aufgaben. Für den Mittelwert solcher Personen wären es nur ${num(p.ciLo)} bis ${num(p.ciHi)}.`,
-        fachlich: `ŷ₀ ± t · sₑ · √(1 + h₀) = ${num(p.yhat)} ± ${num(p.tq)} · ${num(p.se)} · √(1 + 1 / ${p.N}) ≈ ${num(p.yhat)} ± ${num(p.half)}; an der Stelle x₀ = x̄ ist h₀ = 1 / n.`,
-        zusatz: `${p.inside} von ${p.N} Befragten liegen höchstens ${num(p.half)} Aufgaben neben ihrer eigenen Vorhersage.`,
+        kurz: `Für eine neue Person mit ${unit(p.mx, 'Stunde', 'Stunden')} Lernzeit sagt die Gerade ${num(p.yhat)} Aufgaben voraus. Plausibel sind ${fixed(p.lo)} bis ${fixed(p.hi)} gelöste Aufgaben. Für den Mittelwert solcher Personen wären es nur ${fixed(p.ciLo)} bis ${fixed(p.ciHi)}.`,
+        fachlich: `ŷ₀ ± t · sₑ · √(1 + h₀) = ${num(p.yhat)} ± ${num(p.tq)} · ${num(p.se)} · √(1 + 1 / ${p.N}) ≈ ${num(p.yhat)} ± ${fixed(p.half)}; an der Stelle x₀ = x̄ ist h₀ = 1 / n.`,
+        zusatz: `${p.inside} von ${p.N} Befragten liegen höchstens ${fixed(p.half)} Aufgaben neben ihrer eigenen Vorhersage.`,
       };
     },
     voraussetzung: 'Die Gerade beschreibt den Zusammenhang gut, die Streuung um sie ist überall gleich, und die neue Person ist unabhängig von den 200.',
@@ -165,7 +165,7 @@ export const predictionIntervalTabs: ConceptTabs = {
     outputMap: [
       { match: 'Mean', atlas: 'ȳ, mittlerer Wissenstest', explain: 'Die Befragten lösen im Mittel 10,13 Aufgaben. Für eine Person mit durchschnittlicher Lernzeit sagt die Gerade genau diesen Wert voraus.' },
       { match: 'R Square', atlas: 'erklärter Anteil R²', explain: 'Wie viel der Unterschiede im Wissenstest das Modell erfasst. Der Rest ist die Streuung um die Gerade, die das Vorhersageintervall breit macht.' },
-      { match: 'Std. Error of the Estimate', atlas: 'sₑ', explain: 'Daneben steht sₑ: So weit liegen die Befragten typischerweise neben ihrer Vorhersage. Dieses Modell nimmt das Alter dazu, ohne Alter sind es 2,63 Aufgaben.' },
+      { match: 'Std. Error of the Estimate', atlas: 'sₑ', explain: 'Daneben steht sₑ, die Streuung der Befragten um ihre Vorhersage. Dieses Modell nimmt das Alter dazu; ohne Alter sind es 2,63 Aufgaben.' },
       { match: '9.180750', atlas: 'ŷ für P001', explain: 'predict() rechnet für jede Person die Vorhersage aus, für P001 rund 9,18 Aufgaben. Um so einen Wert legt das Vorhersageintervall seinen Bereich.' },
     ],
     check: {

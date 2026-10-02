@@ -167,7 +167,7 @@ function VorhersageBild({ s }: { s: PiStats }) {
   return (
     <div ref={box}>
       <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
-        aria-label={`Streudiagramm der 200 Befragten mit der Geraden. Bei ${num(s.x)} Stunden reicht das Vorhersageintervall von ${num(s.lo)} bis ${num(s.hi)} Aufgaben, das Konfidenzintervall für den Mittelwert von ${num(s.ciLo)} bis ${num(s.ciHi)}.`}>
+        aria-label={`Streudiagramm der 200 Befragten mit der Geraden. Bei ${num(s.x)} Stunden reicht das Vorhersageintervall von ${fixed(s.lo)} bis ${fixed(s.hi)} Aufgaben, das Konfidenzintervall für den Mittelwert von ${fixed(s.ciLo)} bis ${fixed(s.ciHi)}.`}>
         <text className="xw-t" x={left - 30} y={16}>Lange Klammer: eine neue Person</text>
         <text className="xw-t" x={left - 30} y={36}>Kurzer Balken: ihr Mittelwert</text>
         {rows.map(r => <circle key={r.id} className="xw-s-dot" cx={X(r.values.lernzeit)} cy={Y(r.values.wissenstest)} r={2.4} />)}
@@ -178,8 +178,8 @@ function VorhersageBild({ s }: { s: PiStats }) {
         <line className="xw-neg" strokeWidth={2.5} x1={x0 - 7} x2={x0 + 7} y1={cy(s.lo)} y2={cy(s.lo)} />
         <rect className="xw-bar-pos" x={x0 - 7} y={cy(s.ciHi)} width={14} height={Math.max(3, cy(s.ciLo) - cy(s.ciHi))} />
         <circle cx={x0} cy={cy(s.yhat)} r={2.5} className="xw-s-dot sel" />
-        {label(cy(s.hi) + 4, `${num(s.hi)}`)}
-        {label(cy(s.lo) + 4, `${num(s.lo)}`)}
+        {label(cy(s.hi) + 4, fixed(s.hi))}
+        {label(cy(s.lo) + 4, fixed(s.lo))}
         {label(cy(s.yhat) + 4, `ŷ₀ = ${num(s.yhat)}`)}
         <Axis scale={X} ticks={[0, 5, 10, 15]} at={bottom} from={left} to={right} labelGap={20} title="Lernzeit in Stunden" />
         <Axis scale={Y} ticks={[0, 5, 10, 15, 20]} at={left} from={bottom} to={top} orient="left" labelGap={24} />
