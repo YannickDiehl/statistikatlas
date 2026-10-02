@@ -151,7 +151,7 @@ function ErwartungLine({ values, s, step, who, names, bounds, onChange, onWho }:
   const m = s.mu;
   return (
     <div ref={box}>
-      <svg ref={svg} className="xw-svg xw-drag" width={W} height={224} viewBox={`0 0 ${W} 224`} role="group" aria-label="Haushaltsgrößen der fünf Beispielpersonen; jede wird mit der Chance 0,2 gezogen" {...handlers}>
+      <svg ref={svg} className="xw-svg xw-drag" width={W} height={240} viewBox={`0 0 ${W} 240`} role="group" aria-label="Haushaltsgrößen der fünf Beispielpersonen; jede wird mit der Chance 0,2 gezogen" {...handlers}>
         <text className="xw-t" x={10} y={14}>{step >= 5 ? `σ² = ${num(s.ss)} · 0,2 = ${num(s.sigma2)}` : step >= 2 ? `μ = ${num(m)}` : 'Chance je Person: 0,2'}</text>
         {squares && <text className="xw-t" x={W - 8} y={14} textAnchor="end">Quadrat</text>}
         {values.map((_, i) => <g key={`row${i}`}>
@@ -162,7 +162,9 @@ function ErwartungLine({ values, s, step, who, names, bounds, onChange, onWho }:
         {step >= 2 && <line className="xw-mean" x1={X(m)} x2={X(m)} y1={24} y2={AXIS} />}
         {step >= 3 && s.dev.map((d, i) => Math.abs(d) > 1e-9 && <g key={`dev${i}`}>
           <line className={d > 0 ? 'xw-pos' : 'xw-neg'} strokeWidth={i === who ? 4.5 : 3} x1={X(m)} x2={X(values[i])} y1={Y(i)} y2={Y(i)} />
-          <text className="xw-t" x={(X(m) + X(values[i])) / 2} y={Y(i) - 6} textAnchor="middle">{signed(d)}</text>
+          {Math.abs(X(values[i]) - X(m)) >= 48
+            ? <text className="xw-t" x={(X(m) + X(values[i])) / 2} y={Y(i) - 6} textAnchor="middle">{signed(d)}</text>
+            : <text className="xw-t" x={X(m) + (d > 0 ? -6 : 6)} y={Y(i) + 4} textAnchor={d > 0 ? 'end' : 'start'}>{signed(d)}</text>}
         </g>)}
         <Axis scale={X} ticks={Array.from({ length: bounds.max - bounds.min + 1 }, (_, k) => bounds.min + k)} at={AXIS} from={left} to={right} labelGap={24} title="Personen im Haushalt" />
         {values.map((v, i) => (
