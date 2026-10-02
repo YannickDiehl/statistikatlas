@@ -121,3 +121,32 @@ test('B7 t-Verteilung: t-Test der Schlafdauer gegen 7 Stunden und Grenzen wie in
   assert.match(tVerteilung.check.options[1], /2,26/); assert.match(tVerteilung.fuerDich, /bei 2,05/);
   if (tTabs.sample?.kind === 'analysis') assert.match(tTabs.sample.result(ctx).kurz, /7,08 Stunden pro Nacht, 4,95 Minuten über 7 Stunden\. Das ergibt t = 1,42 bei 199 Freiheitsgraden; .* ±1,97\. .* in etwa 16 von 100 Stichproben vor\./);
 });
+
+/*
+ * χ²-Verteilung: Schulabschluss × Weiterbildung
+ *   sa <- as.numeric(atlas$schulabschluss); wb <- as.numeric(atlas$weiterbildung); tab <- table(sa, wb)
+ *   ct <- chisq.test(tab, correct = FALSE); ct$statistic; ct$parameter; ct$p.value    # 3.082033 4 0.5441925
+ *   ct$expected["1", "1"]; tab["1", "1"]; (12 - 16.4)^2 / 16.4; min(ct$expected)      # 16.4 12 1.180488 15.17
+ *   qchisq(0.95, 1:10)        # 3.841459 5.991465 7.814728 9.487729 11.070498 ... 18.307038
+ *   chisq.test(tab * 2, correct = FALSE)$statistic                                    # 6.164065
+ *   chisq.test(table(4 - sa, wb), correct = FALSE)$statistic                          # 3.082033 (umgepolt gleich)
+ *   pchisq(12.3, 4, lower.tail = FALSE)                                               # 0.01526 (unter den äußeren 5 %)
+ *   atlas %>% chi_square(schulabschluss, weiterbildung, correct = FALSE)   # chi2(4) = 3.082, p = 0.544, V = 0.124 (small), N = 200
+ *   atlas %>% chi_square(schulabschluss)    # Fehler: Exactly two variables must be specified for `chi_square()`.
+ */
+test('B7 χ²-Verteilung: Chi-Quadrat-Test von Schulabschluss und Weiterbildung wie in R', async () => {
+  const { CHI, chiFit, chiQuadratVerteilung, chiTabs } = await import('./chi-square');
+  const { qchisq, pchisq } = await import('./dist');
+  const ctx: SampleCtx = { rows, columns: { x: ['schulabschluss'], y: ['weiterbildung'] } }, f = chiFit(ctx);
+  ok(f.chi2, 3.082033, 'χ²'); assert.equal(f.df, 4); ok(f.p, 0.5441925, 'p'); ok(f.crit, 9.487729, 'Grenze'); ok(f.minE, 15.17, 'kleinste Erwartung');
+  ok(CHI.chi2, f.chi2, 'CHI.chi2'); ok(CHI.p, f.p, 'CHI.p'); ok(CHI.crit, f.crit, 'CHI.crit');
+  [3.841459, 5.991465, 7.814728, 9.487729, 11.070498].forEach((q, i) => ok(qchisq(0.95, i + 1), q, `qchisq(0.95, ${i + 1})`));
+  ok(qchisq(0.95, 10), 18.307038, 'qchisq(0.95, 10)'); ok(pchisq(12.3, 4, false), 0.01526, 'χ²(4) = 12,3', 1e-5);
+  ok(chiFit({ rows: applyOp(rows, 'schulabschluss', 'reverse'), columns: ctx.columns }).chi2, 3.082033, 'umgepolt');
+  ok((CHI.cellB - CHI.cellE) ** 2 / CHI.cellE, 1.180488, 'Beitrag der Zelle');
+  assert.match(chiQuadratVerteilung.bausteine[0].rechnung!, /beobachtet 12, erwartet 16,4\. \(12 − 16,4\)² \/ 16,4 = 19,36 \/ 16,4 ≈ 1,18\. .* χ² ≈ 3,08\./);
+  assert.match(chiQuadratVerteilung.bausteine[2].rechnung!, /in etwa 54 von 100 Stichproben/);
+  assert.match(chiQuadratVerteilung.ausprobieren[2].explain, /etwa 6,16/);
+  assert.match(chiQuadratVerteilung.regler!.describe(4), /^Bei 4 Freiheitsgraden liegt der Erwartungswert bei 4, und nur 5 % der χ²-Werte sind größer als 9,49\. So ist es/);
+  if (chiTabs.sample?.kind === 'analysis') assert.match(chiTabs.sample.result(ctx).kurz, /5 Abschlüssen und 2 Antworten ergibt χ² = 3,08 bei 4 Freiheitsgraden\. .* unter 9,49\. .* in etwa 54 von 100 Stichproben vor\./);
+});

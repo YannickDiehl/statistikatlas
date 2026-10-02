@@ -3,10 +3,11 @@
 // Eigene Stile in src/explain/areas/b07-verteilungen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { num, pct } from '../../../explain/format';
 import { baseSurvey } from '../../../explain/sample';
-import { columnStats, dnorm, dt, within } from '../../../explain/content/b07-verteilungen/dist';
+import { columnStats, dchisq, dnorm, dt, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
 import { inside } from '../../../explain/content/b07-verteilungen/normal';
 import { areaText, type ZStats } from '../../../explain/content/b07-verteilungen/standard-normal';
 import { SCHLAF_T, tCrit } from '../../../explain/content/b07-verteilungen/t';
+import { CHI } from '../../../explain/content/b07-verteilungen/chi-square';
 import { AreaUnder, Axis, Bar, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Histogramm der Schlafdauer (halbe Stunden) mit der Normalverteilung x̄, s; markiert ist x̄ ± k · s. */
@@ -73,12 +74,36 @@ function TCompare({ df }: { df: number }) {
         <Curve f={dnorm} from={-lim} to={lim} x={X} y={Y} className="b07-ref" />
         <Curve f={f} from={-lim} to={lim} x={X} y={Y} />
         {crit < lim && <><MarkLine x={X(cut)} from={top} to={base} /><MarkLine x={X(-cut)} from={top} to={base} /></>}
-        <line className="xw-pos" strokeWidth={2.5} x1={X(t)} x2={X(t)} y1={top + 20} y2={base} />
+        <line className="xw-pos" strokeWidth={2.5} x1={X(t)} x2={X(t)} y1={Y(Math.max(f(t), dnorm(t))) - 14} y2={base} />
         <Axis scale={X} ticks={[-4, -2, 0, 2, 4]} at={base} from={left} to={right} labelGap={20} title="t" />
         <text className="xw-t xw-strong" x={left} y={16}>t-Verteilung, {fgText(df)}</text>
         <text className="xw-t" x={left} y={36}>gestrichelt: Standardnormalverteilung</text>
         <text className="xw-t" x={left} y={56}>braunrot: äußere 5 %, jenseits von ±{num(crit)}</text>
         <text className="xw-t" x={left} y={76}>grüner Strich bei {num(t)}: t der Schlafdauer</text>
+      </svg>
+    </div>
+  );
+}
+/** χ²-Verteilung mit df Freiheitsgraden: Erwartungswert gestrichelt, äußere 5 % braunrot, bei 4 Freiheitsgraden χ² = 3,08 als grüner Strich. */
+function ChiShape({ df }: { df: number }) {
+  const [box, W] = useWidth();
+  const lim = 25, base = 222, top = 98, left = 28, right = W - 20, crit = qchisq(0.95, df), four = Math.abs(df - 4) < 1e-9;
+  const peak = Math.min(0.5, Math.max(...Array.from({ length: 100 }, (_, i) => dchisq(0.1 + i * 0.25, df))));
+  const f = (v: number) => Math.min(dchisq(v, df), peak);
+  const X = linear([0, lim], [left, right]), Y = linear([0, peak * 1.08], [base, top]);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={268} viewBox={`0 0 ${W} 268`} role="img"
+        aria-label={`χ²-Verteilung mit ${num(df)} Freiheitsgraden. Erwartungswert ${num(df)}, die äußeren 5 % liegen über ${num(crit)}.${four ? ` Markiert ist χ² = ${num(CHI.chi2)} aus dem Lehrdatensatz.` : ''}`}>
+        <AreaUnder f={f} from={crit} to={lim} x={X} y={Y} tone="neg" />
+        <Curve f={f} from={0.02} to={lim} x={X} y={Y} samples={200} />
+        <MarkLine x={X(df)} from={top} to={base} />
+        {four && <line className="xw-pos" strokeWidth={2.5} x1={X(CHI.chi2)} x2={X(CHI.chi2)} y1={Y(f(CHI.chi2)) - 14} y2={base} />}
+        <Axis scale={X} ticks={[0, 5, 10, 15, 20, 25]} at={base} from={left} to={right} labelGap={20} title="χ²" />
+        <text className="xw-t xw-strong" x={left} y={16}>χ²-Verteilung, {fgText(df)}</text>
+        <text className="xw-t" x={left} y={36}>gestrichelt: Erwartungswert {num(df)}</text>
+        <text className="xw-t" x={left} y={56}>braunrot: äußere 5 %, ab {num(crit)}</text>
+        {four && <text className="xw-t" x={left} y={76}>grüner Strich bei {num(CHI.chi2)}: χ² der 200</text>}
       </svg>
     </div>
   );
@@ -89,4 +114,5 @@ export const pictures: Record<string, Picture> = {
   'b07-normal': forCard(p => <NormalFit k={p.value ?? 1} />),
   'b07-standard': forSentence(p => <StandardArea s={p.s as ZStats} />),
   'b07-t': forCard(p => <TCompare df={p.value ?? 4} />),
+  'b07-chi': forCard(p => <ChiShape df={p.value ?? 4} />),
 };
