@@ -14,6 +14,7 @@ import { ANTEIL, alpha } from './alpha';
 import { kritisch } from './kritisch';
 import { betaFor, fehlerarten } from './fehlerarten';
 import { teststaerke } from './teststaerke';
+import { DF, freiheitsgrade } from './freiheitsgrade';
 
 /*
  * Referenzwerte des Bereichs B9, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -53,6 +54,11 @@ import { teststaerke } from './teststaerke';
  *   # pz(.3, 175, .05) 0.8013024; pz(.05, 5, .001) 0.0010367; 2 * ((qnorm(.975) + qnorm(.8)) / .3)^2 = 174.42
  *   power.t.test(n = 100, delta = .3)$power; power.t.test(power = .8, delta = .3)$n   # 0.5600359, 175.39
  *   1 / sp (gepoolte Standardabweichung der Lernzeit nach Weiterbildung 3.2454809)   # 0.3081207
+ *   t.test(lz ~ wb, var.equal = TRUE)$parameter                          # 198; t(198) = 0.156 in t_test(…, var.equal = TRUE)
+ *   sa <- as.numeric(atlas$schulabschluss); chisq.test(table(sa, wb))$parameter   # 4
+ *   oneway.test(lz ~ sa, var.equal = TRUE)$parameter; oneway.test(lz ~ sa)$parameter   # 4, 195; 4, 96.701708
+ *   qt(.975, c(1, 4, 26, 27, 30, 100, 199)); qnorm(.975)
+ *   # 12.7062047, 2.7764451, 2.0555294, 2.0518305, 2.0422725, 1.9839715, 1.9719565; 1.9599640 (gerundet ab df = 27 weniger als 0,1 über 1,96)
  *   t.test(lz ~ wb, alternative = "greater")$p.value; t.test(lz ~ wb, alternative = "less")$p.value   # 0.4379349, 0.5620651
  *   atlas %>% t_test(lernzeit, group = weiterbildung, alternative = "greater")  # t(175.8) = 0.156, p = 0.438
  *
@@ -68,7 +74,7 @@ const tabs = (id: string): ConceptTabs => b09Testlogik.tabs[id];
 const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.ok(s?.kind === 'analysis', `${id}: Auswertung`); const cols = Object.fromEntries(Object.entries(s.columns ?? {}).map(([k, v]) => [k, [v]])); return s.result({ rows: data, columns: cols }); };
 
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
-  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power'];
+  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power', 'general_df'];
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -217,4 +223,20 @@ test('B9 Teststärke: Näherung mit der Normalverteilung wie in R', () => {
   assert.ok(close(g.sp, 3.2454809, 1e-6) && close(1 / g.sp, 0.3081207, 1e-6), 'gepoolte Standardabweichung');
   assert.match(result('power').kurz, /Mit 82 und 118 Befragten und einem Standardfehler von 0,47 Stunden fände der Test eine Stunde Unterschied in etwa 57 von 100 Studien\. Eine Stunde sind hier d ≈ 0,31\./);
   assert.match(result('power', applyOp(rows, 'lernzeit', 'double')).fachlich, /Φ\(1 \/ 0,93 − 1,96\) ≈ 0,19/);
+});
+
+test('B9 Freiheitsgrade: Zählregeln und Grenzen wie in R', () => {
+  const g = gruppenTest(ctx({ x: 'lernzeit', group: 'weiterbildung' }))!;
+  assert.equal(g.studentDf, 198); assert.ok(close(g.df, DF.welch, 1e-6) && close(DF.welch, 175.84117, 1e-4), 'Welch');
+  assert.deepEqual([DF.eins, DF.student, DF.kreuz, DF.anovaZ, DF.anovaN], [199, 198, 4, 4, 195]);
+  assert.ok(close(DF.welchAnova, 96.701708, 1e-6));
+  assert.match(freiheitsgrade.stellDirVor.text, /200 − 1 = 199 .*200 − 2 = 198\. Welch kommt auf 175,8,/);
+  assert.equal(freiheitsgrade.bausteine[3].rechnung, 'Grenze für α = 0,05, zweiseitig: df = 4: 2,78; df = 199: 1,97; sehr viele: 1,96');
+  assert.match(freiheitsgrade.regler!.describe(1), /bei 12,71\. .*Die Ränder sind dicker/);
+  assert.match(freiheitsgrade.regler!.describe(26), /bei 2,06\. .*Die Ränder sind dicker/);
+  assert.match(freiheitsgrade.regler!.describe(27), /bei 2,05\. .*kaum noch ein Unterschied/);
+  assert.match(freiheitsgrade.regler!.describe(100), /bei 1,98\. Die Normalverteilung hätte 1,96\./);
+  assert.match(freiheitsgrade.genau.paragraphs[1], /4 und 195 Freiheitsgrade, im Welch-Test 4 und 96,7\./);
+  assert.match(result('general_df').kurz, /Student hat 198 Freiheitsgrade\. Welch kommt auf 175,8,/);
+  assert.match(result('general_df').fachlich, /bei Welch: 1,97\./);
 });

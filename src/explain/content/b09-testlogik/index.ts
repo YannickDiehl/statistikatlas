@@ -10,6 +10,7 @@ import { alpha, alphaTabs } from './alpha';
 import { kritisch, kritischTabs } from './kritisch';
 import { fehlerarten, fehlerartenTabs } from './fehlerarten';
 import { teststaerke, teststaerkeTabs } from './teststaerke';
+import { freiheitsgrade, freiheitsgradeTabs } from './freiheitsgrade';
 
 export const b09Testlogik: AreaIndex = {
   explanations: {
@@ -21,6 +22,7 @@ export const b09Testlogik: AreaIndex = {
     critical_value: { kind: 'satz', template: kritisch },
     type_errors: { kind: 'begriff', card: fehlerarten },
     power: { kind: 'satz', template: teststaerke },
+    general_df: { kind: 'begriff', card: freiheitsgrade },
   },
   tabs: {
     hypothesis: hypotheseTabs,
@@ -31,5 +33,6 @@ export const b09Testlogik: AreaIndex = {
     critical_value: kritischTabs,
     type_errors: fehlerartenTabs,
     power: teststaerkeTabs,
+    general_df: freiheitsgradeTabs,
   },
 };

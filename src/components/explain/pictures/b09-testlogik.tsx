@@ -1,7 +1,7 @@
 // Bilder des Bereichs B9 „Testlogik“ für alle Vorlagen. Schlüssel = `picture` der Erklärung, Bausteine und
 // `forWorkshop`/`forCard`/`forSentence`/`forTable` aus ./kit.tsx.
 // Eigene Stile in src/explain/areas/b09-testlogik.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
-import { lgamma } from '../../../tasks/kit/dist';
+import { lgamma, qt } from '../../../tasks/kit/dist';
 import type { TStats } from '../../../explain/content/b09-testlogik/pruefgroesse';
 import { MISCHEN, asFarAs, mixCount } from '../../../explain/content/b09-testlogik/nullverteilung';
 import { SEITEN, sideOf } from '../../../explain/content/b09-testlogik/seiten';
@@ -9,6 +9,7 @@ import { ANTEIL } from '../../../explain/content/b09-testlogik/alpha';
 import type { CStats } from '../../../explain/content/b09-testlogik/kritisch';
 import { betaFor, percent } from '../../../explain/content/b09-testlogik/fehlerarten';
 import type { PStats } from '../../../explain/content/b09-testlogik/teststaerke';
+import { dfOf } from '../../../explain/content/b09-testlogik/freiheitsgrade';
 import { MU0, SCHLAF, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
 import { baseSurvey } from '../../../explain/sample';
@@ -228,7 +229,35 @@ function Teststaerke({ s }: { s: PStats }) {
   );
 }
 
+/** t-Verteilung mit df Freiheitsgraden (durchgezogen) neben der Normalverteilung (gestrichelt), dazu die Grenzen ±c für α = 0,05. */
+function Freiheitsgrade({ value }: { value: number }) {
+  const [box, W] = useWidth();
+  const df = dfOf(value), c = qt(0.975, df), lim = 6, cs = Math.min(c, lim), base = 160;
+  const x = linear([-lim, lim], [24, W - 24]), y = linear([0, 0.42], [base, 50]);
+  const normal = (v: number) => Math.exp(-v * v / 2) / Math.sqrt(2 * Math.PI), t = (v: number) => tDensity(v, df);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={256} viewBox={`0 0 ${W} 256`} role="img"
+        aria-label={`t-Verteilung mit ${df} Freiheitsgraden neben der Normalverteilung. Die Grenzen für α = 0,05, zweiseitig, liegen bei ±${num(c)}; bei der Normalverteilung wären es ±1,96.`}>
+        <text className="xw-t xw-strong" x={24} y={16}>df = {df}: Grenze ±{num(c)}{c > lim ? ' (weiter außen)' : ''}</text>
+        <AreaUnder f={t} from={-lim} to={-cs} x={x} y={y} tone="neg" />
+        <AreaUnder f={t} from={cs} to={lim} x={x} y={y} tone="neg" />
+        <Curve f={normal} from={-lim} to={lim} x={x} y={y} className="b09-other" samples={160} />
+        <Curve f={t} from={-lim} to={lim} x={x} y={y} samples={160} />
+        <MarkLine x={x(cs)} from={44} to={base} className="xw-mean b09-reject" />
+        <MarkLine x={x(-cs)} from={44} to={base} className="xw-mean b09-reject" />
+        <text className="xw-t" x={x(cs)} y={38} textAnchor={x(cs) > W - 60 ? 'end' : 'middle'}>+c</text>
+        <text className="xw-t" x={x(-cs)} y={38} textAnchor={x(-cs) < 60 ? 'start' : 'middle'}>−c</text>
+        <Axis scale={x} ticks={[-6, -4, -2, 0, 2, 4, 6]} at={base} from={24} to={W - 24} labelGap={20} title="t" />
+        <text className="xw-t" x={24} y={230}>durchgezogen: t-Verteilung, df = {df}</text>
+        <text className="xw-t" x={24} y={250}>gestrichelt: Normalverteilung</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-freiheitsgrade': forCard(p => <Freiheitsgrade value={p.value ?? 4} />),
   'b09-teststaerke': forSentence(p => <Teststaerke s={p.s as PStats} />),
   'b09-fehlerarten': forCard(p => <Fehlerarten a={p.value ?? 0.05} />),
   'b09-kritisch': forSentence(p => <Kritisch s={p.s as CStats} />),
