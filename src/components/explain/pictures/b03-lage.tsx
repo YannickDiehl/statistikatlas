@@ -19,14 +19,19 @@ function stacked(values: readonly number[], X: (v: number) => number, dot: numbe
   return { level, tallest: Math.max(1, ...stack.values()) };
 }
 
-/** Klammer über einem Bereich mit Beschriftung (Spannweite, Interquartilsabstand). */
-function Bracket({ from, to, y, label, className }: { from: number; to: number; y: number; label: string; className: string }) {
+/**
+ * Klammer über einem Bereich mit Beschriftung (Spannweite, Interquartilsabstand). Die Beschriftung steht mittig über
+ * der Klammer, rückt aber so weit nach innen, dass sie ganz im Bild bleibt (`width`: Breite des Bildes; geschätzt
+ * mit gut 8 px je Zeichen bei 14 px Schrift). Sonst schnitte der Bildrand sie auf dem Telefon ab.
+ */
+function Bracket({ from, to, y, label, className, width }: { from: number; to: number; y: number; label: string; className: string; width: number }) {
+  const half = label.length * 4.2, x = Math.min(width - 4 - half, Math.max(4 + half, (from + to) / 2));
   return (
     <g className={className}>
       <line x1={from} x2={to} y1={y} y2={y} />
       <line x1={from} x2={from} y1={y - 6} y2={y + 6} />
       <line x1={to} x2={to} y1={y - 6} y2={y + 6} />
-      <text className="xw-t xw-halo" x={(from + to) / 2} y={y - 9} textAnchor="middle">{label}</text>
+      <text className="xw-t xw-halo" x={x} y={y - 9} textAnchor="middle">{label}</text>
     </g>
   );
 }
@@ -45,8 +50,8 @@ function Spannweite({ top }: { top: number }) {
         <rect className="xw-band" x={X(r.q1)} y={top0 - 4} width={X(r.q3) - X(r.q1)} height={base - top0 + 4} />
         {r.xs.map((v, i) => i !== maxAt && <circle key={i} className="xw-s-dot" cx={X(v)} cy={base - 3 - level[i] * DOT} r={2.4} />)}
         <circle className="xw-s-dot sel" cx={X(r.max)} cy={base - 3 - level[maxAt] * DOT} r={5} />
-        <Bracket className="b03-bracket b03-range" from={X(r.min)} to={X(r.max)} y={26} label={`Spannweite ${num(r.range)} h`} />
-        <Bracket className="b03-bracket" from={X(r.q1)} to={X(r.q3)} y={60} label={`mittlere Hälfte ${num(r.iqr)} h`} />
+        <Bracket className="b03-bracket b03-range" from={X(r.min)} to={X(r.max)} y={26} label={`Spannweite ${num(r.range)} h`} width={W} />
+        <Bracket className="b03-bracket" from={X(r.q1)} to={X(r.q3)} y={60} label={`mittlere Hälfte ${num(r.iqr)} h`} width={W} />
         <Axis scale={X} ticks={[0, 10, 20, 30, 40, 50, 60]} at={base + 4} from={left} to={right} labelGap={18} />
         <text className="xw-t" x={(left + right) / 2} y={base + 42} textAnchor="middle">Lernzeit in den letzten sieben Tagen (h)</text>
       </svg>
