@@ -34,7 +34,7 @@ const size = (d: number) => { const a = Math.abs(d); return a < 0.2 ? 'sehr klei
 export const tTestSentence: SentenceTemplate<TValues, TStats> = {
   concept: 't_test',
   wofuer: 'Im ALLBUS 2023 sagen 2.423 Befragte aus Westdeutschland, wie sehr sie dem Bundestag vertrauen: von 1 (gar kein Vertrauen) bis 7 (großes Vertrauen). Im Mittel sind es 4,08 Punkte. Die 1.169 Befragten aus Ostdeutschland kommen auf 3,67 Punkte (ungewichtet). Ist dieser Unterschied größer, als der Zufall einer Stichprobe erwarten lässt?',
-  kurz: 'Der t-Test sagt dir, wie groß der Unterschied zweier Gruppenmittel im Vergleich zu seinem üblichen Schwanken ist. Je größer t, desto weniger passt der Unterschied zum Zufall allein.',
+  kurz: 'Der t-Test sagt dir, wie groß der Unterschied zweier Gruppenmittel im Vergleich zu seinem üblichen Schwanken ist. Je weiter t von 0 entfernt ist, desto schlechter passt der Unterschied zum Zufall allein.',
   fachlich: 'Die Differenz zweier Gruppenmittelwerte geteilt durch ihren geschätzten Standardfehler; nach Welch geht die Varianz jeder Gruppe geteilt durch ihre Größe ein.',
   initial: START,
   compute: welchFromSummary,

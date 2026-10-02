@@ -10,12 +10,11 @@ import { ZELLEN } from '../../../explain/content/b10-mittelwerte/factorial-anova
 import { BEREINIGT } from '../../../explain/content/b10-mittelwerte/ancova';
 import { STREUUNGEN } from '../../../explain/content/b10-mittelwerte/variance-assumption';
 import { baseSurvey } from '../../../explain/sample';
+import { eq } from '../../../explain/content/b10-mittelwerte/stats';
 import { sleepHistogram } from '../../../explain/content/b10-mittelwerte/normality';
 import { Axis, Bar, clamp, Curve, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Ganzzahlige Ticks von `from` bis `to` in Schritten von `by`. */
-/** „=“, wenn die angezeigte Zahl genau ist, sonst „≈“. */
-const eq = (v: number) => Math.abs(Math.round(v * 100) / 100 - v) > 1e-9 ? '≈' : '=';
 const ticks = (from: number, to: number, by: number) => Array.from({ length: Math.floor((to - from) / by) + 1 }, (_, k) => from + k * by);
 
 /**
@@ -129,7 +128,7 @@ function GroupDots({ values, s, step, who, names, bounds, onChange, onWho }: {
           const top = rowY(j * 3) - 14, bottom = rowY(j * 3 + 2) + 14, mid = rowY(j * 3 + 1), d = s.gm[j] - s.grand;
           return <g key={`g${j}`}>
             <rect className="b10-group" x={left - 10} y={top} width={right - left + 20} height={bottom - top} />
-            <text className="xw-t" x={right + 14} y={mid - 4}>{GRUPPEN[j].key}: x̄ = {num(s.gm[j])}</text>
+            <text className="xw-t" x={right + 14} y={mid - 4}>{GRUPPEN[j].key}: {num(s.gm[j])}</text>
             {step >= 2 && Math.abs(d) > 1e-9 && <g>
               <rect className={d > 0 ? 'xw-rect-pos' : 'xw-rect-neg'} x={Math.min(X(s.grand), X(s.gm[j]))} y={mid - 5} width={Math.abs(X(s.gm[j]) - X(s.grand))} height={10} />
               <text className="xw-t" x={right + 14} y={mid + 14}>{signed(d)}</text>
@@ -153,9 +152,9 @@ function GroupDots({ values, s, step, who, names, bounds, onChange, onWho }: {
         {step >= 4 && <g>
           <text className="xw-t xw-strong" x={8} y={barTop - 14}>Geteilt durch die Freiheitsgrade</text>
           <Bar x={left} y={barTop} width={bar(s.msB)} height={18} tone="pos" />
-          <text className="xw-t" x={left} y={barTop + 34}>zwischen: MS_B = {num(s.msB)}</text>
+          <text className="xw-t" x={left} y={barTop + 34}>MS zwischen = {num(s.msB)}</text>
           <Bar x={left} y={barTop + 42} width={bar(s.msW)} height={18} tone="plain" />
-          <text className="xw-t" x={left + bar(s.msW) + 8} y={barTop + 56}>innerhalb: MS_W = {num(s.msW)}</text>
+          <text className="xw-t" x={left + bar(s.msW) + 8} y={barTop + 56}>MS innerhalb = {num(s.msW)}</text>
           {step >= 5 && <text className="xw-t xw-strong" x={left} y={barTop + 84}>{s.F === null ? 'F nicht definiert: innerhalb streut nichts.' : `F = ${num(s.msB)} / ${num(s.msW)} ${eq(s.F)} ${num(s.F)}`}</text>}
         </g>}
       </svg>
@@ -214,7 +213,7 @@ function AdjustedMeans() {
   );
 }
 
-/** Gleiche Fehlervarianz: Standardabweichung der Lernzeit je Schulabschluss und die gemeinsame Streuung √MS_W (gestrichelt). */
+/** Gleiche Fehlervarianz: Standardabweichung der Lernzeit je Schulabschluss und die gemeinsame Streuung √(MS innerhalb) (gestrichelt). */
 function GroupSpreads() {
   const [box, W] = useWidth();
   const left = 70, right = W - 60, X = linear([0, 4], [left, right]), rowY = (i: number) => 40 + i * 30, bottom = rowY(STREUUNGEN.sd.length - 1) + 20;

@@ -2,7 +2,7 @@
 // levene_test(lernzeit, group = schulabschluss, center = "median"). Referenzwerte: ./b10-mittelwerte.test.ts.
 import type { ConceptCard, ConceptTabs } from '../../types';
 import { num } from '../../format';
-import { leveneFor, often, pText } from './stats';
+import { abschluss, leveneFor, often, pText } from './stats';
 
 export const levene: ConceptCard = {
   concept: 'levene_test',
@@ -23,7 +23,7 @@ export const levene: ConceptCard = {
   bausteine: [
     {
       title: 'Das Zentrum jeder Gruppe finden',
-      was: 'Für jede Gruppe bestimmen wir ein Zentrum: beim Brown–Forsythe-Test den Median, den mittleren Wert der Reihe nach, beim klassischen Levene-Test den Mittelwert.',
+      was: 'Für jede Gruppe bestimmen wir ein Zentrum. Beim Brown–Forsythe-Test ist es der Median, der mittlere Wert der Reihe nach; beim Levene-Test der Mittelwert.',
       rechnung: 'Median der Lernzeit: 5,7 Stunden ohne Abschluss, dann 7,3; 8; 8,6 und 8,9 Stunden mit Abitur.',
       warum: 'Von diesem Zentrum aus messen wir gleich, wie weit jede Person entfernt ist.',
       acht: 'Der Median ist unempfindlicher gegen Ausreißer. Deshalb nimmt man ihn gern, wenn die Werte schief verteilt sind.',
@@ -88,7 +88,6 @@ export const levene: ConceptCard = {
   },
 };
 
-const LABEL = ['ohne Schulabschluss', 'Hauptschulabschluss', 'Mittlerer Abschluss', 'Fachhochschulreife', 'Abitur'];
 
 export const leveneTabs: ConceptTabs = {
   sample: {
@@ -100,7 +99,7 @@ export const leveneTabs: ConceptTabs = {
       if (!Number.isFinite(l.F)) return { kurz: 'Die Lernzeit streut nicht. Dann gibt es keine Abstände, die sich vergleichen ließen.', fachlich: 'Alle Abstände sind 0; F ist nicht definiert.' };
       const lo = l.parts.reduce((p, q) => q.distance < p.distance ? q : p), hi = l.parts.reduce((p, q) => q.distance > p.distance ? q : p);
       return {
-        kurz: `Im Mittel liegen die Befragten ${num(lo.distance, 1)} Stunden (${LABEL[lo.level] ?? lo.level}) bis ${num(hi.distance, 1)} Stunden (${LABEL[hi.level] ?? hi.level}) vom Median ihrer Gruppe entfernt. Gäbe es keine Unterschiede in der Streuung, wären solche Unterschiede ${often(l.p)} Stichproben zu erwarten (${pText(l.p)}).`,
+        kurz: `Im Mittel liegen die Befragten ${num(lo.distance, 1)} Stunden (${abschluss(lo.level)}) bis ${num(hi.distance, 1)} Stunden (${abschluss(hi.level)}) vom Median ihrer Gruppe entfernt. Gäbe es keine Unterschiede in der Streuung, wären solche Unterschiede ${often(l.p)} Stichproben zu erwarten (${pText(l.p)}).`,
         fachlich: `Brown–Forsythe-Test (Levene mit Median): F(${l.df1}, ${l.df2}) ≈ ${num(l.F)}, ${pText(l.p)}. Mit dem Mittelwert als Zentrum: F ≈ ${num(m.F)}, ${pText(m.p)}.`,
         zusatz: 'Ein großes p heißt nicht, dass die Streuungen gleich sind; die Daten sprechen nur nicht dagegen.',
       };
@@ -127,7 +126,7 @@ export const leveneTabs: ConceptTabs = {
     entry: 'levene_test', variant: 0,
     tokens: {
       center: { sym: 'center =', term: 'Gruppenzentrum', kurz: '"median" misst die Abstände zum Median jeder Gruppe (Brown–Forsythe), "mean" zum Mittelwert (Levene).', fehler: 'Mit einem anderen Wort meldet mariposa: `center` must be one of "mean" or "median".' },
-      '"median"': { sym: '"median"', term: 'Median', kurz: 'Das Zentrum für die Abstände ist der Median jeder Gruppe. Das ist der Brown–Forsythe-Test.', fehler: 'Ohne Anführungszeichen sucht R eine Variable namens median und findet sie nicht.' },
+      '"median"': { sym: '"median"', term: 'Median', kurz: 'Das Zentrum für die Abstände ist der Median jeder Gruppe. Das ist der Brown–Forsythe-Test.', fehler: 'Ohne Anführungszeichen ist median die R-Funktion für den Median, kein Wort. mariposa meldet dann: `center` must be a character vector, not a function.' },
     },
     outputMap: [
       { match: 'F', atlas: 'F der Abstände', step: 3, explain: 'F der einfaktoriellen ANOVA auf die Abstände zum Median, wie in Schritt 3.' },

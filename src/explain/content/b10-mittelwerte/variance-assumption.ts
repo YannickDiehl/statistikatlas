@@ -3,9 +3,9 @@
 // gemeinsame Streuung √MS_W. Referenzwerte: ./b10-mittelwerte.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num } from '../../format';
-import { anovaFor, dfText, groupsFor, leveneFor, pText } from './stats';
+import { abschluss, anovaFor, dfText, groupsFor, leveneFor, pText } from './stats';
 
-/** Standardabweichung der Lernzeit je Schulabschluss (Codes 0 bis 4) und gemeinsame Streuung √MS_W; aus R. */
+/** Standardabweichung der Lernzeit je Schulabschluss (Codes 0 bis 4) und gemeinsame Streuung √(MS innerhalb); aus R. */
 export const STREUUNGEN = {
   sd: [3.071975, 2.529113, 3.324454, 2.725655, 3.360475],
   labels: ['ohne', 'Haupt', 'Mittel', 'FHR', 'Abitur'],
@@ -25,7 +25,7 @@ export const varianceAssumption: ConceptCard = {
   wofuer: 'Die klassische ANOVA und der Student-t-Test nehmen an, dass die Menschen in allen Gruppen ähnlich stark um ihre Gruppenmitte streuen. In der Regression heißt dieselbe Annahme: Die Vorhersagefehler streuen überall gleich stark. Was passiert, wenn das nicht stimmt?',
   kurz: 'Gleiche Fehlervarianz heißt: Die Abweichungen vom Modell streuen überall ungefähr gleich stark. Der Fachbegriff dafür ist Homoskedastizität.',
   stellDirVor: {
-    text: 'Im Lehrdatensatz streut die Lernzeit der letzten sieben Tage in den fünf Abschlussgruppen ähnlich stark: Die Standardabweichungen liegen zwischen 2,53 Stunden (Hauptschulabschluss) und 3,36 Stunden (Abitur). Die größte ist damit 1,33-mal so groß wie die kleinste. Die klassische ANOVA meldet F = 8,64, die Welch-ANOVA ohne diese Annahme F = 8,25. Beide kommen zum selben Schluss.',
+    text: 'Im Lehrdatensatz streut die Lernzeit der letzten sieben Tage in den fünf Abschlussgruppen ähnlich stark: Die Standardabweichungen liegen zwischen 2,53 Stunden (Hauptschulabschluss) und 3,36 Stunden (Abitur). Die größte ist damit 1,33-mal so groß wie die kleinste. Die klassische ANOVA meldet F = 8,64, die Welch-ANOVA ohne diese Annahme F = 8,25. Beide melden p < 0,001 und kommen so zum selben Schluss.',
     figures: [
       { label: 'kleinste s', value: '2,53 h' },
       { label: 'größte s', value: '3,36 h' },
@@ -110,7 +110,6 @@ export const varianceAssumption: ConceptCard = {
   },
 };
 
-const LABEL = ['ohne Schulabschluss', 'Hauptschulabschluss', 'Mittlerer Abschluss', 'Fachhochschulreife', 'Abitur'];
 
 export const varianceAssumptionTabs: ConceptTabs = {
   sample: {
@@ -122,7 +121,7 @@ export const varianceAssumptionTabs: ConceptTabs = {
       if (!a || a.F === null || ratio === null) return { kurz: 'In mindestens einer Gruppe streut die Lernzeit nicht. Dann lassen sich die Streuungen nicht vergleichen.', fachlich: 'Eine Gruppenvarianz ist 0; Welch-ANOVA und Levene-Test sind nicht definiert.' };
       const lo = g.reduce((p, q) => q.sd < p.sd ? q : p), hi = g.reduce((p, q) => q.sd > p.sd ? q : p);
       return {
-        kurz: `Die Lernzeit streut je Abschluss zwischen ${num(lo.sd)} Stunden (${LABEL[lo.level]}) und ${num(hi.sd)} Stunden (${LABEL[hi.level]}). Die größte Standardabweichung ist ${num(ratio)}-mal so groß wie die kleinste.`,
+        kurz: `Die Lernzeit streut je Abschluss zwischen ${num(lo.sd)} Stunden (${abschluss(lo.level)}) und ${num(hi.sd)} Stunden (${abschluss(hi.level)}). Die größte Standardabweichung ist ${num(ratio)}-mal so groß wie die kleinste.`,
         fachlich: `Klassische ANOVA F(${a.dfBetween}, ${a.dfWithin}) ≈ ${num(a.F)}; Welch-ANOVA ohne gleiche Varianzen F ≈ ${num(a.welch.F)} bei ${a.welch.df1} und ${dfText(a.welch.df2)} Freiheitsgraden. Brown–Forsythe-Test: F ≈ ${num(lev.F)}, ${pText(lev.p)}.`,
         zusatz: ratio <= 2 ? 'Nach der Faustregel, höchstens das Doppelte, ist das kein Grund zur Sorge.' : 'Nach der Faustregel, höchstens das Doppelte, lohnt sich hier der Blick auf die Welch-ANOVA.',
       };

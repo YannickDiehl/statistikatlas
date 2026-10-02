@@ -5,7 +5,7 @@ import type { ConceptTabs, Ctx, FNode, Workshop } from '../../types';
 import type { Pairs } from '../../math';
 import { close, num, paren, signed, unit } from '../../format';
 import { pt } from '../../../tasks/kit/dist';
-import { dfText, often, pairedFor, pText, sig3 } from './stats';
+import { eq, often, pairedFor, pText, sig3 } from './stats';
 
 export type PairedStats = {
   xs: number[]; ys: number[]; d: number[]; n: number; sum: number; mean: number; absMean: number;
@@ -37,8 +37,6 @@ const tasks = (v: number) => unit(v, 'Aufgabe', 'Aufgaben');
  */
 const exactNote = (fromShown: number, result: number, fmt: (v: number) => string) => fmt(fromShown) !== fmt(result) ? ' Mit allen Nachkommastellen gerechnet.' : '';
 const r2 = (v: number) => Math.round(v * 100) / 100;
-/** „=“, wenn die angezeigte Zahl genau ist, sonst „≈“. */
-const eq = (v: number) => Math.abs(r2(v) - v) > 1e-9 ? '≈' : '=';
 /** Auf drei gültige Ziffern gerundet, wie sig3 es zeigt. */
 const r3 = (v: number) => Math.abs(v) >= 1 ? r2(v) : Number(v.toPrecision(3));
 
@@ -102,7 +100,7 @@ export const paarWerkstatt: Workshop<Pairs, PairedStats> = {
     {
       button: 's', title: 'Die Streuung der Veränderungen messen', sym: 's', say: 's', concept: 'sd', perPerson: true,
       links: [{ id: 'variance', label: 'Varianz' }],
-      was: 'Wie in der Werkstatt Streuung: Abstand jeder Veränderung zu d̄, quadrieren, zusammenzählen, durch n − 1 = 4 teilen, Wurzel ziehen.',
+      was: 'Wie in der Werkstatt Streuung: Abstände zu d̄ quadrieren, zusammenzählen, durch n − 1 = 4 teilen, Wurzel ziehen.',
       rechnung: c => `Person ${P(c)}: (${signed(c.s.d[c.who])} − ${paren(c.s.mean)})² = ${num(c.s.sq[c.who])}. Alle fünf: s = √(${num(c.s.ss)} / 4) = √${num(c.s.variance)} ≈ ${num(c.s.sd)}.`,
       fach: 'Die Standardabweichung der Differenzen: s = √(Σ(dᵢ − d̄)² / (n − 1)).',
       warum: 'Verändern sich alle ähnlich, ist s klein. Dann fällt schon eine kleine mittlere Veränderung auf.',
@@ -139,7 +137,7 @@ export const paarWerkstatt: Workshop<Pairs, PairedStats> = {
       rechnung: c => c.s.t === null ? 'Alle Veränderungen sind gleich, der Standardfehler ist 0. Durch 0 lässt sich nicht teilen.'
         : `t = ${num(c.s.mean)} / ${sig3(c.s.se)} ${eq(c.s.t)} ${num(c.s.t)}.${exactNote(r2(c.s.mean) / r3(c.s.se), c.s.t, v => num(v))}`,
       fach: 't = d̄ / SE mit n − 1 = 4 Freiheitsgraden. Das ist der gepaarte t-Test: ein t-Test für eine Stichprobe, die Differenzen.',
-      warum: 't misst die mittlere Veränderung in Standardfehlern. Je größer t, desto weniger passt das Ergebnis zur Annahme, dass sich im Mittel nichts verändert.',
+      warum: 't misst die mittlere Veränderung in Standardfehlern. Je weiter t von 0 entfernt ist, desto schlechter passt das Ergebnis zur Annahme, dass sich im Mittel nichts verändert.',
       acht: 'Ein großes t heißt nicht, dass sich jede Person verbessert hat. Es sagt etwas über die mittlere Veränderung.',
       check: {
         question: 'Wie groß ist t?',
@@ -199,7 +197,7 @@ export const paarWerkstatt: Workshop<Pairs, PairedStats> = {
     },
     {
       question: 'Was passiert mit t, wenn du die beiden Tests wie zwei fremde Gruppen vergleichst?', options: ['t wird kleiner', 't bleibt gleich', 't wird größer'], correct: 0, step: 3,
-      explain: c => `Dann zählt das Schwanken zwischen den Personen mit: Die ersten Testwerte streuen mit s ≈ ${num(c.s.sdX)}, die Veränderungen nur mit ${num(c.s.sd)}. Der Unterschied erscheint dann viel unsicherer.`,
+      explain: c => `Dann zählt das Schwanken zwischen den Personen mit: Die ersten Testwerte streuen mit s ≈ ${num(c.s.sdX)}, die Veränderungen nur mit ${num(c.s.sd)}. Der Unterschied erscheint dann viel unsicherer. Das gilt, solange gut im ersten Test meist auch gut im zweiten heißt; ziehst du die Punkte gegenläufig, kann es sich umkehren.`,
       kurz: 'Wer die Paare zerreißt, verschenkt Genauigkeit.',
     },
   ],
@@ -233,7 +231,7 @@ export const paarWerkstatt: Workshop<Pairs, PairedStats> = {
           `Hier: Die ersten Testwerte streuen mit s ≈ ${num(c.s.sdX)} Aufgaben, die Veränderungen mit s ≈ ${num(c.s.sd)}. Weil jede Person mit sich selbst verglichen wird, zählt nur die kleinere Streuung.`,
           'Mit fünf Personen nimmt der Test an, dass die Differenzen in der Grundgesamtheit annähernd normalverteilt sind. Ab etwa 30 Personen sorgt der zentrale Grenzwertsatz dafür, dass d̄ annähernd normalverteilt ist; das ist eine Faustregel.',
           'Die Differenzen brauchen eine sinnvolle gemeinsame Skala: Beide Tests haben 20 Aufgaben und gelten im Lehrbeispiel als gleich schwer. Bei sehr schiefen Differenzen ordnet der Wilcoxon-Test ihre Beträge nach Rängen.',
-          'In R gibt es dafür kein eigenes Argument: Du bildest die Differenz mit mutate() und testest sie mit t_test(differenz, mu = 0).',
+          'In mariposa gibt es dafür kein eigenes Argument: Du bildest die Differenz mit mutate() und testest sie mit t_test(differenz, mu = 0).',
         ],
       },
     },
@@ -304,4 +302,3 @@ export const pairedDifferenceTabs: ConceptTabs = {
   },
 };
 
-void dfText;

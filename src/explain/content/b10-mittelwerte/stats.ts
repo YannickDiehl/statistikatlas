@@ -31,6 +31,14 @@ export function often(p: number): string {
   return p >= 0.01 ? `in etwa ${Math.round(p * 100)} von 100` : p >= 0.001 ? 'in weniger als 1 von 100' : 'in weniger als 1 von 1.000';
 }
 
+/** „=“, wenn die angezeigte Zahl (zwei Nachkommastellen) genau ist, sonst „≈“. */
+export const eq = (v: number) => Math.abs(Math.round(v * 100) / 100 - v) > 1e-9 ? '≈' : '=';
+
+/** Schulabschlüsse des Lehrdatensatzes (Codes 0 bis 4) für Texte. */
+export const ABSCHLUSS = ['ohne Schulabschluss', 'Hauptschulabschluss', 'Mittlerer Abschluss', 'Fachhochschulreife', 'Abitur'] as const;
+/** Abschluss zum Code als Text, unbekannte Codes als „Code 7“. */
+export const abschluss = (level: number) => ABSCHLUSS[level] ?? `Code ${level}`;
+
 /** Freiheitsgrade mit einer Nachkommastelle, ganze Zahlen ohne: „175,8“, „198“. */
 export const dfText = (df: number) => num(df, Math.abs(df - Math.round(df)) < 1e-9 ? 0 : 1);
 

@@ -12,31 +12,27 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createSurvey } from '../../../domain/survey';
+import { conceptById } from '../../../domain/concepts';
 import { readSav } from '../../../sandbox/readSav';
 import { validValues } from '../../../tasks/kit/stats';
 import { applyOp } from '../../sample';
-import { close } from '../../format';
 import type { SampleCtx } from '../../types';
 import { b10Mittelwerte } from './index';
-import { dfText, lilliefors, often, pText, sig3, welchFor } from './stats';
+import { ancovaFor, anovaFor, dfText, factorialFor, groupsFor, leveneFor, normalityFor, often, pairedFor, pText, sig3, welchFor } from './stats';
 import { tTestSentence, VERTRAUEN, welchFromSummary } from './t-test';
 import { paarWerkstatt, pairedStats } from './paired-difference';
 import { pairedDesign, sdForR, tForR, WISSEN } from './paired-design';
 import { anovaStats, anovaWerkstatt } from './anova';
-import { anovaFor, factorialFor, groupsFor } from './stats';
 import { factorialAnova, TERME, ZELLEN } from './factorial-anova';
 import { ancova, BEREINIGT } from './ancova';
 import { sdRatio, STREUUNGEN, varianceAssumption } from './variance-assumption';
 import { levene } from './levene';
 import { normality, sleepHistogram } from './normality';
-import { normalityFor } from './stats';
-import { leveneFor } from './stats';
-import { ancovaFor } from './stats';
-import { pairedFor } from './stats';
 import { txt } from '../../types';
 
 const rows = createSurvey();
 const ctx = (columns: Record<string, string>, data = rows): SampleCtx => ({ rows: data, columns: Object.fromEntries(Object.entries(columns).map(([k, v]) => [k, [v]])) });
+const conceptTitle = (id: string) => conceptById[id]?.title;
 const near = (a: number, b: number, tol: number, label: string) => assert.ok(Math.abs(a - b) <= tol, `${label}: ${a} statt ${b} (R)`);
 
 test('B10: every concept of the area is registered with tabs', () => {
@@ -233,7 +229,10 @@ test('Streuung zwischen und innerhalb und einfaktorielle ANOVA: die neun Beispie
   near(gleich.ssB, 0, 1e-12, 'SS_B gleich'); assert.equal(gleich.ssW, 10); near(gleich.msW, 1.666667, 1e-6, 'MS_W gleich'); assert.equal(gleich.F, 0); near(gleich.p!, 1, 1e-12, 'p gleich');
   const at = (s: typeof klar, who = 4) => ({ s, who, names: anovaWerkstatt.names });
   assert.equal(txt(anovaWerkstatt.steps[1].rechnung, at(klar)), 'Person M2: (7 − 7)² = 0. Alle neun: 3 · (5 − 7)² + 3 · (7 − 7)² + 3 · (9 − 7)² = 24.');
-  assert.equal(txt(anovaWerkstatt.steps[3].rechnung, at(gleich)), 'MS_B = 0 / 2 = 0. MS_W = 10 / 6 ≈ 1,67.');
+  assert.equal(txt(anovaWerkstatt.steps[3].rechnung, at(gleich)), 'MS zwischen = 0 / 2 = 0. MS innerhalb = 10 / 6 ≈ 1,67.');
+  // Fix-Runde 1: Schritt 4 nennt die Freiheitsgrade als Zeichen (I1), die zweite Voreinstellung hat dieselben Mitten wie die erste (I3).
+  assert.deepEqual([anovaWerkstatt.steps[3].sym, conceptTitle(anovaWerkstatt.steps[3].concept)], ['k − 1 und N − k', 'Freiheitsgrade im Modell']);
+  assert.deepEqual(streut.gm, klar.gm); assert.match(anovaWerkstatt.presets[1].label, /^Gleiche Unterschiede, mehr Streuung/);
   assert.equal(txt(anovaWerkstatt.steps[4].rechnung, at(streut)), 'F = 12 / 9 ≈ 1,33.');
   assert.match(anovaWerkstatt.variants.group_variation.interpret(at(klar)).kurz, /\(30\) liegen 24, also 80 %, zwischen den Gruppen/);
   assert.match(anovaWerkstatt.variants.group_variation.interpret(at(streut)).kurz, /\(78\) liegen 24, also 30,8 %/);
@@ -285,6 +284,7 @@ test('Mehrfaktorielle ANOVA: Zellmittel und Typ-III-Tests wie in R', () => {
   near(factorialFor(ctx({ x: 'lernzeit' }, applyOp(rows, 'lernzeit', 'double')))!.ab.F, 2.99857, 1e-5, 'doppelt');
   near(factorialFor(ctx({ x: 'lernzeit' }, applyOp(rows, 'lernzeit', 'reverse')))!.ab.F, 2.99857, 1e-5, 'umgepolt');
   assert.match(factorialAnova.stellDirVor.text, /10,73 Stunden gelernt\. Mit Abitur und Weiterbildung sind es 7,84 Stunden\. .* höchstens 1,56 Stunden/);
+  assert.match(factorialAnova.stellDirVor.text, /ohne Zusammenspiel erzeugt: Hier ist es ein Zufallsfund\./, 'Zufallsfund ausdrücklich benannt');
   assert.match(factorialAnova.bausteine[1].rechnung!, /10,73 − 7,84 = 2,89 Stunden\. Mittlerer Abschluss: 7,23 − 8,79 = −1,56 Stunden/);
   const sample = b10Mittelwerte.tabs.factorial_anova.sample!;
   if (sample.kind === 'analysis') {
@@ -407,5 +407,18 @@ test('Normalverteilung prüfen: Schlafdauer und Einkommen wie in R', () => {
   }
 });
 
-// Damit der Import genutzt wird, auch wenn spätere Begriffe ihn brauchen.
-void close; void lilliefors;
+
+/*
+ * Fix-Runde 1, Meldungen und Zahlen in R nachgeprüft:
+ *   atlas %>% levene_test(lernzeit, group = schulabschluss, center = median)
+ *   # Error: `center` must be a character vector, not a function.
+ *   full <- lm(wissenstest ~ factor(schulabschluss) + lernzeit + alter); coef(full)["alter"]   # 0.00409631
+ *   # eta2p alter = SS(alter) / (SS(alter) + SSE) = 0.00068 (mariposa druckt eta2p = 0.001)
+ *   pf(2, 2, 6) - pf(0.5, 2, 6)   # 0.414: F(2, 6) schwankt unter H0 stark um 1
+ */
+test('Fix-Runde 1: Meldung zu center = median und Altersteigung wie in R', () => {
+  const tok = b10Mittelwerte.tabs.levene_test.r!.tokens!['"median"'];
+  assert.match(tok.fehler, /`center` must be a character vector, not a function\./);
+  const age = b10Mittelwerte.tabs.ancova.r!.outputMap.find(m => m.match === '0.718')!;
+  assert.match(age.explain, /0,004 Aufgaben je Lebensjahr, eta2p = 0\.001/);
+});

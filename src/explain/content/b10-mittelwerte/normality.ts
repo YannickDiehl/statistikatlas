@@ -50,7 +50,7 @@ export const normality: ConceptCard = {
     },
     {
       title: 'Den p-Wert vorsichtig lesen',
-      was: 'p sagt, wie überraschend so ein Abstand wäre, wenn die Daten aus einer Normalverteilung stammten. Bei der Schlafdauer ist p ≈ 0,66, beim Einkommen p < 0,001.',
+      was: 'p sagt, wie überraschend so ein Abstand wäre, wenn die Daten aus einer Normalverteilung stammten. Für die Schlafdauer meldet Shapiro–Wilk p ≈ 0,66, der KS-Test p ≈ 0,24; beim Einkommen beide p < 0,001.',
       warum: 'Ein kleines p heißt: Die Form passt nicht zur Glockenkurve. Ein großes p heißt nur, dass keine Abweichung auffällt.',
       acht: 'Mit sehr vielen Befragten fallen schon harmlose Abweichungen auf, mit wenigen übersieht der Test auch grobe. Schau dir deshalb immer auch ein Bild der Verteilung an.',
       concept: 'p_value',
@@ -58,7 +58,7 @@ export const normality: ConceptCard = {
   ],
   ausprobieren: [
     {
-      question: 'Der Test für die Schlafdauer meldet p ≈ 0,66. Ist damit bewiesen, dass die Schlafdauer normalverteilt ist?',
+      question: 'Shapiro–Wilk meldet für die Schlafdauer p ≈ 0,66. Ist damit bewiesen, dass die Schlafdauer normalverteilt ist?',
       options: ['ja', 'nein'], correct: 1, step: 3,
       explain: 'Ein großes p heißt nur: Die Daten widersprechen der Normalverteilung nicht auffällig. Viele andere Formen würden ebenso passen.',
       kurz: 'Nicht auffällig heißt nicht bewiesen.',

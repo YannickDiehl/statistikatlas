@@ -27,7 +27,7 @@ export const factorialAnova: ConceptCard = {
   wofuer: 'Hängt die Lernzeit mit dem Schulabschluss zusammen, mit einer Weiterbildung oder mit beidem? Die mehrfaktorielle ANOVA prüft beide Gruppierungen in einem Modell. Und sie fragt, ob der Unterschied zwischen mit und ohne Weiterbildung in allen Abschlussgruppen gleich groß ist.',
   kurz: 'Die mehrfaktorielle ANOVA vergleicht Mittelwerte nach zwei oder drei Gruppierungen zugleich. Sie trennt, was jede Gruppierung für sich zeigt, von ihrem Zusammenspiel.',
   stellDirVor: {
-    text: 'Im Lehrdatensatz haben Befragte mit Abitur, die in den letzten zwölf Monaten keine Weiterbildung gemacht haben, in den letzten sieben Tagen im Schnitt 10,73 Stunden gelernt. Mit Abitur und Weiterbildung sind es 7,84 Stunden. In den anderen Abschlussgruppen liegen mit und ohne Weiterbildung höchstens 1,56 Stunden auseinander, teils in der anderen Richtung. Der Unterschied nach Weiterbildung ist also nicht in allen Abschlussgruppen gleich. R meldet für dieses Zusammenspiel p = 0.020.',
+    text: 'Im Lehrdatensatz haben Befragte mit Abitur, die in den letzten zwölf Monaten keine Weiterbildung gemacht haben, in den letzten sieben Tagen im Schnitt 10,73 Stunden gelernt. Mit Abitur und Weiterbildung sind es 7,84 Stunden. In den anderen Abschlussgruppen liegen mit und ohne Weiterbildung höchstens 1,56 Stunden auseinander, teils in der anderen Richtung. Der Unterschied nach Weiterbildung ist also nicht in allen Abschlussgruppen gleich. R meldet für dieses Zusammenspiel p = 0.020. Der Lehrdatensatz wurde aber ohne Zusammenspiel erzeugt: Hier ist es ein Zufallsfund.',
     figures: [
       { label: 'Abitur, ohne Weiterbildung', value: '10,73 h' },
       { label: 'Abitur, mit Weiterbildung', value: '7,84 h' },
@@ -58,8 +58,8 @@ export const factorialAnova: ConceptCard = {
     {
       title: 'Jeden Term am Restschwanken messen',
       was: 'Jeder Haupteffekt und das Zusammenspiel bekommen eine eigene Quadratsumme. Sie wird durch ihre Freiheitsgrade geteilt und mit dem Schwanken innerhalb der Zellen verglichen.',
-      rechnung: 'F = (SS_Term / df_Term) / MSE. Im Nenner stehen 190 Freiheitsgrade: 200 Befragte minus 10 Zellen.',
-      warum: 'Wie in der einfaktoriellen ANOVA: Ein großes F heißt, der Term trennt die Gruppen stärker, als das übliche Schwanken erwarten lässt.',
+      rechnung: 'F = (SS des Terms / seine Freiheitsgrade) / MS innerhalb der Zellen. Im Nenner stehen 190 Freiheitsgrade: 200 Befragte minus 10 Zellen.',
+      warum: 'Wie in der einfaktoriellen ANOVA: Ein großes F heißt, der Term trennt die Gruppen stärker, als es das Schwanken erwarten lässt.',
       acht: 'mariposa rechnet Typ-III-Quadratsummen. Sie ergeben zusammen nicht die gesamte Streuung, anders als in der einfaktoriellen ANOVA.',
       concept: 'residuals',
     },
@@ -80,7 +80,7 @@ export const factorialAnova: ConceptCard = {
     {
       question: 'Drei Tests in einer Tabelle, einer davon mit p ≈ 0,02. Was solltest du bedenken?',
       options: ['Mehrere Tests finden öfter zufällig etwas', 'Nichts, p ist eindeutig', 'Das Zusammenspiel ist sicher echt'], correct: 0, step: 3,
-      explain: 'Jeder Test kann sich irren. Ein einzelnes kleines p unter mehreren Tests ist ein Hinweis, kein Beweis. Der Lehrdatensatz ist außerdem synthetisch.',
+      explain: 'Jeder Test kann sich irren. Ein einzelnes kleines p unter mehreren Tests ist ein Hinweis, kein Beweis. Hier ist es tatsächlich ein Zufallsfund: Der Lehrdatensatz wurde ohne Zusammenspiel erzeugt.',
       kurz: 'Viele Tests, mehr zufällige Funde.',
     },
   ],
@@ -97,7 +97,7 @@ export const factorialAnova: ConceptCard = {
     diagnose: {
       0: 'Fast! Das ist ein Haupteffekt des Schulabschlusses. Interaktion heißt: Der Unterschied nach Weiterbildung ist je nach Abschluss verschieden groß.',
       2: 'Fast! Eine Interaktion sagt nichts über Ursachen. Sie beschreibt, wie Unterschiede über die Gruppen verteilt sind.',
-      3: 'Noch nicht ganz. Das wäre ein Zusammenhang der beiden Faktoren untereinander. Die Interaktion betrifft die Lernzeit.',
+      3: 'Fast! Das wäre ein Zusammenhang der beiden Gruppierungen untereinander. Die Interaktion fragt, ob der Unterschied in der Lernzeit je nach Abschluss verschieden groß ist.',
     },
   },
   fuerDich: 'Wenn eine Studie einen Effekt von A und eine Interaktion A × B berichtet, lies zuerst die Interaktion. Ist sie deutlich, schau dir die Mittelwerte der einzelnen Zellen an, statt nur die Haupteffekte zu deuten.',
@@ -107,7 +107,7 @@ export const factorialAnova: ConceptCard = {
       'Typ III prüft jeden Term so, als käme er als letzter ins Modell. Bei ungleich besetzten Zellen, hier mit 12 bis 28 Befragten je Zelle, ergeben die Quadratsummen zusammen nicht die gesamte Streuung. Mit ss_type = 2 warnt mariposa und rechnet trotzdem Typ III.',
       'Voraussetzungen wie bei der einfaktoriellen ANOVA: unabhängige Befragte, annähernd normalverteilte Werte in jeder Zelle und ähnliche Streuung in allen Zellen. R meldet dazu den Levene-Test über alle zehn Zellen: F(9, 190) = 1.168, p = 0.317.',
       'Die partielle Effektgröße η²p setzt die Quadratsumme eines Terms ins Verhältnis zu ihr selbst plus der Fehlerquadratsumme: beim Schulabschluss 0,15, beim Zusammenspiel 0,06.',
-      'Der Lehrdatensatz ist synthetisch. Das Zusammenspiel zeigt, wie man so einen Befund liest, nicht wie Menschen in Deutschland lernen.',
+      'Der Lehrdatensatz ist synthetisch und wurde ohne ein solches Zusammenspiel erzeugt. p = 0.020 ist hier also ein Zufallsfund, ein Fehler erster Art. Die Karte zeigt, wie man so einen Befund liest, nicht wie Menschen in Deutschland lernen.',
     ],
   },
 };
@@ -127,7 +127,7 @@ export const factorialAnovaTabs: ConceptTabs = {
         zusatz: `Je Zelle aus Abschluss und Weiterbildung zwischen ${Math.min(...f.cells.flat().map(z => z.n))} und ${Math.max(...f.cells.flat().map(z => z.n))} Befragte.`,
       };
     },
-    voraussetzung: 'Unabhängige Befragte und ähnliche Streuung in allen zehn Zellen. Jede Zelle braucht Befragte.',
+    voraussetzung: 'Unabhängige Befragte und ähnliche Streuung in allen zehn Zellen. Erzeugt wurde der Lehrdatensatz ohne Zusammenspiel.',
     think: [
       {
         question: 'Alle lernen doppelt so lange. Was passiert mit F für das Zusammenspiel?', options: ['verdoppelt sich', 'bleibt gleich', 'vervierfacht sich'], correct: 1,
@@ -155,7 +155,7 @@ export const factorialAnovaTabs: ConceptTabs = {
     outputMap: [
       { match: 'F', atlas: 'Haupteffekt Schulabschluss', step: 1, explain: 'F für den Schulabschluss: Die Abschlussgruppen unterscheiden sich, p < 0,001, mit η²p = 0,15.' },
       { match: '0.284', atlas: 'Haupteffekt Weiterbildung', step: 1, explain: 'F für die Weiterbildung allein: im Durchschnitt über alle Abschlüsse kaum ein Unterschied.' },
-      { match: '2.999', atlas: 'Interaktion A × B', step: 2, explain: 'F für das Zusammenspiel: Der Unterschied nach Weiterbildung ist je nach Abschluss verschieden groß.' },
+      { match: '2.999', atlas: 'Interaktion A × B', step: 2, explain: 'F für das Zusammenspiel: In diesen Daten ist der Unterschied nach Weiterbildung je nach Abschluss verschieden groß, hier ein Zufallsfund.' },
       { match: '0.020', atlas: 'p der Interaktion', step: 2, explain: 'Gäbe es kein Zusammenspiel, wären so verschiedene Unterschiede in etwa 2 von 100 Stichproben zu erwarten.' },
       { match: 'eta2p', atlas: 'partielles η²', step: 3, explain: 'Die partielle Effektgröße des Terms: seine Quadratsumme im Verhältnis zu ihr plus dem Restschwanken.' },
     ],

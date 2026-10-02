@@ -3,7 +3,7 @@
 // Das Bild stellt rohe und bereinigte Gruppenmittel gegenüber. Referenzwerte: ./b10-mittelwerte.test.ts.
 import type { ConceptCard, ConceptTabs, TokenNote } from '../../types';
 import { num } from '../../format';
-import { ancovaFor, pText } from './stats';
+import { abschluss, ancovaFor, pText } from './stats';
 
 /** Wissenstest je Schulabschluss (Codes 0 bis 4): roh und bereinigt (Lernzeit und Alter bei ihren Mittelwerten); aus R. */
 export const BEREINIGT = [
@@ -101,13 +101,12 @@ export const ancova: ConceptCard = {
     paragraphs: [
       'Das Modell nimmt an, dass eine Kovariate in allen Gruppen gleich stark mit dem Wissenstest zusammenhängt: parallele Geraden. mariposa enthält keine Interaktion von Faktor und Kovariate; prüfen lässt sich das etwa mit einer Regression mit Interaktionsterm.',
       'Die Kovariaten sollten sich zwischen den Gruppen überschneiden. Lernen Befragte ohne Abschluss fast nie so lange wie Befragte mit Abitur, rechnet das Modell für sie weit außerhalb ihrer Daten.',
-      'Im Leitaufruf stehen Lernzeit und Alter als Kovariaten. Das Alter hängt hier kaum mit dem Wissenstest zusammen: R meldet F(1, 193) = 0.131, p = 0.718.',
+      'Im Leitaufruf stehen Lernzeit und Alter als Kovariaten. Das Alter hängt hier kaum mit dem Wissenstest zusammen: Je Lebensjahr sagt das Modell nur 0,004 Aufgaben mehr voraus (R: F(1, 193) = 0.131, p = 0.718, eta2p = 0.001).',
       'Bereinigen begründet keine Ursache. Hängt die Lernzeit ihrerseits mit dem Abschluss zusammen, nimmt die ANCOVA auch einen Teil des Unterschieds heraus, der zum Abschluss gehören könnte.',
     ],
   },
 };
 
-const LABEL = ['ohne Schulabschluss', 'Hauptschulabschluss', 'Mittlerer Abschluss', 'Fachhochschulreife', 'Abitur'];
 const span = (v: number[]) => { const lo = v.indexOf(Math.min(...v)), hi = v.indexOf(Math.max(...v)); return { lo, hi }; };
 
 export const ancovaTabs: ConceptTabs = {
@@ -120,7 +119,7 @@ export const ancovaTabs: ConceptTabs = {
       if (!a) return { kurz: 'Das Modell lässt sich mit diesen Daten nicht schätzen.', fachlich: 'Die Fehlerquadratsumme ist 0 oder das Modell ist nicht bestimmt.' };
       const r = span(a.raw), b = span(a.adjusted);
       return {
-        kurz: `Roh lösen die Gruppen im Schnitt ${num(a.raw[r.lo])} (${LABEL[r.lo]}) bis ${num(a.raw[r.hi])} Aufgaben (${LABEL[r.hi]}). Bei gleicher Lernzeit und gleichem Alter sagt das Modell nur noch ${num(a.adjusted[b.lo])} bis ${num(a.adjusted[b.hi])} Aufgaben voraus.`,
+        kurz: `Roh lösen die Gruppen im Schnitt ${num(a.raw[r.lo])} (${abschluss(r.lo)}) bis ${num(a.raw[r.hi])} Aufgaben (${abschluss(r.hi)}). Bei gleicher Lernzeit und gleichem Alter sagt das Modell nur noch ${num(a.adjusted[b.lo])} bis ${num(a.adjusted[b.hi])} Aufgaben voraus.`,
         fachlich: `ANCOVA, Typ III: Schulabschluss bereinigt F(${a.df1}, ${a.df2}) ≈ ${num(a.F)}, ${pText(a.p)}; ohne Kovariaten F(${a.df1}, ${a.plainDf2}) ≈ ${num(a.plainF)}, ${pText(a.plainP)}. Steigung der Lernzeit ≈ ${num(a.slope)} Aufgaben je Stunde.`,
         zusatz: 'Die Daten sind Beobachtungen: Die bereinigten Mittel beschreiben Unterschiede bei gleicher Lernzeit, keine Wirkung des Abschlusses.',
       };
@@ -153,7 +152,7 @@ export const ancovaTabs: ConceptTabs = {
     },
     outputMap: [
       { match: 'F', atlas: 'Kovariate Lernzeit', step: 2, explain: 'F für die Lernzeit: Sie hängt mit dem Wissenstest zusammen, p < 0,001, mit η²p = 0,25.' },
-      { match: '0.718', atlas: 'p der Kovariate Alter', step: 2, explain: 'Das Alter hängt bei gleicher Lernzeit kaum mit dem Wissenstest zusammen.' },
+      { match: '0.718', atlas: 'p der Kovariate Alter', step: 2, explain: 'Das Alter hängt bei gleicher Lernzeit kaum mit dem Wissenstest zusammen: 0,004 Aufgaben je Lebensjahr, eta2p = 0.001.' },
       { match: '1.499', atlas: 'F Schulabschluss, bereinigt', step: 3, explain: 'F für den Schulabschluss bei gleicher Lernzeit und gleichem Alter. Ohne Kovariaten wäre es 4,34.' },
       { match: '0.204', atlas: 'p Schulabschluss, bereinigt', step: 3, explain: 'Gäbe es bei gleicher Lernzeit und gleichem Alter keine Unterschiede, wären solche Gruppenunterschiede in etwa 20 von 100 Stichproben zu erwarten.' },
       { match: 'N', atlas: 'n', explain: 'Alle 200 Befragten haben gültige Werte in allen vier Variablen.' },
