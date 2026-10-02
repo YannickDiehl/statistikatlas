@@ -59,7 +59,7 @@ export const missingMechanisms: ConceptCard = {
       was: 'Wer fehlt, fehlt ohne jedes Muster, etwa weil der Zufall die Version des Fragebogens bestimmt hat.',
       rechnung: `Fehlt im Lehrdatensatz jede zehnte Person (P010, P020 bis P200), liegt der Mittelwert des Haushaltseinkommens der übrigen bei ${eur(ohneJedeZehnte(EIN()))} statt ${eur(mean(EIN()))}.`,
       warum: 'Die übrigen sind dann selbst eine Zufallsauswahl. Der Mittelwert bleibt im Schnitt richtig, er wird nur ungenauer.',
-      acht: 'Rein zufälliges Fehlen lässt sich selten belegen. Ein Fragebogensplit, den der Zufall zuteilt, ist der klare Fall, aber nur unter denen, die geteilt wurden.',
+      acht: 'Rein zufälliges Fehlen lässt sich selten belegen. Ein Fragebogensplit, den der Zufall zuteilt, ist der klare Fall, aber nur unter denen, für die der Fragebogen geteilt war.',
       concept: 'random_sampling',
     },
     {
