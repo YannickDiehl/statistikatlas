@@ -2,12 +2,15 @@
 // Je Begriff eine Datei in diesem Ordner, hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
 import type { AreaIndex } from '../../types';
 import { tTestSentence, tTestTabs } from './t-test';
+import { paarWerkstatt, pairedDifferenceTabs } from './paired-difference';
 
 export const b10Mittelwerte: AreaIndex = {
   explanations: {
     t_test: { kind: 'satz', template: tTestSentence },
+    paired_difference: { kind: 'werkstatt', workshop: paarWerkstatt, variant: 'paired_difference' },
   },
   tabs: {
     t_test: tTestTabs,
+    paired_difference: pairedDifferenceTabs,
   },
 };

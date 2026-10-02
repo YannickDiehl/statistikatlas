@@ -1,0 +1,3 @@
+/* Bereich B10 „Mittelwerte vergleichen“: Stile der Bilder in src/components/explain/pictures/b10-mittelwerte.tsx. */
+.b10-dot{fill:var(--ink);stroke:var(--paper);stroke-width:1}
+.b10-dot.sel{fill:var(--green)}

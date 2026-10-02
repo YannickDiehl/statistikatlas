@@ -20,6 +20,9 @@ import type { SampleCtx } from '../../types';
 import { b10Mittelwerte } from './index';
 import { dfText, lilliefors, often, pText, sig3, welchFor } from './stats';
 import { tTestSentence, VERTRAUEN, welchFromSummary } from './t-test';
+import { paarWerkstatt, pairedStats } from './paired-difference';
+import { pairedFor } from './stats';
+import { txt } from '../../types';
 
 const rows = createSurvey();
 const ctx = (columns: Record<string, string>, data = rows): SampleCtx => ({ rows: data, columns: Object.fromEntries(Object.entries(columns).map(([k, v]) => [k, [v]])) });
@@ -106,6 +109,58 @@ test('t-Test: ALLBUS-Aggregate aus der Datei nachgerechnet', { skip: !ALLBUS && 
     const xs = [...v].filter((x, i) => Number.isFinite(x) && g[i] === code);
     const m = xs.reduce((a, b) => a + b, 0) / xs.length, sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1));
     assert.equal(xs.length, ref.n, `n in Gruppe ${code}`); near(m, ref.mean, 1e-6, `Mittelwert ${code}`); near(sd, ref.sd, 1e-6, `SD ${code}`);
+  }
+});
+
+/*
+ * Gepaarte Differenzen (Werkstatt), fünf Beispielpersonen, erster Test x = 12 9 14 10 7:
+ *   x <- c(12, 9, 14, 10, 7)
+ *   y <- c(10, 12, 17, 13, 10); d <- y - x; c(mean(d), sd(d), sd(d)/sqrt(5)); t.test(y, x, paired = TRUE)
+ *   # d = -2 3 3 3 3; 2, 2.236068, 1; t = 2, df = 4, p-value = 0.1161165
+ *   y <- c(13, 11, 16, 12, 10); d <- y - x; c(mean(d), sd(d), sd(d)/sqrt(5)); t.test(y, x, paired = TRUE)
+ *   # d = 1 2 2 2 3; 2, 0.7071068, 0.3162278; t = 6.324555, df = 4, p-value = 0.003198202
+ *   sd(x)                                                     # 2.701851
+ * Lehrdatensatz, wissenstest und wissenstest_t2 (Reiter):
+ *   atlas %>% mutate(differenz = wissenstest_t2 - wissenstest) %>% t_test(differenz, mu = 0) %>% summary()
+ *   # N 200, Mean 0.750, Std. Deviation 1.894 (1.893522), Std. Error Mean 0.134 (0.1338923); t = 5.602 (5.601519), df 199, p < .001
+ *   d <- atlas$wissenstest_t2 - atlas$wissenstest; table(sign(d))   # -1: 53, 0: 32, 1: 115
+ *   t.test(d)$p.value                                                # 7.003222e-08
+ *   mean(atlas$wissenstest_t2 - 1 - atlas$wissenstest)               # -0.25 (zweiter Test eine Aufgabe weniger)
+ *   sd(atlas$wissenstest_t2 - (atlas$wissenstest + 1))                # 1.893522 (erster Test eine mehr: s bleibt)
+ */
+test('Gepaarte Differenzen: die fünf Beispielpersonen wie in R', () => {
+  const [mixed, even] = paarWerkstatt.presets.map(p => pairedStats(p.data));
+  assert.deepEqual(mixed.d, [-2, 3, 3, 3, 3]); assert.deepEqual(even.d, [1, 2, 2, 2, 3]);
+  near(mixed.mean, 2, 1e-12, 'd̄'); near(mixed.sd, 2.236068, 1e-6, 's'); near(mixed.se, 1, 1e-12, 'SE'); near(mixed.t!, 2, 1e-12, 't'); near(mixed.p!, 0.1161165, 1e-7, 'p');
+  near(even.sd, 0.7071068, 1e-7, 's'); near(even.se, 0.3162278, 1e-7, 'SE'); near(even.t!, 6.324555, 1e-6, 't'); near(even.p!, 0.003198202, 1e-9, 'p');
+  near(mixed.sdX, 2.701851, 1e-6, 'sd(x)');
+  const at = (s: typeof mixed) => ({ s, who: 0, names: paarWerkstatt.names });
+  assert.equal(txt(paarWerkstatt.steps[3].rechnung, at(mixed)), 'SE = 2,24 / √5 ≈ 2,24 / 2,24 = 1.');
+  assert.equal(txt(paarWerkstatt.steps[4].rechnung, at(mixed)), 't = 2 / 1 = 2.');
+  assert.equal(txt(paarWerkstatt.steps[3].rechnung, at(even)), 'SE = 0,71 / √5 ≈ 0,71 / 2,24 ≈ 0,316. Mit allen Nachkommastellen gerechnet.');
+  assert.equal(txt(paarWerkstatt.steps[4].rechnung, at(even)), 't = 2 / 0,316 ≈ 6,32. Mit allen Nachkommastellen gerechnet.');
+  const v = paarWerkstatt.variants.paired_difference;
+  assert.match(v.interpret(at(mixed)).kurz, /in etwa 12 von 100 Stichproben zu erwarten \(p ≈ 0,12\)\. Bei nur fünf Personen wäre das nicht überraschend\./);
+  assert.match(v.interpret(at(even)).kurz, /in weniger als 1 von 100 Stichproben zu erwarten \(p ≈ 0,0032\)\. Das wäre überraschend/);
+  assert.match(v.genau.paragraphs(at(mixed))[0], /s ≈ 2,7 Aufgaben, die Veränderungen mit s ≈ 2,24/);
+  // Denkfragen: „erster Test eine Aufgabe mehr“ senkt d̄ um 1 und lässt s gleich; „alle genau +2“ lässt t undefiniert.
+  const shifted = pairedStats(paarWerkstatt.think[1].tryIt!.apply(paarWerkstatt.presets[0].data));
+  near(shifted.mean, 1, 1e-12, 'd̄ nach Verschieben'); near(shifted.sd, mixed.sd, 1e-12, 's nach Verschieben');
+  assert.equal(pairedStats(paarWerkstatt.think[2].tryIt!.apply(paarWerkstatt.presets[0].data)).t, null);
+});
+
+test('Gepaarte Differenzen: die 200 Befragten wie in R', () => {
+  const c = ctx({ x: 'wissenstest', y: 'wissenstest_t2' }), p = pairedFor(c);
+  near(p.dMean, 0.75, 1e-12, 'd̄'); near(p.sdD, 1.893522, 1e-6, 's'); near(p.se, 0.1338923, 1e-7, 'SE'); near(p.t, 5.601519, 1e-6, 't'); near(p.p, 7.003222e-8, 1e-12, 'p');
+  assert.deepEqual([p.up, p.down, p.same], [115, 53, 32]);
+  near(pairedFor(ctx({ x: 'wissenstest', y: 'wissenstest_t2' }, applyOp(rows, 'wissenstest_t2', 'shift', -1))).dMean, -0.25, 1e-9, 'zweiter Test −1');
+  near(pairedFor(ctx({ x: 'wissenstest', y: 'wissenstest_t2' }, applyOp(rows, 'wissenstest', 'shift', 1))).sdD, 1.893522, 1e-6, 'erster Test +1');
+  const sample = b10Mittelwerte.tabs.paired_difference.sample!;
+  if (sample.kind === 'analysis') {
+    const r = sample.result(c);
+    assert.match(r.kurz, /im Schnitt \+0,75 Aufgaben im Vergleich zum ersten\. Die Veränderungen streuen mit s ≈ 1,89 Aufgaben, der Standardfehler ist 0,134\. .*in weniger als 1 von 1\.000 Stichproben zu erwarten \(p < 0,001\)/);
+    assert.equal(r.zusatz, '115 Befragte lösen beim zweiten Test mehr Aufgaben, 53 weniger, 32 gleich viele.');
+    assert.match(r.fachlich, /t\(199\) ≈ 5,6, p < 0,001/);
   }
 });
 
