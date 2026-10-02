@@ -103,6 +103,12 @@ test('B12 Unabhängigkeit: Vierfeldertafeln, erwartete Zahlen, χ², Yates und C
   assert.equal(txt(unabhaengigkeit.steps[4].rechnung, c), '0,22 + 0,099 + 0,31 + 0,14 ≈ 0,77. Zelle a steuert 0,22 bei, das sind 28 % von χ².');
   assert.equal(txt(unabhaengigkeit.steps[1].rechnung, { ...c, s: a, who: 2 }), 'Zelle c (ab 66 Jahren, nicht erwerbstätig): 29 − 9,135 = +19,865, also 19,865 mehr als erwartet.');
   assert.equal(txt(unabhaengigkeit.steps[2].rechnung, { ...c, s: a, who: 0 }), 'Zelle a (bis 65 Jahre, nicht erwerbstätig): (−19,865) · (−19,865) ≈ 394,62. Minus mal Minus ergibt Plus.');
+  // Zelle d (O = 0, E = 19,865): R chisq.test(matrix(c(34, 137, 29, 0), 2, byrow = TRUE), correct = FALSE), Beitrag
+  // (0 − 19.865)^2 / 19.865 = 19.865. Angezeigt 19,87, wie 394,62 / 19,865 ≈ 19,8651 mit den sichtbaren Zahlen;
+  // die Gleitkommazahl liegt knapp unter dem Halb und ergab vorher 19,86.
+  assert.ok(near(a.part[3], 19.865), `Beitrag Zelle d ${a.part[3]}`);
+  assert.match(txt(unabhaengigkeit.steps[3].rechnung, { ...c, s: a, who: 3 }), /: 394,62 \/ 19,865 ≈ 19,87\.$/);
+  assert.ok(near(394.62 / 19.865, 19.8651, 1e-4), 'mit den sichtbaren Zahlen');
   const i = unabhaengigkeit.variants.chi_square.interpret(c);
   assert.match(i.kurz, /mit Weiterbildung sind 72 % erwerbstätig, von denen ohne Weiterbildung 66,1 %\. .*0,77 in etwa 38 von 100/);
   assert.match(i.fachlich, /χ² = 0,77 bei 1 Freiheitsgrad, p ≈ 0,38; Cramér-V ≈ 0,06\. Die kleinste erwartete Zellhäufigkeit ist 25,83/);
