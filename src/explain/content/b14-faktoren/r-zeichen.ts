@@ -10,7 +10,7 @@ export const EXTRACTION: TokenNote = {
 export const PCA: TokenNote = {
   sym: '"pca"', term: 'Hauptkomponentenanalyse',
   kurz: 'Fasst die gesamte Streuung der Fragen in Komponenten zusammen. Eine Normalverteilung braucht sie nicht.',
-  fehler: 'Ohne extraction rechnet efa() auch eine PCA, dreht sie aber mit Varimax. Schreib das Modell deshalb ausdrücklich hin.',
+  fehler: 'Ohne extraction rechnet efa() auch eine PCA und dreht sie mit Varimax, sobald es mindestens zwei Komponenten gibt. Schreib das Modell deshalb ausdrücklich hin.',
 };
 export const ML: TokenNote = {
   sym: '"ml"', term: 'Maximum Likelihood',

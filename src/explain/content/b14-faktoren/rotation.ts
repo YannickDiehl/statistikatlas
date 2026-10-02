@@ -33,7 +33,7 @@ export const rotation: ConceptCard = {
     ],
   },
   heisst: {
-    fach: 'Eine Rotation ersetzt die Ladungsmatrix Λ durch Λ* = ΛT mit einer Transformationsmatrix T. Bei orthogonaler Rotation (Varimax) bleiben die Faktoren unkorreliert, bei schiefwinkliger (Oblimin, Promax) dürfen sie korrelieren; die modellierte gemeinsame Kovarianz bleibt gleich.',
+    fach: 'Bei einer Rotation werden die Achsen der Lösung gedreht und die Ladungen für die neuen Achsen umgerechnet. Bei orthogonaler Rotation (Varimax) bleiben die Faktoren unkorreliert, bei schiefwinkliger (Oblimin, Promax) dürfen sie korrelieren; die modellierte gemeinsame Kovarianz bleibt gleich. Als Formel: Λ* = ΛT mit der Ladungsmatrix Λ und einer Transformationsmatrix T.',
   },
   bausteine: [
     {
@@ -47,7 +47,7 @@ export const rotation: ConceptCard = {
       title: 'Die Achsen drehen',
       was: `Wir drehen beide Achsen gemeinsam, bis sie möglichst nah an den Punktgruppen liegen. Varimax findet das von selbst, hier bei etwa ${VARIMAX_DEG} Grad.`,
       rechnung: `Bundesregierung: vorher ${fixed(REG[0])} und ${fixed(REG[1])}, nachher ${fixed(V.rotated[1][0])} und ${fixed(V.rotated[1][1])}.`,
-      warum: 'Lädt jede Frage nur auf einer Achse hoch, lassen sich die Achsen benennen: Vertrauen in die Politik, Vertrauen in die Kirchen.',
+      warum: 'Lädt jede Frage nur auf einer Achse hoch, lassen sich die Achsen benennen. Hier heißen sie Vertrauen in die Politik und Vertrauen in die Kirchen.',
       acht: 'Gedreht werden nur die Achsen. Die Punkte bleiben, wo sie sind: Die Daten ändern sich nicht.',
       concept: 'efa',
     },
@@ -55,7 +55,7 @@ export const rotation: ConceptCard = {
       title: 'Prüfen, was gleich bleibt',
       was: 'Jeder Punkt behält seinen Abstand zum Ursprung. Darum bleiben die Kommunalität jeder Frage und die zusammen erfasste Streuung gleich.',
       rechnung: `Bundesregierung: ${sq(REG[0])} + ${sq(REG[1])} ≈ ${num(REG[0] ** 2 + REG[1] ** 2)} und ${sq(V.rotated[1][0])} + ${sq(V.rotated[1][1])} ≈ ${num(V.rotated[1][0] ** 2 + V.rotated[1][1] ** 2)}.`,
-      warum: `Die Rotation verteilt die erfasste Streuung nur anders auf die Komponenten: vorher ${pct1(V.shareUnrotated[0] / 100)} und ${pct1(V.shareUnrotated[1] / 100)}, nachher ${pct1(V.shareRotated[0] / 100)} und ${pct1(V.shareRotated[1] / 100)}.`,
+      warum: `Die Rotation verteilt die erfasste Streuung nur anders. Vorher: ${pct1(V.shareUnrotated[0] / 100)} und ${pct1(V.shareUnrotated[1] / 100)}; nachher: ${pct1(V.shareRotated[0] / 100)} und ${pct1(V.shareRotated[1] / 100)}.`,
       acht: 'Eine Rotation erzeugt keine neue Information. Bei nur einer Komponente gibt es nichts zu drehen.',
       concept: 'communality',
     },
@@ -153,7 +153,7 @@ export const rotationTabs: ConceptTabs = {
       const [d1, d2] = z.p.values, first = z.p.loadings.map(r => r[0]);
       const before = Math.min(...first) >= 0.5 ? `Vor der Rotation laden alle fünf Fragen stark auf der ersten Komponente, zwischen ${num(Math.min(...first))} und ${num(Math.max(...first))}.` : 'Vor der Rotation laden die Fragen vor allem auf der ersten Komponente.';
       return {
-        kurz: `${before} Nach Varimax teilen sich die Fragen auf beide Komponenten auf. Zusammen erfassen beide vorher wie nachher ${pct1(z.total)}.`,
+        kurz: `${before} Nach Varimax teilen sich die Fragen auf beide Komponenten auf, ${d2 < 1 ? 'obwohl sich die Befragten im Wesentlichen nur in einer Sache unterscheiden' : 'und die zweite Komponente hat einen Eigenwert über 1'}. Zusammen erfassen beide vorher wie nachher ${pct1(z.total)}.`,
         fachlich: `Ungedreht ${pct1(d1 / 5)} und ${pct1(d2 / 5)}, nach Varimax ${pct1(z.ss[0] / 5)} und ${pct1(z.ss[1] / 5)}. Der zweite Eigenwert ist ${num(d2)}${d2 < 1 ? ', also unter 1: Die Aufteilung ist hier ein Kunstprodukt der erzwungenen zweiten Komponente' : ''}.`,
         zusatz: `Nach der Rotation: ${gruppen(z.vm.loadings)}`,
       };

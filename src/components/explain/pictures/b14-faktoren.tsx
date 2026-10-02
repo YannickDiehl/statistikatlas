@@ -76,7 +76,7 @@ function AlphaProfile({ data, s, step, who, names, onChange, onWho }: {
           <polyline className={`b14-line${i === who ? ' sel' : ''}`} points={data[i].map((v, j) => `${at(i, j)},${y(v)}`).join(' ')} />
           <line className={`b14-link${i === who ? ' sel' : ''}`} x1={at(i, 2)} y1={y(data[i][2])} x2={sumAt + sumOff[i]} y2={ySum(s.X[i])} />
         </g>)}
-        {order.map(i => <g key={`x${i}`} className={`b14-sum${i === who ? ' sel' : ''}`} onClick={() => onWho(i)}>
+        {order.map(i => <g key={`x${i}`} className={`b14-sum${i === who ? ' sel' : ''}`} aria-hidden="true" onClick={() => onWho(i)}>
           <circle cx={sumAt + sumOff[i]} cy={ySum(s.X[i])} r={i === who ? 12 : 10} />
           <text className="xw-t" x={sumAt + sumOff[i]} y={ySum(s.X[i]) + 5} textAnchor="middle">{names[i]}</text>
         </g>)}
@@ -123,7 +123,7 @@ export function Scree({ values, title }: { values: readonly number[]; title: str
   return (
     <div ref={box}>
       <svg className="xw-svg" width={W} height={270} viewBox={`0 0 ${W} 270`} role="img"
-        aria-label={`${title}: Eigenwerte ${values.map(v => num(v)).join(', ')}. ${above === 1 ? 'Einer liegt' : `${above} liegen`} über 1.`}>
+        aria-label={`${title}: Eigenwerte ${values.map(v => num(v)).join('; ')}. ${above === 0 ? 'Keiner liegt' : above === 1 ? 'Einer liegt' : `${above} liegen`} über 1.`}>
         <text className="xw-t xw-strong" x={8} y={18}>{title}</text>
         <Axis scale={y} ticks={[0, 1, 2, 3, 4, 5]} at={left} from={base} to={top} orient="left" labelGap={24} />
         <MarkLine y={y(1)} from={left} to={right} className="b14-kaiser" />
@@ -153,7 +153,7 @@ export function LoadingGrid({ rows, names, heads, title }: { rows: readonly (rea
   return (
     <div ref={box}>
       <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
-        aria-label={`${title}: ${rows.map((r, i) => `${names[i]} ${r.map((v, k) => `${heads[k]} ${fixed(v)}`).join(', ')}`).join('; ')}`}>
+        aria-label={`${title}: ${rows.map((r, i) => `${names[i]} ${r.map((v, k) => `${heads[k]} ${fixed(v)}`).join(' und ')}`).join('; ')}`}>
         <text className="xw-t xw-strong" x={8} y={18}>{title}</text>
         {heads.map((h, k) => <text key={h} className="xw-t xw-strong" x={label + k * colW} y={top - 12}>{h}</text>)}
         {rows.map((r, i) => <g key={names[i]}>
@@ -184,18 +184,18 @@ function CommunalityPicture({ l1, l2 }: { l1: number; l2: number }) {
   return (
     <div ref={box}>
       <svg className="xw-svg" width={W} height={barY + 64} viewBox={`0 0 ${W} ${barY + 64}`} role="img"
-        aria-label={`Frage mit den Ladungen ${fixed(l1)} und ${fixed(l2)}: Kommunalität ${num(h2)}${over ? ', mehr als 1 und damit unmöglich' : `, Einzigartigkeit ${num(1 - h2)}`}.`}>
+        aria-label={`Frage mit den Ladungen ${fixed(l1)} und ${fixed(l2)}: Kommunalität ${num(h2)}${over ? ', mehr als 1 und damit unmöglich' : `, nicht erfasst ${num(1 - h2)}`}.`}>
         <circle className="b14-circle" cx={cx} cy={cy} r={k} />
         <line className="xw-axis" x1={X(-1.1)} x2={X(1.1)} y1={cy} y2={cy} />
         <line className="xw-axis" x1={cx} x2={cx} y1={Y(1.1)} y2={Y(-1.1)} />
-        <text className="xw-t" x={X(1.1)} y={cy - 8} textAnchor="end">Faktor 1</text>
-        <text className="xw-t" x={cx - 8} y={Y(1.1) + 10} textAnchor="end">Faktor 2</text>
+        <text className="xw-t" x={X(1.1)} y={cy - 8} textAnchor="end">Achse 1</text>
+        <text className="xw-t" x={cx - 8} y={Y(1.1) + 10} textAnchor="end">Achse 2</text>
         <line className="b14-old" x1={X(l1)} x2={X(l1)} y1={cy} y2={Y(l2)} />
         <line className="b14-old" x1={cx} x2={X(l1)} y1={Y(l2)} y2={Y(l2)} />
         <line className="b14-rot" x1={cx} y1={cy} x2={X(l1)} y2={Y(l2)} />
         <circle className="b14-point pol" cx={X(l1)} cy={Y(l2)} r={7} />
         <text className="xw-t xw-strong" x={X(l1) + (l1 >= 0 ? 12 : -12)} y={Y(l2) + 5} textAnchor={l1 >= 0 ? 'start' : 'end'}>({fixed(l1)}; {fixed(l2)})</text>
-        <text className="xw-t" x={16} y={barY - 10}>{over ? `hⱼ² = ${num(h2)}: mehr als 1, das gibt es nicht` : `hⱼ² = ${num(h2)}, Einzigartigkeit ${num(1 - h2)}`}</text>
+        <text className="xw-t" x={16} y={barY - 10}>{over ? `hⱼ² = ${num(h2)}: mehr als 1, das gibt es nicht` : `hⱼ² = ${num(h2)}, nicht erfasst ${num(1 - h2)}`}</text>
         <rect className="b14-shared" x={L} y={barY} width={Math.max(0, bw(s1))} height={22} />
         <rect className="b14-total" x={L + bw(s1)} y={barY} width={Math.max(0, bw(s2))} height={22} />
         {!over && <rect className="b14-seg" x={L + bw(h2)} y={barY} width={Math.max(0, bw(1 - h2))} height={22} />}

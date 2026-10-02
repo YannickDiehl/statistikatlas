@@ -40,7 +40,7 @@ export const loadings: ConceptCard = {
     },
     {
       title: 'Auf das Vorzeichen achten',
-      was: 'Eine negative Ladung heißt: Die Frage läuft gegen die Komponente. Wer dort hoch liegt, stimmt ihr eher nicht zu.',
+      was: 'Eine negative Ladung heißt: Die Frage läuft gegen die Komponente. Wer auf der Komponente hoch liegt, stimmt dieser Frage eher nicht zu.',
       warum: 'Verkehrt gepolte Fragen erkennst du so sofort. Polst du sie um, wird die Ladung positiv, mit gleichem Betrag.',
       acht: 'Das Vorzeichen einer ganzen Komponente ist frei wählbar. Kehrt R alle Ladungen einer Komponente um, ändert sich am Modell nichts.',
       concept: 'recode',

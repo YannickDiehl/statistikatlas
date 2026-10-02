@@ -123,7 +123,7 @@ export const dimensionalityTabs: ConceptTabs = {
         kurz: n <= 1
           ? `Nur eine Komponente hat einen Eigenwert über 1 (${num(v1)}); der zweite liegt bei ${num(v2)}. Die fünf Fragen messen im Wesentlichen eine Sache.`
           : `${n} Komponenten haben einen Eigenwert über 1. Die fünf Fragen könnten mehr als eine Sache messen; prüfe, ob die Gruppen inhaltlich zusammenpassen.`,
-        fachlich: `Eigenwerte der Korrelationsmatrix: ${p.values.map(v => num(v)).join(', ')}. Zusammen ergeben sie mit allen Nachkommastellen 5, die Zahl der Fragen.`,
+        fachlich: `Eigenwerte der Korrelationsmatrix: ${p.values.map(v => num(v)).join('; ')}. Zusammen ergeben sie mit allen Nachkommastellen 5, die Zahl der Fragen.`,
         zusatz: `Die erste Komponente bündelt ${pct1(p.share[0])} der Streuung, die zweite nur ${pct1(p.share[1])}.`,
       };
     },

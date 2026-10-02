@@ -18,8 +18,8 @@ const M = METHODEN_PCA;
 /** Nicht berechenbar: Eine Frage streut nicht. */
 export const NO_PCA = { kurz: 'Mindestens eine Frage streut nicht: Alle haben dort dasselbe angekreuzt. Dann gibt es keine Korrelationen und keine Komponenten.', fachlich: 'Eine konstante Variable hat keine definierte Korrelation; efa() bricht in diesem Fall mit einer Meldung ab.' };
 
-/** Ladungen als Liste: „Frage 1 0,85, Frage 2 0,84, …“ */
-export const loadingList = (L: readonly number[]) => L.map((l, j) => `${FRAGE[j]} ${num(l)}`).join(', ');
+/** Ladungen als Liste: „Frage 1: 0,85; Frage 2: 0,84; …“ */
+export const loadingList = (L: readonly number[]) => L.map((l, j) => `${FRAGE[j]}: ${num(l)}`).join('; ');
 
 /** Satz zu den Ladungen der ersten Komponente, aus den Vorzeichen und Beträgen. */
 export function loadingSentence(L: readonly number[]): string {
@@ -50,7 +50,7 @@ export const efa: ConceptCard = {
       title: 'Die Zusammenhänge ansehen',
       was: `Für jedes Paar von Fragen rechnen wir die Korrelation. Bei fünf Fragen sind es zehn Paare, hier alle zwischen ${num(M.rMin)} und ${num(M.rMax)}.`,
       warum: 'Gemeinsames zeigt sich daran, dass Fragen zusammen nach oben und unten gehen. Ohne Korrelationen gibt es nichts zu bündeln.',
-      acht: 'Sind die Korrelationen nahe 0, findet die Analyse auch nichts Gemeinsames. Der KMO-Wert in R prüft das vorab; hier meldet R KMO = 0.891.',
+      acht: 'Sind die Korrelationen nahe 0, findet die Analyse nichts Gemeinsames. Der KMO-Wert (Kaiser-Meyer-Olkin, zwischen 0 und 1) prüft das vorab: Je näher an 1, desto mehr Gemeinsames steckt in den Korrelationen. Hier meldet R KMO = 0.891.',
       concept: 'correlation_matrix',
     },
     {
@@ -116,7 +116,7 @@ export const efa: ConceptCard = {
   genau: {
     kurz: 'Hauptkomponenten und gemeinsame Faktoren sind verschiedene Modelle. Zahl der Faktoren, Rotation und Deutung sind Entscheidungen, die du begründen musst.',
     paragraphs: [
-      'Die Hauptkomponentenanalyse (PCA) zerlegt die gesamte standardisierte Streuung. Die gemeinsame Faktorenanalyse, etwa mit Maximum Likelihood, erklärt nur den Teil, den die Fragen teilen, und lässt jeder Frage einen eigenen Rest. mariposa rechnet ohne Angabe eine PCA mit Varimax-Rotation; schreib extraction deshalb ausdrücklich hin.',
+      'Die Hauptkomponentenanalyse (PCA) zerlegt die gesamte standardisierte Streuung. Die gemeinsame Faktorenanalyse, etwa mit Maximum Likelihood, erklärt nur den Teil, den die Fragen teilen, und lässt jeder Frage einen eigenen Rest. Ohne Angabe rechnet mariposa eine PCA und dreht sie mit Varimax, sobald es mindestens zwei Komponenten gibt; schreib extraction deshalb ausdrücklich hin.',
       'Ohne n_factors nimmt efa() so viele Komponenten, wie Eigenwerte über 1 liegen, mindestens eine. KMO und der Bartlett-Test helfen bei der Frage, ob sich eine Analyse lohnt; eine inhaltliche Prüfung ersetzen sie nicht.',
       'use = "complete" rechnet nur mit Personen, die alle Fragen beantwortet haben. Mit "pairwise" kann eine Korrelationsmatrix entstehen, die sich nicht sinnvoll zerlegen lässt.',
       'Die ML-Schätzung und ihr Modelltest setzen annähernd normalverteilte Antworten voraus; siebenstufige Zustimmungsfragen erfüllen das nur näherungsweise. Die PCA braucht diese Annahme nicht.',
@@ -137,7 +137,9 @@ export const efaTabs: ConceptTabs = {
       if (!p) return NO_PCA;
       const L = p.loadings.map(r => r[0]), n = aboveOne(p.values);
       return {
-        kurz: `Eine Komponente bündelt ${pct1(p.share[0])} der Streuung aller fünf Fragen. ${loadingSentence(L)}`,
+        kurz: L.every(l => l >= 0.5)
+          ? `Wer sich bei einer Methodenfrage viel zutraut, traut sich meist auch bei den anderen viel zu: Eine Komponente bündelt ${pct1(p.share[0])} der Streuung aller fünf Fragen. ${loadingSentence(L)}`
+          : `Eine Komponente bündelt ${pct1(p.share[0])} der Streuung aller fünf Fragen. ${loadingSentence(L)}`,
         fachlich: `Hauptkomponentenanalyse der Korrelationsmatrix: erster Eigenwert ${num(p.values[0])} von 5, also ${pct1(p.share[0])}. Der zweite Eigenwert ist ${num(p.values[1])}; ${n === 1 ? 'nur eine Komponente liegt' : `${n} Komponenten liegen`} über 1.`,
         zusatz: `Die Ladungen: ${loadingList(L)}.`,
       };

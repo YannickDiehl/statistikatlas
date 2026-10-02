@@ -33,8 +33,8 @@ export const factorModel: ConceptCard = {
     ],
   },
   heisst: {
-    sym: 'R ≈ ΛΛ′ + Ψ', say: 'R ungefähr Lambda mal Lambda Strich plus Psi',
-    fach: 'Die Hauptkomponentenanalyse zerlegt die Korrelationsmatrix exakt: R = VDV′. Das gemeinsame Faktorenmodell nimmt Z = ΛF + ε an und beschreibt R durch die Ladungen Λ und die Einzigartigkeiten Ψ auf der Diagonale: R ≈ ΛΛ′ + Ψ.',
+    sym: 'zⱼ = λⱼ · F + εⱼ', say: 'z j gleich Lambda j mal F plus Epsilon j',
+    fach: 'Die Hauptkomponentenanalyse verteilt die gesamte Streuung der standardisierten Fragen auf Komponenten. Das gemeinsame Faktorenmodell nimmt an: Jede standardisierte Antwort zⱼ besteht aus der Ladung λⱼ mal dem gemeinsamen Faktor F und einem eigenen Rest εⱼ. Die Matrixform R ≈ ΛΛ′ + Ψ steht unter „Genau genommen“.',
   },
   bausteine: [
     {
@@ -96,8 +96,8 @@ export const factorModel: ConceptCard = {
   genau: {
     kurz: 'Die Hauptkomponentenanalyse zerlegt die Korrelationsmatrix exakt, das Faktorenmodell nähert sie mit wenigen Faktoren und Einzigartigkeiten an. Darum unterscheiden sich Ladungen und erklärte Anteile.',
     paragraphs: [
-      'Hauptkomponenten: R = VDV′ mit den Eigenvektoren V und den Eigenwerten D. Die Ladungen einer Komponente sind ihr Eigenvektor mal die Wurzel aus ihrem Eigenwert. Behält man alle Komponenten, ist alles erklärt; behält man wenige, bleibt ein Rest.',
-      `Faktorenmodell: Die standardisierten Antworten Z sind ΛF + ε, Faktoren F und Reste ε sind unkorreliert. Dann gilt R ≈ ΛΛ′ + Ψ. Die Einzigartigkeit ψ einer Frage ist 1 minus ihre Kommunalität, für Frage 1 also 1 − ${num(F.communalities[0])} = ${num(1 - F.communalities[0])}.`,
+      'Hauptkomponenten: R = VDV′. Dabei ist R die Korrelationsmatrix, V enthält die Eigenvektoren als Spalten, D die Eigenwerte auf der Diagonale, und V′ ist V gespiegelt (Zeilen und Spalten vertauscht). Die Ladungen einer Komponente sind ihr Eigenvektor mal die Wurzel aus ihrem Eigenwert. Behält man alle Komponenten, ist alles erklärt; behält man wenige, bleibt ein Rest.',
+      `Faktorenmodell: Die standardisierten Antworten Z sind ΛF + ε, mit der Ladungsmatrix Λ (eine Zeile je Frage, eine Spalte je Faktor), den Faktoren F und den Resten ε; Faktoren und Reste sind unkorreliert. Dann gilt R ≈ ΛΛ′ + Ψ, mit Ψ den Einzigartigkeiten auf der Diagonale. Die Einzigartigkeit ψ einer Frage ist 1 minus ihre Kommunalität, für Frage 1 also 1 − ${num(F.communalities[0])} = ${num(1 - F.communalities[0])}.`,
       'Die Schätzung mit Maximum Likelihood setzt annähernd normalverteilte Antworten voraus und liefert einen Test der Modellpassung. Mit fünf Fragen lassen sich höchstens zwei ML-Faktoren schätzen; verlangst du mehr, bricht mariposa mit einer Meldung ab.',
       'Die Anteile der beiden Modelle liegen in der Regel so wie hier: Die Komponente erfasst mehr, weil sie auch die eigenen Reste einrechnet. Bei sehr zuverlässigen Fragen mit kleinen Resten rücken beide zusammen.',
     ],

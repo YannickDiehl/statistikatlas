@@ -4,7 +4,7 @@
 // Referenzwerte aus R stehen in b14-faktoren.test.ts.
 import type { SampleCtx } from '../../types';
 import type { SurveyRow } from '../../../domain/survey';
-import { reliability, symEigen, omegaOneFactor } from '../../../tasks/kit/reliability';
+import { reliability, rowSums, symEigen, omegaOneFactor } from '../../../tasks/kit/reliability';
 import { fixed } from '../../format';
 
 /** Die fünf Fragen zur Methoden-Zuversicht im Lehrdatensatz (Likert, 1 bis 7). */
@@ -31,7 +31,11 @@ const mean = (xs: readonly number[]) => xs.reduce((a, b) => a + b, 0) / xs.lengt
 /** Varianz mit n − 1. */
 export const variance = (xs: readonly number[]) => { const m = mean(xs); return xs.reduce((a, x) => a + (x - m) ** 2, 0) / (xs.length - 1); };
 
-/** Pearson-Korrelationsmatrix; null, wenn eine Spalte nicht streut (dann ist keine Korrelation definiert). */
+/**
+ * Pearson-Korrelationsmatrix; null, wenn eine Spalte nicht streut (dann ist keine Korrelation definiert).
+ * Bewusst eine leichte Fassung neben corMatrix aus src/tasks/kit/means.ts: ohne fehlende Werte (der Lehrdatensatz hat keine)
+ * und mit null statt NaN, damit die Reiter „nicht berechenbar“ sagen können.
+ */
 export function corMatrix(cols: readonly number[][]): Matrix | null {
   const means = cols.map(mean), n = cols[0]?.length ?? 0;
   const dev = cols.map((c, j) => c.map(x => x - means[j]));
@@ -124,9 +128,8 @@ export type Alpha = { alpha: number; k: number; itemVars: number[]; sumItemVar: 
 /** Cronbachs Alpha wie mariposa::reliability(): k / (k − 1) · (1 − Σ sⱼ² / sₓ²). */
 export function cronbach(cols: readonly number[][]): Alpha {
   const r = reliability(cols as number[][], null, { omega: false });
-  const itemVars = cols.map(variance), n = cols[0].length;
-  const total = Array.from({ length: n }, (_, i) => cols.reduce((s, c) => s + c[i], 0));
-  return { alpha: r.alpha, k: cols.length, itemVars, sumItemVar: itemVars.reduce((a, b) => a + b, 0), totalVar: variance(total), alphaStd: r.alphaStd };
+  const itemVars = cols.map(variance);
+  return { alpha: r.alpha, k: cols.length, itemVars, sumItemVar: itemVars.reduce((a, b) => a + b, 0), totalVar: variance(Array.from(rowSums(cols as number[][]))), alphaStd: r.alphaStd };
 }
 
 // Kennwerte der fünf Fragen für die Reiter (aus den aktuellen Daten) ------------------------------------------------

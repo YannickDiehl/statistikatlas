@@ -6,7 +6,7 @@
 .b14-sum{cursor:pointer}
 .b14-sum circle{fill:var(--paper);stroke:var(--muted);stroke-width:1.5}
 .b14-sum.sel circle{fill:var(--wash);stroke:var(--green);stroke-width:2.5}
-.b14-total{fill:#e3ecdc;stroke:var(--muted);stroke-width:1}
+.b14-total{fill:var(--wash);stroke:var(--muted);stroke-width:1}
 .b14-seg{fill:var(--paper);stroke:var(--ink);stroke-width:1}
 .b14-shared{fill:var(--xw-pos-fill);stroke:var(--green);stroke-width:2}
 .b14-excess{fill:var(--xw-neg-fill);stroke:var(--xw-neg);stroke-width:2}

@@ -17,7 +17,7 @@ export const eigenvalues: ConceptCard = {
   wofuer: 'Fünf Fragen bringen zusammen eine Streuung von 5 mit, eine je Frage. Wie viel davon lässt sich in einer einzigen Komponente bündeln? Der Eigenwert gibt die Antwort, für jede Komponente einzeln.',
   kurz: 'Ein Eigenwert sagt dir, wie viel der gesamten Streuung eine Komponente bündelt, gemessen in Fragen. Ein Eigenwert von 3,56 heißt: so viel wie dreieinhalb Fragen.',
   stellDirVor: {
-    text: `Bei den fünf Fragen zur Methoden-Zuversicht im Lehrdatensatz ist der erste Eigenwert ${num(E[0])}. Die übrigen vier sind klein: ${E.slice(1).map(v => num(v)).join(', ')}. Mit allen Nachkommastellen ergeben alle fünf zusammen genau 5. Die erste Komponente bündelt also ${num(E[0])} / 5 ≈ ${pct1(E[0] / 5)} der Streuung.`,
+    text: `Bei den fünf Fragen zur Methoden-Zuversicht im Lehrdatensatz ist der erste Eigenwert ${num(E[0])}. Die übrigen vier sind klein: ${E.slice(1).map(v => num(v)).join('; ')}. Mit allen Nachkommastellen ergeben alle fünf zusammen genau 5. Die erste Komponente bündelt also ${num(E[0])} / 5 ≈ ${pct1(E[0] / 5)} der Streuung.`,
     figures: [
       { label: 'erster Eigenwert', value: num(E[0]) },
       { label: 'zweiter Eigenwert', value: num(E[1]) },
@@ -27,7 +27,7 @@ export const eigenvalues: ConceptCard = {
   },
   heisst: {
     sym: 'dₖ', say: 'd k',
-    fach: 'Der Eigenwert dₖ der Korrelationsmatrix R erfüllt R · vₖ = dₖ · vₖ mit einem Eigenvektor vₖ der Länge 1. In der Hauptkomponentenanalyse ist dₖ die Varianz der k-ten Komponente; alle Eigenwerte zusammen ergeben die Zahl der Variablen.',
+    fach: 'Der Eigenwert dₖ ist die Varianz der k-ten Hauptkomponente der Korrelationsmatrix R; alle Eigenwerte zusammen ergeben die Zahl der Variablen. Die Gleichung R · vₖ = dₖ · vₖ steht unter „Genau genommen“.',
   },
   bausteine: [
     {
@@ -39,7 +39,7 @@ export const eigenvalues: ConceptCard = {
     },
     {
       title: 'Die stärkste Richtung suchen',
-      was: 'Die erste Komponente ist die gewichtete Summe der Fragen, die am stärksten streut. Ihre Varianz ist der erste Eigenwert.',
+      was: 'Die erste Komponente ist die gewichtete Summe der Fragen, die am stärksten streut, unter allen Gewichtungen, deren Quadrate zusammen 1 ergeben. Ihre Varianz ist der erste Eigenwert.',
       rechnung: `d₁ = ${num(E[0])}, also ${num(E[0])} / 5 ≈ ${pct1(E[0] / 5)} der Streuung.`,
       warum: 'Hängen die Fragen eng zusammen, gehen sie gemeinsam nach oben und unten. Dann erfasst eine Richtung fast alles.',
       acht: 'Der Eigenwert ist kein Prozentwert. Erst geteilt durch die Zahl der Fragen wird daraus ein Anteil.',
@@ -100,7 +100,7 @@ export const eigenvalues: ConceptCard = {
   genau: {
     kurz: 'Eigenwerte gehören zur Zerlegung der Korrelationsmatrix. Als erklärte Anteile gelten sie nur für die Hauptkomponentenanalyse.',
     paragraphs: [
-      'Formal gilt R · vₖ = dₖ · vₖ. Der Eigenvektor vₖ (Länge 1) enthält die Gewichte der Fragen, der Eigenwert dₖ die Varianz der Komponente. Die Ladungen sind vₖ mal √dₖ.',
+      'Formal gilt R · vₖ = dₖ · vₖ: Die Korrelationsmatrix R mal den Eigenvektor vₖ ergibt dasselbe wie dₖ mal vₖ. Der Eigenvektor vₖ (Länge 1, seine Quadrate ergeben zusammen 1) enthält die Gewichte der Fragen, der Eigenwert dₖ die Varianz der Komponente. Die Ladungen sind vₖ mal √dₖ.',
       'Für ein gemeinsames Faktorenmodell sind die Eigenwerte der ursprünglichen Korrelationsmatrix nicht die erklärten Varianzen. Dort erklärt der Faktor bei den fünf Fragen 64,0 % statt 71,2 %.',
       'Haben alle Paare dieselbe Korrelation r, ist der erste Eigenwert 1 + (k − 1) · r und alle anderen 1 − r. Das nutzt der Regler. In echten Daten sind die Korrelationen nie ganz gleich; bei den fünf Fragen liegen sie zwischen 0,61 und 0,68, im Mittel bei 0,64, und 1 + 4 · 0,64 = 3,56 trifft den echten ersten Eigenwert fast genau.',
       'Die Regel „Eigenwert über 1“ ist eine Faustregel, keine automatische Bestimmung der Dimensionen. Negative Eigenwerte kann eine echte Korrelationsmatrix nicht haben; tauchen sie auf, etwa nach paarweisem Ausschluss fehlender Werte, ist die Matrix in sich widersprüchlich.',
@@ -120,8 +120,8 @@ export const eigenvaluesTabs: ConceptTabs = {
       if (!p) return NO_PCA;
       const rest = p.values.slice(1), n = aboveOne(p.values);
       return {
-        kurz: `Der erste Eigenwert ist ${num(p.values[0])}: Die erste Komponente bündelt ${pct1(p.share[0])} der Streuung aller fünf Fragen. Die anderen vier Eigenwerte liegen zwischen ${num(Math.min(...rest))} und ${num(Math.max(...rest))}.`,
-        fachlich: `Eigenwerte der Korrelationsmatrix: ${p.values.map(v => num(v)).join(', ')}. Ihre Summe ist mit allen Nachkommastellen 5, die Zahl der Fragen.`,
+        kurz: `Der erste Eigenwert ist ${num(p.values[0])}: Die erste Komponente bündelt ${pct1(p.share[0])} der Unterschiede zwischen den Befragten in allen fünf Fragen. ${p.loadings.every(r => r[0] >= 0.5) ? 'Wer bei einer Frage viel Zuversicht zeigt, zeigt sie meist auch bei den anderen. ' : ''}Die übrigen vier Eigenwerte liegen zwischen ${num(Math.min(...rest))} und ${num(Math.max(...rest))}.`,
+        fachlich: `Eigenwerte der Korrelationsmatrix: ${p.values.map(v => num(v)).join('; ')}. Ihre Summe ist mit allen Nachkommastellen 5, die Zahl der Fragen.`,
         zusatz: `${n === 1 ? 'Ein Eigenwert liegt' : `${n} Eigenwerte liegen`} über 1.`,
       };
     },
@@ -159,14 +159,14 @@ export const eigenvaluesTabs: ConceptTabs = {
     },
   },
   next: {
-    next: { id: 'dimensionality', why: 'Wie viele Eigenwerte groß sind, deutet auf die Zahl der gemeinsamen Merkmale.' },
+    next: { id: 'loadings', why: 'Aus Eigenvektor und Eigenwert werden die Ladungen: wie eng jede Frage mit der Komponente zusammenhängt.' },
     before: [
       { id: 'correlation_matrix', why: 'Die Matrix, deren Eigenwerte hier gemeint sind.' },
       { id: 'z', why: 'Standardisierte Fragen bringen je die Varianz 1 mit.' },
     ],
     after: [
       { id: 'efa', why: 'Eigenwerte helfen, die Zahl der Komponenten zu wählen, entscheiden sie aber nicht allein.' },
-      { id: 'loadings', why: 'Aus Eigenvektor und Eigenwert werden die Ladungen.' },
+      { id: 'dimensionality', why: 'Wie viele Eigenwerte groß sind, deutet auf die Zahl der gemeinsamen Merkmale.' },
     ],
     more: [{ id: 'factor_model', why: 'Im Faktorenmodell sind die erklärten Anteile kleiner als die Eigenwerte.' }],
   },

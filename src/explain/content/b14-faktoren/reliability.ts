@@ -2,7 +2,7 @@
 // zur Methoden-Zuversicht (1 bis 7), sechs Schritte. Ton nach der Streuung (src/explain/content/streuung.ts).
 // Alle Zahlen in R nachgerechnet, siehe b14-faktoren.test.ts.
 import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
-import { close, fixed, num } from '../../format';
+import { close, fixed, num, paren } from '../../format';
 import { cronbach, itemColumns, SPALTEN } from './rechnen';
 
 /** Fünf Personen (Zeilen) mal drei Fragen (Spalten), Antworten von 1 bis 7. */
@@ -15,6 +15,8 @@ export type AlphaStats = {
   X: number[]; personMean: number[];
   sumX: number; meanX: number; devX: number[]; sqX: number[]; ssX: number; varX: number; sdX: number;
   itemSS: number[]; itemVar: number[]; sumItemVar: number;
+  /** Kovarianzen der Fragenpaare 1–2, 1–3, 2–3 (wie stats::cov) und ihre Summe. */
+  covPairs: number[]; sumCov: number;
   /** sₓ² − Σsⱼ², der gemeinsame Teil (doppelte Summe der Kovarianzen). */
   diff: number;
   /** (sₓ² − Σsⱼ²) / sₓ², ohne k/(k − 1). */
@@ -40,8 +42,10 @@ export function alphaStats(d: Antworten): AlphaStats {
   const items = Array.from({ length: k }, (_, j) => d.map(r => r[j]));
   const itemSS = items.map(ss), itemVar = itemSS.map(s => s / (n - 1)), sumItemVar = sumOf(itemVar);
   const diff = varX - sumItemVar, ratio = varX > 1e-12 ? diff / varX : NaN;
+  const cov = (a: number[], b: number[]) => { const ma = sumOf(a) / n, mb = sumOf(b) / n; return a.reduce((s, x, i) => s + (x - ma) * (b[i] - mb), 0) / (n - 1); };
+  const covPairs = k === 3 ? [cov(items[0], items[1]), cov(items[0], items[2]), cov(items[1], items[2])] : [];
   return {
-    d, k, X, personMean: X.map(x => x / k), sumX, meanX, devX, sqX, ssX, varX, sdX: Math.sqrt(varX), itemSS, itemVar, sumItemVar,
+    d, k, X, personMean: X.map(x => x / k), sumX, meanX, devX, sqX, ssX, varX, sdX: Math.sqrt(varX), itemSS, itemVar, sumItemVar, covPairs, sumCov: sumOf(covPairs),
     diff, ratio, alpha: k / (k - 1) * ratio, wrongPart: varX > 1e-12 ? k / (k - 1) * sumItemVar / varX : NaN,
   };
 }
@@ -49,21 +53,27 @@ export function alphaStats(d: Antworten): AlphaStats {
 type C = Ctx<AlphaStats>;
 const P = (c: C) => c.names[c.who];
 const ok = (c: C) => Number.isFinite(c.s.alpha);
-/** Alpha wie in R mit zwei festen Stellen („0,96“, „−1,78“), ohne Wert „nicht berechenbar“. */
-const A = (c: C) => ok(c) ? fixed(c.s.alpha) : 'nicht berechenbar';
+/** Alpha in Sätzen („0,96“, „knapp 0,9“, „−1,78“), ohne Wert „nicht berechenbar“. */
+const A = (c: C) => ok(c) ? alphaText(c.s.alpha) : 'nicht berechenbar';
+/** Alpha in Rechnungen und Kennzahlen: zwei feste Stellen. */
+const AN = (c: C) => ok(c) ? fixed(c.s.alpha) : 'nicht berechenbar';
+/** „2 · (2,5 + 2,5 + 2,2)“, negative Kovarianzen in Klammern. */
+const COVS = (c: C) => `2 · (${c.s.covPairs.map(v => paren(v)).join(' + ')})`;
 const VARS = (c: C) => c.s.itemVar.map(v => num(v));
 const SUB = ['₁', '₂', '₃'];
 
-/** Wie gut die Fragen zusammenpassen, als Wort (Faustregeln stehen in der Deutung als Faustregel). */
+/**
+ * Wie gut die Fragen zusammenpassen, als Wort, mit den Grenzen von mariposa 0.7.4 (Excellent ab 0.90, Good ab 0.80,
+ * Acceptable ab 0.70, Questionable ab 0.60, sonst Poor) auf dem ungerundeten Wert: 0.898 ist „gut“ wie R „Good“.
+ */
 export function fit(alpha: number): string {
-  const a = Math.round(alpha * 100) / 100;
-  return a >= 0.9 ? 'sehr gut' : a >= 0.8 ? 'gut' : a >= 0.7 ? 'ordentlich' : a >= 0.5 ? 'nur mäßig' : 'kaum';
+  return alpha >= 0.9 ? 'sehr gut' : alpha >= 0.8 ? 'gut' : alpha >= 0.7 ? 'ausreichend' : alpha >= 0.6 ? 'nur fraglich' : 'schlecht';
 }
 
-/** Verschiebt alle Antworten um eine Stufe, wenn das auf der Skala von 1 bis 7 geht: zuerst nach unten. */
-export function shiftAll(d: Antworten): Antworten {
-  const all = d.flat(), step = Math.min(...all) >= 2 ? -1 : Math.max(...all) <= 6 ? 1 : 0;
-  return d.map(r => r.map(x => x + step));
+/** Alpha mit zwei Stellen; liegt es knapp unter einer Grenze, die das Runden erreichen würde: „knapp 0,9“ statt „0,90“. */
+export function alphaText(alpha: number): string {
+  const edge = [0.9, 0.8, 0.7, 0.6].find(t => alpha < t && Math.round(alpha * 100) / 100 >= t);
+  return edge !== undefined ? `knapp ${num(edge)}` : fixed(alpha);
 }
 
 const vars = (c: C): FNode[] => c.s.itemVar.flatMap((v, j): FNode[] => [...(j ? [' + '] : []), { part: [num(v)], m: 3 }]);
@@ -87,6 +97,7 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
     { sym: 'j', say: 'j', term: 'Laufindex der Fragen', plain: 'die Nummer der Frage, von 1 bis k', step: 3 },
     { sym: 'Σ', say: 'Sigma', term: 'Summenzeichen', plain: 'über alle Fragen zusammenzählen', step: 4 },
     { sym: 'sₓ² − Σsⱼ²', say: 's x Quadrat minus Summe der s j Quadrat', term: 'gemeinsamer Teil', plain: 'was nur entsteht, weil die Fragen zusammen nach oben und unten gehen', step: 5 },
+    { sym: 'sⱼₗ', say: 's j l', term: 'Stichprobenkovarianz', plain: 'wie Frage j und Frage l gemeinsam um ihre Mitten schwanken', step: 5 },
     { sym: 'k', say: 'k', term: 'Zahl der Fragen', plain: 'wie viele Fragen die Skala hat, hier 3', step: 6 },
     { sym: 'α', say: 'Alpha', term: 'Cronbachs Alpha', plain: 'wie stimmig die Fragen sind, höchstens 1', step: 6 },
   ],
@@ -107,7 +118,7 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
     },
     {
       button: 'sₓ²', title: 'Die Streuung der Summenwerte messen', sym: 'sₓ²', say: 's x Quadrat', concept: 'variance', perPerson: true,
-      was: 'Wie bei jeder Varianz: Wir quadrieren die Abstände der Summenwerte zur Mitte, zählen sie zusammen und teilen durch n − 1 = 4.',
+      was: 'Wie bei jeder Varianz quadrieren wir die Abstände der Summenwerte zur Mitte und zählen sie zusammen. Dann teilen wir durch n − 1 = 4.',
       rechnung: c => `Mitte: ${num(c.s.sumX)} / 5 = ${num(c.s.meanX)}. Person ${P(c)}: (${c.s.X[c.who]} − ${num(c.s.meanX)})² = ${num(c.s.sqX[c.who])}. Alle zusammen ${num(c.s.ssX)}, geteilt durch 4: sₓ² = ${num(c.s.varX)}.`,
       fach: 'sₓ² ist die korrigierte Stichprobenvarianz der Summenwerte Xᵢ, also ihre Quadratsumme geteilt durch n − 1.',
       warum: 'Passen die Fragen zusammen, landen manche Personen überall oben und andere überall unten. Dann liegen die Summenwerte weit auseinander.',
@@ -153,10 +164,10 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
       },
     },
     {
-      button: 'sₓ² − Σsⱼ²', title: 'Den gemeinsamen Teil herausrechnen', sym: 'sₓ² − Σsⱼ²', say: 's x Quadrat minus Summe der s j Quadrat', concept: 'covariance', perPerson: false,
+      button: 'sₓ² − Σsⱼ²', title: 'Den gemeinsamen Teil herausrechnen', sym: 'sⱼₗ', say: 's j l', concept: 'covariance', perPerson: false,
       was: 'Wir ziehen die Summe der Einzelstreuungen von der Streuung der Summenwerte ab. Was übrig bleibt, entsteht nur, weil die Fragen zusammen nach oben und unten gehen.',
-      rechnung: c => `${num(c.s.varX)} − ${num(c.s.sumItemVar)} = ${num(c.s.diff)}`,
-      fach: 'Die Differenz sₓ² − Σsⱼ² ist die doppelte Summe aller Kovarianzen zwischen den Fragen.',
+      rechnung: c => `${num(c.s.varX)} − ${num(c.s.sumItemVar)} = ${num(c.s.diff)} = ${COVS(c)}. Die Klammer enthält die Kovarianzen der drei Fragenpaare.`,
+      fach: 'Der Unterschied sₓ² − Σsⱼ² ist die doppelte Summe der Kovarianzen sⱼₗ aller Fragenpaare, hier 2 · (s₁₂ + s₁₃ + s₂₃).',
       warum: 'Streuen die Summenwerte stärker als die Fragen einzeln zusammen, dann stimmen die Antworten einer Person überein. Genau das soll eine Skala.',
       acht: c => c.s.diff < -1e-9
         ? 'Hier ist der Unterschied negativ: Die Fragen laufen eher gegeneinander. Prüfe dann, ob eine Frage verkehrt herum gepolt ist.'
@@ -174,7 +185,7 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
       button: 'α', title: 'Den Anteil bilden und hochrechnen', sym: 'α', say: 'Alpha', concept: 'reliability', perPerson: false,
       was: 'Wir teilen den gemeinsamen Teil durch sₓ². Dann nehmen wir das Ergebnis mit k/(k − 1) = 3/2 mal.',
       rechnung: c => ok(c)
-        ? `α = 3/2 · ${num(c.s.diff)} / ${num(c.s.varX)} ≈ ${A(c)}. Der gemeinsame Teil macht ${num(c.s.ratio * 100, 0)} % der Streuung der Summenwerte aus.`
+        ? `α = 3/2 · ${num(c.s.diff)} / ${num(c.s.varX)} ≈ ${AN(c)}. Der gemeinsame Teil macht ${num(c.s.ratio * 100, 0)} % der Streuung der Summenwerte aus.`
         : 'Alle Summenwerte sind gleich, sₓ² ist 0. Durch 0 lässt sich nicht teilen: Alpha ist hier nicht berechenbar.',
       fach: 'Cronbachs Alpha ist α = k/(k − 1) · (sₓ² − Σsⱼ²) / sₓ², gleichbedeutend mit k/(k − 1) · (1 − Σsⱼ² / sₓ²).',
       warum: 'Selbst bei völlig gleichen Antworten auf alle drei Fragen erreicht der Anteil nur 2/3. Mal 3/2 setzt dieses Höchste auf 1.',
@@ -190,7 +201,7 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
     },
   ],
   numeric: c => ['α = ', { part: ['3/2'], m: 6 }, ' · ( ', { part: [num(c.s.varX)], m: 2 }, ' − ', { part: ['('], m: 4 }, ...vars(c), { part: [')'], m: 4 }, ' ) / ', { part: [num(c.s.varX)], m: 2 },
-    { br: true }, '= ', { part: ['3/2'], m: 6 }, ' · ', { part: [num(c.s.diff)], m: 5 }, ' / ', { part: [num(c.s.varX)], m: 2 }, ' ≈ ', { part: [A(c)], m: 6 }],
+    { br: true }, '= ', { part: ['3/2'], m: 6 }, ' · ', { part: [num(c.s.diff)], m: 5 }, ' / ', { part: [num(c.s.varX)], m: 2 }, ' ≈ ', { part: [AN(c)], m: 6 }],
   table: {
     columns: [
       { head: 'Frage 1', from: 1, active: [1, 3], cell: (c, i) => String(c.s.d[i][0]) },
@@ -203,8 +214,8 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
       { from: 2, step: 2, text: c => `X̄ = ${num(c.s.sumX)} / 5 = ${num(c.s.meanX)}; sₓ² = ${num(c.s.ssX)} / 4 = ${num(c.s.varX)}` },
       { from: 3, step: 3, text: c => VARS(c).map((v, j) => `s${SUB[j]}² = ${v}`).join('; ') },
       { from: 4, step: 4, text: c => `Σsⱼ² = ${VARS(c).join(' + ')} = ${num(c.s.sumItemVar)}` },
-      { from: 5, step: 5, text: c => `sₓ² − Σsⱼ² = ${num(c.s.varX)} − ${num(c.s.sumItemVar)} = ${num(c.s.diff)}` },
-      { from: 6, step: 6, text: c => ok(c) ? `α = 3/2 · ${num(c.s.diff)} / ${num(c.s.varX)} ≈ ${A(c)}` : 'α ist nicht berechenbar, weil sₓ² = 0 ist.' },
+      { from: 5, step: 5, text: c => `sₓ² − Σsⱼ² = ${num(c.s.varX)} − ${num(c.s.sumItemVar)} = ${num(c.s.diff)} = ${COVS(c)}` },
+      { from: 6, step: 6, text: c => ok(c) ? `α = 3/2 · ${num(c.s.diff)} / ${num(c.s.varX)} ≈ ${AN(c)}` : 'α ist nicht berechenbar, weil sₓ² = 0 ist.' },
     ],
   },
   captions: {
@@ -217,11 +228,11 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
   },
   think: [
     {
-      question: 'Alle fünf kreuzen bei Frage 2 dasselbe an, zum Beispiel 4. Was macht Alpha?',
+      question: 'In der Gruppe „Passen zusammen“ kreuzen alle bei Frage 2 dasselbe an, zum Beispiel 4. Was macht Alpha?',
       options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 2, step: 4,
-      explain: 'Frage 2 unterscheidet dann niemanden mehr, ihre Varianz ist 0. Sie trägt nichts zur Streuung der Summenwerte bei, zählt aber weiter als eine von drei Fragen. Deshalb sinkt Alpha.',
+      explain: 'Frage 2 unterscheidet dann niemanden mehr, ihre Varianz ist 0. Sie trägt nichts zur Streuung der Summenwerte bei, zählt aber weiter als eine von drei Fragen. Hier sinkt Alpha von 0,96 auf 0,73. Meist ist das so; nur wenn Frage 2 vorher gegen die anderen lief, kann Alpha steigen.',
       kurz: 'Eine Frage, auf die alle gleich antworten, misst nichts.',
-      tryIt: { label: 'Frage 2 für alle auf 4', apply: d => d.map(r => [r[0], 4, r[2]]) },
+      tryIt: { label: 'Passen zusammen, Frage 2 für alle auf 4', apply: () => ZUSAMMEN.map(r => [r[0], 4, r[2]]) },
     },
     {
       question: 'In der Gruppe „Passen zusammen“ wird Frage 3 verkehrt herum gestellt: Aus 6 wird 2, aus 2 wird 6. Was macht Alpha?',
@@ -231,11 +242,11 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
       tryIt: { label: 'Passen zusammen, Frage 3 umgepolt', apply: () => ZUSAMMEN.map(r => [r[0], r[1], 8 - r[2]]) },
     },
     {
-      question: 'Alle kreuzen bei jeder Frage eine Stufe tiefer an. Was macht Alpha?',
+      question: 'In der Gruppe „Passen zusammen“ kreuzen alle bei jeder Frage eine Stufe tiefer an. Was macht Alpha?',
       options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 1, step: 2,
       explain: 'Alle Antworten rücken gleich weit. Die Abstände zur Mitte bleiben gleich, also auch alle Varianzen. Alpha ändert sich nicht.',
       kurz: 'Verschieben ändert die Lage, nicht die Stimmigkeit.',
-      tryIt: { label: 'alle eine Stufe verschieben', apply: shiftAll },
+      tryIt: { label: 'Passen zusammen, alle eine Stufe tiefer', apply: () => ZUSAMMEN.map(r => r.map(x => x - 1)) },
     },
     {
       question: 'Warum nimmt die Formel am Ende mit 3/2 mal?',
@@ -257,7 +268,7 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
       metrics: [
         { label: 'Streuung der Summenwerte sₓ²', value: c => num(c.s.varX) },
         { label: 'Summe der Einzelstreuungen Σsⱼ²', value: c => num(c.s.sumItemVar) },
-        { label: 'Cronbachs Alpha α', value: A },
+        { label: 'Cronbachs Alpha α', value: AN },
       ],
       interpret: c => {
         if (!ok(c)) return { kurz: 'Alle Summenwerte sind gleich. Dann lässt sich Alpha nicht berechnen.', fachlich: 'Mit sₓ² = 0 ist der Anteil (sₓ² − Σsⱼ²) / sₓ² nicht definiert.' };
@@ -269,7 +280,7 @@ export const alphaWerkstatt: Workshop<Antworten, AlphaStats> = {
             : `Die drei Fragen passen ${fit(a)} zusammen: Wer einer Frage zustimmt, stimmt den anderen nicht unbedingt zu. Alpha ist ${A(c)}.`;
         return {
           kurz,
-          fachlich: `α = 3/2 · (${num(c.s.varX)} − ${num(c.s.sumItemVar)}) / ${num(c.s.varX)} ≈ ${A(c)}. Eine Faustregel nennt Werte ab etwa 0,7 ausreichend; das ist keine feste Grenze. Ein hohes Alpha zeigt Stimmigkeit, nicht, dass die Fragen das Richtige messen.`,
+          fachlich: `α = 3/2 · (${num(c.s.varX)} − ${num(c.s.sumItemVar)}) / ${num(c.s.varX)} ≈ ${AN(c)}. Als Faustregel gelten Werte ab 0,7 als ausreichend, ab 0,8 als gut und ab 0,9 als sehr gut; das sind keine festen Grenzen. Ein hohes Alpha zeigt Stimmigkeit, nicht, dass die Fragen das Richtige messen.`,
         };
       },
       genau: {
@@ -301,12 +312,12 @@ export const reliabilityTabs: ConceptTabs = {
       const kurz = a.alpha < 0
         ? `Alpha ist negativ (${fixed(a.alpha)}): Die fünf Fragen laufen eher gegeneinander. Meist ist dann eine Frage verkehrt herum gepolt.`
         : a.alpha >= 0.7
-          ? `Die fünf Fragen zur Methoden-Zuversicht passen ${fit(a.alpha)} zusammen: Cronbachs Alpha ist ${fixed(a.alpha)}. Wer einer Frage zustimmt, stimmt meist auch den anderen zu.`
-          : `Die fünf Fragen zur Methoden-Zuversicht passen ${fit(a.alpha)} zusammen: Cronbachs Alpha ist ${fixed(a.alpha)}. Wer einer Frage zustimmt, stimmt den anderen nicht unbedingt zu.`;
+          ? `Die fünf Fragen zur Methoden-Zuversicht passen ${fit(a.alpha)} zusammen: Cronbachs Alpha ist ${alphaText(a.alpha)} (R meldet ${a.alpha.toFixed(3)}). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.`
+          : `Die fünf Fragen zur Methoden-Zuversicht passen ${fit(a.alpha)} zusammen: Cronbachs Alpha ist ${alphaText(a.alpha)} (R meldet ${a.alpha.toFixed(3)}). Wer einer Frage zustimmt, stimmt den anderen nicht unbedingt zu.`;
       const std = Number.isFinite(a.alphaStd) ? ` Aus den Korrelationen gerechnet (standardisiert) ergibt sich ${fixed(a.alphaStd)}.` : ' Ein standardisiertes Alpha gibt es hier nicht, weil eine Frage nicht streut.';
       return {
         kurz,
-        fachlich: `k = 5 Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = 5/4 · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${std} Als Faustregel gilt eine Skala ab etwa 0,7 als ausreichend stimmig.`,
+        fachlich: `k = 5 Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = 5/4 · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${std} mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good und ab 0,7 mit Acceptable; hier heißt das sehr gut, gut und ausreichend. Das sind Faustregeln, keine festen Grenzen.`,
         zusatz: a.sumItemVar > 1e-12 ? `Die Summenwerte streuen ${num(a.totalVar / a.sumItemVar)}-mal so stark wie die fünf Fragen einzeln zusammen.` : undefined,
       };
     },
@@ -315,7 +326,7 @@ export const reliabilityTabs: ConceptTabs = {
       {
         question: 'Frage 1 wird umgepolt: Aus 7 wird 1, aus 1 wird 7. Was macht Alpha?',
         options: ['bleibt gleich', 'sinkt deutlich', 'steigt'], correct: 1,
-        explain: 'Frage 1 läuft jetzt gegen die anderen vier. Die Summenwerte streuen viel weniger, der gemeinsame Teil schrumpft. In den Ausgangsdaten fällt Alpha von 0,90 auf 0,41.',
+        explain: 'Frage 1 läuft jetzt gegen die anderen vier. Die Summenwerte streuen viel weniger, der gemeinsame Teil schrumpft. In den Ausgangsdaten fällt Alpha von knapp 0,9 auf 0,41.',
         kurz: 'Eine verkehrt gepolte Frage drückt Alpha stark nach unten.',
         tryIt: { label: 'Frage 1 umpolen', op: 'reverse', column: 'x' },
         expect: { change: 'down', atLeast: 0.09 },
@@ -323,7 +334,7 @@ export const reliabilityTabs: ConceptTabs = {
       {
         question: 'Alle kreuzen bei Frage 2 „Weder noch“ an, also 4. Was macht Alpha?',
         options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 2,
-        explain: 'Frage 2 unterscheidet niemanden mehr. Sie trägt nichts zur Streuung der Summenwerte bei, zählt aber weiter als eine von fünf Fragen. In den Ausgangsdaten sinkt Alpha von 0,90 auf 0,82.',
+        explain: 'Frage 2 unterscheidet niemanden mehr. Sie trägt nichts zur Streuung der Summenwerte bei, zählt aber weiter als eine von fünf Fragen. In den Ausgangsdaten sinkt Alpha von knapp 0,9 auf 0,82.',
         kurz: 'Eine Frage ohne Streuung trägt nichts zur Messung bei.',
         tryIt: { label: 'alle bei Frage 2 auf 4', op: 'constant', column: 'y', value: 4 },
         expect: { change: 'down' },

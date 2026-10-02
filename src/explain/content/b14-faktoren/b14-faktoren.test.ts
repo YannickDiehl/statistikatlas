@@ -8,7 +8,7 @@ import { applyOp } from '../../sample';
 import { close } from '../../format';
 import { txt, type Ctx, type SampleCtx } from '../../types';
 import { cronbach, itemColumns, methodenPca, methodenR, mlOneFactor, pca, varimax, SPALTEN } from './rechnen';
-import { alphaStats, alphaWerkstatt, KAUM, reliabilityTabs, shiftAll, ZUSAMMEN, type AlphaStats } from './reliability';
+import { alphaStats, alphaText, alphaWerkstatt, fit, KAUM, reliabilityTabs, ZUSAMMEN, type AlphaStats } from './reliability';
 import { efa, efaTabs, METHODEN_PCA } from './efa';
 import { beideModelle, factorModel, factorModelTabs, METHODEN_ML } from './factor-model';
 import { dimensionality, dimensionalityTabs } from './dimensionality';
@@ -38,9 +38,12 @@ import { corMatrix } from './rechnen';
  *   z2 <- zus; z2[,2] <- 4; alpha(z2); k2 <- kaum; k2[,2] <- 4; alpha(k2) # 0.7281553; -0.3488372
  *   alpha(zus - 1); alpha(kaum - 1); alpha(cbind(zus[,1], zus[,1], zus[,1]))   # 0.96; 0.3428571; 1
  *   reliability(as.data.frame(zus), V1, V2, V3)$alpha                      # 0.96
+ *   cov(zus); cov(kaum)          # Paare 1–2, 1–3, 2–3: 2.5 2.5 2.2 (2 · 7.2 = 14.4); 2.5 −0.5 −0.8 (2 · 1.2 = 2.4)
+ *   d <- matrix(c(2,6,2, 3,5,4, 4,4,4, 5,3,6, 6,2,6), ncol = 3, byrow = TRUE); alpha(d); d[,2] <- 4; alpha(d)   # −2.678571 → 0.7281553: kann steigen
  *
  * Mit 200 Befragten und In R (reliability):
  *   atlas %>% reliability(methoden1, methoden2, methoden3, methoden4, methoden5, na.rm = TRUE) %>% summary()
+ *   # print(): Cronbach's Alpha = 0.898 (Good); mariposa .alpha_interpretation: Excellent ab 0.90, Good ab 0.80, Acceptable ab 0.70, Questionable ab 0.60
  *   # Cronbach's Alpha 0.898, Alpha (standardized) 0.899, McDonald's Omega 0.899; SD methoden1 1.425;
  *   # Corrected Item-Total methoden1 0.761, Alpha if Deleted 0.873
  *   alpha(M); sum(apply(M, 2, var)); var(rowSums(M))                       # 0.8981982; 10.15633; 36.08683
@@ -95,19 +98,31 @@ test('B14 Cronbachs Alpha: die Werkstatt rechnet wie R', () => {
   assert.deepEqual(k.itemVar.map(v => Math.round(v * 100) / 100), [2.5, 2.8, 2.8], 'gleiche Antworten je Frage, anders verteilt');
   // Denkfragen: die Antworten stimmen für beide Voreinstellungen.
   const [t1, t2, t3, t4] = alphaWerkstatt.think;
-  assert.ok(close(alphaStats(t1.tryIt!.apply(ZUSAMMEN)).alpha, 0.7281553, 1e-6) && close(alphaStats(t1.tryIt!.apply(KAUM)).alpha, -0.3488372, 1e-6), 'Frage 2 auf 4: sinkt');
+  assert.ok(close(alphaStats(ZUSAMMEN.map(r => [r[0], 4, r[2]])).alpha, 0.7281553, 1e-6) && close(alphaStats(KAUM.map(r => [r[0], 4, r[2]])).alpha, -0.3488372, 1e-6), 'Frage 2 auf 4: sinkt in beiden Gruppen');
   const z3 = alphaStats(t2.tryIt!.apply(KAUM));
   assert.ok(close(z3.alpha, -1.783784, 1e-6) && close(z3.varX, 3.7, 1e-9), 'Frage 3 umgepolt: −1,78');
   assert.match(txt(t2.explain, at(ZUSAMMEN)), /von 0,96 auf −1,78/);
-  assert.deepEqual(shiftAll(ZUSAMMEN)[0], [1, 2, 1], 'eine Stufe tiefer');
-  for (const d of [ZUSAMMEN, KAUM]) assert.ok(close(alphaStats(t3.tryIt!.apply(d)).alpha, alphaStats(d).alpha, 1e-12), 'verschieben: gleich');
+  assert.deepEqual(t3.tryIt!.apply(KAUM)[0], [1, 2, 1], 'Passen zusammen, eine Stufe tiefer');
+  assert.ok(close(alphaStats(t3.tryIt!.apply(KAUM)).alpha, 0.96, 1e-12), 'verschieben: gleich');
+  assert.ok(close(alphaStats(t1.tryIt!.apply(KAUM)).alpha, 0.7281553, 1e-6), 'S1: an Passen zusammen gebunden');
+  assert.match(txt(t1.explain, at(ZUSAMMEN)), /von 0,96 auf 0,73/);
+  const gegen = [[2, 6, 2], [3, 5, 4], [4, 4, 4], [5, 3, 6], [6, 2, 6]];
+  assert.ok(close(alphaStats(gegen).alpha, -2.678571, 1e-6) && close(alphaStats(gegen.map(r => [r[0], 4, r[2]])).alpha, 0.7281553, 1e-6), 'S1: Gegenbeispiel aus R, Alpha steigt');
   assert.ok(close(alphaStats(t4.tryIt!.apply(ZUSAMMEN)).alpha, 1, 1e-12), 'gleiche Antworten: Alpha 1');
   // Texte mit den sichtbaren Zahlen.
   const v = alphaWerkstatt.variants.reliability;
   assert.equal(txt(alphaWerkstatt.steps[5].rechnung, at(ZUSAMMEN)), 'α = 3/2 · 14,4 / 22,5 ≈ 0,96. Der gemeinsame Teil macht 64 % der Streuung der Summenwerte aus.');
   assert.equal(txt(alphaWerkstatt.steps[5].rechnung, at(KAUM)), 'α = 3/2 · 2,4 / 10,5 ≈ 0,34. Der gemeinsame Teil macht 23 % der Streuung der Summenwerte aus.');
   assert.match(v.interpret(at(ZUSAMMEN)).kurz, /passen sehr gut zusammen.*Alpha ist 0,96\./);
-  assert.match(v.interpret(at(KAUM)).kurz, /passen kaum zusammen.*Alpha ist 0,34\./);
+  assert.match(v.interpret(at(KAUM)).kurz, /passen schlecht zusammen.*Alpha ist 0,34\./);
+  // I1: Schritt 5 ist die doppelte Summe der Kovarianzen (R: cov).
+  assert.equal(txt(alphaWerkstatt.steps[4].rechnung, at(ZUSAMMEN)), '22,5 − 8,1 = 14,4 = 2 · (2,5 + 2,5 + 2,2). Die Klammer enthält die Kovarianzen der drei Fragenpaare.');
+  assert.match(txt(alphaWerkstatt.steps[4].rechnung, at(KAUM)), /^10,5 − 8,1 = 2,4 = 2 · \(2,5 \+ \(−0,5\) \+ \(−0,8\)\)/);
+  assert.deepEqual([alphaWerkstatt.steps[4].sym, alphaWerkstatt.steps[4].concept], ['sⱼₗ', 'covariance']);
+  assert.ok(close(alphaStats(ZUSAMMEN).sumCov * 2, alphaStats(ZUSAMMEN).diff, 1e-12) && close(alphaStats(KAUM).sumCov * 2, alphaStats(KAUM).diff, 1e-12), 'diff = 2 · Σ Kovarianzen');
+  // I2: Grenzen wie mariposa, auf dem ungerundeten Wert.
+  assert.deepEqual([fit(0.898), fit(0.9), fit(0.75), fit(0.65), fit(0.34)], ['gut', 'sehr gut', 'ausreichend', 'nur fraglich', 'schlecht']);
+  assert.deepEqual([alphaText(0.898), alphaText(0.96), alphaText(0.797), alphaText(-1.783784)], ['knapp 0,9', '0,96', 'knapp 0,8', '−1,78']);
   assert.match(v.interpret(at(t2.tryIt!.apply(ZUSAMMEN))).kurz, /^Alpha ist negativ \(−1,78\)/);
   // Diagnosen der typischen Fehler.
   const c = at(ZUSAMMEN), s = alphaWerkstatt.steps;
@@ -132,14 +147,15 @@ test('B14 Cronbachs Alpha mit 200 Befragten wie in R', () => {
   assert.equal(s.kind, 'analysis');
   if (s.kind !== 'analysis') return;
   const r = s.result(ctx());
-  assert.match(r.kurz, /passen sehr gut zusammen: Cronbachs Alpha ist 0,90\./);
+  assert.equal(r.kurz, 'Die fünf Fragen zur Methoden-Zuversicht passen gut zusammen: Cronbachs Alpha ist knapp 0,9 (R meldet 0.898). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.');
+  assert.match(r.fachlich, /Excellent, ab 0,8 mit Good/);
   assert.match(r.fachlich, /Σsⱼ² = 10,16, sₓ² = 36,09: α = 5\/4 · \(1 − 10,16 \/ 36,09\) ≈ 0,90\. .* 0,90\./);
   assert.equal(r.zusatz, 'Die Summenwerte streuen 3,55-mal so stark wie die fünf Fragen einzeln zusammen.');
   const rev = applyOp(rows, 'methoden1', 'reverse'), con = applyOp(rows, 'methoden2', 'constant', 4);
   assert.ok(close(s.value!(ctx(rev))!, 0.4064987, 1e-6), 'umgepolt wie R');
   assert.ok(close(s.value!(ctx(con))!, 0.8221579, 1e-6), 'Frage 2 konstant wie R');
   assert.ok(close(s.value!(ctx(applyOp(rev, 'methoden2', 'constant', 4)))!, -0.03941032, 1e-6), 'beides wie R');
-  assert.match(s.think[0].explain, /von 0,90 auf 0,41/); assert.match(s.think[1].explain, /von 0,90 auf 0,82/);
+  assert.match(s.think[0].explain, /von knapp 0,9 auf 0,41/); assert.match(s.think[1].explain, /von knapp 0,9 auf 0,82/);
   assert.match(s.result(ctx(con)).fachlich, /weil eine Frage nicht streut/);
   // In R: 1,425² ≈ 2,03 (var(methoden1) = 2.029246).
   assert.ok(close(1.425 ** 2, 2.03, 0.005) && close(a.itemVars[0], 2.029246, 1e-6));
@@ -173,7 +189,10 @@ test('B14 Komponenten- & Faktorenanalyse: die Zahlen der Karte und der Reiter wi
   const s = efaTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const r = s.result(ctx());
-  assert.match(r.kurz, /^Eine Komponente bündelt 71,2 % der Streuung aller fünf Fragen\. Alle fünf Fragen laden stark auf ihr, zwischen 0,83 und 0,86\./);
+  assert.equal(r.kurz, 'Wer sich bei einer Methodenfrage viel zutraut, traut sich meist auch bei den anderen viel zu: Eine Komponente bündelt 71,2 % der Streuung aller fünf Fragen. Alle fünf Fragen laden stark auf ihr, zwischen 0,83 und 0,86.');
+  assert.match(r.zusatz!, /^Die Ladungen: Frage 1: 0,85; Frage 2: 0,84; /);
+  assert.match(efa.bausteine[0].acht, /Kaiser-Meyer-Olkin, zwischen 0 und 1/);
+  assert.match(efa.genau.paragraphs[0], /sobald es mindestens zwei Komponenten gibt/);
   assert.match(r.fachlich, /erster Eigenwert 3,56 von 5, also 71,2 %\. Der zweite Eigenwert ist 0,41; nur eine Komponente liegt über 1\./);
   const rev = applyOp(rows, 'methoden1', 'reverse');
   assert.match(s.result(ctx(rev)).kurz, /Frage 1 \(−0,85\) lädt negativ/);
@@ -205,14 +224,14 @@ test('B14 Dimensionalität: Texte und Reiter mit den Zahlen aus R', () => {
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const r = s.result(ctx());
   assert.match(r.kurz, /^Nur eine Komponente hat einen Eigenwert über 1 \(3,56\); der zweite liegt bei 0,41\./);
-  assert.equal(r.fachlich, 'Eigenwerte der Korrelationsmatrix: 3,56, 0,41, 0,37, 0,34, 0,31. Zusammen ergeben sie mit allen Nachkommastellen 5, die Zahl der Fragen.');
+  assert.equal(r.fachlich, 'Eigenwerte der Korrelationsmatrix: 3,56; 0,41; 0,37; 0,34; 0,31. Zusammen ergeben sie mit allen Nachkommastellen 5, die Zahl der Fragen.');
   assert.equal(r.zusatz, 'Die erste Komponente bündelt 71,2 % der Streuung, die zweite nur 8,3 %.');
   // In R: Variance explained 79.5 % mit zwei Komponenten, 71.2 % mit einer: 8,3 Prozentpunkte dazu.
   assert.ok(close(METHODEN_PCA.eigen[1] / 5 * 100, 8.27, 0.01));
 });
 
 test('B14 Eigenwerte: Karte, Regler und Reiter mit den Zahlen aus R', () => {
-  assert.match(eigenvalues.stellDirVor.text, /erste Eigenwert 3,56\. Die übrigen vier sind klein: 0,41, 0,37, 0,34, 0,31\. .* 3,56 \/ 5 ≈ 71,2 %/);
+  assert.match(eigenvalues.stellDirVor.text, /erste Eigenwert 3,56\. Die übrigen vier sind klein: 0,41; 0,37; 0,34; 0,31\. .* 3,56 \/ 5 ≈ 71,2 %/);
   assert.match(eigenvalues.regler!.describe(0.64), /1 \+ 4 · 0,64 = 3,56\. Die erste Komponente bündelt 71,2 %, die anderen vier je 0,36\./);
   assert.deepEqual(equalCorrelation(0).map(v => Math.round(v * 1e9) / 1e9), [1, 1, 1, 1, 1]);
   assert.ok(close(equalCorrelation(0.6399357)[0], METHODEN_PCA.eigen[0], 1e-3), 'mittlere Korrelation 0.6399 (R) trifft den ersten Eigenwert fast');
@@ -220,7 +239,9 @@ test('B14 Eigenwerte: Karte, Regler und Reiter mit den Zahlen aus R', () => {
   const s = eigenvaluesTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const r = s.result(ctx());
-  assert.match(r.kurz, /^Der erste Eigenwert ist 3,56: Die erste Komponente bündelt 71,2 % .* zwischen 0,31 und 0,41\./);
+  assert.equal(r.kurz, 'Der erste Eigenwert ist 3,56: Die erste Komponente bündelt 71,2 % der Unterschiede zwischen den Befragten in allen fünf Fragen. Wer bei einer Frage viel Zuversicht zeigt, zeigt sie meist auch bei den anderen. Die übrigen vier Eigenwerte liegen zwischen 0,31 und 0,41.');
+  assert.doesNotMatch(s.result(ctx(applyOp(rows, 'methoden1', 'reverse'))).kurz, /Wer bei einer Frage/, 'T5: Satz über Menschen nur bei gleichgerichteten Fragen');
+  assert.equal(eigenvaluesTabs.next.next.id, 'loadings', 'T7: kein Hin und Her mit Dimensionalität');
   const out = applyOp(rows, 'methoden1', 'outlier', 1, 1), p = methodenPca(out)!;
   assert.ok(close(p.values.reduce((a, b) => a + b, 0), 5, 1e-9), 'Summe 5');
 });
@@ -244,7 +265,10 @@ test('B14 Kommunalität: Formel als Satz und Reiter mit den Zahlen aus R', () =>
   assert.ok(close(KIRCHE['λ₁'], VERTRAUEN.rotated[3][0], 0.005) && close(KIRCHE['λ₂'], VERTRAUEN.rotated[3][1], 0.005), 'Ladungen auf zwei Stellen');
   assert.ok(close(v.h2, 0.81, 1e-12) && close(n.h2, 0.81, 1e-12), 'vor und nach der Drehung 0,81');
   assert.ok(close(Math.hypot(0.72, 0.54), 0.9, 1e-12), 'Drehung: gleicher Abstand vom Ursprung');
-  assert.match(kommunalitaet.interpret(k).kurz, /erfassen 87 % .* 13 % gehören ihr allein/);
+  assert.equal(kommunalitaet.interpret(k).kurz, 'Die beiden Faktoren oder Komponenten erfassen 87 % der Streuung dieser Frage, 13 % erfassen sie nicht.');
+  for (const text of [kommunalitaet.kurz, kommunalitaet.interpret(k).kurz, ...kommunalitaet.worked(k).map(w => w.text)]) assert.doesNotMatch(text, /allein/, 'I3: kein „allein“ für den PCA-Rest');
+  assert.match(kommunalitaet.genau.paragraphs[1], /In der Hauptkomponentenanalyse steckt im Rest auch Gemeinsames/);
+  assert.match(kommunalitaet.interpret(kommunalitaet.compute({ 'λ₁': 1, 'λ₂': 1 })).fachlich, /ML-Faktorenanalyse heißt eine Kommunalität von 1 Heywood-Fall/);
   assert.deepEqual(kommunalitaet.worked(k).map(w => w.text).slice(0, 3), ['0,14 · 0,14 ≈ 0,02.', '0,92 · 0,92 ≈ 0,85.', '0,02 + 0,85 = 0,87.']);
   assert.match(kommunalitaet.fehler, /\(0,14 \+ 0,92\)² ≈ 1,12 statt 0,87/);
   assert.ok(close((0.14 + 0.92) ** 2, 1.1236, 1e-9));
@@ -253,8 +277,8 @@ test('B14 Kommunalität: Formel als Satz und Reiter mit den Zahlen aus R', () =>
   const s = communalityTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const r = s.result(ctx());
-  assert.match(r.kurz, /bei Frage 1 73 % ihrer Streuung, 27 % gehören der Frage allein\. .* zwischen 69 und 73 %\./);
-  assert.match(r.fachlich, /Frage 1 0,73, Frage 2 0,71, Frage 3 0,69, Frage 4 0,73, Frage 5 0,71\. .* Eigenwert 3,56\./);
+  assert.equal(r.kurz, 'Von den Unterschieden zwischen den Befragten bei Frage 1 erfasst die Komponente 73 %; 27 % erfasst sie nicht. Bei allen fünf Fragen liegt der erfasste Anteil zwischen 69 und 73 %.');
+  assert.match(r.fachlich, /Frage 1: 0,73; Frage 2: 0,71; Frage 3: 0,69; Frage 4: 0,73; Frage 5: 0,71\. .* Eigenwert 3,56\./);
 });
 
 test('B14 Rotation: Drehwinkel, Karte und Reiter mit den Zahlen aus R', () => {
@@ -264,7 +288,7 @@ test('B14 Rotation: Drehwinkel, Karte und Reiter mit den Zahlen aus R', () => {
   assert.ok(close(kir[0], VERTRAUEN.rotated[3][0], 1e-4) && close(kir[1], VERTRAUEN.rotated[3][1], 1e-4), 'Drehung trifft Varimax (Kirche)');
   assert.match(rotation.stellDirVor.text, /mit 0,84 auf der ersten Komponente und mit −0,39 auf der zweiten, die katholische Kirche mit 0,62 und 0,69\. .* 0,92 und 0,13 für die Bundesregierung, 0,14 und 0,92 .* vorher wie nachher 83,5 %/);
   assert.match(rotation.bausteine[2].rechnung!, /0,84² \+ \(−0,39\)² ≈ 0,86 und 0,92² \+ 0,13² ≈ 0,86\./);
-  assert.match(rotation.bausteine[2].warum, /vorher 58,4 % und 25,0 %, nachher 48,5 % und 34,9 %/);
+  assert.match(rotation.bausteine[2].warum, /Vorher: 58,4 % und 25,0 %; nachher: 48,5 % und 34,9 %\./);
   assert.match(rotation.regler!.describe(33), /Bundesregierung mit 0,92 auf Achse 1 und mit 0,13 auf Achse 2, die katholische Kirche mit 0,14 und 0,92\. Etwa hier/);
   assert.match(rotation.regler!.describe(90), /mit 0,39 auf Achse 1 und mit 0,84 auf Achse 2, die katholische Kirche mit −0,69 und 0,62\.$/);
   const s = rotationTabs.sample!;
