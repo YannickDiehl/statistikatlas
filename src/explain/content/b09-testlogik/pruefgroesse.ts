@@ -1,6 +1,6 @@
 // Formel als Satz „Prüfgröße & Referenzverteilung“: t = (x̄ − μ₀) / (s / √n) am Beispiel der Schlafdauer gegen
 // sieben Stunden. Zahlen in R nachgerechnet, siehe b09-testlogik.test.ts.
-import type { ConceptTabs, SentenceTemplate } from '../../types';
+import type { ConceptTabs, FNode, SentenceTemplate } from '../../types';
 import { count, close, num } from '../../format';
 import { pt, qt } from '../../../tasks/kit/dist';
 import { SCHLAF, outOf100, pShown, schlafTest, small } from './rechnen';
@@ -15,6 +15,10 @@ const dText = (v: number) => small(v);
 /** t aus den sichtbaren, gerundeten Zahlen; weicht es vom genauen t ab, nennt die Rechnung beide. */
 const shownT = (s: TStats) => Number(dText(s.d).replace(',', '.').replace('−', '-')) / Number(small(s.se).replace(',', '.'));
 const exactNote = (s: TStats) => num(shownT(s)) === num(s.t) ? '' : `, mit allen Nachkommastellen ≈ ${num(s.t)}`;
+/** Ende der eingesetzten Formel: Das Ergebnis t ist antippbar, mit Rundungshinweis der genaue Wert. */
+const tEnd = (s: TStats): FNode[] => exactNote(s)
+  ? [num(shownT(s)), ', mit allen Nachkommastellen ≈ ', { part: [num(s.t)], m: 't' }]
+  : [{ part: [num(s.t)], m: 't' }];
 
 export const pruefgroesse: SentenceTemplate<TValues, TStats> = {
   concept: 'test_statistic',
@@ -41,7 +45,7 @@ export const pruefgroesse: SentenceTemplate<TValues, TStats> = {
   symbolic: [{ part: ['t'], m: 't' }, ' = ', { frac: [{ part: ['x̄ − μ₀'], m: 'd' }], den: [{ part: ['s'], m: 's' }, ' / ', { big: '√', m: 'n' }, { root: [{ part: ['n'], m: 'n' }], m: 'n' }], m: 'se' }],
   aria: 't gleich x quer minus mü null, geteilt durch s durch Wurzel aus n',
   numeric: s => [{ part: ['t'], m: 't' }, ' = ', { part: [dText(s.d)], m: 'd' }, ' / (', { part: [num(s.s)], m: 's' }, ' / ', { part: [`√${count(s.n)}`], m: 'n' }, ') ≈ ',
-    dText(s.d), ' / ', { part: [small(s.se)], m: 'se' }, ' ≈ ', ...(exactNote(s) ? [num(shownT(s)), exactNote(s)] : [{ part: [num(s.t)], m: 't' }])],
+    dText(s.d), ' / ', { part: [small(s.se)], m: 'se' }, ' ≈ ', ...tEnd(s)],
   sentence: ['Die ', { m: 't', t: 'Prüfgröße t' }, ' ist ', { m: 'd', t: 'der Abstand des Mittelwerts zum Wert der Nullhypothese' }, ', geteilt durch ', { m: 'se', t: 'den Standardfehler' }, ', also durch ', { m: 's', t: 'die Standardabweichung' }, ' geteilt durch die Wurzel aus ', { m: 'n', t: 'der Fallzahl' }, '.'],
   worked: s => {
     return [

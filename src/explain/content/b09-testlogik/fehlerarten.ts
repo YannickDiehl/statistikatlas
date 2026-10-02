@@ -103,7 +103,7 @@ export const fehlerarten: ConceptCard = {
     paragraphs: [
       `Die Zahlen hier sind grob gerechnet: mit der Normalverteilung und dem Standardfehler ${num(L.se)} Stunden aus dem Lehrdatensatz. Die Teststärke für eine Stunde ist dann etwa Φ(1 / ${num(L.se)} − 1,96) ≈ ${num(1 - betaFor(0.05))}, also β ≈ ${num(betaFor(0.05))}.`,
       'Welche der vier Situationen vorliegt, weiß man bei einer einzelnen Studie nicht. Die Fehlerquoten beschreiben, wie oft ein Verfahren über viele Studien hinweg irrt.',
-      'Ein Fehler erster Art ist auch bei korrekt erhobenen Daten und korrekt angewandtem Test möglich. Wer viele Tests rechnet, macht ihn fast sicher irgendwo (Begriff „Mehrere Vergleiche“).',
+      'Ein Fehler erster Art ist auch bei korrekt erhobenen Daten und korrekt angewandtem Test möglich. Wer viele Tests rechnet, macht ihn leichter irgendwo: Bei 20 unabhängigen Tests ohne echten Unterschied und α = 0,05 passiert er in etwa 64 von 100 Fällen mindestens einmal (Begriff „Mehrere Vergleiche“).',
     ],
   },
 };
