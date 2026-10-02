@@ -6,6 +6,8 @@ import { formWithTop, FORM } from '../../../explain/content/b03-lage/shape';
 import { niceTicks } from './sample';
 import type { Reihe as ReiheStats } from '../../../explain/content/b03-lage/reihe';
 import type { Haeufigkeit } from '../../../explain/content/b03-lage/haeufigkeit';
+import { OPTIONEN, type Mehrfach } from '../../../explain/content/b03-lage/mehrfach';
+import type { KeyboardEvent } from 'react';
 import { num, pct } from '../../../explain/format';
 import { labelOf } from '../../../explain/content/b03-lage/lage';
 import { Axis, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, useDrag, useWidth, type Bounds, type Picture } from './kit';
@@ -180,7 +182,55 @@ function SaeulenPicture({ values, s, step, who, names, bounds, onChange, onWho }
   );
 }
 
+/**
+ * Werkstatt „Mehrfachantworten“: je Person und Lernquelle ein Kästchen zum Ankreuzen (Rolle „checkbox“, Leertaste
+ * oder Enter), darunter die Zählungen; ab Schritt 3 Balken für die Prozente der Antworten, ab 4 für die der Fälle.
+ */
+function KreuzePicture({ rows, s, step, who, names, onChange, onWho }: {
+  rows: number[][]; s: Mehrfach; step: number; who: number; names: readonly string[];
+  onChange: (d: number[][]) => void; onWho: (i: number) => void;
+}) {
+  const [box, W] = useWidth();
+  const left = 40, cw = Math.min(96, (W - left - 70) / OPTIONEN.length), X = (j: number) => left + (j + 0.5) * cw, R = 34, top = 34, B = top + rows.length * R;
+  const toggle = (i: number, j: number) => { onWho(i); onChange(rows.map((r, k) => k === i ? r.map((v, l) => l === j ? 1 - v : v) : r)); };
+  const key = (e: KeyboardEvent, i: number, j: number) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); toggle(i, j); } };
+  const bx = 84, bw = Math.max(60, W - bx - 128), barY = B + 46, rowH = step >= 4 ? 44 : 26, H = step >= 3 ? barY + OPTIONEN.length * rowH + (step >= 5 ? 26 : 6) : B + 40;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`Kreuze der fünf Beispielpersonen: ${OPTIONEN.map((o, j) => `${o} ${s.counts[j]}`).join(', ')}`}>
+        {OPTIONEN.map((o, j) => <text key={o} className="xw-t xw-strong" x={X(j)} y={top - 12} textAnchor="middle">{o}</text>)}
+        {step >= 2 && <text className="xw-t xw-strong" x={left + OPTIONEN.length * cw + 30} y={top - 12} textAnchor="middle">Σ</text>}
+        {rows.map((r, i) => <g key={`r${i}`}>
+          <text className={`xw-t${i === who ? ' xw-strong' : ''}`} x={12} y={top + i * R + R / 2 + 5}>{names[i]}</text>
+          {r.map((v, j) => (
+            <g key={j} className={`b03-toggle${v === 1 ? ' on' : ''}${i === who ? ' sel' : ''}`} role="checkbox" tabIndex={0} aria-checked={v === 1}
+              aria-label={`Person ${names[i]}, ${OPTIONEN[j]}`} onClick={() => toggle(i, j)} onKeyDown={e => key(e, i, j)}>
+              <rect x={X(j) - 13} y={top + i * R + 4} width={26} height={26} rx={4} />
+              {v === 1 && <text className="xw-t xw-strong" x={X(j)} y={top + i * R + 22} textAnchor="middle">✕</text>}
+            </g>
+          ))}
+          {step >= 2 && <text className="xw-t" x={left + OPTIONEN.length * cw + 30} y={top + i * R + R / 2 + 5} textAnchor="middle">{s.perPerson[i]}</text>}
+        </g>)}
+        <line className="xw-axis" x1={left} x2={left + OPTIONEN.length * cw + (step >= 2 ? 50 : 0)} y1={B + 4} y2={B + 4} />
+        {OPTIONEN.map((o, j) => <text key={`n${o}`} className="xw-t xw-strong" x={X(j)} y={B + 24} textAnchor="middle">{s.counts[j]}</text>)}
+        {step >= 2 && <text className="xw-t xw-strong" x={left + OPTIONEN.length * cw + 30} y={B + 24} textAnchor="middle">{s.total}</text>}
+        {step >= 3 && OPTIONEN.map((o, j) => <g key={`bar${o}`}>
+          <text className="xw-t" x={12} y={barY + j * rowH + 13}>{o}</text>
+          <rect className="xw-bar-plain" x={bx} y={barY + j * rowH} width={Math.max(2, bw * s.respPct[j] / 100)} height={16} />
+          <text className="xw-t" x={bx + Math.max(2, bw * s.respPct[j] / 100) + 6} y={barY + j * rowH + 13}>{num(s.respPct[j])} % der Kreuze</text>
+          {step >= 4 && <>
+            <rect className="xw-bar-pos" x={bx} y={barY + j * rowH + 19} width={Math.max(2, bw * s.casePct[j] / 100)} height={16} />
+            <text className="xw-t" x={bx + Math.max(2, bw * s.casePct[j] / 100) + 6} y={barY + j * rowH + 32}>{num(s.casePct[j])} % der Personen</text>
+          </>}
+        </g>)}
+        {step >= 5 && <text className="xw-t xw-strong" x={12} y={H - 8}>Personen zusammen {num(s.caseSum)} %, Kreuze zusammen 100 %</text>}
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b03-mehrfach': forWorkshop(p => <KreuzePicture rows={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} onChange={p.setData} onWho={p.pickWho} />),
   'b03-haeufigkeit': forWorkshop(p => <SaeulenPicture values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b03-reihe': forWorkshop(p => <ReihePicture values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b03-schiefe': forCard(p => <Schiefe top={p.value ?? FORM.einkommen.max} />),

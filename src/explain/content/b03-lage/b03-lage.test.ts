@@ -15,6 +15,7 @@ import { CATALOG_OUTPUT } from '../../catalogOutput';
 import { sdOf } from './lage';
 import { bridgeReihe, derReiheNach, reihe } from './reihe';
 import { bridgeHaeufigkeit, haeufigkeit, haeufigkeiten } from './haeufigkeit';
+import { mehrfach, mehrfachOf, multipleResponseTabs } from './mehrfach';
 import { txt } from '../../types';
 import { bridgeContext } from '../../sample';
 
@@ -82,6 +83,15 @@ import { bridgeContext } from '../../sample';
  *   table(4 - sa); atlas %>% mutate(sa_rev = rec(schulabschluss, rules = "rev")) %>% w_modus(sa_rev)   # 40 41 37 40 42; Mode 4.000
  *   100 * mean(sa <= 3)                                                  # 80 (P002 hat Code 3)
  *   for (v in c("lernzeit", "einkommen", "lernplanung5")) { t <- table(as.numeric(atlas[[v]])); length(t); max(t) }   # 99/7, 197/2, 5/58
+ *
+ * Mehrfachantworten (Werkstatt „Mehrfachantworten“), Lernquellen:
+ *   atlas %>% multiple_response(quelle_buch, quelle_video, quelle_kurs, counted = 1)
+ *     # Responses n 121 113 103 (337), Responses % 35.9 33.5 30.6, % of Cases 60.5 56.5 51.5 (168.5), Valid cases 200
+ *   b <- atlas$quelle_buch; v <- atlas$quelle_video; k <- atlas$quelle_kurs; sum(b + v + k == 0)   # 17 ohne Quelle
+ *   atlas %>% mutate(quelle_buch = 1) %>% multiple_response(quelle_buch, quelle_video, quelle_kurs, counted = 1)   # Buch 100.0 % der Fälle, 48.1 % der Antworten (416)
+ *   atlas %>% mutate(quelle_video = 0) %>% multiple_response(quelle_buch, quelle_video, quelle_kurs, counted = 1)  # Valid cases: 200
+ *   atlas %>% multiple_response(quelle_buch, quelle_video, quelle_kurs, counted = 2)   # alle Nennungen 0, keine Fehlermeldung
+ *   Fünf Personen, Gruppe 1: Nennungen 3 3 2 (8), % Antworten 37.5 37.5 25, % Fälle 60 60 40 (160)
  */
 
 const rows = createSurvey();
@@ -232,4 +242,23 @@ test('B3 Häufigkeiten: Modus, Anteile und kumulierte Anteile der acht und der 2
   }
   assert.match(CATALOG_OUTPUT['frequency:0'].output, /\|\s+0 \| Ohne Schulabschluss\s+\|\s+42 \|\s+21\.00/);
   assert.match(CATALOG_OUTPUT['mode:0'].output, /schulabschluss {2}0\.000/);
+});
+
+test('B3 Mehrfachantworten: Nennungen und beide Prozente der fünf und der 200 wie in R', () => {
+  const a = mehrfach([[1, 0, 1], [1, 1, 0], [0, 1, 0], [1, 1, 1], [0, 0, 0]]), b = mehrfach([[1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1], [1, 0, 0]]);
+  assert.deepEqual([a.counts, a.total, a.respPct, a.casePct, a.caseSum, a.none], [[3, 3, 2], 8, [37.5, 37.5, 25], [60, 60, 40], 160, 1]);
+  assert.deepEqual([b.counts, b.total, b.caseSum, b.respPct], [[3, 1, 1], 5, 100, [60, 20, 20]]);
+  const ctx = { rows, columns: { x: ['quelle_buch'], y: ['quelle_video'], z: ['quelle_kurs'] } }, s = mehrfachOf(ctx);
+  assert.deepEqual([s.counts, s.total, s.casePct.map(v => Math.round(v * 1e9) / 1e9), s.none], [[121, 113, 103], 337, [60.5, 56.5, 51.5], 17]);
+  assert.ok(close(s.caseSum, 168.5, 1e-9) && close(s.respPct[0], 35.905, 0.001) && close(s.respPct[1], 33.531, 0.001) && close(s.respPct[2], 30.564, 0.001));
+  const t = multipleResponseTabs.sample!;
+  assert.ok(t.kind === 'analysis');
+  if (t.kind === 'analysis') {
+    assert.equal(t.result(ctx).kurz, '60,5 % der 200 Befragten haben in den letzten sieben Tagen mit einem Buch gelernt, 56,5 % mit Videos und 51,5 % mit einem Kurs. Zusammen sind das 168,5 %, weil viele mehrere Quellen nutzen.');
+    assert.match(t.result(ctx).fachlich, /Buch 35,9 %, Video 33,5 %, Kurs 30,6 %/);
+  }
+  const allBook = mehrfachOf({ ...ctx, rows: applyOp(rows, 'quelle_buch', 'constant', 1) });
+  assert.deepEqual([allBook.casePct[0], allBook.total], [100, 416]);
+  assert.ok(close(allBook.respPct[0], 48.08, 0.01) && t.think[0].explain.includes('200 von 416, also 48,1 %'));
+  assert.match(CATALOG_OUTPUT['multiple_response:0'].output, /Lernquelle Buch {11}121 {9}35\.9 {8}60\.5/);
 });

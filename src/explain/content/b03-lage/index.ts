@@ -7,6 +7,7 @@ import { shape, shapeTabs } from './shape';
 import { describeCard, describeTabs } from './describe';
 import { derReiheNach, medianTabs, quantileTabs } from './reihe';
 import { frequencyTabs, haeufigkeiten, modeTabs } from './haeufigkeit';
+import { mehrfachantworten, multipleResponseTabs } from './mehrfach';
 
 export const b03Lage: AreaIndex = {
   explanations: {
@@ -18,6 +19,7 @@ export const b03Lage: AreaIndex = {
     quantile: { kind: 'werkstatt', workshop: derReiheNach, variant: 'quantile' },
     mode: { kind: 'werkstatt', workshop: haeufigkeiten, variant: 'mode' },
     frequency: { kind: 'werkstatt', workshop: haeufigkeiten, variant: 'frequency' },
+    multiple_response: { kind: 'werkstatt', workshop: mehrfachantworten, variant: 'multiple_response' },
   },
   tabs: {
     validn: validnTabs,
@@ -28,5 +30,6 @@ export const b03Lage: AreaIndex = {
     quantile: quantileTabs,
     mode: modeTabs,
     frequency: frequencyTabs,
+    multiple_response: multipleResponseTabs,
   },
 };
