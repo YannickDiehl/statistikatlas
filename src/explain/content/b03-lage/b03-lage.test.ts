@@ -14,6 +14,8 @@ import { UEBERBLICK, describeCard, describeTabs, overviewOf } from './describe';
 import { CATALOG_OUTPUT } from '../../catalogOutput';
 import { sdOf } from './lage';
 import { bridgeReihe, derReiheNach, reihe } from './reihe';
+import { bridgeHaeufigkeit, haeufigkeit, haeufigkeiten } from './haeufigkeit';
+import { txt } from '../../types';
 import { bridgeContext } from '../../sample';
 
 /*
@@ -70,6 +72,16 @@ import { bridgeContext } from '../../sample';
  *   rank(x, ties.method = "min")[atlas$id == "P002"]; rank(x, ties.method = "max")[atlas$id == "P002"]   # 113 114
  *   q(x, .25, 7); q(x, .75, 7)                                         # 5.8 9.65 (Type 7, nah an Type 6)
  *   q(x + 1, .75) - q(x + 1, .25); q(2 * x, .75) - q(2 * x, .25)       # 3.95 7.9
+ *
+ * Modus und Häufigkeiten (Werkstatt „Häufigkeiten“), sa <- as.numeric(atlas$schulabschluss):
+ *   d <- c(2, 4, 1, 2, 4, 2, 0, 3); table(d); 100 * cumsum(table(d)) / 8   # 1 1 3 1 2; 12.5 25 62.5 75 100; Modus 2
+ *   e <- c(1, 1, 4, 1, 4, 4, 2, 0); table(e); names(which.max(table(e)))    # 0:1 1:3 2:1 4:3; w_modus-Regel: kleinster, 1
+ *   atlas %>% frequency(schulabschluss, show_unused = TRUE)              # 42 40 37 41 40; Raw % 21.00 …; Cum. % 21 41 59.5 80 100
+ *   atlas %>% filter(schulabschluss != 3) %>% frequency(schulabschluss, show_unused = TRUE)   # Code 3 mit N 0
+ *   atlas %>% w_modus(schulabschluss)                                    # Mode 0.000
+ *   table(4 - sa); atlas %>% mutate(sa_rev = rec(schulabschluss, rules = "rev")) %>% w_modus(sa_rev)   # 40 41 37 40 42; Mode 4.000
+ *   100 * mean(sa <= 3)                                                  # 80 (P002 hat Code 3)
+ *   for (v in c("lernzeit", "einkommen", "lernplanung5")) { t <- table(as.numeric(atlas[[v]])); length(t); max(t) }   # 99/7, 197/2, 5/58
  */
 
 const rows = createSurvey();
@@ -196,4 +208,28 @@ test('B3 Der Reihe nach: Median, Quartile und IQR der fünf und der 200 wie in R
   assert.equal(bridgeReihe.lines[0].person(c), 'P002 hat 8,3 h und steht der Reihe nach auf einem der Plätze 113 bis 114.');
   const iqrOf = (d: typeof rows) => bridgeReihe.value(bridgeContext(reihe, 'series', d, 'lernzeit', '', 0), 'quantile')!;
   assert.ok(close(iqrOf(applyOp(rows, 'lernzeit', 'shift', 1)), 3.95, 1e-9) && close(iqrOf(applyOp(rows, 'lernzeit', 'double', 2)), 7.9, 1e-9));
+});
+
+test('B3 Häufigkeiten: Modus, Anteile und kumulierte Anteile der acht und der 200 wie in R', () => {
+  const a = haeufigkeit([2, 4, 1, 2, 4, 2, 0, 3]), b = haeufigkeit([1, 1, 4, 1, 4, 4, 2, 0]);
+  assert.deepEqual([a.values, a.counts, a.mode, a.max, a.modes], [[0, 1, 2, 3, 4], [1, 1, 3, 1, 2], 2, 3, [2]]);
+  assert.deepEqual([b.values, b.counts, b.mode, b.modes], [[0, 1, 2, 4], [1, 3, 1, 3], 1, [1, 4]]);
+  assert.deepEqual(a.ownCum, [62.5, 100, 25, 62.5, 100, 62.5, 12.5, 75]);
+  const ca = { s: a, who: 0, names: haeufigkeiten.names };
+  assert.equal(txt(haeufigkeiten.steps[3].rechnung, ca), 'h₂ = n₂ / n = 3 / 8 ≈ 0,38, also 37,5 %. So viele der acht haben denselben Abschluss wie A.');
+  assert.equal(txt(haeufigkeiten.steps[4].rechnung, ca), 'F₂ = h₀ + h₁ + h₂ = (1 + 1 + 3) / 8 = 62,5 %. So viele haben höchstens den Abschluss von A.');
+  assert.match(txt(haeufigkeiten.steps[1].rechnung, { s: b, who: 0, names: haeufigkeiten.names }), /Gleich häufig sind Code 1 .* und Code 4 .* mit je 3 Personen\. R meldet bei Gleichstand den kleinsten Code, also 1\./);
+  const c = bridgeContext(haeufigkeit, 'series', rows, 'schulabschluss', '', 1), s = c.s;
+  assert.deepEqual([s.values, s.counts, s.mode, s.maxShare], [[0, 1, 2, 3, 4], [42, 40, 37, 41, 40], 0, 21]);
+  assert.equal(s.ownCum[1], 80, 'P002 hat Code 3: 80 % höchstens');
+  assert.equal(bridgeHaeufigkeit.lines[4].all(c), 'Von der kleinsten Antwort an aufsummiert, erreichst du bei 2 („Mittlerer Abschluss“) erstmals mindestens 50 %.');
+  assert.equal(bridgeHaeufigkeit.interpret(c, 'mode').zusatz, 'Danach folgt 3 („Fachhochschulreife“) mit 41 Befragten.');
+  const rev = bridgeContext(haeufigkeit, 'series', applyOp(rows, 'schulabschluss', 'reverse'), 'schulabschluss', '', 1);
+  assert.deepEqual([rev.s.counts, rev.s.mode, rev.s.max], [[40, 41, 37, 40, 42], 4, 42]);
+  for (const [col, k, max] of [['lernzeit', 99, 7], ['einkommen', 197, 2], ['lernplanung5', 5, 58]] as const) {
+    const h = bridgeContext(haeufigkeit, 'series', rows, col, '', 0).s;
+    assert.deepEqual([h.k, h.max], [k, max], col);
+  }
+  assert.match(CATALOG_OUTPUT['frequency:0'].output, /\|\s+0 \| Ohne Schulabschluss\s+\|\s+42 \|\s+21\.00/);
+  assert.match(CATALOG_OUTPUT['mode:0'].output, /schulabschluss {2}0\.000/);
 });

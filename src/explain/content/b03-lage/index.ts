@@ -6,6 +6,7 @@ import { range, rangeTabs } from './range';
 import { shape, shapeTabs } from './shape';
 import { describeCard, describeTabs } from './describe';
 import { derReiheNach, medianTabs, quantileTabs } from './reihe';
+import { frequencyTabs, haeufigkeiten, modeTabs } from './haeufigkeit';
 
 export const b03Lage: AreaIndex = {
   explanations: {
@@ -15,6 +16,8 @@ export const b03Lage: AreaIndex = {
     describe: { kind: 'begriff', card: describeCard },
     median: { kind: 'werkstatt', workshop: derReiheNach, variant: 'median' },
     quantile: { kind: 'werkstatt', workshop: derReiheNach, variant: 'quantile' },
+    mode: { kind: 'werkstatt', workshop: haeufigkeiten, variant: 'mode' },
+    frequency: { kind: 'werkstatt', workshop: haeufigkeiten, variant: 'frequency' },
   },
   tabs: {
     validn: validnTabs,
@@ -23,5 +26,7 @@ export const b03Lage: AreaIndex = {
     describe: describeTabs,
     median: medianTabs,
     quantile: quantileTabs,
+    mode: modeTabs,
+    frequency: frequencyTabs,
   },
 };

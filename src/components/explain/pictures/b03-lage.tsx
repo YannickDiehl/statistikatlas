@@ -1,11 +1,13 @@
 // Bilder des Bereichs B3 „Lage und Verteilung“ für alle Vorlagen. Schlüssel = `picture` der Erklärung, Bausteine und
 // `forWorkshop`/`forCard`/`forSentence`/`forTable` aus ./kit.tsx.
 // Eigene Stile in src/explain/areas/b03-lage.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
-import { num } from '../../../explain/format';
 import { rangeWithTop, LERNZEIT } from '../../../explain/content/b03-lage/range';
 import { formWithTop, FORM } from '../../../explain/content/b03-lage/shape';
 import { niceTicks } from './sample';
 import type { Reihe as ReiheStats } from '../../../explain/content/b03-lage/reihe';
+import type { Haeufigkeit } from '../../../explain/content/b03-lage/haeufigkeit';
+import { num, pct } from '../../../explain/format';
+import { labelOf } from '../../../explain/content/b03-lage/lage';
 import { Axis, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Punktdiagramm: gleiche (in Pixeln nahe) Werte stapeln sich; liefert die Punkte und die Höhe des höchsten Stapels. */
@@ -135,7 +137,51 @@ function ReihePicture({ values, s, step, who, names, bounds, onChange, onWho }: 
   );
 }
 
+const SHORT = ['ohne', 'Haupt', 'Mittel', 'FH', 'Abitur'];
+
+/**
+ * Werkstatt „Häufigkeiten“: je Abschluss eine Säule, jede Person ein ziehbarer Punkt. Ab Schritt 1 die Zählung über der
+ * Säule, ab 2 der Modus hervorgehoben, ab 4 die Anteile, in Schritt 5 die kumulierten Anteile.
+ */
+function SaeulenPicture({ values, s, step, who, names, bounds, onChange, onWho }: {
+  values: number[]; s: Haeufigkeit; step: number; who: number; names: readonly string[]; bounds: Bounds;
+  onChange: (v: number[]) => void; onWho: (i: number) => void;
+}) {
+  const [box, W] = useWidth();
+  const codes = Array.from({ length: bounds.max - bounds.min + 1 }, (_, k) => bounds.min + k);
+  const left = 16, right = W - 16, cw = (right - left) / codes.length, X = (v: number) => left + (v - bounds.min + 0.5) * cw;
+  const ROW = 26, B = 40 + values.length * ROW, H = B + (step >= 5 ? 96 : step >= 4 ? 78 : 58);
+  const set = (i: number, v: number) => { if (v !== values[i]) onChange(values.map((x, k) => k === i ? v : x)); };
+  const { svg, start, handlers } = useDrag((i, p) => set(i, clamp((p.x - left) / cw - 0.5 + bounds.min, bounds)));
+  const level = values.map((v, i) => values.slice(0, i).filter(x => x === v).length);
+  const count = (code: number) => values.filter(v => v === code).length;
+  const upTo = (code: number) => values.filter(v => v <= code).length / values.length;
+  return (
+    <div ref={box}>
+      <svg ref={svg} className="xw-svg xw-drag" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group"
+        aria-label={`Säulen der ${values.length} Beispielpersonen nach Schulabschluss: ${codes.map(k => `Code ${k}: ${count(k)}`).join(', ')}`} {...handlers}>
+        {codes.map(k => <rect key={`col${k}`} className={`b03-col${step >= 2 && s.modes.includes(k) ? ' on' : ''}`} x={X(k) - cw / 2 + 3} y={22} width={cw - 6} height={B - 22} />)}
+        {codes.map(k => <text key={`n${k}`} className="xw-t xw-strong" x={X(k)} y={B - 14 - Math.max(0, count(k)) * ROW + (count(k) ? 2 : 4)} textAnchor="middle">{`n${'₀₁₂₃₄₅₆₇₈₉'[k] ?? ''} = ${count(k)}`}</text>)}
+        <line className="xw-axis" x1={left} x2={right} y1={B} y2={B} />
+        {codes.map(k => <g key={`lab${k}`}>
+          <text className="xw-t xw-strong" x={X(k)} y={B + 20} textAnchor="middle">{k}</text>
+          <text className="xw-t" x={X(k)} y={B + 38} textAnchor="middle">{SHORT[k] ?? ''}</text>
+          {step >= 4 && <text className="xw-t" x={X(k)} y={B + 58} textAnchor="middle">{pct(count(k) / values.length)}</text>}
+          {step >= 5 && <text className="xw-t" x={X(k)} y={B + 78} textAnchor="middle">{`≤ ${pct(upTo(k))}`}</text>}
+        </g>)}
+        {values.map((v, i) => (
+          <DragPoint key={`dot${i}`} x={X(v)} y={B - 14 - level[i] * ROW} label={`Person ${names[i]}, Schulabschluss`} valueText={`Code ${v}: ${labelOf('schulabschluss', v)}`}
+            selected={i === who} valueNow={v} bounds={bounds}
+            onPointerDown={e => { onWho(i); start(i, e); }}
+            onKeyDown={e => { const next = keyStep(e, v, bounds); if (next !== null) { e.preventDefault(); onWho(i); set(i, next); } }}>{names[i]}</DragPoint>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b03-haeufigkeit': forWorkshop(p => <SaeulenPicture values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b03-reihe': forWorkshop(p => <ReihePicture values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b03-schiefe': forCard(p => <Schiefe top={p.value ?? FORM.einkommen.max} />),
   'b03-spannweite': forCard(p => <Spannweite top={p.value ?? LERNZEIT.max} />),
