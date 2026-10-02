@@ -91,7 +91,7 @@ export const partielleKorrelation: SentenceTemplate<PcValues, PcStats> = {
     question: 'Die Lernzeit hängt weder mit der Lernplanung noch mit dem Wissenstest zusammen (rXZ = rYZ = 0). Was passiert beim Kontrollieren?',
     options: ['nichts, rXY|Z = rXY', 'der Zusammenhang verschwindet', 'er verdoppelt sich'], correct: 0, mark: 'rXZ',
     explain: 'Mit rXZ = 0 wird nichts abgezogen, und der Nenner ist √(1 · 1) = 1. Eine Kontrollvariable, die mit keinem der beiden zusammenhängt, ändert nichts.',
-    kurz: 'Kontrollieren wirkt nur über die Zusammenhänge mit z.',
+    kurz: 'Kontrollieren ändert nur etwas, wenn z mit x oder y zusammenhängt.',
     hint: 'Probier oben „z hängt mit nichts zusammen“ aus.',
   },
   genau: {

@@ -187,7 +187,7 @@ export const rangkorrelation: Workshop<Pairs, RankStats> = {
           ? `Quadratsummen: ${num(c.s.qx)} bei den Stunden, ${num(c.s.qy)} bei den Aufgaben. ρ = ${num(c.s.sp)} / √(${num(c.s.qx)} · ${num(c.s.qy)}) = ${num(c.s.sp)} / ${num(c.s.den)} ${eq(c.s.rho)} ${num(c.s.rho)}.`
           : `Ohne gleiche Werte ist jede Quadratsumme 10: (−2)² + (−1)² + 0² + 1² + 2². Also ρ = ${num(c.s.sp)} / √(10 · 10) = ${num(c.s.sp)} / 10 = ${num(c.s.rho)}.`,
       fach: 'Spearman-ρ ist die Pearson-Korrelation der Ränge: die Summe der Produkte geteilt durch √(Σ(R(xᵢ) − R̄)² · Σ(R(yᵢ) − R̄)²). Das n − 1 der Pearson-Formel kürzt sich weg.',
-      warum: 'Größer als dieses Produkt kann die Summe nicht werden. Teilen wir dadurch, liegt ρ immer zwischen −1 und +1, egal wie viele Personen es sind.',
+      warum: 'Im Betrag kann die Summe nie größer werden als diese Wurzel. Teilen wir dadurch, liegt ρ immer zwischen −1 und +1, egal wie viele Personen es sind.',
       acht: 'ρ = 1 heißt: Die Reihenfolge ist bei beiden Fragen genau gleich. Es heißt nicht, dass die Punkte auf einer Geraden liegen.',
       check: {
         question: c => c.s.rho === null ? 'Wie groß ist ρ? Eine Quadratsumme ist hier 0. Tippe NA, wenn ρ nicht definiert ist.' : 'Wie groß ist ρ? Zwei Nachkommastellen reichen.',

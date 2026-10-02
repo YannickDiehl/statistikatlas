@@ -317,7 +317,7 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
         paragraphs: c => [
           `Hier ist (C − D) / (C + D) = ${int(c.s.cd)} / ${c.s.cpd}. Umgerechnet heißt das: Unter den Paaren mit klarer Richtung ist der Anteil gleich gerichteter Paare (1 + γ) / 2.`,
           'Bei geordneten Kategorien mit wenigen Stufen gibt es sehr viele Gleichstände. Dann kann Gamma groß wirken, obwohl nur wenige Paare eine Richtung haben.',
-          'goodman_gamma() aus mariposa gibt nur die Zahl aus. Gibt es kein Paar mit Richtung, meldet es 0 statt „nicht definiert“.',
+          'goodman_gamma() aus mariposa gibt nur die Zahl aus. Gibt es kein Paar mit Richtung, meldet es 0 statt „nicht definiert“. Weil es intern auch χ² rechnet, warnt R manchmal vor kleinen erwarteten Zellzahlen; Gamma selbst betrifft das nicht.',
           GENAU_URSACHE,
         ],
       },
