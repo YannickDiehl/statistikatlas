@@ -30,6 +30,8 @@ let table: { train: number; test: number; last: string }[] | null = null;
 export const baseTable = () => table ??= Array.from({ length: MAX_K }, (_, i) => trainTest(baseSurvey(), i + 1)!);
 const pct = (v: number) => `${num(v * 100, 0)} %`;
 const kOf = (v: number) => Math.max(1, Math.min(MAX_K, Math.round(v)));
+/** Abstand zwischen Training und Test; „fast 0“, wenn er gerundet 0 wäre. */
+const gapText = (v: number) => num(v) === '0' ? 'fast 0' : num(v);
 const predictors = (k: number) => `${k} ${k === 1 ? 'Prädiktor' : 'Prädiktoren'}`;
 
 export const ueberanpassung: ConceptCard = {
@@ -38,7 +40,7 @@ export const ueberanpassung: ConceptCard = {
   wofuer: 'Wer den Wissenstest vorhersagen will, kann immer mehr Spalten ins Modell nehmen: Alter, Schlafdauer, Einkommen und so weiter. Auf den Daten, mit denen das Modell geschätzt wird, passt es dann jedes Mal besser. Aber sagt es auch neue Personen besser vorher?',
   kurz: 'Überanpassung heißt: Ein Modell lernt Zufälligkeiten seiner Daten mit. Auf diesen Daten passt es dann immer besser, bei neuen Personen wird es schlechter.',
   stellDirVor: {
-    text: `Wir schätzen Modelle mit den ersten 100 Befragten und prüfen sie an den anderen 100. Mit der Lernzeit allein erfasst das Modell bei den ersten 100 ${pct(baseTable()[0].train)} der Streuung, bei den neuen 100 ${pct(baseTable()[0].test)}. Mit 20 Prädiktoren sind es bei den ersten 100 ${pct(baseTable()[19].train)}, bei den neuen nur noch ${pct(baseTable()[19].test)}.`,
+    text: `Wir schätzen Modelle mit den ersten 100 Befragten und prüfen sie an den anderen 100. Mit der Lernzeit allein erfasst das Modell ${pct(baseTable()[0].train)} der Streuung bei den ersten 100 Befragten und ${pct(baseTable()[0].test)} bei den neuen. Mit 20 Prädiktoren sind es ${pct(baseTable()[19].train)} bei den ersten 100, bei den neuen nur noch ${pct(baseTable()[19].test)}.`,
     figures: [
       { label: 'Training, 1 Prädiktor', value: `R² ${num(baseTable()[0].train)}` },
       { label: 'Test, 1 Prädiktor', value: `R² ${num(baseTable()[0].test)}` },
@@ -48,7 +50,7 @@ export const ueberanpassung: ConceptCard = {
   },
   heisst: {
     sym: 'MSEₜₑₛₜ', say: 'M S E Test',
-    fach: 'Überanpassung liegt vor, wenn ein Modell seine Trainingsdaten besser beschreibt, als es neue Fälle vorhersagt. Gemessen wird das am Fehler bei zurückgehaltenen Daten, etwa am mittleren quadrierten Fehler MSEₜₑₛₜ.',
+    fach: 'Überanpassung liegt vor, wenn ein Modell seine Trainingsdaten besser beschreibt, als es neue Fälle vorhersagt. Gemessen wird das am Fehler bei zurückgehaltenen Daten, etwa am mittleren quadrierten Fehler MSEₜₑₛₜ. R² im Test ist 1 − MSEₜₑₛₜ geteilt durch die mittlere quadrierte Abweichung der Testwerte von ihrem Mittelwert.',
   },
   bausteine: [
     {
@@ -120,7 +122,7 @@ export const ueberanpassung: ConceptCard = {
       'R² im Test ist hier 1 − Σ(yᵢ − ŷᵢ)² / Σ(yᵢ − ȳ)² über die 100 Testpersonen, mit ihrem eigenen Mittelwert ȳ. Es kann negativ werden, wenn das Modell schlechter vorhersagt als dieser Mittelwert.',
       'Kreuzvalidierung teilt die Daten mehrmals anders auf und mittelt die Testfehler. So hängt das Ergebnis weniger an einer einzigen Teilung.',
       'Messungen derselben Person gehören zusammen in Training oder Test. Bei Vorhersagen über die Zeit muss der Test nach dem Training liegen.',
-      'Die Reihenfolge der Prädiktoren ist hier fest: zuerst die Lernzeit, dann Spalten, die mit dem Wissenstest kaum zusammenhängen. Kategorien ohne Rangfolge sind nicht dabei.',
+      'Die Reihenfolge der Prädiktoren ist hier fest: zuerst die Lernzeit, dann Spalten, die mit dem Wissenstest höchstens schwach zusammenhängen (r zwischen −0,17 und 0,25). Kategorien ohne Rangfolge sind nicht dabei.',
       'Das korrigierte R² und Kriterien wie AIC ziehen für jeden Prädiktor etwas ab. Sie ersetzen die Prüfung an neuen Daten aber nicht.',
     ],
   },
@@ -136,7 +138,7 @@ export const ueberanpassungTabs: ConceptTabs = {
       if (!one || !all) return { kurz: 'Mit diesen Daten lässt sich das Modell nicht schätzen.', fachlich: 'Die Prädiktoren hängen im Training vollständig voneinander ab.' };
       return {
         kurz: `Mit der Lernzeit allein: R² ${num(one.train)} im Training und ${num(one.test)} im Test. Mit 20 Prädiktoren: ${num(all.train)} im Training, aber nur ${num(all.test)} im Test.`,
-        fachlich: `Die 19 zusätzlichen Prädiktoren erhöhen R² im Training um ${num(all.train - one.train)} und verändern es im Test um ${num(all.test - one.test)}. Der Unterschied zwischen Training und Test wächst von ${num(one.train - one.test)} auf ${num(all.train - all.test)}.`,
+        fachlich: `Die 19 zusätzlichen Prädiktoren erhöhen R² im Training um ${num(all.train - one.train)} und verändern es im Test um ${num(all.test - one.test)}. Der Unterschied zwischen Training und Test wächst von ${gapText(one.train - one.test)} auf ${num(all.train - all.test)}.`,
       };
     },
     voraussetzung: 'Die Teilung in P001 bis P100 und P101 bis P200 ist fest. Mit einer anderen Teilung sähen die Zahlen etwas anders aus.',
@@ -161,8 +163,8 @@ export const ueberanpassungTabs: ConceptTabs = {
     entry: 'linear_regression', variant: 0,
     tokens: { linear_regression: LINEAR_REGRESSION_TOKEN, modell: MODELL },
     outputMap: [
-      { match: '0.292', atlas: 'R² im Training', explain: 'R Square gilt für die 200 Befragten, an die das Modell angepasst wurde. Für neue Personen sagt es nichts.' },
-      { match: '0.285', atlas: 'korrigiertes R²', explain: 'Adjusted R Square zieht für jeden Prädiktor etwas ab. Das dämpft Überanpassung, ersetzt aber keinen Test an neuen Daten.' },
+      { match: '0.292', atlas: 'R² im Training', explain: 'R Square gilt für die 200 Befragten, an die das Modell angepasst wurde. Wie gut es neue Personen vorhersagt, zeigt es nicht.' },
+      { match: '0.285', atlas: 'korrigiertes R²', explain: 'Adjusted R Square zieht für jeden Prädiktor etwas ab. Das ersetzt keinen Test an neuen Daten.' },
     ],
     check: {
       question: 'Welche Zahl zieht für jeden Prädiktor etwas ab? Tippe sie an.', correct: '0.285',

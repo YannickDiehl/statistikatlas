@@ -42,7 +42,7 @@ export const logistischeRegression: ConceptCard = {
       was: 'Die logistische Funktion macht aus jedem Logit eine Zahl zwischen 0 und 1.',
       rechnung: `p = 1 / (1 + e^(−${num(BE.b0 + BE.b1 * 12)})) ≈ ${num(pBestanden(12))}, also ${pct(pBestanden(12))}.`,
       warum: 'So bleibt jede Vorhersage eine echte Wahrscheinlichkeit, auch bei sehr viel oder sehr wenig Lernzeit.',
-      acht: 'Die S-Kurve ist in der Mitte steil und an den Rändern flach. Eine Stunde mehr bringt deshalb nicht überall gleich viel.',
+      acht: 'Die S-Kurve ist in der Mitte steil und an den Rändern flach. Eine Stunde Unterschied geht deshalb nicht überall mit gleich viel Unterschied in der Wahrscheinlichkeit einher.',
       concept: 'logit',
     },
     {
@@ -66,7 +66,7 @@ export const logistischeRegression: ConceptCard = {
     {
       question: 'Von 6 auf 7 Stunden oder von 15 auf 16 Stunden: Wo steigt die vorhergesagte Wahrscheinlichkeit stärker?', options: ['von 6 auf 7', 'von 15 auf 16', 'überall gleich'], correct: 0, step: 2,
       explain: `Von 6 auf 7 Stunden steigt sie von ${pct(pBestanden(6))} auf ${pct(pBestanden(7))}, von 15 auf 16 Stunden nur von ${pct(pBestanden(15))} auf ${pct(pBestanden(16))}. In der Mitte ist die S-Kurve am steilsten.`,
-      kurz: 'Dieselbe Stunde bringt in der Mitte viel, am Rand wenig.',
+      kurz: 'Derselbe Unterschied von einer Stunde zählt in der Mitte viel, am Rand wenig.',
     },
     {
       question: 'Kann das Modell bei 40 Stunden Lernzeit eine Wahrscheinlichkeit über 1 vorhersagen?', options: ['ja', 'nein'], correct: 1, step: 2,

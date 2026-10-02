@@ -10,6 +10,8 @@ import { BESTANDEN as BE, LOGISTIC_TOKEN, wbModel } from './logistisch-kit';
 export type MeValues = { b: number; p: number };
 export type MeStats = MeValues & { q: number; pq: number; me: number };
 const pp = (v: number) => `${num(v * 100, 1)} Prozentpunkte`;
+const shown = (v: number) => Math.round(v * 100) / 100;
+const eq = (v: number) => Math.abs(shown(v) - v) > 1e-9 ? '≈' : '=';
 
 export const marginaleEffekte: SentenceTemplate<MeValues, MeStats> = {
   concept: 'marginal_effects',
@@ -19,7 +21,7 @@ export const marginaleEffekte: SentenceTemplate<MeValues, MeStats> = {
   initial: { b: 0.34, p: 0.66 },
   compute: v => { const q = 1 - v.p, pq = v.p * q; return { ...v, q, pq, me: v.b * pq }; },
   metrics: [
-    { label: 'p · (1 − p)', value: s => num(s.pq, 3) },
+    { label: 'p · (1 − p)', value: s => num(s.pq) },
     { label: 'Marginaler Effekt', value: s => pp(s.me) },
   ],
   glyphs: [
@@ -33,11 +35,11 @@ export const marginaleEffekte: SentenceTemplate<MeValues, MeStats> = {
   numeric: s => [{ part: ['ME'], m: 'me' }, ' = ', { part: [num(s.b)], m: 'b' }, ' · ', { part: [num(s.p)], m: 'p' }, ' · ', { part: [num(s.q)], m: 'q' }, ' ≈ ', { part: [num(s.me, 3)], m: 'me' }],
   sentence: ['Der ', { m: 'me', t: 'marginale Effekt' }, ' ist ', { m: 'b', t: 'die Logit-Steigung' }, ' mal ', { m: 'p', t: 'der Wahrscheinlichkeit' }, ' mal ', { m: 'q', t: 'ihrer Gegenwahrscheinlichkeit' }, '.'],
   worked: s => [
-    { title: 'Wahrscheinlichkeit und Gegenwahrscheinlichkeit malnehmen', text: `${num(s.p)} · ${num(s.q)} ≈ ${num(s.pq, 3)}. Am größten wird das bei p = 0,5: 0,5 · 0,5 = 0,25.` },
-    { title: 'Mit der Logit-Steigung malnehmen', text: `${num(s.b)} · ${num(s.pq, 3)} ≈ ${num(s.me, 3)}.` },
+    { title: 'Wahrscheinlichkeit und Gegenwahrscheinlichkeit malnehmen', text: `${num(s.p)} · ${num(s.q)} ${eq(s.pq)} ${num(s.pq)}. Am größten wird das bei p = 0,5: 0,5 · 0,5 = 0,25.` },
+    { title: 'Mit der Logit-Steigung malnehmen', text: `${num(s.b)} · ${num(s.pq)} ≈ ${num(s.me, 3)}${num(s.b * shown(s.pq), 3) === num(s.me, 3) ? '' : '; R rechnet mit allen Nachkommastellen'}.` },
     { title: 'In Prozentpunkte übersetzen', text: `${num(s.me, 3)} sind ${pp(s.me)} je Einheit von x, an dieser Stelle der S-Kurve.` },
   ],
-  fehler: 'Der marginale Effekt gilt für einen kleinen Schritt an einer Stelle der S-Kurve. Für eine ganze Stunde oder für andere Personen ist die Änderung etwas anders; deshalb mittelt R über alle Personen.',
+  fehler: 'Der marginale Effekt gilt für einen kleinen Schritt an einer Stelle der S-Kurve. Für eine ganze Stunde ist die Änderung etwas anders, für andere Personen auch. Deshalb mittelt R über alle Personen.',
   sliders: [
     { key: 'b', label: 'Logit-Steigung b', min: -1, max: 1, step: 0.01, format: v => num(v) },
     { key: 'p', label: 'Wahrscheinlichkeit p', min: 0.01, max: 0.99, step: 0.01, format: v => num(v) },
@@ -70,14 +72,14 @@ export const marginaleEffekte: SentenceTemplate<MeValues, MeStats> = {
     question: 'Wo ist der marginale Effekt bei gleichem b am größten?',
     options: ['bei p = 0,5', 'bei p nahe 1', 'überall gleich'], correct: 0, mark: 'p',
     explain: 'p · (1 − p) ist bei p = 0,5 am größten, nämlich 0,25. Dort ist die S-Kurve am steilsten; zu den Rändern hin wird sie flach.',
-    kurz: 'In der Mitte der S-Kurve bringt eine Einheit am meisten.',
+    kurz: 'In der Mitte der S-Kurve ändert sich die Wahrscheinlichkeit je Einheit am stärksten.',
     hint: 'Probier oben „Mitte der S-Kurve: p = 0,5“ aus.',
   },
   genau: {
     kurz: 'R mittelt den marginalen Effekt über alle Personen, das ist der AME. Für Kategorien vergleicht R stattdessen Gruppen.',
     paragraphs: [
       `Der mittlere marginale Effekt (AME) ist der Durchschnitt von b · pᵢ · (1 − pᵢ) über alle Personen. Für mindestens 10 Aufgaben nach Lernzeit meldet R AME = 0.065: je Stunde im Schnitt ${pp(BE.ame)}.`,
-      `Daraus folgt eine Faustregel: b / 4 ist der größtmögliche Effekt. Bei b ≈ ${num(BE.b1, 3)} sind das ${pp(BE.b1 / 4)} je Stunde.`,
+      `Daraus folgt eine Faustregel: b / 4 ist der größtmögliche Effekt. Bei b ≈ ${num(BE.b1)} sind das, mit allen Nachkommastellen gerechnet, ${pp(BE.b1 / 4)} je Stunde.`,
       'mariposa rechnet die Ableitung numerisch und ihren Standardfehler mit der Delta-Methode. Für Kategorien vergleicht es jede Stufe mit der Vergleichsgruppe, statt abzuleiten.',
       'Die Formel gilt für einen metrischen Prädiktor ohne Interaktion. Lineare Modelle brauchen sie nicht: Dort ist der Koeffizient selbst der marginale Effekt.',
     ],
@@ -124,7 +126,7 @@ export const marginaleEffekteTabs: ConceptTabs = {
       marginal_effects: { sym: 'marginal_effects()', term: titleFor(ref('marginal_effects')), kurz: 'Rechnet ein Logitmodell in Änderungen der Wahrscheinlichkeit um, gemittelt über alle Personen.', fehler: 'Für ein lineares Modell meldet mariposa: Average marginal effects are not needed for a linear model.' },
     },
     outputMap: [
-      { match: 'lernzeit: AME', atlas: 'AME der Lernzeit', explain: 'Je Stunde ändert sich die Wahrscheinlichkeit einer Weiterbildung im Schnitt um etwa −0,1 Prozentpunkte, genauer um −0,14.' },
+      { match: 'lernzeit: AME', atlas: 'AME der Lernzeit', explain: 'Je Stunde ändert sich die Wahrscheinlichkeit einer Weiterbildung im Schnitt um etwa −0,1 Prozentpunkte, genauer um −0,14 Prozentpunkte.' },
       { match: 'alter: AME', atlas: 'AME des Alters', explain: 'Je Lebensjahr ändert sich die Wahrscheinlichkeit im Schnitt um etwa −0,2 Prozentpunkte.' },
       { match: 'p', atlas: 'p-Wert', explain: 'Gäbe es keinen Zusammenhang, käme ein AME dieser Größe in etwa 89 von 100 Stichproben vor.' },
     ],

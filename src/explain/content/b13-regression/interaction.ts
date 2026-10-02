@@ -30,7 +30,7 @@ export const interaktion: ConceptCard = {
   concept: 'interaction',
   picture: 'b13-interaktion',
   wofuer: 'Hängt die Lernzeit bei allen gleich stark mit dem Wissenstest zusammen? Vielleicht ist die Gerade bei Befragten mit Weiterbildung steiler als bei denen ohne. Eine Interaktion prüft genau das: ob die Steigung einer Variable von einer anderen abhängt.',
-  kurz: 'Eine Interaktion heißt: Wie stark x mit y zusammenhängt, hängt von einer dritten Variable ab. Im Bild sind das zwei Geraden mit verschiedener Steigung.',
+  kurz: 'Eine Interaktion heißt: Wie stark die Lernzeit mit dem Wissenstest zusammenhängt, hängt von einer dritten Variable ab. Im Bild sind das zwei Geraden mit verschiedener Steigung.',
   stellDirVor: {
     text: `R schätzt für die 200 Befragten den Wissenstest aus Lernzeit, Weiterbildung (0 = Nein, 1 = Ja) und ihrem Produkt. Ohne Weiterbildung steigt die Gerade um ${num(IA.b1)} Aufgaben je Stunde, mit Weiterbildung um ${num(IA.b1)} + ${num(IA.b3)} = ${num(IA.b1 + IA.b3)}. Der Unterschied ist klein; R meldet dazu p = .447.`,
     figures: [
@@ -65,7 +65,7 @@ export const interaktion: ConceptCard = {
       title: 'Den Unterschied einordnen',
       was: `Der Unterschied von ${num(IA.b3)} Aufgaben je Stunde ist klein. R meldet für das Produkt p = .447.`,
       warum: 'Gäbe es in Wahrheit keinen Unterschied der Steigungen, käme ein so großer Unterschied in etwa 45 von 100 Stichproben vor.',
-      acht: 'Ein großer p-Wert beweist nicht, dass die Steigungen gleich sind. Er heißt nur: Die Daten passen gut zu parallelen Geraden.',
+      acht: 'Ein großer p-Wert beweist nicht, dass die Steigungen gleich sind. Die Daten sind mit parallelen Geraden vereinbar, aber auch mit einem Unterschied: R meldet für b₃ plausible Werte von −0,14 bis 0,32.',
       concept: 'p_value',
     },
   ],
@@ -111,7 +111,7 @@ export const interaktion: ConceptCard = {
     paragraphs: [
       'Allgemein ist die Steigung von x im Modell mit Interaktion b₁ + b₃ · z. Ist z metrisch, ändert sich die Steigung mit jedem Wert von z ein Stück.',
       `b₂ = ${num(IA.b2)} ist der Unterschied der beiden Geraden bei 0 Stunden Lernzeit, nicht der Unterschied im Durchschnitt. Zentriert man die Lernzeit vorher, gilt b₂ beim Mittelwert der Lernzeit.`,
-      'Das Produkt hängt eng mit der Weiterbildung selbst zusammen. R meldet dafür VIF-Werte von 6.774 und 7.405 (Begriff „Multikollinearität“); die Vorhersagen des Modells berührt das nicht.',
+      'Das Produkt hängt eng mit der Weiterbildung selbst zusammen. R meldet dafür VIF-Werte von etwa 6,8 und 7,4 (Begriff „Multikollinearität“); die Vorhersagen des Modells berührt das nicht.',
       'Eine Interaktion beschreibt, dass ein Zusammenhang in Gruppen verschieden stark ist. Warum das so ist, sagt sie nicht.',
     ],
   },

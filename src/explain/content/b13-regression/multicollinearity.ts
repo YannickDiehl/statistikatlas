@@ -1,7 +1,7 @@
 // Begriffskarte „Multikollinearität“ (Bereich B13) mit Reitern. Beispiele aus den Katalogaufrufen: Lernzeit und Alter
 // (VIF 1.001) und das Produkt im Modell mit Interaktion (VIF 7.405). Referenzwerte aus R in b13-regression.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
-import { num } from '../../format';
+import { fixed, num } from '../../format';
 import { sampleColumn, sampleColumnInfo } from '../../sample';
 import { relate } from '../../math';
 import { LINEAR_REGRESSION_TOKEN, MODELL } from './gerade-tabs';
@@ -22,12 +22,12 @@ export const multikollinearitaet: ConceptCard = {
   wofuer: 'Lernzeit und Alter haben bei den 200 Befragten fast nichts miteinander zu tun. Im Modell für den Wissenstest lassen sich ihre Beiträge deshalb sauber trennen. Was aber, wenn zwei Prädiktoren fast dasselbe messen?',
   kurz: 'Multikollinearität heißt: Prädiktoren hängen so eng zusammen, dass sich ihre Beiträge kaum trennen lassen. Die Koeffizienten werden dann unsicher, die Vorhersagen nicht unbedingt.',
   stellDirVor: {
-    text: 'Lernzeit und Alter korrelieren mit r = 0,03. R meldet für beide einen VIF von 1.001: kein Problem. Im Modell mit Interaktion steckt dagegen das Produkt aus Lernzeit und Weiterbildung. Es lässt sich zu 86 % aus den beiden anderen Prädiktoren vorhersagen, und R meldet dafür einen VIF von 7.405.',
+    text: 'Lernzeit und Alter korrelieren mit r = 0,03. R meldet für beide einen VIF von etwa 1,00: kein Problem. Im Modell mit Interaktion steckt dagegen das Produkt aus Lernzeit und Weiterbildung. Es lässt sich zu 86 % aus den beiden anderen Prädiktoren vorhersagen, und R meldet dafür einen VIF von 7,4.',
     figures: [
       { label: 'r von Lernzeit und Alter', value: '0,03' },
-      { label: 'VIF der Lernzeit in R', value: '1.001' },
+      { label: 'VIF der Lernzeit in R', value: '1,00' },
       { label: 'R² des Produkts aus den anderen', value: '0,86' },
-      { label: 'VIF des Produkts in R', value: '7.405' },
+      { label: 'VIF des Produkts in R', value: '7,4' },
     ],
   },
   heisst: {
@@ -46,7 +46,7 @@ export const multikollinearitaet: ConceptCard = {
     {
       title: 'Den Faktor ausrechnen',
       was: 'Eins geteilt durch den Rest, der sich nicht vorhersagen lässt: Das ist der VIF.',
-      rechnung: '1 / (1 − 0,001) ≈ 1 für die Lernzeit, 1 / (1 − 0,865) ≈ 7,4 für das Produkt. Der Standardfehler des Produkts ist damit √7,4 ≈ 2,7-mal so groß wie ohne diesen Zusammenhang.',
+      rechnung: '1 / (1 − 0,001) ≈ 1 für die Lernzeit, 1 / (1 − 0,86) ≈ 7,1 für das Produkt; mit allen Nachkommastellen 7,4. Der Standardfehler des Produkts ist damit √7,4 ≈ 2,7-mal so groß wie ohne diesen Zusammenhang.',
       warum: 'Der VIF sagt, um welchen Faktor die Varianz eines Koeffizienten wächst. Für den Standardfehler gilt seine Wurzel.',
       acht: 'R meldet auch die Toleranz, 1 − Rⱼ². Kleine Toleranz und großer VIF sagen dasselbe.',
       concept: 'se',
@@ -75,7 +75,7 @@ export const multikollinearitaet: ConceptCard = {
     },
     {
       question: 'Hohe Multikollinearität: Sagt das Modell deshalb schlechter vorher?', options: ['ja, deutlich', 'nicht unbedingt'], correct: 1, step: 3,
-      explain: 'Zusammen erfassen die Prädiktoren genauso viel wie vorher, R² bleibt gleich. Unsicher ist nur, wie sich das auf die einzelnen Koeffizienten verteilt.',
+      explain: 'Multikollinearität drückt R² nicht. Unsicher ist nur, wie sich das Erfasste auf die einzelnen Koeffizienten verteilt.',
       kurz: 'Unsichere Koeffizienten heißen nicht schlechte Vorhersagen.',
     },
     {
@@ -116,8 +116,8 @@ export const multikollinearitaetTabs: ConceptTabs = {
       if (!v) return { kurz: 'Eine der beiden Spalten streut nicht. Dann gibt es keinen VIF.', fachlich: 'Eine Standardabweichung ist 0.' };
       const tx = `„${sampleColumnInfo(v.x).title}“`, ty = `„${sampleColumnInfo(v.y).title}“`;
       return {
-        kurz: `${tx} und ${ty} korrelieren mit r = ${num(v.r)}. Beide bekommen den VIF ${num(v.vif, 3)}: Ihre Beiträge lassen sich ${v.vif < 2 ? 'sauber' : v.vif < 5 ? 'noch gut' : 'nur schwer'} trennen.`,
-        fachlich: `R² der einen Spalte aus der anderen ist r² ≈ ${num(v.r * v.r, 4)}, also VIF = 1 / (1 − r²) ≈ ${num(v.vif, 3)}. Die Standardfehler wachsen um den Faktor √VIF ≈ ${num(Math.sqrt(v.vif), 3)}.`,
+        kurz: `${tx} und ${ty} korrelieren mit r = ${num(v.r)}. Beide bekommen den VIF ${fixed(v.vif)}: Ihre Beiträge lassen sich ${v.vif < 2 ? 'sauber' : v.vif < 5 ? 'noch gut' : 'nur schwer'} trennen.`,
+        fachlich: `R² der einen Spalte aus der anderen ist r² ≈ ${num(v.r * v.r, 4)}, also VIF = 1 / (1 − r²) ≈ ${fixed(v.vif)}. Die Standardfehler wachsen um den Faktor √VIF ≈ ${fixed(Math.sqrt(v.vif))}.`,
       };
     },
     voraussetzung: 'Mit zwei Prädiktoren hängt der VIF nur von ihrer Korrelation ab. Mit mehr Prädiktoren zählen alle übrigen zugleich.',
@@ -165,7 +165,7 @@ export const multikollinearitaetTabs: ConceptTabs = {
     ],
     after: [{ id: 'se', why: 'Der VIF vergrößert die Standardfehler der Koeffizienten.' }],
     more: [
-      { id: 'interaction', why: 'Produktterme haben fast immer einen hohen VIF.' },
+      { id: 'interaction', why: 'Produktterme unzentrierter Prädiktoren haben oft einen hohen VIF.' },
       { id: 'correlation_matrix', why: 'Zeigt alle paarweisen Zusammenhänge der Prädiktoren auf einen Blick.' },
     ],
   },

@@ -15,10 +15,17 @@ export const BEISPIEL: Pairs = { x: X, y: [9, 7, 12, 9, 13] };
 export const AUSREISSER: Pairs = { x: X, y: [9, 7, 12, 9, 3] };
 
 const P = (c: C) => c.names[c.who];
+/** Größte Verschiebung (2 oder 1, sonst 0), die alle Werte auf der Skala lässt; bevorzugt nach oben. */
+const shiftWithin = (d: number[], lo: number, hi: number) => {
+  const up = hi - Math.max(...d), down = Math.min(...d) - lo;
+  return up >= 2 ? 2 : down >= 2 ? -2 : up >= 1 ? 1 : down >= 1 ? -1 : 0;
+};
 const same = (a: number[], b: number[]) => a.length === b.length && a.every((v, i) => v === b[i]);
 const preset = (c: C) => same(c.s.xs, X) && same(c.s.ys, BEISPIEL.y) ? 'beispiel' : same(c.s.xs, X) && same(c.s.ys, AUSREISSER.y) ? 'ausreisser' : null;
 /** „≈“, wenn die angezeigte Zahl gerundet ist, sonst „=“. */
 export const eq = (v: number) => Math.abs(Math.round(v * 100) / 100 - v) > 1e-9 ? '≈' : '=';
+/** „≈“, sobald eine der eingesetzten Zahlen gerundet angezeigt wird. */
+const eqAll = (...vs: number[]) => vs.some(v => eq(v) === '≈') ? '≈' : '=';
 const h = (v: number) => unit(v, 'Stunde', 'Stunden');
 const tasks = (v: number) => unit(v, 'Aufgabe', 'Aufgaben');
 /** Gerade als Text: „7 + 0,5 · x“, bei negativer Steigung „11 − 0,5 · x“. */
@@ -39,7 +46,7 @@ const squares = (c: C): FNode[] => c.s.xs.flatMap((x, i): FNode[] => [...(i ? ['
 export const gerade: Workshop<Pairs, Fit> = {
   id: 'b13-gerade',
   wofuer: 'Lösen Personen, die mehr lernen, im Wissenstest mehr Aufgaben? Und wenn ja: wie viele mehr pro Stunde? Fünf Personen sagen, wie viele Stunden sie in den letzten sieben Tagen gelernt haben und wie viele von 20 Aufgaben sie gelöst haben. Die lineare Regression legt die Gerade durch ihre Punkte, die insgesamt am wenigsten danebenliegt.',
-  mut: 'Die Formeln sehen nach viel aus. Sie bestehen aber aus sechs kleinen Schritten, die du schon kennst: Mitten finden, malnehmen, teilen, einsetzen, abziehen und quadrieren. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
+  mut: 'Die Formeln sehen nach viel aus. Sie bestehen aber aus kleinen Schritten, die du schon kennst: Mitten finden, malnehmen, teilen, einsetzen, abziehen und quadrieren. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'b13-gerade',
   names: NAMES,
   bounds: { min: 0, max: 20 },
@@ -106,7 +113,7 @@ export const gerade: Workshop<Pairs, Fit> = {
       button: 'b₀', title: 'Die Gerade durch die Mitte legen', sym: 'b₀', say: 'b null', concept: 'linear_regression', perPerson: false,
       was: 'Die Gerade geht durch die Mitte (x̄ | ȳ). Von dort gehen wir mit der Steigung zurück bis 0 Stunden.',
       rechnung: c => c.s.b1 === null || c.s.b0 === null ? 'Ohne Steigung gibt es auch keinen Achsenabschnitt: b₁ ist nicht definiert.'
-        : `b₀ = ȳ − b₁ · x̄ = ${num(c.s.y.mean)} − ${paren(c.s.b1)} · ${num(c.s.x.mean)} = ${num(c.s.y.mean)} − ${paren(c.s.b1 * c.s.x.mean)} ${eq(c.s.b0)} ${num(c.s.b0)}`,
+        : `b₀ = ȳ − b₁ · x̄ ${eq(c.s.b1)} ${num(c.s.y.mean)} − ${paren(c.s.b1)} · ${num(c.s.x.mean)} ${eqAll(c.s.b1, c.s.b1 * c.s.x.mean)} ${num(c.s.y.mean)} − ${paren(c.s.b1 * c.s.x.mean)} ${eq(c.s.b0)} ${num(c.s.b0)}`,
       fach: 'Der Achsenabschnitt b₀ ist der vorhergesagte Wert bei x = 0. Er folgt aus b₀ = ȳ − b₁ · x̄.',
       warum: 'Mit Startwert und Steigung liegt die Gerade fest. Jetzt kann sie für jede Lernzeit eine Zahl vorhersagen.',
       acht: c => {
@@ -133,7 +140,7 @@ export const gerade: Workshop<Pairs, Fit> = {
       rechnung: c => {
         const i = c.who;
         if (c.s.b1 === null) return `Ohne Steigung bleibt nur die Mitte: Die Gerade sagt für alle ${tasks(c.s.y.mean)} voraus. Gelöst hat ${P(c)} ${c.s.ys[i]}.`;
-        return `Person ${P(c)}: ŷ = ${num(c.s.b0!)} + ${paren(c.s.b1)} · ${c.s.xs[i]} = ${num(c.s.b0!)} ${c.s.b1x[i] < 0 ? '−' : '+'} ${num(Math.abs(c.s.b1x[i]))} ${eq(c.s.yhat[i])} ${tasks(c.s.yhat[i])}. Gelöst hat ${P(c)} ${c.s.ys[i]}.`;
+        return `Person ${P(c)}: ŷ ${eqAll(c.s.b0!, c.s.b1)} ${num(c.s.b0!)} + ${paren(c.s.b1)} · ${c.s.xs[i]} ${eqAll(c.s.b1, c.s.b1x[i])} ${num(c.s.b0!)} ${c.s.b1x[i] < 0 ? '−' : '+'} ${num(Math.abs(c.s.b1x[i]))} ${eqAll(c.s.b0!, c.s.b1x[i], c.s.yhat[i])} ${tasks(c.s.yhat[i])}. Gelöst hat ${P(c)} ${c.s.ys[i]}.`;
       },
       fach: 'ŷᵢ heißt vorhergesagter Wert. b₀ + b₁ · xᵢ ist der lineare Prädiktor; in der linearen Regression ist er die Vorhersage selbst.',
       warum: 'Die Vorhersage ist der Maßstab. Gleich vergleichen wir sie mit dem, was die Person wirklich gelöst hat.',
@@ -174,7 +181,7 @@ export const gerade: Workshop<Pairs, Fit> = {
       rechnung: c => `${c.s.e.map(e => `${paren(e)}²`).join(' + ')} = ${c.s.e2.map(q => num(q)).join(' + ')} ${eq(c.s.sse)} ${num(c.s.sse)}`,
       fach: 'Die Quadratsumme der Residuen Σeᵢ², englisch SSE. Die Methode der kleinsten Quadrate wählt b₀ und b₁ so, dass sie so klein wie möglich wird.',
       warum: 'Wie bei der Streuung: Ohne Quadrat heben sich Plus und Minus auf. Und große Fehler zählen im Quadrat stärker als kleine.',
-      acht: c => `Keine andere Gerade kommt hier unter ${num(c.s.sse)}. Deshalb heißt das Verfahren Methode der kleinsten Quadrate.`,
+      acht: 'Wer die Residuen ohne Quadrat zusammenzählt, bekommt immer 0. Erst die Quadrate zeigen, wie weit die Gerade insgesamt danebenliegt.',
       check: {
         question: 'Wie groß ist die Summe der quadrierten Residuen?',
         answer: c => c.s.sse,
@@ -192,8 +199,8 @@ export const gerade: Workshop<Pairs, Fit> = {
     const s = c.s, out: FNode[] = ['b₁ = [ ', ...products(c), ' ] / [ ', ...squares(c), ' ]', { br: true }];
     if (s.b1 === null) return [...out, '= ', { part: [num(s.cp)], m: 2 }, ' / ', { part: ['0'], m: 2 }, ': ', { part: ['nicht definiert'], m: 2 }];
     out.push('= ', { part: [`${num(s.cp)} / ${num(s.sxx)}`], m: 2 }, ` ${eq(s.b1)} `, { part: [num(s.b1)], m: 2 });
-    if (last >= 3) out.push({ br: true }, 'b₀ = ', { part: [num(s.y.mean)], m: 1 }, ' − ', { part: [paren(s.b1)], m: 2 }, ' · ', { part: [num(s.x.mean)], m: 1 }, ` ${eq(s.b0!)} `, { part: [num(s.b0!)], m: 3 });
-    if (last >= 4) out.push({ br: true }, 'ŷ', { sub: P(c) }, ' = ', { part: [num(s.b0!)], m: 3 }, ' + ', { part: [paren(s.b1)], m: 2 }, ` · ${s.xs[c.who]} ${eq(s.yhat[c.who])} `, { part: [num(s.yhat[c.who])], m: 4 });
+    if (last >= 3) out.push({ br: true }, 'b₀ = ', { part: [num(s.y.mean)], m: 1 }, ' − ', { part: [paren(s.b1)], m: 2 }, ' · ', { part: [num(s.x.mean)], m: 1 }, ` ${eqAll(s.b1, s.b0!)} `, { part: [num(s.b0!)], m: 3 });
+    if (last >= 4) out.push({ br: true }, 'ŷ', { sub: P(c) }, ' = ', { part: [num(s.b0!)], m: 3 }, ' + ', { part: [paren(s.b1)], m: 2 }, ` · ${s.xs[c.who]} ${eqAll(s.b0!, s.b1, s.yhat[c.who])} `, { part: [num(s.yhat[c.who])], m: 4 });
     if (last >= 5) out.push({ br: true }, 'e', { sub: P(c) }, ` = ${s.ys[c.who]} − `, { part: [num(s.yhat[c.who])], m: 4 }, ` ${eq(s.e[c.who])} `, { part: [signed(s.e[c.who])], m: 5 });
     if (last >= 6) out.push({ br: true }, 'Σeᵢ² = ', { part: [s.e2.map(q => num(q)).join(' + ')], m: 6 }, ` ${eq(s.sse)} `, { part: [num(s.sse)], m: 6 });
     return out;
@@ -232,11 +239,11 @@ export const gerade: Workshop<Pairs, Fit> = {
       tryIt: { label: 'Person E auf 3 Aufgaben', apply: d => ({ x: [...d.x], y: d.y.map((v, i) => i === 4 ? 3 : v) }) },
     },
     {
-      question: 'Alle lösen zwei Aufgaben mehr. Was passiert mit der Steigung?',
-      options: ['bleibt gleich', 'steigt um 2', 'verdoppelt sich'], correct: 0, step: 3,
-      explain: 'ȳ steigt um 2, alle Abstände yᵢ − ȳ bleiben gleich, also auch b₁. Nur b₀ steigt um 2: Die ganze Gerade rutscht nach oben.',
+      question: 'Alle rücken bei den Aufgaben gleich weit nach oben oder unten. Was passiert mit der Steigung?',
+      options: ['bleibt gleich', 'ändert sich um denselben Betrag', 'verdoppelt sich'], correct: 0, step: 3,
+      explain: 'ȳ wandert mit, alle Abstände yᵢ − ȳ bleiben gleich, also auch b₁. Nur b₀ ändert sich um denselben Betrag: Die ganze Gerade rutscht mit.',
       kurz: 'Verschieben ändert den Startwert, nicht die Steigung.',
-      tryIt: { label: 'alle zwei Aufgaben mehr', apply: d => ({ x: [...d.x], y: d.y.map(v => Math.min(20, v + 2)) }) },
+      tryIt: { label: 'alle gleich weit verschieben', apply: d => { const k = shiftWithin(d.y, 0, 20); return { x: [...d.x], y: d.y.map(v => v + k) }; } },
     },
     {
       question: 'Wie groß ist die Summe aller Residuen?',
@@ -254,7 +261,7 @@ export const gerade: Workshop<Pairs, Fit> = {
   variants: {
     linear_regression: {
       lastStep: 3,
-      kurz: 'Die lineare Regression legt eine Gerade durch die Punkte. Ihre Steigung sagt dir, um wie viel die Zielgröße im Schnitt höher liegt, wenn x um eins höher liegt.',
+      kurz: 'Die lineare Regression legt eine Gerade durch die Punkte. Ihre Steigung sagt dir, wie viele Aufgaben mehr Personen im Schnitt lösen, die eine Stunde länger gelernt haben.',
       fachlich: 'Die Gerade ŷ = b₀ + b₁ · x nach der Methode der kleinsten Quadrate: b₁ = Σ(xᵢ − x̄)(yᵢ − ȳ) / Σ(xᵢ − x̄)² und b₀ = ȳ − b₁ · x̄.',
       symbolic: [{ part: ['b₁'], m: 2 }, ' = ', { frac: [{ big: 'Σ', m: 2 }, '(x', { sub: 'i' }, ' − ', { part: ['x̄'], m: 1 }, ')(y', { sub: 'i' }, ' − ', { part: ['ȳ'], m: 1 }, ')'], den: [{ big: 'Σ', m: 2 }, '(x', { sub: 'i' }, ' − ', { part: ['x̄'], m: 1 }, ')²'], m: 2 },
         ',   ', { part: ['b₀ = '], m: 3 }, { part: ['ȳ'], m: 1 }, { part: [' − b₁ · '], m: 3 }, { part: ['x̄'], m: 1 }],
@@ -268,7 +275,7 @@ export const gerade: Workshop<Pairs, Fit> = {
         if (s.b1 === null || s.b0 === null) return { kurz: 'Alle haben gleich lange gelernt. Dann lässt sich keine Steigung berechnen.', fachlich: 'Die Quadratsumme von x ist 0, deshalb sind b₁ und b₀ nicht definiert.' };
         const fach = `Die Regressionsgerade lautet ŷ = ${lineText(s.b0, s.b1)}. Die Steigung ist b₁ = ${num(s.cp)} / ${num(s.sxx)} ${eq(s.b1)} ${num(s.b1)}, also sₓᵧ / sₓ². Bei nur fünf Personen ist sie sehr unsicher.`;
         if (Math.abs(s.b1) < 0.005) return { kurz: 'Die Gerade liegt waagerecht: Wer länger lernt, löst hier im Schnitt nicht mehr Aufgaben.', fachlich: fach };
-        const kurz = `Wer eine Stunde länger lernt, löst laut Gerade im Schnitt ${tasks(Math.abs(s.b1))} ${s.b1 > 0 ? 'mehr' : 'weniger'}.`;
+        const kurz = `Wer eine Stunde mehr gelernt hat, löst laut Gerade im Schnitt ${tasks(Math.abs(s.b1))} ${s.b1 > 0 ? 'mehr' : 'weniger'}.`;
         return {
           kurz: preset(c) === 'ausreisser' ? `${kurz} Das liegt vor allem an Person E: Mit 13 statt 3 Aufgaben stiege die Gerade um 0,5 Aufgaben je Stunde.`
             : `${kurz} Bei 0 Stunden sagt die Gerade ${tasks(s.b0)} voraus.`,
@@ -288,7 +295,7 @@ export const gerade: Workshop<Pairs, Fit> = {
     },
     prediction: {
       lastStep: 4,
-      kurz: 'Der lineare Prädiktor setzt Startwert und Gewicht zu einer Vorhersage zusammen: b₀ plus b₁ mal x. So bekommt jede Person die Zahl, die die Gerade für sie erwartet.',
+      kurz: 'Der lineare Prädiktor setzt Startwert und Gewicht zu einer Vorhersage zusammen: Startwert plus Steigung mal Lernzeit. So bekommt jede Person die Zahl, die die Gerade für sie erwartet.',
       fachlich: 'Die gewichtete Summe ηᵢ = b₀ + Σ bⱼ · xᵢⱼ der Prädiktorwerte einer Person. In der linearen Regression ist der vorhergesagte Wert ŷᵢ = ηᵢ.',
       symbolic: [{ part: ['ŷᵢ'], m: 4 }, ' = ', { part: ['b₀'], m: 3 }, ' + ', { part: ['b₁'], m: 2 }, { part: [' · xᵢ'], m: 4 }],
       aria: 'y Dach i gleich b null plus b eins mal x i',
@@ -301,7 +308,7 @@ export const gerade: Workshop<Pairs, Fit> = {
         if (s.b1 === null) return { kurz: `Ohne Steigung sagt die Gerade für alle die Mitte voraus: ${tasks(s.y.mean)}.`, fachlich: 'Die Quadratsumme von x ist 0; als Vorhersage bleibt der Mittelwert ȳ.' };
         return {
           kurz: `Für Person ${P(c)} mit ${h(s.xs[i])} Lernzeit sagt die Gerade ${tasks(s.yhat[i])} voraus. Gelöst hat ${P(c)} ${tasks(s.ys[i])}.`,
-          fachlich: `ŷ = ${num(s.b0!)} + ${paren(s.b1)} · ${s.xs[i]} ${eq(s.yhat[i])} ${num(s.yhat[i])}. Die Gerade liefert so für jede Lernzeit eine Vorhersage, auch für Lernzeiten, die niemand angegeben hat.`,
+          fachlich: `ŷ ${eqAll(s.b0!, s.b1)} ${num(s.b0!)} + ${paren(s.b1)} · ${s.xs[i]} ${eqAll(s.b0!, s.b1, s.yhat[i])} ${num(s.yhat[i])}. Die Gerade liefert so für jede Lernzeit eine Vorhersage, auch für Lernzeiten, die niemand angegeben hat.`,
         };
       },
       next: { id: 'residuals', label: 'Weiter zu den Residuen' },
@@ -356,17 +363,18 @@ const PB = (c: BC) => c.names[c.who];
 const N = (c: BC) => c.values.length;
 const t1 = (c: BC) => `„${c.col.title}“`, t2 = (c: BC) => `„${c.col2!.title}“`;
 const uy = (c: BC, v: number) => unitText(c.col2!, v);
+/** b₁ in Rechnungen: mit genug gültigen Ziffern, negativ in Klammern. */
+const pc = (v: number) => v < 0 ? `(${coef(v)})` : coef(v);
 /** Koeffizient mit der Einheit von y („0,52 Aufgaben“, „0,00031 Aufgaben“). */
 const uyc = (c: BC, v: number) => `${coef(v)}${c.col2!.unit ? ` ${c.col2!.unit}` : ''}`;
 const lw = (c: BC) => c.col.id === 'lernzeit' && c.col2!.id === 'wissenstest';
 const shown = (v: number) => Math.round(v * 100) / 100;
-/** Koeffizient mit höchstens zwei Nachkommastellen; sehr kleine Werte mit zwei gültigen Ziffern („0,00031“). */
-export const coef = (v: number) => {
-  const a = Math.abs(v);
-  if (a >= 0.01 || a === 0) return num(v);
-  const digits = Math.min(10, 1 - Math.floor(Math.log10(a)));
-  return num(v, digits);
-};
+/** Koeffizient mit höchstens zwei Nachkommastellen; sehr kleine Werte mit drei gültigen Ziffern („0,000368“), damit Rechnungen aufgehen. */
+/** Nachkommastellen, mit denen `coef` eine Zahl zeigt. */
+const coefDigits = (v: number) => { const a = Math.abs(v); return a >= 0.01 || a === 0 ? 2 : Math.min(10, 2 - Math.floor(Math.log10(a))); };
+/** Der Wert, den `coef` sichtbar macht (für Proben mit den sichtbaren Zahlen). */
+const coefShown = (v: number) => Number(v.toFixed(coefDigits(v)));
+export const coef = (v: number) => num(v, coefDigits(v));
 /** Anteil an einer Summe in Prozent, kleine Anteile als „weniger als 0,01 %“. */
 const share = (part: number, whole: number) => whole <= 0 ? '0 %' : part / whole * 100 < 0.005 ? 'weniger als 0,01 %' : `${num(part / whole * 100)} %`;
 /** Satz zum Skalenniveau einer Spalte, leer bei metrischen Spalten. */
@@ -387,8 +395,8 @@ export const bridgeGerade: Bridge<Fit> = {
     const s = c.s, n = N(c), out: FNode[] = ['b₁ = [ ', ...sumNodes(n, c.who, i => prodTerm(c, i)), ' ] / [ ', ...sumNodes(n, c.who, i => sqTerm(c, i)), ' ]', { br: true }];
     if (s.b1 === null) return [...out, '= ', { part: [num(s.cp)], m: 2 }, ' / ', { part: ['0'], m: 2 }, ': ', { part: ['nicht definiert'], m: 2 }];
     out.push('= ', { part: [`${num(s.cp)} / ${num(s.sxx)}`], m: 2 }, ' ≈ ', { part: [coef(s.b1)], m: 2 });
-    if (last >= 3) out.push({ br: true }, 'b₀ = ', { part: [num(s.y.mean)], m: 1 }, ' − ', { part: [paren(s.b1)], m: 2 }, ' · ', { part: [num(s.x.mean)], m: 1 }, ' ≈ ', { part: [num(s.b0!)], m: 3 });
-    if (last >= 4) out.push({ br: true }, 'ŷ', { sub: PB(c) }, ' = ', { part: [num(s.b0!)], m: 3 }, ' + ', { part: [paren(s.b1)], m: 2 }, ` · ${num(c.values[c.who])} ≈ `, { part: [uy(c, s.yhat[c.who])], m: 4 });
+    if (last >= 3) out.push({ br: true }, 'b₀ = ', { part: [num(s.y.mean)], m: 1 }, ' − ', { part: [pc(s.b1)], m: 2 }, ' · ', { part: [num(s.x.mean)], m: 1 }, ' ≈ ', { part: [num(s.b0!)], m: 3 });
+    if (last >= 4) out.push({ br: true }, 'ŷ', { sub: PB(c) }, ' = ', { part: [num(s.b0!)], m: 3 }, ' + ', { part: [pc(s.b1)], m: 2 }, ` · ${num(c.values[c.who])} ≈ `, { part: [uy(c, s.yhat[c.who])], m: 4 });
     if (last >= 5) out.push({ br: true }, 'e', { sub: PB(c) }, ` = ${num(c.values2![c.who])} − `, { part: [num(s.yhat[c.who])], m: 4 }, ' ≈ ', { part: [signed(s.e[c.who])], m: 5 });
     if (last >= 6) out.push({ br: true }, 'Σeᵢ² = ', ...sumNodes(n, c.who, i => [{ part: [`${paren(s.e[i])}²`], m: 5 }]), ' ≈ ', { part: [num(s.sse)], m: 6 });
     return out;
@@ -407,8 +415,8 @@ export const bridgeGerade: Bridge<Fit> = {
       all: c => {
         const s = c.s;
         if (s.b1 === null || s.b0 === null) return 'Ohne Steigung gibt es keinen Achsenabschnitt.';
-        const visible = shown(s.y.mean) - shown(s.b1) * shown(s.x.mean), fits = num(visible) === num(s.b0);
-        return `b₀ = ${num(s.y.mean)} − ${paren(s.b1)} · ${num(s.x.mean)} ≈ ${num(s.b0)}${fits ? '' : ' (mit allen Nachkommastellen)'}. So geht die Gerade durch den Punkt der beiden Mitten.`;
+        const visible = shown(s.y.mean) - coefShown(s.b1) * shown(s.x.mean), fits = num(visible) === num(s.b0);
+        return `b₀ = ${num(s.y.mean)} − ${pc(s.b1)} · ${num(s.x.mean)} ≈ ${num(s.b0)}${fits ? '' : ' (mit allen Nachkommastellen)'}. So geht die Gerade durch den Punkt der beiden Mitten.`;
       },
       person: c => `${PB(c)} geht in b₀ nur über die beiden Mitten und die Steigung ein, wie jede andere Person auch.`,
     },
@@ -420,7 +428,7 @@ export const bridgeGerade: Bridge<Fit> = {
       },
       person: c => {
         const s = c.s, i = c.who;
-        return s.b1 === null ? `${PB(c)} bekommt wie alle ${uy(c, s.yhat[i])}.` : `${PB(c)}: ${num(s.b0!)} + ${paren(s.b1)} · ${num(c.values[i])} ≈ ${uy(c, s.yhat[i])}.`;
+        return s.b1 === null ? `${PB(c)} bekommt wie alle ${uy(c, s.yhat[i])}.` : `${PB(c)}: ${num(s.b0!)} + ${pc(s.b1)} · ${num(c.values[i])} ≈ ${uy(c, s.yhat[i])}.`;
       },
     },
     {
@@ -447,8 +455,8 @@ export const bridgeGerade: Bridge<Fit> = {
       const i = c.who;
       return {
         kurz: lw(c) ? `Für ${PB(c)} mit ${num(c.values[i])} Stunden Lernzeit sagt die Gerade ${unit(s.yhat[i], 'gelöste Aufgabe', 'gelöste Aufgaben')} voraus. Gelöst hat ${PB(c)} ${tasks(c.values2![i])}.`
-          : `Für ${PB(c)} mit ${c.u(c.values[i])} bei ${t1(c)} sagt die Gerade ${uy(c, s.yhat[i])} bei ${t2(c)} voraus. Beobachtet sind ${uy(c, c.values2![i])}.`,
-        fachlich: `ŷ = ${num(s.b0)} + ${paren(s.b1)} · ${num(c.values[i])} ≈ ${num(s.yhat[i])}. In der linearen Regression ist der lineare Prädiktor die Vorhersage selbst.`,
+          : `Für ${PB(c)} (${c.u(c.values[i])} bei ${t1(c)}) sagt die Gerade ${uy(c, s.yhat[i])} bei ${t2(c)} voraus. Beobachtet sind ${uy(c, c.values2![i])}.`,
+        fachlich: `ŷ = ${num(s.b0)} + ${pc(s.b1)} · ${num(c.values[i])} ≈ ${num(s.yhat[i])}. In der linearen Regression ist der lineare Prädiktor die Vorhersage selbst.`,
         zusatz: `Die Vorhersagen reichen von ${uy(c, Math.min(...s.yhat))} bis ${uy(c, Math.max(...s.yhat))}, beobachtet sind ${uy(c, Math.min(...c.values2!))} bis ${uy(c, Math.max(...c.values2!))}.`,
       };
     }
@@ -463,8 +471,8 @@ export const bridgeGerade: Bridge<Fit> = {
     const tiny = Math.abs(s.b1) < 0.005 && coef(s.b1) === num(s.b1);
     return {
       kurz: tiny ? `Zwischen ${t1(c)} und ${t2(c)} zeigt die Gerade fast keine Steigung.`
-        : lw(c) ? `Wer eine Stunde länger lernt, löst laut Gerade im Schnitt ${tasks(Math.abs(s.b1))} ${s.b1 > 0 ? 'mehr' : 'weniger'}. Das gilt im Durchschnitt, nicht für jede Person.`
-        : `Liegt ${t1(c)} um ${c.u(1)} höher, liegt ${t2(c)} laut Gerade im Schnitt ${uyc(c, Math.abs(s.b1))} ${s.b1 > 0 ? 'höher' : 'niedriger'}.`,
+        : lw(c) ? `Wer eine Stunde mehr gelernt hat, löst laut Gerade im Schnitt ${tasks(Math.abs(s.b1))} ${s.b1 > 0 ? 'mehr' : 'weniger'}. Das gilt im Durchschnitt, nicht für jede Person.`
+        : `Liegt ${t1(c)} um eine Einheit${c.col.unit ? ` (${c.col.unit})` : ''} höher, liegt ${t2(c)} laut Gerade im Schnitt ${uyc(c, Math.abs(s.b1))} ${s.b1 > 0 ? 'höher' : 'niedriger'}.`,
       fachlich: `Die Regressionsgerade lautet ŷ = ${lineText(s.b0, s.b1, coef)} bei n = ${n}. b₁ = sₓᵧ / sₓ² ≈ ${coef(s.b1)}; der Achsenabschnitt b₀ ≈ ${num(s.b0)} ist die Vorhersage bei x = 0.`,
       zusatz,
     };

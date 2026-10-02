@@ -19,14 +19,19 @@ export function withScore(who: number, y: number) {
   return { b1: inf.fit.b1!, b0: inf.fit.b0!, cook: inf.cook[who], h: inf.h[who], e: inf.fit.e[who] };
 }
 /** Index von P175 (längste Lernzeit) und P008 (Lernzeit nahe x̄) in den Ausgangsdaten. */
-export const P175 = 174, P008 = 7;
+export const P175 = 174, P008 = 7, P136 = 135;
+/** Steigung der 200 Befragten ohne P136 (größtes Residuum). */
+export function withoutP136() {
+  const rows = baseSurvey(), xs = sampleColumn(rows, 'lernzeit'), ys = sampleColumn(rows, 'wissenstest');
+  return fitLine({ x: xs.filter((_, i) => i !== P136), y: ys.filter((_, i) => i !== P136) }).b1!;
+}
 const dText = (d: number) => d < 0.1 ? num(d, 3) : num(d);
 
 export const ausreisser: ConceptCard = {
   concept: 'outliers_influence',
   picture: 'b13-einfluss',
   wofuer: 'Eine einzelne Person kann eine Regressionsgerade kippen, aber nicht jede. Entscheidend ist, wie ungewöhnlich ihre Lernzeit ist und wie weit sie neben der Geraden liegt. Was wäre, wenn die Person mit der längsten Lernzeit kaum eine Aufgabe gelöst hätte?',
-  kurz: 'Ein Ausreißer liegt weit neben der Geraden. Einflussreich wird er erst, wenn er auch am Rand liegt: Dann ändert sich die Gerade deutlich, sobald man ihn weglässt.',
+  kurz: 'Ein Ausreißer liegt weit neben der Geraden. Stark verändert er die Gerade erst, wenn er auch am Rand liegt: Dann ändert sie sich deutlich, sobald man ihn weglässt.',
   stellDirVor: {
     text: `P175 hat mit 18,4 Stunden am längsten gelernt und 17 Aufgaben gelöst; sie passt gut zur Geraden. Hätte sie 0 Aufgaben gelöst, fiele die Steigung von 0,52 auf ${num(withScore(P175, 0).b1)} Aufgaben je Stunde. Löst dagegen P008 mit 7,8 Stunden, fast der mittleren Lernzeit, 0 statt 13 Aufgaben, bleibt die Steigung bei ${num(withScore(P008, 0).b1)}.`,
     figures: [
@@ -46,7 +51,7 @@ export const ausreisser: ConceptCard = {
       was: 'Das Residuum sagt, wie weit eine Person über oder unter der Geraden liegt. Groß heißt: ungewöhnlicher Wissenstest für diese Lernzeit.',
       rechnung: 'Das größte Residuum hat P136: 6,5 Stunden, 17 Aufgaben, vorhergesagt 9,48, also +7,52.',
       warum: 'Nur wer neben der Geraden liegt, kann sie zu sich herziehen.',
-      acht: 'Ein großes Residuum allein macht noch keinen Einfluss. P136 liegt bei der Lernzeit nahe der Mitte; ihre Cooks Distanz ist nur 0,024.',
+      acht: `Ein großes Residuum allein kippt die Gerade kaum. P136 liegt bei der Lernzeit nahe der Mitte: Ohne sie bliebe die Steigung bei ${num(withoutP136())}. Ihre Cooks Distanz von 0,024 liegt nur knapp über der Faustregel 4 / n = 0,02.`,
       concept: 'residuals',
     },
     {
@@ -82,7 +87,7 @@ export const ausreisser: ConceptCard = {
     },
     {
       question: 'P008 mit fast mittlerer Lernzeit löst 0 statt 13 Aufgaben. Ändert sich die Steigung stark?', options: ['ja, stark', 'kaum'], correct: 1, step: 2,
-      explain: `Die Steigung bleibt bei ${num(withScore(P008, 0).b1)}; die Gerade rutscht nur ein wenig nach unten. In der Mitte hat eine Person keinen Hebel.`,
+      explain: `Die Steigung bleibt bei ${num(withScore(P008, 0).b1)}; die Gerade rutscht nur ein wenig nach unten. In der Mitte hat eine Person kaum einen Hebel.`,
       kurz: 'Weit daneben, aber in der Mitte: wenig Einfluss auf die Steigung.',
     },
     {

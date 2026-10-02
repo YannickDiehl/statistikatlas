@@ -14,7 +14,7 @@ import { BESTANDEN, WB_MODELL, pBestanden, wbModel } from './logistisch-kit';
 import { logistic } from './fit';
 import { logistischeRegression, logistischeRegressionTabs } from './logistic-regression';
 import { marginaleEffekte, marginaleEffekteTabs } from './marginal-effects';
-import { ausreisser, ausreisserTabs, influence, P175, P008, withScore } from './outliers';
+import { ausreisser, ausreisserTabs, influence, P175, P008, withScore, withoutP136 } from './outliers';
 import { multikollinearitaet, multikollinearitaetTabs, vifFor, vifOf } from './multicollinearity';
 import { baseTable, trainTest, ueberanpassung, ueberanpassungTabs } from './overfitting';
 
@@ -68,6 +68,7 @@ import { baseTable, trainTest, ueberanpassung, ueberanpassungTabs } from './over
  *   coef(mi)        # 6.46656417701  0.48240625911  -0.88941068393  0.08977126592
  *   # Steigung mit Weiterbildung 0.5721775, Achsenabschnitt 5.577153; p(b3) = 0.4469257; sum(w) = 82; w[1] = 1
  *   coef(lm(y ~ x:w))  # nur das Produkt: B 0.106, p .038 (Token-Karte zu *)
+ *   confint(mi)[4, ]   # -0.142541  0.322084 (Katalogausgabe: 95% CI -0.143 bis 0.322)
  *
  * Logit und Likelihood (Weiterbildung):
  *   k <- sum(w); p <- k / 200; c(k, p, p / (1 - p), log(p / (1 - p)))   # 82  0.41  0.6949153  -0.3639654
@@ -99,6 +100,7 @@ import { baseTable, trainTest, ueberanpassung, ueberanpassungTabs } from './over
  *   # v = 0: 0.432103 / 0.891998;  v = 10: 0.483154 / 0.130249;  v = 17: 0.518891 / 0.008829;  v = 20: 0.534206 / 0.083342
  *   yy <- y; yy[8] <- 0; coef(lm(yy ~ x))[2]           # P008 (7.8 h, 13 Aufgaben) auf 0: 0.5185885
  *   coef(lm(y[-175] ~ x[-175]))[2]                     # 0.511566
+ *   coef(lm(y[-136] ~ x[-136]))[2]                     # 0.52343154; which(cd > 4/200) = 20 21 57 113 114 136 143 158 172
  *
  * Multikollinearität:
  *   r <- cor(x, alter); c(r, r^2, 1 / (1 - r^2), sqrt(1 / (1 - r^2)))   # 0.02962693 0.0008777552 1.000879 1.000439 (R: VIF 1.001)
@@ -114,6 +116,7 @@ import { baseTable, trainTest, ueberanpassung, ueberanpassungTabs } from './over
  *           "erwerbstaetig", "weiterbildung", "kurs_vor", "kurs_nach")
  *   for (k in 1:20) { m <- lm(reformulate(ov[1:k], "wissenstest"), d[tr, ]); pr <- predict(m, d[te, ]); yt <- d$wissenstest[te]
  *     c(summary(m)$r.squared, 1 - sum((yt - pr)^2) / sum((yt - mean(yt))^2)) }   # Werte in OVERFIT unten
+ *   range(sapply(ov[-1], function(v) cor(d[[v]], d$wissenstest)))                 # -0.1699 (Schlafdauer) bis 0.2457 (Schulabschluss)
  */
 
 const rows = createSurvey();
@@ -178,7 +181,7 @@ test('B13 Gerade: die 200 Befragten wie in R', () => {
   assert.equal(bridgeGerade.lines[2].all(c), 'b₀ = 10,13 − 0,52 · 7,75 ≈ 6,1. So geht die Gerade durch den Punkt der beiden Mitten.');
   assert.equal(bridgeGerade.lines[5].all(c), 'Die 200 Quadrate ergeben Σeᵢ² ≈ 1.370,27. Den größten Beitrag liefert P136 mit e ≈ +7,52.');
   assert.equal(bridgeGerade.interpret(c, 'residuals').zusatz, '136 von 200 Befragten liegen höchstens 2,63 Aufgaben von der Geraden entfernt.');
-  assert.match(bridgeGerade.interpret(c, 'linear_regression').kurz, /^Wer eine Stunde länger lernt, löst laut Gerade im Schnitt 0,52 Aufgaben mehr\./);
+  assert.match(bridgeGerade.interpret(c, 'linear_regression').kurz, /^Wer eine Stunde mehr gelernt hat, löst laut Gerade im Schnitt 0,52 Aufgaben mehr\./);
   assert.match(bridgeGerade.interpret(c, 'prediction').kurz, /P002 mit 8,3 Stunden Lernzeit sagt die Gerade 10,41 gelöste Aufgaben voraus/);
 });
 
@@ -249,7 +252,7 @@ test('B13 Likelihood: Log-Likelihood und Modellvergleich wie in R', () => {
   assert.ok(close(Math.min(...m.p), 0.3543686, 1e-6) && close(Math.max(...m.p), 0.4644712, 1e-6), 'Spanne der Wahrscheinlichkeiten');
   assert.match(likelihoodKarte.stellDirVor.text, /−135,37, bei p = 0,9 nur −280,34/);
   assert.match(likelihoodKarte.bausteine[3].rechnung!, /270,74 − 270,06 = 0,68/);
-  assert.match(likelihoodKarte.ausprobieren[0].explain, /etwa 26-mal weniger wahrscheinlich/);
+  assert.match(likelihoodKarte.ausprobieren[0].explain, /nur etwa ein 26stel so wahrscheinlich wie unter 0,41/);
 });
 
 test('B13 Logistische Regression: S-Kurve und Katalogmodell wie in R', () => {
@@ -269,7 +272,7 @@ test('B13 Logistische Regression: S-Kurve und Katalogmodell wie in R', () => {
   if (t.kind === 'analysis') {
     const r = t.result({ rows, columns: { x: ['lernzeit'], y: ['weiterbildung'] } });
     assert.match(r.kurz, /mit 0,99 malgenommen, bei gleichem Alter\. Sie ändern sich also so gut wie gar nicht/);
-    assert.match(r.fachlich, /0,01 − 0,006 · Lernzeit − 0,007 · Alter\. Die Odds Ratio der Lernzeit ist e\^b₁ ≈ 0,994/);
+    assert.match(r.fachlich, /0,01 − 0,00596 · Lernzeit − 0,00702 · Alter\. Die Odds Ratio der Lernzeit ist e\^b₁ ≈ 0,994/);
     assert.match(r.zusatz!, /von 0,35 bis 0,46/);
   }
 });
@@ -280,7 +283,7 @@ test('B13 Marginale Effekte: Formel, Beispiel und AME wie in R', () => {
   assert.match(marginaleEffekte.interpret(s).kurz, /um etwa 7,6 Prozentpunkte\. In der Mitte, bei p = 0,5, wären es 8,5 Prozentpunkte/);
   assert.ok(close(pBestanden(8), 0.66, 0.005) && close(BESTANDEN.b1, 0.34, 0.005), 'Startwerte gerundet aus R');
   assert.match(marginaleEffekte.genau.paragraphs[0], /je Stunde im Schnitt 6,5 Prozentpunkte/);
-  assert.match(marginaleEffekte.genau.paragraphs[1], /b ≈ 0,336 sind das 8,4 Prozentpunkte/);
+  assert.match(marginaleEffekte.genau.paragraphs[1], /b ≈ 0,34 sind das, mit allen Nachkommastellen gerechnet, 8,4 Prozentpunkte/);
   const pass = Y.map(v => v >= 10 ? 1 : 0), m = logistic([X], pass)!;
   assert.ok(close(m.p.reduce((a, p) => a + m.b[1] * p * (1 - p), 0) / 200, BESTANDEN.ame, 1e-7), 'AME bestanden wie R');
   const t = marginaleEffekteTabs.sample!;
@@ -327,7 +330,7 @@ test('B13 Multikollinearität: VIF wie in R', () => {
   assert.ok(close(1 / (1 - 0.865), 7.4, 0.05) && close(Math.sqrt(7.4), 2.7, 0.03), 'Rechnung mit sichtbaren Zahlen');
   assert.match(multikollinearitaet.regler!.describe(0.9), /VIF 5,26\. Der Standardfehler jedes der beiden Koeffizienten ist dann 2,29-mal so groß/);
   const t = multikollinearitaetTabs.sample!;
-  if (t.kind === 'analysis') assert.match(t.result({ rows, columns: { x: ['lernzeit'], y: ['alter'] } }).kurz, /r = 0,03\. Beide bekommen den VIF 1,001: Ihre Beiträge lassen sich sauber trennen/);
+  if (t.kind === 'analysis') assert.match(t.result({ rows, columns: { x: ['lernzeit'], y: ['alter'] } }).kurz, /r = 0,03\. Beide bekommen den VIF 1,00: Ihre Beiträge lassen sich sauber trennen/);
 });
 
 const OVERFIT = [[0.291157, 0.288101], [0.305721, 0.256309], [0.326673, 0.253099], [0.344673, 0.255398], [0.364397, 0.267944], [0.380788, 0.255907], [0.381114, 0.253752],
@@ -337,11 +340,34 @@ const OVERFIT = [[0.291157, 0.288101], [0.305721, 0.256309], [0.326673, 0.253099
 test('B13 Überanpassung: Training und Test für 1 bis 20 Prädiktoren wie in R', () => {
   const t = baseTable();
   OVERFIT.forEach(([tr, te], k) => assert.ok(close(t[k].train, tr, 1e-6) && close(t[k].test, te, 1e-6), `${k + 1} Prädiktoren: ${t[k].train} / ${t[k].test}`));
-  assert.match(ueberanpassung.stellDirVor.text, /bei den ersten 100 29 % der Streuung, bei den neuen 100 29 %\. Mit 20 Prädiktoren sind es bei den ersten 100 46 %, bei den neuen nur noch 8 %/);
+  assert.match(ueberanpassung.stellDirVor.text, /erfasst das Modell 29 % der Streuung bei den ersten 100 Befragten und 29 % bei den neuen\. Mit 20 Prädiktoren sind es 46 % bei den ersten 100, bei den neuen nur noch 8 %/);
   assert.match(ueberanpassung.bausteine[1].rechnung!, /0,29 mit 1 Prädiktor, 0,38 mit 6, 0,46 mit 20/);
   assert.match(ueberanpassung.bausteine[2].rechnung!, /0,29 mit 1 Prädiktor, 0,26 mit 6, 0,08 mit 20/);
   assert.match(ueberanpassung.regler!.describe(20), /46 % der Streuung, bei den 100 Testpersonen 8 %\. Die Lücke .* „Kurszuversicht, nachher“/);
   assert.equal(trainTest(rows, 1)!.train, t[0].train);
   const s = ueberanpassungTabs.sample!;
   if (s.kind === 'analysis') assert.match(s.result({ rows, columns: { x: ['lernzeit'], y: ['wissenstest'] } }).kurz, /R² 0,29 im Training und 0,29 im Test\. Mit 20 Prädiktoren: 0,46 im Training, aber nur 0,08 im Test/);
+});
+
+test('B13 Fixrunde 1: Zahlen der geänderten Texte wie in R', () => {
+  // I1: P136 ist über 4 / n, kippt die Gerade aber kaum.
+  const inf = influence({ x: X, y: Y });
+  assert.ok(inf.cook[135] > 0.02 && close(withoutP136(), 0.52343154, 1e-7), 'P136');
+  assert.deepEqual(inf.cook.map((d, i) => d > 0.02 ? i + 1 : 0).filter(Boolean), [20, 21, 57, 113, 114, 136, 143, 158, 172], 'auffällige Befragte wie in R');
+  assert.match(ausreisser.bausteine[0].acht, /Ohne sie bliebe die Steigung bei 0,52\. Ihre Cooks Distanz von 0,024 liegt nur knapp über der Faustregel 4 \/ n = 0,02/);
+  // I3: kleine Steigungen in der Brücke mit gültigen Ziffern (Einkommen als x).
+  const c = bridgeContext(gerade.compute, 'pairs', rows, 'einkommen', 'wissenstest', 0);
+  for (const k of [2, 3]) assert.doesNotMatch(bridgeGerade.lines[k].person(c) + bridgeGerade.lines[k].all(c), / 0 · /, `Schritt ${k + 1}: b₁ als 0`);
+  assert.match(bridgeGerade.lines[3].person(c), /\+ 0,000\d+ · /, 'b₁ mit gültigen Ziffern');
+  // I5: plausible Werte für b₃ aus der Katalogausgabe.
+  assert.match(interaktion.bausteine[2].acht, /von −0,14 bis 0,32/);
+  assert.ok(close(-0.142541, -0.14, 0.005) && close(0.322084, 0.32, 0.005), 'Intervall gerundet');
+  // M2: sichtbare Rechnung für P001 im Leitaufruf.
+  assert.ok(close(5.82 + 0.52 * 6 + 0.006 * 41, 9.19, 0.005), '9,19 mit den sichtbaren Zahlen');
+  // M4: Korrelationen der übrigen Prädiktoren mit dem Wissenstest.
+  const rs = ['alter', 'schlafdauer', 'einkommen', 'haushaltsgroesse', 'arbeitsstunden', 'lernplanung5', 'lernzuversicht7', 'statistikinteresse10', 'finanzlage', 'methoden1', 'methoden2', 'methoden3', 'methoden4', 'methoden5', 'schulabschluss', 'erwerbstaetig', 'weiterbildung', 'kurs_vor', 'kurs_nach']
+    .map(v => fitLine({ x: sampleColumn(rows, v), y: Y }).r2! ** 0.5 * Math.sign(fitLine({ x: sampleColumn(rows, v), y: Y }).b1!));
+  assert.ok(close(Math.min(...rs), -0.1699, 1e-4) && close(Math.max(...rs), 0.2457, 1e-4), `r zwischen ${Math.min(...rs)} und ${Math.max(...rs)}`);
+  // M1: marginale Effekte mit zwei Nachkommastellen und Hinweis.
+  assert.match(marginaleEffekte.worked(marginaleEffekte.compute(marginaleEffekte.initial))[1].text, /0,34 · 0,22 ≈ 0,076; R rechnet mit allen Nachkommastellen/);
 });

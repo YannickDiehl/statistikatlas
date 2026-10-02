@@ -9,10 +9,12 @@ import { FACTORS_TOKEN, LOGISTIC_TOKEN, WB_MODELL, wbModel } from './logistisch-
 /** Log-Likelihood von 82 Ja unter 200 bei der Wahrscheinlichkeit p. */
 export const llWb = (p: number) => bernoulliLL(82, 200, p);
 const BEST = llWb(0.41);
-/** Wie viel wahrscheinlicher die Daten unter p = 0,41 sind als unter p (Likelihood-Quotient). */
+/** Brüche als Wort: „halb“, „ein Drittel“ … „ein Zwölftel“, darüber „ein 26stel“. */
+const PARTS = ['', '', 'halb', 'ein Drittel', 'ein Viertel', 'ein Fünftel', 'ein Sechstel', 'ein Siebtel', 'ein Achtel', 'ein Neuntel', 'ein Zehntel', 'ein Elftel', 'ein Zwölftel'];
+/** Wie wahrscheinlich die Daten unter p sind, verglichen mit p = 0,41 (Likelihood-Quotient), als Teil: „nur etwa ein 26stel so wahrscheinlich“. */
 const ratioText = (p: number) => {
-  const r = Math.exp(BEST - llWb(p));
-  return r < 1.5 ? 'fast genauso wahrscheinlich' : r < 1000 ? `etwa ${count(r)}-mal weniger wahrscheinlich` : 'mehr als tausendmal weniger wahrscheinlich';
+  const r = Math.exp(BEST - llWb(p)), k = Math.round(r);
+  return r < 1.5 ? 'fast genauso wahrscheinlich' : r >= 1000 ? 'nicht einmal ein Tausendstel so wahrscheinlich' : `nur etwa ${k < PARTS.length ? PARTS[k] : `ein ${count(k)}stel`} so wahrscheinlich`;
 };
 
 export const likelihoodKarte: ConceptCard = {
@@ -70,12 +72,12 @@ export const likelihoodKarte: ConceptCard = {
     format: v => `p = ${num(v)}`,
     describe: v => Math.abs(v - 0.41) < 0.005
       ? `Das ist das Maximum: Kein anderes p passt besser zu 82 Ja unter 200. Die Log-Likelihood beträgt ${num(BEST)}.`
-      : `Bei p = ${num(v)} beträgt die Log-Likelihood ${num(llWb(v))}. Die beobachteten Antworten wären darunter ${ratioText(v)} als unter p = 0,41.`,
+      : `Bei p = ${num(v)} beträgt die Log-Likelihood ${num(llWb(v))}. Die beobachteten Antworten wären darunter ${ratioText(v)} wie unter p = 0,41.`,
   },
   ausprobieren: [
     {
       question: 'Schieb p auf 0,5. Passt das besser oder schlechter zu 82 Ja unter 200 als 0,41?', options: ['besser', 'schlechter', 'genauso'], correct: 1, step: 3,
-      explain: `Bei 0,5 beträgt die Log-Likelihood ${num(llWb(0.5))}, bei 0,41 ${num(BEST)}. Die beobachteten Antworten wären unter 0,5 ${ratioText(0.5)}.`,
+      explain: `Bei 0,5 beträgt die Log-Likelihood ${num(llWb(0.5))}, bei 0,41 ${num(BEST)}. Die beobachteten Antworten wären unter 0,5 ${ratioText(0.5)} wie unter 0,41.`,
       kurz: 'Am besten passt der Anteil, den du beobachtet hast.',
     },
     {

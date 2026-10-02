@@ -25,12 +25,9 @@ export function wbModel(c: SampleCtx) {
   const xId = c.columns.x?.[0] ?? 'lernzeit', yId = c.columns.y?.[0] ?? 'weiterbildung';
   const x = sampleColumn(c.rows, xId), a = sampleColumn(c.rows, 'alter'), y = sampleColumn(c.rows, yId);
   const k = y.filter(v => v === 1).length, n = y.length;
-  if (k === 0 || k === n) return null;
   const m = logistic([x, a], y);
-  if (!m || !m.converged) return null;
-  const p0 = k / n, nullDev = -2 * (k * Math.log(p0) + (n - k) * Math.log(1 - p0));
-  const ame = m.p.reduce((s, p) => s + m.b[1] * p * (1 - p), 0) / n;
-  return { b: m.b, p: m.p, dev: m.deviance, nullDev, chi2: nullDev - m.deviance, k, n, ame, or: Math.exp(m.b[1]) };
+  if (!m) return null;
+  return { b: m.b, p: m.p, dev: m.deviance, nullDev: m.nullDeviance, chi2: m.nullDeviance - m.deviance, k, n, ame: m.ame[0], or: Math.exp(m.b[1]) };
 }
 
 export const LOGISTIC_TOKEN: TokenNote = {

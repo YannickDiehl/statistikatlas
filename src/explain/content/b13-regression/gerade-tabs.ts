@@ -71,7 +71,7 @@ export const linearRegressionTabs: ConceptTabs = {
     tokens: { linear_regression: LINEAR_REGRESSION_TOKEN, standardized: STANDARDIZED, modell: MODELL },
     outputMap: [
       { match: '0.518', atlas: 'b₁ der Lernzeit', step: 2, explain: 'B in der Zeile lernzeit ist die Steigung: je Stunde 0,52 Aufgaben mehr, bei gleichem Alter. Ohne Alter im Modell ist sie fast gleich.' },
-      { match: '5.822', atlas: 'b₀', step: 3, explain: 'B in der Zeile (Intercept) ist der Achsenabschnitt. Ohne Alter im Modell wären es 6,1 Aufgaben bei 0 Stunden.' },
+      { match: '5.822', atlas: 'b₀', step: 3, explain: 'B in der Zeile (Intercept) ist der Achsenabschnitt bei 0 Stunden und Alter 0, also weit außerhalb der Daten. Ohne Alter im Modell wären es 6,1 Aufgaben bei 0 Stunden.' },
       { match: '0.006', atlas: 'b₂ des Alters', explain: 'Je Lebensjahr sagt das Modell 0,006 Aufgaben mehr voraus, bei gleicher Lernzeit: fast nichts.' },
       { match: 'Beta', atlas: 'standardisierte Steigung', explain: 'Beta misst die Steigung in Standardabweichungen beider Variablen. Mit nur einem Prädiktor wäre Beta gleich r.' },
       N_MAP,
@@ -88,8 +88,8 @@ export const linearRegressionTabs: ConceptTabs = {
   next: {
     next: { id: 'explained_variance', why: r2Sentence },
     before: [
-      { id: 'covariance', why: 'Die Summe der Abweichungsprodukte im Zähler der Steigung.' },
-      { id: 'variance', why: 'Die Quadratsumme von x im Nenner der Steigung.' },
+      { id: 'covariance', why: 'sₓᵧ, die gemittelte Summe der Abweichungsprodukte; sie steht im Zähler der Steigung.' },
+      { id: 'variance', why: 'sₓ², die gemittelte Quadratsumme von x; sie steht im Nenner der Steigung.' },
       { id: 'linear', why: 'Die Gerade beschreibt nur gerade Muster.' },
     ],
     after: [
@@ -130,7 +130,7 @@ export const predictionTabs: ConceptTabs = {
     entry: 'linear_regression', variant: 0,
     tokens: { linear_regression: LINEAR_REGRESSION_TOKEN, standardized: STANDARDIZED, modell: MODELL },
     outputMap: [
-      { match: '9.180750', atlas: 'ŷ von P001', step: 4, explain: 'predict() zeigt die Vorhersage jeder Person. P001 lernt 6 Stunden und ist 41: 5,82 + 0,52 · 6 + 0,006 · 41 ≈ 9,18 Aufgaben.' },
+      { match: '9.180750', atlas: 'ŷ von P001', step: 4, explain: 'predict() zeigt die Vorhersage jeder Person. P001 lernt 6 Stunden und ist 41: 5,82 + 0,52 · 6 + 0,006 · 41 ≈ 9,19, mit allen Nachkommastellen 9,18 Aufgaben.' },
       { match: '5.822', atlas: 'b₀', step: 3, explain: 'Der Startwert des linearen Prädiktors in der Zeile (Intercept).' },
       { match: '0.518', atlas: 'b₁ der Lernzeit', step: 2, explain: 'Das Gewicht der Lernzeit: Es wird mit den Stunden einer Person malgenommen.' },
       { match: '0.006', atlas: 'b₂ des Alters', explain: 'Das Gewicht des Alters: Es wird mit den Lebensjahren einer Person malgenommen.' },
