@@ -1,5 +1,34 @@
 // Bereich B4 „Umformen“. Begriffe (Spezifikation Ausbau, Abschnitt 6): ss, centering, scaling, z, ranks, pomps, row_operations, item_score.
 // Je Begriff eine Datei in diesem Ordner, hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
 import type { AreaIndex } from '../../types';
+import { zentrieren, tabsCentering } from './zentrieren';
+import { standardisieren, tabsZ } from './standardisieren';
+import { tabsSs } from './ss';
+import { skalieren, tabsScaling } from './skalieren';
+import { raenge, tabsRanks } from './raenge';
+import { pomps, tabsPomps } from './pomps';
+import { zeilen, tabsRowOperations } from './zeilen';
+import { skalenwert, tabsItemScore } from './skalenwert';
 
-export const b04Umformen: AreaIndex = { explanations: {}, tabs: {} };
+export const b04Umformen: AreaIndex = {
+  explanations: {
+    centering: { kind: 'werkstatt', workshop: zentrieren, variant: 'centering' },
+    z: { kind: 'werkstatt', workshop: standardisieren, variant: 'z' },
+    scaling: { kind: 'satz', template: skalieren },
+    ranks: { kind: 'werkstatt', workshop: raenge, variant: 'ranks' },
+    pomps: { kind: 'satz', template: pomps },
+    row_operations: { kind: 'tabelle', tool: zeilen },
+    item_score: { kind: 'begriff', card: skalenwert },
+  },
+  // Die Quadratsumme behält ihre Schrittkarte aus der Werkstatt Streuung (Pilot); B4 liefert nur ihre Reiter.
+  tabs: {
+    ss: tabsSs,
+    centering: tabsCentering,
+    z: tabsZ,
+    scaling: tabsScaling,
+    ranks: tabsRanks,
+    pomps: tabsPomps,
+    row_operations: tabsRowOperations,
+    item_score: tabsItemScore,
+  },
+};

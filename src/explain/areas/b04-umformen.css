@@ -1,0 +1,6 @@
+/* Bereich B4 „Umformen“: Ablesehilfe der gewählten Person und Titel der Lineale (src/components/explain/pictures/b04-umformen.tsx). */
+.b04-reading{stroke:var(--green);stroke-width:1.5;stroke-dasharray:2 3}
+.b04-ruler-title{fill:var(--muted)}
+.b04-link{stroke:var(--muted);stroke-width:1}
+.b04-link.sel{stroke:var(--green);stroke-width:2.5}
+.b04-fill{fill:var(--xw-pos-fill);stroke:var(--green);stroke-width:1}
