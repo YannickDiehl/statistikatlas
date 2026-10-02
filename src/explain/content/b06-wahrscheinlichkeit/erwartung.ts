@@ -325,7 +325,7 @@ export const erwartung: Workshop<number[], Erw> = {
     expectation: {
       lastStep: 2,
       kurz: 'Der Erwartungswert sagt dir, welcher Wert im Mittel herauskommt, wenn du sehr oft zufällig ziehst. Jeder Wert zählt so stark wie seine Wahrscheinlichkeit.',
-      fachlich: 'Der Erwartungswert ist die Summe aller möglichen Werte einer Zufallsvariable, jeder mit seiner Wahrscheinlichkeit gewichtet. Um ihn pendeln sich die Ergebnisse auf lange Sicht ein.',
+      fachlich: 'Der Erwartungswert ist die Summe aller möglichen Werte einer Zufallsvariable, jeder mit seiner Wahrscheinlichkeit gewichtet. Um ihn pendelt sich der Durchschnitt vieler Ziehungen auf lange Sicht ein.',
       symbolic: ['μ = E(X) = ', { big: 'Σ', m: 2 }, { part: ['x', { sub: 'i' }], m: 2 }, ' · ', { part: ['p', { sub: 'i' }], m: 1 }],
       aria: 'mü gleich E von X gleich Summe über alle Personen i von x i mal p i',
       metrics: [{ label: 'Chance je Person', value: () => '0,2' }, { label: 'Erwartungswert μ', value: c => num(c.s.mu) }],
@@ -346,7 +346,7 @@ export const erwartung: Workshop<number[], Erw> = {
     population_variance: {
       lastStep: 5,
       kurz: 'Die Populationsvarianz sagt dir, wie weit die Werte im Modell um den Erwartungswert streuen. Sie ist der mit den Wahrscheinlichkeiten gewichtete Durchschnitt der Abstandsquadrate.',
-      fachlich: 'Die Populationsvarianz ist der Erwartungswert der quadrierten Abweichung vom Erwartungswert. Bei gleich wahrscheinlichen Werten teilt man die Quadratsumme durch ihre Anzahl, nicht durch eins weniger.',
+      fachlich: 'Die Populationsvarianz ist der Erwartungswert der quadrierten Abweichung vom Erwartungswert. Bei gleich wahrscheinlichen Werten teilt man die Quadratsumme durch die Zahl der Werte, nicht durch eins weniger.',
       symbolic: ['σ² = ', { big: 'Σ', m: 5 }, { part: ['('], m: 4 }, { part: ['x', { sub: 'i' }, ' −'], m: 3 }, ' ', { part: ['μ'], m: 2 }, { part: [')²'], m: 4 }, ' · ', { part: ['p', { sub: 'i' }], m: 1 }],
       aria: 'sigma Quadrat gleich Summe über alle Personen i von x i minus mü, zum Quadrat, mal p i',
       // σ² zuletzt: Das Ausprobieren dieser Karte (Denkfrage zu σ²) meldet die letzte Kennzahl.

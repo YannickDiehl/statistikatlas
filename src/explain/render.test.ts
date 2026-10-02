@@ -196,6 +196,15 @@ test('the header line „In der Fachsprache“ is words only, like the approved 
     assert.deepEqual(styleProblems(fach, { maxWords: 25, maxSentences: 2 }), [], `${id}: ${fach}`);
   }
   assert.ok(n > 40, `nur ${n} Fachsprache-Zeilen geprüft`);
+  // Korrigierte Zeilen der Nachprüfung (N-M2): der Durchschnitt pendelt sich ein, erst teilen, dann die Wurzel ziehen,
+  // „Zahl der Werte“, kein Wortlaut-Wiederholen von „Kurz gesagt“ mit Anker für die Verteilungsfunktion, Spanne statt Wert.
+  const fach = (id: string) => kurzOf(explainFor(id))?.fach ?? '';
+  assert.match(fach('expectation'), /pendelt sich der Durchschnitt vieler Ziehungen auf lange Sicht ein\.$/);
+  assert.match(fach('population_variance'), /durch die Zahl der Werte, nicht durch eins weniger\.$/);
+  assert.match(fach('phi'), /Teilt man Chi-Quadrat durch die Fallzahl und zieht die Wurzel, erhält man seinen Betrag\.$/);
+  assert.match(fach('standard_normal'), /Fläche links von einem z-Wert, also die Wahrscheinlichkeit, höchstens so weit zu kommen\.$/);
+  assert.notEqual(fach('standard_normal').split('. ')[0], kurzOf(explainFor('standard_normal'))?.text.split('. ')[0], 'standard_normal: Fachsprache wiederholt „Kurz gesagt“');
+  assert.match(fach('pomps'), /^POMPS rechnet Antworten in Prozent der größtmöglichen Spanne um,/);
   assert.equal(kurzOf(explainFor('weights'))?.fach, 'Der gewichtete Mittelwert zählt jede Antwort mit dem Gewicht ihrer Person und teilt durch die Summe der Gewichte. Designgewichte gleichen ungleiche Auswahlwahrscheinlichkeiten aus.');
 });
 
