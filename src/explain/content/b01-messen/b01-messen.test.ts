@@ -16,6 +16,9 @@ import { pearson } from './shared';
 import { attenuation, measurementError, measurementErrorTabs, MF } from './measurement-error';
 import { VAL, validity, validityTabs } from './validity';
 import { CATALOG_OUTPUT } from '../../catalogOutput';
+import { ALLBUS_HHINC, ALLBUS_INC, MITTEL, missing, missingTabs } from './missing';
+import { readFileSync } from 'node:fs';
+import { readSav, type SavFile } from '../../../sandbox/readSav';
 import { surveyColumns } from '../../../domain/survey';
 import { styleProblems } from '../../style';
 
@@ -81,6 +84,20 @@ import { styleProblems } from '../../style';
  * Validität (validity):
  *   cor(m, y); cor(x, y); cor(x, 20 - y); cor(x, y + 1)   # 0.0211; 0.5391689; -0.5391689; 0.5391689
  *   (Cronbach's Alpha der fünf Methodenfragen: 0.898, siehe oben)
+ *
+ * Fehlende Angaben (missing), Übungskopie wie im R-Code des Werkzeugs:
+ *   fuenf <- atlas %>% filter(id %in% c("P001", "P002", "P003", "P004", "P005")) %>%
+ *     mutate(einkommen = replace(einkommen, id == "P003", -9), lernzeit = replace(lernzeit, id == "P005", NA))
+ *   fuenf %>% describe(einkommen, show = "mean")                                   # Mean 2972.400, N 5
+ *   fuenf %>% set_na(einkommen = -9) %>% describe(einkommen, show = "mean")        # Mean 3717.750, N 4, Missing 1
+ *   fuenf %>% mutate(einkommen = replace(einkommen, id == "P003", 0)) %>% describe(einkommen, show = "mean")   # 2974.200
+ *   fuenf %>% set_na(einkommen = -9) %>% pearson_cor(einkommen, lernzeit)          # N = 3 (listenweise)
+ *   atlas %>% mutate(einkommen = replace(einkommen, id == "P001", -9)) %>% set_na(einkommen = -9) %>%
+ *     describe(einkommen, show = c("mean", "sd"))                                   # Mean 3147.613, SD 1426.790, N 199, Missing 1
+ *
+ * ALLBUS 2023 (ZA8831 v1-3-0, ungewichtet, nur Aggregate; haven::read_sav(user_na = TRUE)):
+ *   table(a$hhincc)[c("-9", "-7")]                  # 696 keine Angabe, 28 verweigert: 724 / 5246 = 13.8 %
+ *   table(a$incc)[c("-9", "-7", "-50")]             # 362 + 84 = 446 keine Angabe oder verweigert; 251 kein Einkommen
  */
 
 const rows = createSurvey();
@@ -224,4 +241,30 @@ test('B1 Validität: Alpha, Zuversicht und Lernzeit gegen den Wissenstest wie in
   assert.match(reversed.kurz, /eher niedrigere Werte: r ≈ −0,54\. Das passt nicht/);
   assert.match(reversed.kurz, /kaum zusammen \(r ≈ −0,02\)/);
   assert.ok(close(tab.value!(ctx(applyOp(rows, 'wissenstest', 'shift', 1))) as number, VAL.rLernzeit, 1e-6), 'r nach +1 Aufgabe wie in R');
+});
+
+test('B1 fehlende Angaben: die Übungskopie und ihre Mittelwerte wie in R', () => {
+  assert.ok(close(MITTEL.zahl, 2972.4, 1e-9) && close(MITTEL.na, 3717.75, 1e-9) && close(MITTEL.null, 2974.2, 1e-9), JSON.stringify(MITTEL));
+  for (const o of ['zahl', 'na', 'null']) assert.equal(missing.check.answer(o), MITTEL[o as keyof typeof MITTEL]);
+  assert.match(missing.check.diagnose('na', 2974.2)!, /^Fast! Du hast durch 5 geteilt/);
+  assert.deepEqual(missing.apply(missing.rows, 'na').rows.map(r => r.einkommen), [4549, 3850, null, 4604, 1868]);
+  assert.deepEqual(missing.apply(missing.rows, 'null').rows.map(r => r.zaehlt), ['ja', 'ja', 'ja, als 0', 'ja', 'ja']);
+  assert.match(missing.rCode('na'), /set_na\(einkommen = -9\) %>%\n  describe\(einkommen, show = "mean"\)$/);
+  assert.match(missing.wofuer, /ALLBUS 2023 \(ungewichtet\) machten 13,8 %/);
+  assert.match(missing.genau.paragraphs[1], /446 von 5\.246 .* Weitere 251/);
+  const tab = analysis(missingTabs.sample), r = tab.result(ctx(rows, { x: ['einkommen'] }));
+  assert.equal(r.kurz, 'Alle 200 von 200 Befragten haben eine gültige Angabe zum Haushaltsnettoeinkommen. Der Mittelwert 3.154,62 €/Monat beruht deshalb auf allen 200.');
+  assert.match(CATALOG_OUTPUT['missing_tools:0'].output, /einkommen\s+3147\.613\s+1426\.790\s+199\s+1/);
+  assert.ok(ALLBUS_HHINC.fehlend === 696 + 28 && ALLBUS_INC.fehlend === 362 + 84, 'Summen der ALLBUS-Codes');
+});
+
+const allbusFile = process.env.ALLBUS_SAV;
+let allbus: SavFile | null = null;
+const loadAllbus = () => { if (!allbus) { const b = readFileSync(allbusFile!); allbus = readSav(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)); } return allbus; };
+const codeCount = (name: string, code: number) => loadAllbus().byName.get(name)!.values.filter(v => v === code).length;
+
+test('B1 ALLBUS 2023: Aggregate wie in R (nur mit der eigenen GESIS-Datei)', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, () => {
+  assert.equal(loadAllbus().nCases, 5246);
+  assert.deepEqual([codeCount('hhincc', -9), codeCount('hhincc', -7)], [696, 28]);
+  assert.deepEqual([codeCount('incc', -9), codeCount('incc', -7), codeCount('incc', -50)], [362, 84, 251]);
 });

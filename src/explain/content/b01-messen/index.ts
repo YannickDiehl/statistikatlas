@@ -9,6 +9,7 @@ import { ordinal, ordinalTabs } from './ordinal';
 import { operationalization, operationalizationTabs } from './operationalization';
 import { measurementError, measurementErrorTabs } from './measurement-error';
 import { validity, validityTabs } from './validity';
+import { missing, missingTabs } from './missing';
 
 export const b01Messen: AreaIndex = {
   explanations: {
@@ -20,6 +21,7 @@ export const b01Messen: AreaIndex = {
     operationalization: { kind: 'begriff', card: operationalization },
     measurement_error: { kind: 'begriff', card: measurementError },
     validity: { kind: 'begriff', card: validity },
+    missing: { kind: 'tabelle', tool: missing },
   },
   tabs: {
     series: seriesTabs,
@@ -30,5 +32,6 @@ export const b01Messen: AreaIndex = {
     operationalization: operationalizationTabs,
     measurement_error: measurementErrorTabs,
     validity: validityTabs,
+    missing: missingTabs,
   },
 };
