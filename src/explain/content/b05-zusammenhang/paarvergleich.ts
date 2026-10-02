@@ -145,7 +145,7 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
       },
     },
     {
-      button: 'C − D', title: 'Entgegengesetzte Paare abziehen', sym: 'C − D', say: 'C minus D', concept: 'concordance', perPerson: true,
+      button: 'C − D', title: 'Widersprüche abziehen', sym: 'C − D', say: 'C minus D', concept: 'concordance', perPerson: true,
       was: 'Ein Paar ist entgegengesetzt, wenn die eine Person mehr Interesse hat, aber seltener Nachrichten liest. Wir zählen diese Paare und ziehen sie von C ab.',
       rechnung: c => {
         const all = comparisons(c), opp = all.filter(x => x.kind === 'D').map(x => c.names[x.j]);
@@ -227,13 +227,11 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
   numeric: (c, last) => numericFor(c.s, last),
   table: {
     columns: [
-      { head: 'Interesse xᵢ', from: 1, active: [1], cell: (c, i) => String(c.s.xs[i]) },
-      { head: 'Nachrichten yᵢ', from: 1, active: [1], cell: (c, i) => String(c.s.ys[i]) },
+      { head: 'xᵢ, yᵢ', from: 1, active: [1], cell: (c, i) => `${c.s.xs[i]}, ${c.s.ys[i]}` },
       { head: 'Paare mit Späteren', from: 1, active: [1], cell: (c, i) => String(c.s.later[i]), sum: c => String(c.s.n0), sumFrom: 1 },
       { head: 'gleich gerichtet', from: 2, active: [2], cell: (c, i) => String(c.s.ci[i]), sum: c => String(c.s.C), sumFrom: 2, tone: (c, i) => c.s.ci[i] > 0 ? 'pos' : undefined },
       { head: 'entgegengesetzt', from: 3, active: [3], cell: (c, i) => String(c.s.di[i]), sum: c => String(c.s.D), sumFrom: 3, tone: (c, i) => c.s.di[i] > 0 ? 'neg' : undefined },
-      { head: 'Gleichstand x', from: 5, active: [5], cell: (c, i) => String(c.s.txi[i]), sum: c => String(c.s.Tx), sumFrom: 5 },
-      { head: 'Gleichstand y', from: 5, active: [5], cell: (c, i) => String(c.s.tyi[i]), sum: c => String(c.s.Ty), sumFrom: 5 },
+      { head: 'Gleichstand x, y', from: 5, active: [5], cell: (c, i) => `${c.s.txi[i]}, ${c.s.tyi[i]}`, sum: c => `${c.s.Tx}, ${c.s.Ty}`, sumFrom: 5 },
     ],
     lines: [
       { from: 3, step: 3, text: c => `C − D = ${c.s.C} − ${c.s.D} = ${int(c.s.cd)}` },

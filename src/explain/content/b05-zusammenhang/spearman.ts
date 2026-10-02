@@ -207,15 +207,14 @@ export const rangkorrelation: Workshop<Pairs, RankStats> = {
     { part: [`/ √(${num(c.s.qx)} · ${num(c.s.qy)})`], m: 5 }, { br: true }, ...result(c.s)],
   table: {
     columns: [
-      { head: 'Stunden xᵢ', from: 1, active: [1], cell: (c, i) => String(c.s.xs[i]) },
-      { head: 'Aufgaben yᵢ', from: 1, active: [1], cell: (c, i) => String(c.s.ys[i]) },
-      { head: 'R(xᵢ)', from: 1, active: [1], cell: (c, i) => num(c.s.rx[i]), sum: () => '15', sumFrom: 1, sumNote: 'immer' },
-      { head: 'R(yᵢ)', from: 1, active: [1], cell: (c, i) => num(c.s.ry[i]), sum: () => '15', sumFrom: 1, sumNote: 'immer' },
+      { head: 'xᵢ → R(xᵢ)', from: 1, active: [1], cell: (c, i) => `${c.s.xs[i]} → ${num(c.s.rx[i])}` },
+      { head: 'yᵢ → R(yᵢ)', from: 1, active: [1], cell: (c, i) => `${c.s.ys[i]} → ${num(c.s.ry[i])}` },
       { head: 'R(xᵢ) − R̄', from: 2, active: [2], cell: (c, i) => signed(c.s.dx[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer' },
       { head: 'R(yᵢ) − R̄', from: 2, active: [2], cell: (c, i) => signed(c.s.dy[i]), sum: () => '0', sumFrom: 2, sumNote: 'immer' },
       { head: 'Produkt', from: 3, active: [3, 4], cell: (c, i) => num(c.s.prod[i]), sum: c => num(c.s.sp), sumFrom: 4, tone: (c, i) => c.s.prod[i] > 1e-9 ? 'pos' : c.s.prod[i] < -1e-9 ? 'neg' : undefined },
     ],
     lines: [
+      { from: 1, step: 1, text: () => 'Jede Rangreihe ergibt zusammen 1 + 2 + 3 + 4 + 5 = 15, auch mit gleichen Werten.' },
       { from: 2, step: 2, text: () => 'R̄ = (5 + 1) / 2 = 3' },
       { from: 5, step: 5, text: c => `Quadratsummen ${num(c.s.qx)} und ${num(c.s.qy)}: ρ = ${num(c.s.sp)} / √(${num(c.s.qx)} · ${num(c.s.qy)})${c.s.rho === null ? ', nicht definiert' : ` ${eq(c.s.rho)} ${num(c.s.rho)}`}` },
     ],
@@ -265,7 +264,7 @@ export const rangkorrelation: Workshop<Pairs, RankStats> = {
       symbolic: ['ρ = ', { frac: [
         { big: 'Σ', m: 4 }, { part: ['('], m: 3 }, { part: ['R(x', { sub: 'i' }, ')'], m: 1 }, { part: [' − R̄'], m: 2 }, { part: [')('], m: 3 },
         { part: ['R(y', { sub: 'i' }, ')'], m: 1 }, { part: [' − R̄'], m: 2 }, { part: [')'], m: 3 },
-      ], den: [{ part: ['√( Σ(R(xᵢ) − R̄)² · Σ(R(yᵢ) − R̄)² )'], m: 5 }], m: 5 }],
+      ], den: [{ big: '√', m: 5 }, { root: [{ part: ['Σ(R(xᵢ) − R̄)²'], m: 5 }, ' · ', { part: ['Σ(R(yᵢ) − R̄)²'], m: 5 }], m: 5 }], m: 5 }],
       aria: 'rho gleich: Summe über alle Personen i von R von x i minus R quer, mal R von y i minus R quer; geteilt durch die Wurzel aus dem Produkt der beiden Quadratsummen der Rangabstände',
       metrics: [
         { label: 'Pearson-r der Antworten', value: c => c.s.r === null ? 'nicht definiert' : num(c.s.r) },
