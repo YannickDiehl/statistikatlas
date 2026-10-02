@@ -1140,7 +1140,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "ancova",
-  "title": "Kovarianzanalyse · ANCOVA",
+  "title": "Kovarianzanalyse (ANCOVA)",
   "region": "groups",
   "intro": "Verbinde Gruppenvergleiche mit metrischen Kovariaten. Adjustierte Mittel sind Modellvorhersagen bei festgelegten Kovariatenwerten.",
   "formula": "Y = μ + A + βX + ε → [[adjustierte Mittel|prediction|Vorhersage bei Kovariatenmittelwerten]]",
@@ -1483,7 +1483,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "wilcoxon_test",
-  "title": "Wilcoxon · verbunden",
+  "title": "Wilcoxon, verbunden",
   "region": "groups",
   "intro": "Vergleiche zwei Messungen derselben Personen mit dem Vorzeichen-Rang-Test. Entscheidend sind die geordneten absoluten Differenzen und ihre Vorzeichen.",
   "formula": "dᵢ = [[yᵢ−xᵢ|paired_difference|Differenzen derselben Personen]]; V = W⁺ = Σ [[R(|dᵢ|)|ranks|Mittlere Ränge der Differenzbeträge]] für dᵢ > 0",
@@ -1801,7 +1801,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "chi_square",
-  "title": "Chi-Quadrat · Unabhängigkeit",
+  "title": "Chi-Quadrat (Unabhängigkeit)",
   "region": "categorical",
   "intro": "Prüfe, ob die gemeinsame Verteilung zweier kategorialer Merkmale mit Unabhängigkeit vereinbar ist.",
   "formula": "χ² = Σ ([[Oⱼₖ|crosstab|Beobachtete Zellzahl]] − [[Eⱼₖ|expected|Erwartete Zellzahl]])² / Eⱼₖ",
@@ -1873,7 +1873,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "chisq_gof",
-  "title": "Chi-Quadrat · Anpassung",
+  "title": "Chi-Quadrat (Anpassung)",
   "region": "categorical",
   "intro": "Vergleiche eine beobachtete Kategorienverteilung mit einer vorab festgelegten Verteilung. Ohne expected nimmt mariposa gleiche Wahrscheinlichkeiten an.",
   "formula": "χ² = Σ ([[Oⱼ|frequency|Beobachtete Häufigkeit]] − n p₀ⱼ)² / (n p₀ⱼ)",
@@ -1921,7 +1921,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "fisher_test",
-  "title": "Fisher · exakter Test",
+  "title": "Exakter Test nach Fisher",
   "region": "categorical",
   "intro": "Prüfe Unabhängigkeit anhand der möglichen Kreuztabellen bei festen Randhäufigkeiten. Das funktioniert auch bei kleinen Zellzahlen.",
   "formula": "P(Tabelle | Ränder) → [[p exakt|p_value|Summe mindestens ebenso ungewöhnlicher Tabellen]]",
@@ -2434,7 +2434,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "reliability",
-  "title": "Reliabilität · Alpha & Omega",
+  "title": "Reliabilität: Alpha und Omega",
   "region": "scales",
   "intro": "Beschreibe die interne Konsistenz zusammengehöriger Items. Alpha verwendet Item- und Summenvarianzen; Omega verwendet ein Einfaktor-Modell.",
   "formula": "α = k/(k−1) · (1 − Σ[[sⱼ²|variance|Varianz einzelner Items]] / [[s²Summe|item_score|Varianz des Summenwerts]]); ω = (Σλⱼ)² / ((Σλⱼ)² + Σθⱼ)",
@@ -2958,7 +2958,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "pomps",
-  "title": "POMPS · Skalen auf 0–100",
+  "title": "POMPS (Skalen auf 0–100)",
   "region": "scales",
   "intro": "Rechne eine Antwort anhand ihrer theoretischen Skalenendpunkte in Prozent des möglichen Wertebereichs um.",
   "formula": "POMP = 100 · ([[x|series|Beobachteter Wert]] − min) / (max − min)",

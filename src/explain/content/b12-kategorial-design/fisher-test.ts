@@ -1,7 +1,8 @@
-// Begriffskarte „Fisher · exakter Test“: Weiterbildung und Erwerbstätigkeit im Lehrdatensatz (Vierfeldertafel 40 78 / 23 59),
+// Begriffskarte „Exakter Test nach Fisher“: Weiterbildung und Erwerbstätigkeit im Lehrdatensatz (Vierfeldertafel 40 78 / 23 59),
 // wie mariposa::fisher_test(row = weiterbildung, col = erwerbstaetig) 0.7.4. R-Referenzwerte: b12-kategorial-design.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num, pct } from '../../format';
+import { ref, titleFor } from '../../../domain/learning';
 import { chiSquare } from '../../../tasks/kit/stats';
 import { pchisq } from '../../../tasks/kit/dist';
 import { dhyper, fisher2x2, fisherFromCell, fourfold, oddsRatio, often, pText } from './rechnen';
@@ -160,7 +161,7 @@ export const fisherTabs: ConceptTabs = {
   r: {
     entry: 'fisher_test', variant: 0,
     tokens: {
-      fisher_test: { sym: 'fisher_test()', term: 'Exakter Test nach Fisher', kurz: 'Prüft exakt, ob zwei kategoriale Spalten zusammenhängen. Meldet p, bei vier Feldern das Odds Ratio mit Intervall, und N.', fehler: 'Mit einer Spalte voller Kommazahlen meldet mariposa: `row` variable `lernzeit` appears to be continuous. Fisher\'s exact test requires categorical variables.' },
+      fisher_test: { sym: 'fisher_test()', term: titleFor(ref('fisher_test')), kurz: 'Prüft exakt, ob zwei kategoriale Spalten zusammenhängen. Meldet p, bei vier Feldern das Odds Ratio mit Intervall, und N.', fehler: 'Mit einer Spalte voller Kommazahlen meldet mariposa: `row` variable `lernzeit` appears to be continuous. Fisher\'s exact test requires categorical variables.' },
       row: { sym: 'row =', term: 'Zeilen der Kreuztabelle', kurz: 'Die Spalte, deren Antworten die Zeilen der Tafel bilden, hier die Weiterbildung.', fehler: 'Vertauschst du row und col, bleiben p und Odds Ratio gleich; nur die Tafel steht gekippt da.' },
       col: { sym: 'col =', term: 'Spalten der Kreuztabelle', kurz: 'Die Spalte, deren Antworten die Spalten der Tafel bilden, hier die Erwerbstätigkeit.', fehler: 'Ohne col meldet mariposa: Argument `col` is missing, with no default.' },
     },

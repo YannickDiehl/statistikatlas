@@ -1,4 +1,4 @@
-// Begriffskarte „Kovarianzanalyse · ANCOVA“: Wissenstest nach Schulabschluss im Lehrdatensatz, roh und bereinigt um
+// Begriffskarte „Kovarianzanalyse (ANCOVA)“: Wissenstest nach Schulabschluss im Lehrdatensatz, roh und bereinigt um
 // Lernzeit und Alter, wie der Leitaufruf ancova(dv = wissenstest, between = schulabschluss, covariate = c(lernzeit, alter)).
 // Das Bild stellt rohe und bereinigte Gruppenmittel gegenüber. Referenzwerte: ./b10-mittelwerte.test.ts.
 import type { ConceptCard, ConceptTabs, TokenNote } from '../../types';

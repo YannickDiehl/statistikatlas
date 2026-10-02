@@ -843,7 +843,7 @@ export const foundationEntries:AtlasEntry[]=[
   },
   {
     "id": "power",
-    "title": "Teststärke · Power",
+    "title": "Teststärke (Power)",
     "region": "inference_foundations",
     "intro": "Die Teststärke ist die Wahrscheinlichkeit, unter einer bestimmten tatsächlichen Alternative die Nullhypothese zu verwerfen. Sie beschreibt, wie gut ein geplantes Testverfahren einen relevanten Effekt erkennen kann.",
     "formula": "Power(θ) = 1 − [[β(θ)|type_errors|Wahrscheinlichkeit, die konkrete Alternative zu übersehen]] = Pθ(H₀ verwerfen), θ unter H₁",
@@ -1048,7 +1048,7 @@ export const foundationEntries:AtlasEntry[]=[
   },
   {
     "id": "explained_variance",
-    "title": "Erklärter Varianzanteil · R²",
+    "title": "Erklärter Varianzanteil (R²)",
     "region": "model_foundations",
     "intro": "R² vergleicht die Fehler eines linearen Modells mit der Streuung der Zielwerte um ihren Mittelwert. Es beschreibt, wie viel dieser Streuung das angepasste Modell rechnerisch erfasst.",
     "formula": "R² = 1 − [[SSE|residuals|Quadratsumme der Modellresiduen]] / [[SST|ss|Quadratsumme der Zielwerte um ihren Mittelwert]]",
@@ -1138,7 +1138,7 @@ export const foundationEntries:AtlasEntry[]=[
   },
   {
     "id": "confounding",
-    "title": "Confounding · gemeinsame Ursachen",
+    "title": "Confounding (gemeinsame Ursachen)",
     "region": "model_foundations",
     "intro": "Ein beobachteter Zusammenhang kann durch gemeinsame Ursachen mitentstehen. Die verglichenen Gruppen unterscheiden sich dann bereits in ihrer Ausgangslage für das Ergebnis.",
     "formula": "A ← [[C|causality|Angenommene gemeinsame Ursache]] → Y",
@@ -1165,7 +1165,7 @@ export const foundationEntries:AtlasEntry[]=[
   },
   {
     "id": "causality",
-    "title": "Kausalität · was würde sich ändern?",
+    "title": "Kausalität: Was würde sich ändern?",
     "region": "model_foundations",
     "intro": "Eine kausale Frage vergleicht, was unter zwei klar beschriebenen Handlungen geschehen würde. Ein bloßer Unterschied zwischen beobachteten Gruppen beantwortet diese Frage noch nicht.",
     "formula": "ATE = [[E|expectation|Erwartungswert: Mittel in der Zielpopulation]][Y(1) − Y(0)]",

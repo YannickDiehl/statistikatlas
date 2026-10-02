@@ -1,8 +1,9 @@
-// Werkstatt „Cronbachs Alpha“ für den Begriff `reliability` (Reliabilität · Alpha & Omega): fünf Personen, drei Fragen
+// Werkstatt „Cronbachs Alpha“ für den Begriff `reliability` (Reliabilität: Alpha und Omega): fünf Personen, drei Fragen
 // zur Methoden-Zuversicht (1 bis 7), sechs Schritte. Ton nach der Streuung (src/explain/content/streuung.ts).
 // Alle Zahlen in R nachgerechnet, siehe b14-faktoren.test.ts.
 import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
 import { close, fixed, num, paren } from '../../format';
+import { ref, titleFor } from '../../../domain/learning';
 import { cronbach, FRAGE, itemColumns, SPALTEN, variance } from './rechnen';
 
 /** Fünf Personen (Zeilen) mal drei Fragen (Spalten), Antworten von 1 bis 7. */
@@ -362,7 +363,7 @@ export const reliabilityTabs: ConceptTabs = {
   r: {
     entry: 'reliability', variant: 0,
     tokens: {
-      reliability: { sym: 'reliability()', term: 'Reliabilität: Alpha und Omega', kurz: 'Rechnet Cronbachs Alpha und McDonalds Omega für Fragen, die zusammen eine Skala bilden sollen. Die Fragen stehen durch Kommas getrennt in der Klammer.', fehler: 'Mit nur einer Frage bricht mariposa ab: `reliability()` requires at least 2 items.' },
+      reliability: { sym: 'reliability()', term: titleFor(ref('reliability')), kurz: 'Rechnet Cronbachs Alpha und McDonalds Omega für Fragen, die zusammen eine Skala bilden sollen. Die Fragen stehen durch Kommas getrennt in der Klammer.', fehler: 'Mit nur einer Frage bricht mariposa ab: `reliability()` requires at least 2 items.' },
       summary: { sym: 'summary()', term: 'Ausführliche Ausgabe', kurz: 'Zeigt alle Tabellen der Reliabilitätsanalyse: Kennwerte je Frage, die Korrelationen und Alpha ohne jede einzelne Frage.', fehler: 'Ohne summary() zeigt R nur zwei Zeilen: Cronbach\'s Alpha = 0.898 (Good), McDonald\'s Omega = 0.899 und N.' },
     },
     outputMap: [

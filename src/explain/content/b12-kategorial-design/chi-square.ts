@@ -1,4 +1,4 @@
-// Werkstatt „Chi-Quadrat · Unabhängigkeit“ (chi_square) an einer Vierfeldertafel aus dem Lehrdatensatz.
+// Werkstatt „Chi-Quadrat (Unabhängigkeit)“ (chi_square) an einer Vierfeldertafel aus dem Lehrdatensatz.
 // Ton nach der Streuung (src/explain/content/streuung.ts). Zahlen in R nachgerechnet: b12-kategorial-design.test.ts.
 import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
 import { num, signed, paren, close, pct, count } from '../../format';
@@ -6,6 +6,7 @@ import { chiParts, eqFor, fine, fineParen, fineSigned, partSum, partText, shareO
 import { often, pText } from './rechnen';
 import { chiSquare, cramersV, crosstab } from '../../../tasks/kit/stats';
 import { columnById } from '../../../domain/survey';
+import { ref, titleFor } from '../../../domain/learning';
 import { pchisq } from '../../../tasks/kit/dist';
 
 /** Vierfeldertafel: Zellen a, b, c, d (Zeile 1 links, Zeile 1 rechts, Zeile 2 links, Zeile 2 rechts) mit Beschriftung. */
@@ -303,7 +304,7 @@ export const chiSquareTabs: ConceptTabs = {
   r: {
     entry: 'chi_square', variant: 0,
     tokens: {
-      chi_square: { sym: 'chi_square()', term: 'Chi-Quadrat-Test auf Unabhängigkeit', kurz: 'Prüft, ob zwei kategoriale Spalten zusammenhängen. Meldet χ², die Freiheitsgrade, p, Cramér-V und die Zahl der Befragten N.', fehler: 'Mit nur einer Spalte meldet mariposa: Exactly two variables must be specified for `chi_square()`.' },
+      chi_square: { sym: 'chi_square()', term: titleFor(ref('chi_square')), kurz: 'Prüft, ob zwei kategoriale Spalten zusammenhängen. Meldet χ², die Freiheitsgrade, p, Cramér-V und die Zahl der Befragten N.', fehler: 'Mit nur einer Spalte meldet mariposa: Exactly two variables must be specified for `chi_square()`.' },
       correct: { sym: 'correct =', term: 'Kontinuitätskorrektur', kurz: 'FALSE rechnet χ² ohne Korrektur, wie in der Werkstatt. TRUE zieht bei vier Feldern von jedem Abstand 0,5 ab.', fehler: 'Bei mehr als zwei Zeilen oder Spalten wirkt correct = TRUE nicht. Die Korrektur gibt es nur für Vierfeldertafeln.' },
     },
     outputMap: [

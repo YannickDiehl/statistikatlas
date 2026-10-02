@@ -5,6 +5,7 @@
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { fixed, num, unit } from '../../format';
 import { sampleColumn } from '../../sample';
+import { ref, titleFor } from '../../../domain/learning';
 import { dbinom, dhyper, fisherTest, often, prob, pValue } from './dist';
 
 /** 10 aus 200 mit 82 Erfolgen (R: dhyper, dbinom) und die Vierfeldertafel Weiterbildung × Erwerbstätig (R: fisher.test). */
@@ -167,7 +168,7 @@ export const hyperTabs: ConceptTabs = {
   r: {
     entry: 'fisher_test', variant: 0,
     tokens: {
-      fisher_test: { sym: 'fisher_test()', term: 'Exakter Test von Fisher', kurz: 'Rechnet den exakten Test von Fisher für zwei Spalten mit Kategorien. Bei einer Vierfeldertafel nutzt er die hypergeometrische Verteilung.', fehler: 'Ohne zweite Spalte meldet mariposa: Argument `col` is missing, with no default.' },
+      fisher_test: { sym: 'fisher_test()', term: titleFor(ref('fisher_test')), kurz: 'Rechnet den exakten Test von Fisher für zwei Spalten mit Kategorien. Bei einer Vierfeldertafel nutzt er die hypergeometrische Verteilung.', fehler: 'Ohne zweite Spalte meldet mariposa: Argument `col` is missing, with no default.' },
     },
     outputMap: [
       { match: 'p', atlas: 'p-Wert', step: 4, explain: 'Gäbe es keinen Zusammenhang, käme eine mindestens so große Abweichung in etwa 44 von 100 Stichproben vor. Die Wahrscheinlichkeiten liefert die hypergeometrische Verteilung.' },

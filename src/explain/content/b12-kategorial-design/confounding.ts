@@ -1,4 +1,4 @@
-// Begriffskarte „Confounding · gemeinsame Ursachen“: Lernplanung und Wissenstest im Lehrdatensatz hängen zusammen,
+// Begriffskarte „Confounding (gemeinsame Ursachen)“: Lernplanung und Wissenstest im Lehrdatensatz hängen zusammen,
 // die Lernzeit hängt mit beidem zusammen. R-Referenzwerte (cor, partial_cor aus mariposa 0.7.4): b12-kategorial-design.test.ts.
 // Ursachenwörter stehen hier bewusst (Leitplanke in AUTHORING 2a, Ausnahme B12), aber nur als Vermutung über die Entstehung.
 import type { ConceptCard, ConceptTabs } from '../../types';

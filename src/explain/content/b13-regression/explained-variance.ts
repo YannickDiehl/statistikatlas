@@ -3,6 +3,7 @@
 import type { ConceptTabs, SentenceTemplate } from '../../types';
 import { num, close } from '../../format';
 import { sampleColumnInfo } from '../../sample';
+import { ref, titleFor } from '../../../domain/learning';
 import { lineFor, LINEAR_REGRESSION_TOKEN, MODELL } from './gerade-tabs';
 
 /** Quadratsummen der 200 Befragten: ohne Gerade (SST), mit Lernzeit (SSE) und mit Lernzeit und Alter (SSE2). */
@@ -26,7 +27,7 @@ export const erklaerteVarianz: SentenceTemplate<R2Values, R2Stats> = {
     { label: 'Erklärter Anteil R²', value: s => num(s.r2) },
   ],
   glyphs: [
-    { key: 'r2', sym: 'R²', say: 'R Quadrat', term: 'Erklärter Varianzanteil · R²', plain: 'der Anteil der Streuung, den die Gerade erfasst', concept: 'explained_variance' },
+    { key: 'r2', sym: 'R²', say: 'R Quadrat', term: titleFor(ref('explained_variance')), plain: 'der Anteil der Streuung, den die Gerade erfasst', concept: 'explained_variance' },
     { key: 'rest', sym: 'SSE / SST', say: 'S S E durch S S T', term: 'Unerklärter Anteil', plain: 'der Teil der Streuung, der trotz Gerade übrig bleibt' },
     { key: 'sse', sym: 'SSE', say: 'S S E', term: 'Residuen & kleinste Quadrate', plain: 'die quadrierten Abstände zur Geraden, zusammengezählt', concept: 'residuals' },
     { key: 'sst', sym: 'SST', say: 'S S T', term: 'Quadratsumme der Abweichungen', plain: 'die quadrierten Abstände zum Mittelwert, ganz ohne Gerade', concept: 'ss' },

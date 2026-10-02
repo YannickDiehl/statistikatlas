@@ -1,4 +1,4 @@
-// Begriffskarte „Kausalität · was würde sich ändern?“: Lernzeit und Wissenstest im Lehrdatensatz hängen deutlich zusammen,
+// Begriffskarte „Kausalität: Was würde sich ändern?“: Lernzeit und Wissenstest im Lehrdatensatz hängen deutlich zusammen,
 // eine Wirkung zeigt das allein nicht. R-Referenzwerte: b12-kategorial-design.test.ts.
 import type { ConceptCard, ConceptTabs } from '../../types';
 import { num } from '../../format';
