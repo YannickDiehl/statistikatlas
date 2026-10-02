@@ -3,6 +3,7 @@
 import type { AreaIndex } from '../../types';
 import { rangkorrelation, spearmanTabs } from './spearman';
 import { concordanceTabs, gammaTabs, paarvergleich, tauTabs } from './paarvergleich';
+import { crosstabTabs, kreuztabelle } from './crosstab';
 
 export const b05Zusammenhang: AreaIndex = {
   explanations: {
@@ -10,11 +11,13 @@ export const b05Zusammenhang: AreaIndex = {
     concordance: { kind: 'werkstatt', workshop: paarvergleich, variant: 'concordance' },
     goodman_gamma: { kind: 'werkstatt', workshop: paarvergleich, variant: 'goodman_gamma' },
     kendall_tau: { kind: 'werkstatt', workshop: paarvergleich, variant: 'kendall_tau' },
+    crosstab: { kind: 'tabelle', tool: kreuztabelle },
   },
   tabs: {
     spearman: spearmanTabs,
     concordance: concordanceTabs,
     goodman_gamma: gammaTabs,
     kendall_tau: tauTabs,
+    crosstab: crosstabTabs,
   },
 };

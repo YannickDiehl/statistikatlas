@@ -7,6 +7,7 @@ import { txt, type Ctx } from '../../types';
 import { tabsFor } from '../../registry';
 import { rangkorrelation, rankStats, type RankStats } from './spearman';
 import { paarvergleich, pairCount, type PairCount } from './paarvergleich';
+import { abschlussNachWeiterbildung, crossCounts, FUENF, kreuztabelle } from './crosstab';
 
 /*
  * Referenzwerte des Bereichs B5 „Zusammenhang“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -138,5 +139,41 @@ test('B5 Paarvergleich: konkordante Paare, Gamma und Tau-b wie in R', () => {
   for (const [col, op] of [['schulabschluss', 'reverse'], ['finanzlage', 'reverse']] as const) {
     const flippedRows = applyOp(rows, col, op), f = bridgeContext(pairCount, 'pairs', flippedRows, 'finanzlage', 'schulabschluss', 1);
     assert.deepEqual([f.s.C, f.s.D], [5300, 6954], `${col} umgepolt`);
+  }
+});
+
+/*
+ * Kreuztabelle, Werkzeug (fünf Befragte aus dem Lehrdatensatz):
+ *   five <- atlas %>% filter(id %in% c("P001", "P002", "P003", "P008", "P011"))
+ *   five %>% crosstab(row = erwerbstaetig, col = weiterbildung, percentages = "row")
+ *   #   Nein: 1 | 0 | 1 (100.0% | 0.0%);  Ja: 1 | 3 | 4 (25.0% | 75.0%);  Total: 2 | 3 | 5 (40.0% | 60.0%)
+ *   five %>% crosstab(row = erwerbstaetig, col = weiterbildung, percentages = "col")
+ *   #   col %: Nein 50.0% | 0.0% | 20.0%;  Ja 50.0% | 100.0% | 80.0%
+ *   atlas %>% crosstab(row = erwerbstaetig, col = weiterbildung, percentages = "none")   # 40 23 / 78 59, Total 118 82 200
+ * Reiter (Katalog): atlas %>% crosstab(row = schulabschluss, col = weiterbildung, percentages = "row")
+ *   prop.table(table(schulabschluss, weiterbildung), 1) * 100
+ *   #   Ja: 40.4762 30.0000 45.9459 41.4634 47.5000; table(schulabschluss) 42 40 37 41 40; table(weiterbildung) 118 82
+ */
+test('B5 Kreuztabelle: fünf Befragte, Prozentbasis und die 200 wie in R', () => {
+  const byId = new Map(rows.map(r => [r.id, r.values]));
+  for (const p of FUENF) assert.deepEqual([byId.get(p.person)!.erwerbstaetig, byId.get(p.person)!.weiterbildung], [p.erwerbstaetig, p.weiterbildung], p.person);
+  const k = crossCounts(kreuztabelle.rows);
+  assert.deepEqual([k.cells, k.rowSum, k.colSum, k.n], [[[1, 0], [1, 3]], [1, 4], [2, 3], 5]);
+  const row = kreuztabelle.apply(kreuztabelle.rows, 'row'), col = kreuztabelle.apply(kreuztabelle.rows, 'col'), none = kreuztabelle.apply(kreuztabelle.rows, 'none');
+  assert.deepEqual(row.rows.map(r => r.prozent), ['75 %', '25 %', '100 %', '75 %', '75 %'], 'Zeilenprozente je Person');
+  assert.deepEqual(col.rows.map(r => r.prozent), ['100 %', '50 %', '50 %', '100 %', '100 %'], 'Spaltenprozente je Person');
+  assert.deepEqual(none.rows.map(r => r.zelle), [3, 1, 1, 3, 3]); assert.equal(none.columns.length, 3);
+  assert.equal(kreuztabelle.check.answer('row'), 75);
+  assert.match(kreuztabelle.check.diagnose('row', 60)!, /unter allen fünf/); assert.match(kreuztabelle.check.diagnose('row', 100)!, /Spaltenprozent/);
+  for (const o of kreuztabelle.options) assert.match(kreuztabelle.rCode(o.id), new RegExp(`crosstab\\(row = erwerbstaetig, col = weiterbildung, percentages = "${o.id}"\\)`));
+  // Reiter: Schulabschluss und Weiterbildung der 200.
+  const a = abschlussNachWeiterbildung({ rows, columns: { x: ['schulabschluss'], y: ['weiterbildung'] } });
+  assert.deepEqual(a.groups.map(g => [g.n, g.ja]), [[42, 17], [40, 12], [37, 17], [41, 17], [40, 19]]); assert.deepEqual([a.n, a.ja], [200, 82]);
+  const s = tabsFor('crosstab')!.sample!;
+  if (s.kind === 'analysis') {
+    const r = s.result({ rows, columns: { x: ['schulabschluss'], y: ['weiterbildung'] } });
+    assert.equal(r.kurz, 'Insgesamt haben 41 % der 200 Befragten in den letzten zwölf Monaten eine Weiterbildung gemacht. Am häufigsten mit „Abitur / fachgebundene Hochschulreife“ (47,5 %), am seltensten mit „Haupt-/Volksschulabschluss“ (30 %).');
+    assert.equal(r.fachlich, 'Zeilenprozente für Weiterbildung = Ja: Ohne Schulabschluss 40,5 %, Haupt-/Volksschulabschluss 30 %, Mittlerer Abschluss 45,9 %, Fachhochschulreife 41,5 %, Abitur / fachgebundene Hochschulreife 47,5 %.');
+    assert.ok(near(s.value!({ rows, columns: { x: ['schulabschluss'], y: ['weiterbildung'] } }), 47.5), 'Abitur 47,5 %');
   }
 });

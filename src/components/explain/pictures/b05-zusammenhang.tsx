@@ -6,7 +6,8 @@ import type { Pairs } from '../../../explain/math';
 import { num, signed } from '../../../explain/format';
 import type { RankStats } from '../../../explain/content/b05-zusammenhang/spearman';
 import { pairKind, type PairCount, type PairKind } from '../../../explain/content/b05-zusammenhang/paarvergleich';
-import { clamp, DragPoint, forWorkshop, useDrag, useWidth, type Bounds, type Picture } from './kit';
+import { crossCounts } from '../../../explain/content/b05-zusammenhang/crosstab';
+import { clamp, DragPoint, forTable, GridCell, forWorkshop, useDrag, useWidth, type Bounds, type Picture, type TablePictureProps } from './kit';
 
 type Drag = { data: Pairs; names: readonly string[]; who: number; bounds: Bounds; onChange: (d: Pairs) => void; onWho: (i: number) => void };
 
@@ -154,9 +155,43 @@ function PairPicture({ d, s, step }: { d: Drag; s: PairCount; step: number }) {
   );
 }
 
+// ---------- Kreuztabelle (Tabellen-Werkzeug) ----------
+
+/**
+ * Die Kreuztabelle selbst: Zellzahlen mit Rändern, darunter in jeder Zelle der Anteil nach der gewählten Prozentbasis
+ * (Zeile, Spalte oder keine). So steht nach den fünf Personenzeilen die fertige Tabelle da.
+ */
+function CrossGrid({ p }: { p: TablePictureProps }) {
+  const [box, W] = useWidth();
+  const { cells, rowSum, colSum, n } = crossCounts(p.before.rows);
+  const first = 112, cw = Math.min(110, (W - first - 8) / 3), ch = 48, top = 52, H = top + 3 * ch + 10;
+  const table = [[...cells[0], rowSum[0]], [...cells[1], rowSum[1]], [...colSum, n]];
+  const sub = (v: number, i: number, j: number) => {
+    if (p.option === 'none') return undefined;
+    const whole = p.option === 'row' ? (i < 2 ? rowSum[i] : n) : (j < 2 ? colSum[j] : n);
+    return whole ? `${num(v / whole * 100, 1)} %` : '–';
+  };
+  const rows = ['Nein', 'Ja', 'zusammen'], cols = ['Nein', 'Ja', 'zusammen'];
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Kreuztabelle der fünf Personen: ${table.slice(0, 2).map((r, i) => `erwerbstätig ${rows[i]}: ohne Weiterbildung ${r[0]}, mit Weiterbildung ${r[1]}`).join('; ')}; zusammen ${n}.`}>
+        <text className="xw-t xw-strong" x={first + 1.5 * cw} y={16} textAnchor="middle">Weiterbildung</text>
+        <text className="xw-t xw-strong" x={8} y={top - 10}>Erwerbstätig</text>
+        {cols.map((c, j) => <text key={c} className="xw-t" x={first + (j + 0.5) * cw} y={top - 10} textAnchor="middle">{c}</text>)}
+        {table.map((r, i) => <g key={rows[i]}>
+          <text className="xw-t" x={8} y={top + i * ch + ch / 2 + 5}>{rows[i]}</text>
+          {r.map((v, j) => <GridCell key={j} x={first + j * cw} y={top + i * ch} w={cw} h={ch} text={String(v)} sub={sub(v, i, j)} tone={i < 2 && j < 2 ? 'plain' : 'pos'} />)}
+        </g>)}
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b05-rangkorrelation': forWorkshop(p => <RankPicture s={p.s} step={p.step}
     d={{ data: p.data, names: p.workshop.names, who: p.who, bounds: p.workshop.bounds, onChange: p.setData, onWho: p.pickWho }} />),
+  'b05-kreuztabelle': forTable(p => <CrossGrid p={p} />),
   'b05-paarvergleich': forWorkshop(p => <PairPicture s={p.s} step={p.step}
     d={{ data: p.data, names: p.workshop.names, who: p.who, bounds: p.workshop.bounds, onChange: p.setData, onWho: p.pickWho }} />),
 };
