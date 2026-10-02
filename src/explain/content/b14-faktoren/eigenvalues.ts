@@ -39,7 +39,7 @@ export const eigenvalues: ConceptCard = {
     },
     {
       title: 'Die stärkste Richtung suchen',
-      was: 'Die erste Komponente ist die gewichtete Summe der Fragen mit der größten Varianz, bei Gewichten, deren Quadrate zusammen 1 ergeben. Diese Varianz ist der erste Eigenwert.',
+      was: 'Die erste Komponente ist die gewichtete Summe der Fragen, die am stärksten streut, bei Gewichten, deren Quadrate zusammen 1 ergeben. Diese Varianz ist der erste Eigenwert.',
       rechnung: `d₁ = ${num(E[0])}, also ${num(E[0])} / 5 ≈ ${pct1(E[0] / 5)} der Streuung.`,
       warum: 'Hängen die Fragen eng zusammen, gehen sie gemeinsam nach oben und unten. Dann erfasst eine Richtung fast alles.',
       acht: 'Der Eigenwert ist kein Prozentwert. Erst geteilt durch die Zahl der Fragen wird daraus ein Anteil.',

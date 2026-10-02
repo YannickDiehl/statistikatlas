@@ -158,12 +158,13 @@ test('B14 Cronbachs Alpha mit 200 Befragten wie in R', () => {
   const rev = applyOp(rows, 'methoden1', 'reverse'), con = applyOp(rows, 'methoden2', 'constant', 4);
   const r = s.result(ctx());
   assert.equal(r.kurz, 'Die fünf Fragen zur Methoden-Zuversicht passen gut zusammen: Cronbachs Alpha ist knapp 0,9 (R meldet 0.898). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.');
-  assert.match(r.fachlich, /≈ 0,90\. .* R meldet 0\.898 \(Good\); das liegt knapp unter 0,9\. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good/);
+  // Reihenfolge: rohes α, gleich danach R, dann erst das standardisierte α (R standardisiert: 0.899).
+  assert.match(r.fachlich, /≈ 0,90\. R meldet 0\.898 \(Good\); das liegt knapp unter 0,9\. Aus den Korrelationen gerechnet \(standardisiert\) ergibt sich 0,90\. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good, ab 0,7 mit Acceptable, ab 0,6 mit Questionable und darunter mit Poor\./);
   // N2: Frage 2 ohne Streuung lässt R weg und rechnet mit vier Fragen (0.877); so auch der Reiter.
   const r2 = s.result(ctx(con));
   assert.equal(r2.kurz, 'Die übrigen vier Fragen zur Methoden-Zuversicht passen gut zusammen: Cronbachs Alpha ist 0,88 (R meldet 0.877). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.');
   assert.match(r2.fachlich, /^k = 4 Fragen, Σsⱼ² = 7,98, sₓ² = 23,3: α = 4\/3 · \(1 − 7,98 \/ 23,3\) ≈ 0,88\. Frage 2 streut nicht: R lässt sie weg/);
-  assert.match(r2.fachlich, /standardisiert\) ergibt sich 0,88\. R meldet 0\.877 \(Good\)\./);
+  assert.match(r2.fachlich, /gerechnet ist mit den übrigen vier\. R meldet 0\.877 \(Good\)\. Aus den Korrelationen gerechnet \(standardisiert\) ergibt sich 0,88\./);
   assert.match(s.result(ctx(applyOp(rev, 'methoden2', 'constant', 4))).kurz, /^Alpha ist negativ \(−0,04\): Die übrigen vier Fragen/);
   assert.match(r.fachlich, /Σsⱼ² = 10,16, sₓ² = 36,09: α = 5\/4 · \(1 − 10,16 \/ 36,09\) ≈ 0,90\. .* 0,90\./);
   assert.equal(r.zusatz, 'Die Summenwerte streuen 3,55-mal so stark wie die fünf Fragen einzeln zusammen.');
@@ -308,7 +309,7 @@ test('B14 Rotation: Drehwinkel, Karte und Reiter mit den Zahlen aus R', () => {
   const s = rotationTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const r = s.result(ctx());
-  assert.equal(r.kurz, 'Vor der Rotation laden alle fünf Fragen stark auf der ersten Komponente, zwischen 0,83 und 0,86. Nach Varimax teilen sich die Fragen auf beide Komponenten auf; zusammen erfassen sie wie vorher 79,5 %. Dabei unterscheiden sich die Befragten im Wesentlichen nur in einer Sache.');
+  assert.equal(r.kurz, 'Vor der Rotation laden alle fünf Fragen stark auf der ersten Komponente, zwischen 0,83 und 0,86. Nach Varimax verteilen sich die Fragen auf beide Komponenten, die zusammen wie vorher 79,5 % erfassen. Dabei unterscheiden sich die Befragten im Wesentlichen nur in einer Sache.');
   assert.equal(r.fachlich, 'Ungedreht 71,2 % und 8,3 %, nach Varimax 40,0 % und 39,5 %. Der zweite Eigenwert ist 0,41, also unter 1: Die Aufteilung ist hier ein Kunstprodukt der erzwungenen zweiten Komponente.');
   assert.equal(r.zusatz, 'Nach der Rotation: Frage 3 und Frage 5 laden vor allem auf der ersten Komponente. Frage 2 und Frage 4 laden vor allem auf der zweiten. Frage 1 lädt auf beiden etwa gleich (0,60 und 0,61).');
 });
