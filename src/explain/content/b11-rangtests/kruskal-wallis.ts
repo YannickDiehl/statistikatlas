@@ -80,7 +80,7 @@ export const kruskalWallisWorkshop: Workshop<number[], KwStats> = {
       rechnung: c => {
         const v = c.s.xs[c.who], same = c.s.xs.map((x, i) => [x, i] as const).filter(([x, i]) => x === v && i !== c.who).map(([, i]) => c.names[i]);
         const less = c.s.xs.filter(x => x < v).length;
-        if (!same.length) return `Person ${P(c)} lernt ${hours(v)}. ${less === 1 ? 'Eine Person lernt' : `${less} Personen lernen`} weniger, also bekommt ${P(c)} Rang ${num(c.s.rank[c.who])}.`;
+        if (!same.length) return `Person ${P(c)} lernt ${hours(v)}. ${less === 0 ? 'Niemand lernt' : less === 1 ? 'Eine Person lernt' : `${less} Personen lernen`} weniger, also bekommt ${P(c)} Rang ${num(c.s.rank[c.who])}.`;
         return `Person ${P(c)} lernt ${hours(v)}, genau wie ${same.join(' und ')}. Sie teilen sich die Plätze ${less + 1} bis ${less + same.length + 1} und bekommen alle den mittleren Rang ${num(c.s.rank[c.who])}.`;
       },
       fach: 'Ein Rang ist der Platz eines Werts in der gemeinsamen Reihenfolge aller Werte. Gleiche Werte bekommen den Mittelwert ihrer Plätze.',
@@ -159,7 +159,7 @@ export const kruskalWallisWorkshop: Workshop<number[], KwStats> = {
       was: 'Wir nehmen die Summe mal 12 / (N · (N + 1)) = 12 / 90. So entsteht H, das R mit einer festen Verteilung vergleicht.',
       rechnung: c => `H = 12 / 90 · ${num(c.s.ss)} = ${num(12 * c.s.ss)} / 90 ≈ ${num(c.s.Hraw)}${c.s.ties && Number.isFinite(c.s.H) ? `. Wegen der Gleichstände teilt R noch durch ${num(c.s.C, 3)} und meldet H ≈ ${num(c.s.H)}.` : '.'}`,
       fach: 'H = 12 / (N(N + 1)) · Σ nⱼ(R̄ⱼ − R̄)². Ohne Unterschied folgt H ungefähr einer χ²-Verteilung mit k − 1 Freiheitsgraden, hier 2.',
-      warum: 'Der Faktor macht H vergleichbar, egal wie viele Personen es sind. So reicht eine einzige Verteilung, die χ²-Verteilung, für alle Studien.',
+      warum: 'Der Faktor macht H vergleichbar, egal wie viele Personen es sind. Dann lässt sich H immer mit derselben χ²-Verteilung vergleichen.',
       acht: 'Ein großes H sagt nur: Irgendwo unterscheiden sich Gruppen. Welche es sind, zeigen erst Paarvergleiche wie die Dunn-Vergleiche.',
       check: {
         question: 'Wie groß ist H vor der Korrektur für Gleichstände? Zwei Nachkommastellen reichen.',
@@ -209,7 +209,7 @@ export const kruskalWallisWorkshop: Workshop<number[], KwStats> = {
       tryIt: { label: 'Ränge gleichmäßig verteilen', apply: () => KW_EVEN },
     },
     {
-      question: 'Die Gruppe Abitur heißt jetzt Gruppe 1, die Hauptschule Gruppe 3. Was passiert mit H?', options: ['wird größer', 'bleibt gleich', 'wechselt das Vorzeichen'], correct: 1, step: 4,
+      question: 'Die Gruppe Abitur heißt jetzt Gruppe 1, die Gruppe Hauptschulabschluss Gruppe 3. Was passiert mit H?', options: ['wird größer', 'bleibt gleich', 'wechselt das Vorzeichen'], correct: 1, step: 4,
       explain: 'H zählt für jede Gruppe ihren quadrierten Abstand zur Mitte zusammen. In welcher Reihenfolge die Gruppen stehen, spielt dabei keine Rolle.',
       kurz: 'Die Gruppen brauchen keine Reihenfolge.',
     },
@@ -306,7 +306,7 @@ export const kruskalWallisTabs: ConceptTabs = {
       { match: 'H', atlas: 'H', step: 5, explain: 'Die Prüfgröße: Wie weit liegen die mittleren Ränge auseinander? R hat sie schon für Gleichstände korrigiert.' },
       { match: 'df', atlas: 'Freiheitsgrade k − 1', explain: 'Fünf Gruppen ergeben 5 − 1 = 4 Freiheitsgrade für die χ²-Verteilung.' },
       { match: '.021', atlas: 'p-Wert', explain: 'Gäbe es keine Unterschiede zwischen den Abschlüssen, käme ein so großes H in etwa 2 von 100 Stichproben vor.' },
-      { match: 'Epsilon-squared', atlas: 'Effektgröße ε²', explain: 'ε² = H / (N − 1) ≈ 0,058. Nach der Faustregel darunter ist das ein kleiner Effekt.' },
+      { match: 'Epsilon-squared', atlas: 'Effektgröße ε²', explain: 'ε² = H / (N − 1) ≈ 0,058. Nach der Faustregel, die R darunter druckt, ist das ein kleiner Effekt.' },
     ],
     check: {
       question: 'Welche Zahl in der Ausgabe ist H? Tippe sie an.', correct: 'H',

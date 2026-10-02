@@ -106,7 +106,7 @@ export const scheffeCard: ConceptCard = {
     paragraphs: [
       'mariposa rechnet F = Differenz² / ((k − 1) · MSE · (1/nᵢ + 1/nⱼ)) und vergleicht mit der F-Verteilung mit k − 1 und N − k Freiheitsgraden. Die Intervalle nutzen S = √((k − 1) · F_krit) Standardfehler.',
       'Ein Kontrast ist eine gewichtete Summe von Gruppenmitteln, deren Gewichte zusammen 0 ergeben, etwa (x̄₁ + x̄₂) / 2 − x̄₃. mariposa bietet nur Paarkontraste an; frei eingegebene Kontraste gibt es dort nicht.',
-      'Ist die ANOVA nicht signifikant, findet Scheffé auch keinen auffälligen Kontrast. Bei Tukey kann das in seltenen Fällen anders sein.',
+      'Liegt der F-Test der ANOVA nicht unter α, findet Scheffé auch keinen auffälligen Kontrast. Bei Tukey kann das in seltenen Fällen anders sein.',
       'Nach einer mehrfaktoriellen ANOVA nimmt scheffe_test() die rohen Gruppenmittel und die Fehlervarianz des Gesamtmodells.',
     ],
   },

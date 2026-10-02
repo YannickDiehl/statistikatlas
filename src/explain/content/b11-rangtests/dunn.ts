@@ -166,7 +166,7 @@ export const dunnTabs: ConceptTabs = {
     outputMap: [
       { match: '(Holm)', atlas: 'Holm-Korrektur', step: 3, explain: 'Die p-Werte sind für die zehn Vergleiche korrigiert, wie im Aufruf mit p_adjust = "holm" verlangt.' },
       { match: '10 comparisons', atlas: 'zehn Paare', step: 3, explain: 'Fünf Gruppen ergeben 5 · 4 / 2 = 10 Paare.' },
-      { match: '0 significant', atlas: 'auffällige Paare', step: 3, explain: 'Nach der Korrektur liegt kein Paar unter α = 0,05, obwohl Kruskal–Wallis signifikant ist.' },
+      { match: '0 significant', atlas: 'auffällige Paare', step: 3, explain: 'Nach der Korrektur liegt kein Paar unter α = 0,05, obwohl Kruskal–Wallis bei α = 0,05 signifikant ist.' },
       { match: 'p < .05', atlas: 'Signifikanzniveau α', explain: 'Die Schwelle α = 0,05 für die korrigierten p-Werte.' },
     ],
     check: {

@@ -98,7 +98,7 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
       rechnung: c => {
         const v = c.s.xs[c.who], same = c.s.xs.map((x, i) => [x, i] as const).filter(([x, i]) => x === v && i !== c.who).map(([, i]) => c.names[i]);
         const less = c.s.xs.filter(x => x < v).length;
-        if (!same.length) return `Person ${P(c)} lernt ${hours(v)}. ${less === 1 ? 'Eine Person lernt' : `${less} Personen lernen`} weniger, also bekommt ${P(c)} Rang ${num(c.s.rank[c.who])}.`;
+        if (!same.length) return `Person ${P(c)} lernt ${hours(v)}. ${less === 0 ? 'Niemand lernt' : less === 1 ? 'Eine Person lernt' : `${less} Personen lernen`} weniger, also bekommt ${P(c)} Rang ${num(c.s.rank[c.who])}.`;
         return `Person ${P(c)} lernt ${hours(v)}, genau wie ${same.join(' und ')}. Sie teilen sich die Plätze ${less + 1} bis ${less + same.length + 1} und bekommen alle den mittleren Rang ${num(c.s.rank[c.who])}.`;
       },
       fach: 'Ein Rang ist der Platz eines Werts in der gemeinsamen Reihenfolge aller Werte. Gleiche Werte bekommen den Mittelwert ihrer Plätze.',
@@ -327,7 +327,7 @@ export const mannWhitneyTabs: ConceptTabs = {
       '"two.sided"': { sym: '"two.sided"', term: 'Einseitig & zweiseitig testen', kurz: 'Zweiseitig: Gefragt ist, ob eine der beiden Gruppen in der Reihe vorn liegt, egal welche.', fehler: 'Nur die englischen Wörter funktionieren. alternative = "kleiner" ergibt: \'arg\' sollte eines von \'“two.sided”, “less”, “greater”\' sein.' },
     },
     outputMap: [
-      { match: 'U', atlas: 'U', step: 4, explain: 'Der kleinere der beiden U-Werte. Er zählt die Paare, in denen die Gruppe mit Weiterbildung vorn liegt; Gleichstände zählen halb.' },
+      { match: 'U', atlas: 'U', step: 4, explain: 'Der kleinere der beiden U-Werte: In so vielen Paaren kommt die Person mit Weiterbildung leichter mit dem Einkommen aus. Gleichstände zählen halb.' },
       { match: 'Z', atlas: 'z', step: 5, explain: 'U, gemessen am üblichen Schwanken ohne Unterschied. R rechnet aus dem kleineren U, deshalb ist z negativ.' },
       { match: 'p', atlas: 'p-Wert', explain: 'Gäbe es keinen Unterschied, käme ein so kleines U in etwa 72 von 100 Stichproben vor. Das ist gar nicht überraschend.' },
       { match: 'r', atlas: 'Effektgröße r', explain: 'r = |z| / √N, hier 0,36 / √200. In Klammern steht negligible, auf Deutsch vernachlässigbar.' },

@@ -167,7 +167,7 @@ export const wilcoxonWorkshop: Workshop<Pairs, WxStats> = {
         if (d === 0) return `Person ${P(c)} hat sich nicht verändert und fällt weg. Gerechnet wird mit den übrigen ${c.s.n}.`;
         const a = Math.abs(d), same = c.s.d.map((v, i) => [Math.abs(v), i] as const).filter(([v, i]) => v === a && i !== c.who).map(([, i]) => c.names[i]);
         const less = c.s.d.filter(v => v !== 0 && Math.abs(v) < a).length;
-        if (!same.length) return `Person ${P(c)}: |${signed(d)}| = ${num(a)}. ${less === 1 ? 'Eine Veränderung ist' : `${less} Veränderungen sind`} kleiner, also Rang ${num(c.s.rank[c.who])}.`;
+        if (!same.length) return `Person ${P(c)}: |${signed(d)}| = ${num(a)}. ${less === 0 ? 'Keine Veränderung ist' : less === 1 ? 'Eine Veränderung ist' : `${less} Veränderungen sind`} kleiner, also Rang ${num(c.s.rank[c.who])}.`;
         return `Person ${P(c)}: |${signed(d)}| = ${num(a)}, genau so groß wie bei ${same.join(' und ')}. Sie teilen sich die Plätze ${less + 1} bis ${less + same.length + 1}: Rang ${num(c.s.rank[c.who])}.`;
       },
       fach: 'Gerankt werden die Beträge |dᵢ| aller Differenzen ungleich 0. Gleiche Beträge bekommen den Mittelwert ihrer Plätze.',
@@ -341,7 +341,7 @@ export const wilcoxonTabs: ConceptTabs = {
     },
     outputMap: [
       { match: 'wissenstest_t2 - wissenstest', atlas: 'dᵢ = yᵢ − xᵢ', step: 1, explain: 'Die Richtung der Differenz: zweiter minus erster Messzeitpunkt, also die zweite Spalte im Aufruf minus die erste.' },
-      { match: 'Z', atlas: 'z', step: 4, explain: 'Aus der kleineren Rangsumme gerechnet, deshalb negativ. Die Verbesserungen überwiegen hier deutlich.' },
+      { match: 'Z', atlas: 'z', step: 4, explain: 'Aus der kleineren Rangsumme gerechnet, deshalb negativ. Die Verbesserungen überwiegen hier: 115 gegen 53.' },
       { match: 'p', atlas: 'p-Wert', explain: 'Gäbe es keine Veränderung, käme ein so ungleiches Verhältnis in weniger als 1 von 1.000 Stichproben vor.' },
       { match: 'r', atlas: 'Effektgröße r', explain: 'r = |z| / √n mit den 168 Paaren ohne Nulldifferenz: 5,36 / √168 ≈ 0,41. medium heißt mittel.' },
       { match: 'N', atlas: 'n', explain: 'N zählt alle 200 Befragten, auch die 32 ohne Veränderung, die für die Ränge wegfallen.' },
