@@ -291,7 +291,8 @@ test('Mehrfaktorielle ANOVA: Zellmittel und Typ-III-Tests wie in R', () => {
     const r = sample.result(c);
     assert.match(r.kurz, /ohne Weiterbildung im Schnitt 10,73 Stunden gelernt, mit Weiterbildung 7,84 Stunden\. .* überraschend \(p ≈ 0,02\)/);
     assert.match(r.fachlich, /Schulabschluss F\(4, 190\) ≈ 8,56, p < 0,001; Weiterbildung F\(1, 190\) ≈ 0,28, p ≈ 0,6; Zusammenspiel F\(4, 190\) ≈ 3, p ≈ 0,02, η²p ≈ 0,06/);
-    assert.equal(r.zusatz, 'Je Zelle aus Abschluss und Weiterbildung zwischen 12 und 28 Befragte.');
+    assert.equal(r.zusatz, 'Je Zelle aus Abschluss und Weiterbildung zwischen 12 und 28 Befragte. Erzeugt wurde der Lehrdatensatz ohne Zusammenspiel.');
+    assert.equal(sample.voraussetzung, 'Unabhängige Befragte und ähnliche Streuung in allen zehn Zellen. Jede Zelle braucht Befragte.');
   }
 });
 
@@ -420,5 +421,5 @@ test('Fix-Runde 1: Meldung zu center = median und Altersteigung wie in R', () =>
   const tok = b10Mittelwerte.tabs.levene_test.r!.tokens!['"median"'];
   assert.match(tok.fehler, /`center` must be a character vector, not a function\./);
   const age = b10Mittelwerte.tabs.ancova.r!.outputMap.find(m => m.match === '0.718')!;
-  assert.match(age.explain, /0,004 Aufgaben je Lebensjahr, eta2p = 0\.001/);
+  assert.match(age.explain, /0,0041 Aufgaben je Lebensjahr, η²p ≈ 0,001\./);
 });

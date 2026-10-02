@@ -197,7 +197,7 @@ export const paarWerkstatt: Workshop<Pairs, PairedStats> = {
     },
     {
       question: 'Was passiert mit t, wenn du die beiden Tests wie zwei fremde Gruppen vergleichst?', options: ['t wird kleiner', 't bleibt gleich', 't wird größer'], correct: 0, step: 3,
-      explain: c => `Dann zählt das Schwanken zwischen den Personen mit: Die ersten Testwerte streuen mit s ≈ ${num(c.s.sdX)}, die Veränderungen nur mit ${num(c.s.sd)}. Der Unterschied erscheint dann viel unsicherer. Das gilt, solange gut im ersten Test meist auch gut im zweiten heißt; ziehst du die Punkte gegenläufig, kann es sich umkehren.`,
+      explain: c => `Dann zählt das Schwanken zwischen den Personen mit: Die ersten Testwerte streuen mit s ≈ ${num(c.s.sdX)}, die Veränderungen nur mit ${num(c.s.sd)}. Der Unterschied erscheint dann viel unsicherer. Das gilt, solange, wer im ersten Test gut ist, meist auch im zweiten gut ist; ziehst du die Punkte gegenläufig, kann es sich umkehren.`,
       kurz: 'Wer die Paare zerreißt, verschenkt Genauigkeit.',
     },
   ],

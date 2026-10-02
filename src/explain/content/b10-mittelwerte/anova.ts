@@ -50,7 +50,6 @@ const P = (c: C) => c.names[c.who];
 const G = (c: C) => GRUPPEN[groupOf(c.who)];
 const hours = (v: number) => unit(v, 'Stunde', 'Stunden');
 const ss = (b: 'B' | 'W' | 'T'): FNode[] => ['SS', { sub: b }];
-const ms = (b: 'B' | 'W'): FNode[] => ['MS', { sub: b }];
 /** Zwischen den Gruppen: 3 · (5 − 7)² + 3 · (7 − 7)² + 3 · (9 − 7)² */
 const betweenTerms = (c: C) => c.s.gm.map(m => `3 · (${num(m)} − ${num(c.s.grand)})²`).join(' + ');
 
@@ -74,6 +73,7 @@ export const anovaWerkstatt: Workshop<number[], AnovaStats> = {
     { sym: 'nⱼ', say: 'n j', term: 'Gruppengröße', plain: 'wie viele Personen in Gruppe j sind, hier 3', step: 2 },
     { sym: 'SS zwischen', say: 'S S zwischen', term: 'Quadratsumme zwischen den Gruppen', plain: 'wie weit die Gruppenmitten auseinanderliegen; in der Formel SS mit B für between', step: 2 },
     { sym: 'SS innerhalb', say: 'S S innerhalb', term: 'Quadratsumme innerhalb der Gruppen', plain: 'wie verschieden die Menschen in derselben Gruppe sind; in der Formel SS mit W für within', step: 3 },
+    { sym: 'SS gesamt', say: 'S S gesamt', term: 'Quadratsumme gesamt', plain: 'alle Werte um die Gesamtmitte, SS zwischen plus SS innerhalb; in der Formel SS mit T für total', step: 3 },
     { sym: 'k', say: 'k', term: 'Zahl der Gruppen', plain: 'hier 3', step: 4 },
     { sym: 'N', say: 'N', term: 'Fallzahl', plain: 'alle Personen zusammen, hier 9', step: 4 },
     { sym: 'MS', say: 'M S', term: 'Mittlere Quadratsumme', plain: 'eine Quadratsumme geteilt durch ihre Freiheitsgrade', step: 4 },
@@ -106,7 +106,7 @@ export const anovaWerkstatt: Workshop<number[], AnovaStats> = {
       button: 'SS zwischen', title: 'Die Gruppen mit der Gesamtmitte vergleichen', sym: 'SS zwischen', say: 'S S zwischen', concept: 'group_variation', perPerson: true,
       was: 'Für jede Person nehmen wir den Abstand ihrer Gruppenmitte zur Gesamtmitte und quadrieren ihn. Die Summe über alle neun heißt Streuung zwischen den Gruppen.',
       rechnung: c => `Person ${P(c)}: (${num(c.s.gmOf[c.who])} − ${num(c.s.grand)})² = ${num(c.s.sqB[c.who])}. Alle neun: ${betweenTerms(c)} = ${num(c.s.ssB)}.`,
-      fach: 'Die Quadratsumme zwischen den Gruppen SS zwischen = Σ nⱼ (x̄ⱼ − x̄)²: Jede Gruppe zählt so oft, wie sie Personen hat.',
+      fach: 'Die Quadratsumme zwischen den Gruppen, kurz SS zwischen (in der Formel SS mit tiefgestelltem B für between): Σ nⱼ (x̄ⱼ − x̄)². Jede Gruppe zählt so oft, wie sie Personen hat.',
       warum: 'Liegen die Gruppenmitten weit auseinander, wird diese Summe groß. Sie misst, wie verschieden die Gruppen im Mittel sind.',
       acht: 'Jede Person zählt hier mit der Mitte ihrer Gruppe, nicht mit ihrem eigenen Wert. Deshalb steht in der Tabelle in jeder Gruppe dreimal dieselbe Zahl.',
       check: {
@@ -122,9 +122,9 @@ export const anovaWerkstatt: Workshop<number[], AnovaStats> = {
       button: 'SS innerhalb', title: 'Jede Person mit ihrer Gruppenmitte vergleichen', sym: 'SS innerhalb', say: 'S S innerhalb', concept: 'group_variation', perPerson: true,
       was: 'Für jede Person nehmen wir den Abstand ihrer Lernzeit zur eigenen Gruppenmitte und quadrieren ihn. Alle neun Quadrate zusammen ergeben die Streuung innerhalb der Gruppen.',
       rechnung: c => `Person ${P(c)}: (${c.s.xs[c.who]} − ${num(c.s.gmOf[c.who])})² = ${num(c.s.sqW[c.who])}. Alle neun zusammen: ${num(c.s.ssW)}.`,
-      fach: 'Die Quadratsumme innerhalb der Gruppen SS innerhalb = ΣΣ (xᵢⱼ − x̄ⱼ)²: die Quadratsummen der einzelnen Gruppen, zusammengezählt.',
+      fach: 'Die Quadratsumme innerhalb der Gruppen, kurz SS innerhalb (in der Formel SS mit tiefgestelltem W für within): ΣΣ (xᵢⱼ − x̄ⱼ)², die Quadratsummen der einzelnen Gruppen zusammengezählt.',
       warum: 'Diese Summe misst, wie verschieden Menschen derselben Gruppe sind. Das ist das übliche Schwanken, an dem wir die Gruppenunterschiede messen.',
-      acht: c => `Gemessen wird zur eigenen Gruppenmitte, nicht zur Gesamtmitte. Kleine Probe: ${num(c.s.ssB)} + ${num(c.s.ssW)} = ${num(c.s.ssT)}, die Quadratsumme aller neun um die Gesamtmitte.`,
+      acht: c => `Gemessen wird zur eigenen Gruppenmitte, nicht zur Gesamtmitte. Kleine Probe: ${num(c.s.ssB)} + ${num(c.s.ssW)} = ${num(c.s.ssT)}, die Quadratsumme aller neun um die Gesamtmitte, kurz SS gesamt (in der Formel SS mit T für total).`,
       check: {
         question: 'Wie groß ist die Summe innerhalb der Gruppen?',
         answer: c => c.s.ssW,

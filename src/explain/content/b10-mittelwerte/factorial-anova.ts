@@ -59,8 +59,8 @@ export const factorialAnova: ConceptCard = {
       title: 'Jeden Term am Restschwanken messen',
       was: 'Jeder Haupteffekt und das Zusammenspiel bekommen eine eigene Quadratsumme. Sie wird durch ihre Freiheitsgrade geteilt und mit dem Schwanken innerhalb der Zellen verglichen.',
       rechnung: 'F = (SS des Terms / seine Freiheitsgrade) / MS innerhalb der Zellen. Im Nenner stehen 190 Freiheitsgrade: 200 Befragte minus 10 Zellen.',
-      warum: 'Wie in der einfaktoriellen ANOVA: Ein großes F heißt, der Term trennt die Gruppen stärker, als es das Schwanken erwarten lässt.',
-      acht: 'mariposa rechnet Typ-III-Quadratsummen. Sie ergeben zusammen nicht die gesamte Streuung, anders als in der einfaktoriellen ANOVA.',
+      warum: 'Wie in der einfaktoriellen ANOVA. Ein großes F heißt: Der Term trennt die Gruppen stärker, als es das Schwanken erwarten lässt.',
+      acht: 'mariposa rechnet Typ-III-Quadratsummen. Bei ungleich besetzten Zellen wie hier ergeben sie zusammen nicht die gesamte Streuung, anders als in der einfaktoriellen ANOVA.',
       concept: 'residuals',
     },
   ],
@@ -107,7 +107,7 @@ export const factorialAnova: ConceptCard = {
       'Typ III prüft jeden Term so, als käme er als letzter ins Modell. Bei ungleich besetzten Zellen, hier mit 12 bis 28 Befragten je Zelle, ergeben die Quadratsummen zusammen nicht die gesamte Streuung. Mit ss_type = 2 warnt mariposa und rechnet trotzdem Typ III.',
       'Voraussetzungen wie bei der einfaktoriellen ANOVA: unabhängige Befragte, annähernd normalverteilte Werte in jeder Zelle und ähnliche Streuung in allen Zellen. R meldet dazu den Levene-Test über alle zehn Zellen: F(9, 190) = 1.168, p = 0.317.',
       'Die partielle Effektgröße η²p setzt die Quadratsumme eines Terms ins Verhältnis zu ihr selbst plus der Fehlerquadratsumme: beim Schulabschluss 0,15, beim Zusammenspiel 0,06.',
-      'Der Lehrdatensatz ist synthetisch und wurde ohne ein solches Zusammenspiel erzeugt. p = 0.020 ist hier also ein Zufallsfund, ein Fehler erster Art. Die Karte zeigt, wie man so einen Befund liest, nicht wie Menschen in Deutschland lernen.',
+      'Der Lehrdatensatz ist synthetisch und wurde ohne ein solches Zusammenspiel erzeugt. p = 0.020 ist hier also ein Zufallsfund; wer das Zusammenspiel deshalb für echt hielte, beginge einen Fehler erster Art. Die Karte zeigt, wie man so einen Befund liest, nicht wie Menschen in Deutschland lernen.',
     ],
   },
 };
@@ -124,10 +124,10 @@ export const factorialAnovaTabs: ConceptTabs = {
       return {
         kurz: `Mit Abitur haben Befragte ohne Weiterbildung im Schnitt ${num(abi[0].mean)} Stunden gelernt, mit Weiterbildung ${num(abi[1].mean)} Stunden. Gäbe es kein Zusammenspiel, wären so verschiedene Unterschiede in den fünf Gruppen ${f.ab.p < 0.05 ? 'überraschend' : 'nicht überraschend'} (${pText(f.ab.p)}).`,
         fachlich: `Typ III: Schulabschluss F(${f.a.df}, ${f.dfError}) ≈ ${num(f.a.F)}, ${pText(f.a.p)}; Weiterbildung F(${f.b.df}, ${f.dfError}) ≈ ${num(f.b.F)}, ${pText(f.b.p)}; Zusammenspiel F(${f.ab.df}, ${f.dfError}) ≈ ${num(f.ab.F)}, ${pText(f.ab.p)}, η²p ≈ ${num(f.ab.eta2p)}.`,
-        zusatz: `Je Zelle aus Abschluss und Weiterbildung zwischen ${Math.min(...f.cells.flat().map(z => z.n))} und ${Math.max(...f.cells.flat().map(z => z.n))} Befragte.`,
+        zusatz: `Je Zelle aus Abschluss und Weiterbildung zwischen ${Math.min(...f.cells.flat().map(z => z.n))} und ${Math.max(...f.cells.flat().map(z => z.n))} Befragte. Erzeugt wurde der Lehrdatensatz ohne Zusammenspiel.`,
       };
     },
-    voraussetzung: 'Unabhängige Befragte und ähnliche Streuung in allen zehn Zellen. Erzeugt wurde der Lehrdatensatz ohne Zusammenspiel.',
+    voraussetzung: 'Unabhängige Befragte und ähnliche Streuung in allen zehn Zellen. Jede Zelle braucht Befragte.',
     think: [
       {
         question: 'Alle lernen doppelt so lange. Was passiert mit F für das Zusammenspiel?', options: ['verdoppelt sich', 'bleibt gleich', 'vervierfacht sich'], correct: 1,

@@ -1,6 +1,6 @@
 // Begriffskarte „Gleiche Fehlervarianz“: Streuung der Lernzeit in den fünf Abschlussgruppen des Lehrdatensatzes, klassische
 // und Welch-ANOVA im Vergleich (summary von oneway_anova). Das Bild zeigt die Standardabweichungen je Gruppe und die
-// gemeinsame Streuung √MS_W. Referenzwerte: ./b10-mittelwerte.test.ts.
+// gemeinsame Streuung √(MS innerhalb). Referenzwerte: ./b10-mittelwerte.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num } from '../../format';
 import { abschluss, anovaFor, dfText, groupsFor, leveneFor, pText } from './stats';
