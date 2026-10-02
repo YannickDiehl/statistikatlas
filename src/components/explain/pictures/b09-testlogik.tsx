@@ -5,6 +5,7 @@ import { lgamma } from '../../../tasks/kit/dist';
 import type { TStats } from '../../../explain/content/b09-testlogik/pruefgroesse';
 import { MISCHEN, asFarAs, mixCount } from '../../../explain/content/b09-testlogik/nullverteilung';
 import { SEITEN, sideOf } from '../../../explain/content/b09-testlogik/seiten';
+import { ANTEIL } from '../../../explain/content/b09-testlogik/alpha';
 import { MU0, SCHLAF, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
 import { baseSurvey } from '../../../explain/sample';
@@ -126,7 +127,29 @@ function Seiten({ value }: { value: number }) {
   );
 }
 
+/** Lineal der p-Werte von 0 bis 0,1: links von α liegt der Bereich „H₀ verwerfen“; der Punkt ist p ≈ 0,013 der Weiterbildung. */
+function Alpha({ a }: { a: number }) {
+  const [box, W] = useWidth();
+  const x = linear([0, 0.1], [24, W - 24]), base = 120, reject = ANTEIL.p <= a;
+  const at = Math.min(W - 40, Math.max(40, x(a)));
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={176} viewBox={`0 0 ${W} 176`} role="img"
+        aria-label={`Lineal der p-Werte von 0 bis 0,1. Links von α = ${num(a, 3)} liegt der Bereich, in dem du H₀ verwirfst. Der p-Wert der Weiterbildung, ${small(ANTEIL.p)}, liegt ${reject ? 'darin: signifikant' : 'rechts davon: nicht signifikant'}.`}>
+        <text className="xw-t xw-strong" x={24} y={16}>{reject ? 'p liegt unter α: H₀ verwerfen' : 'p liegt über α: H₀ nicht verwerfen'}</text>
+        <rect className="xw-area-neg" x={x(0)} y={52} width={x(a) - x(0)} height={base - 52} />
+        <MarkLine x={x(a)} from={46} to={base} className="xw-mean b09-reject" />
+        <text className="xw-t" x={at} y={40} textAnchor="middle">α = {num(a, 3)}</text>
+        <circle className="b09-dot" cx={x(ANTEIL.p)} cy={base - 20} r={7} />
+        <text className="xw-t b09-halo" x={x(ANTEIL.p) + 12} y={base - 15}>p ≈ {small(ANTEIL.p)}</text>
+        <Axis scale={x} ticks={[0, 0.02, 0.04, 0.06, 0.08, 0.1]} at={base} from={24} to={W - 24} labelGap={20} format={v => num(v)} title="p-Wert" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-alpha': forCard(p => <Alpha a={p.value ?? 0.05} />),
   'b09-seiten': forCard(p => <Seiten value={p.value ?? 1} />),
   'b09-nullverteilung': forCard(p => <Nullverteilung value={p.value ?? 200} />),
   'b09-pruefgroesse': forSentence(p => <Pruefgroesse s={p.s as TStats} />),

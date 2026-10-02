@@ -6,6 +6,7 @@ import { hypothese, hypotheseTabs } from './hypothese';
 import { pruefgroesse, pruefgroesseTabs } from './pruefgroesse';
 import { nullverteilung, nullverteilungTabs } from './nullverteilung';
 import { seiten, seitenTabs } from './seiten';
+import { alpha, alphaTabs } from './alpha';
 
 export const b09Testlogik: AreaIndex = {
   explanations: {
@@ -13,11 +14,13 @@ export const b09Testlogik: AreaIndex = {
     test_statistic: { kind: 'satz', template: pruefgroesse },
     null_distribution: { kind: 'begriff', card: nullverteilung },
     test_sides: { kind: 'begriff', card: seiten },
+    alpha_level: { kind: 'begriff', card: alpha },
   },
   tabs: {
     hypothesis: hypotheseTabs,
     test_statistic: pruefgroesseTabs,
     null_distribution: nullverteilungTabs,
     test_sides: seitenTabs,
+    alpha_level: alphaTabs,
   },
 };

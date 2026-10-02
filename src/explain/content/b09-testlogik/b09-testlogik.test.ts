@@ -5,11 +5,12 @@ import { close } from '../../format';
 import { applyOp } from '../../sample';
 import type { ConceptTabs, SampleCtx } from '../../types';
 import { b09Testlogik } from './index';
-import { SCHLAF, gruppenTest, mischen, schlafP, schlafTest } from './rechnen';
+import { SCHLAF, anteilTest, binomApprox, binomExact, dbinom, gruppenTest, mischen, schlafP, schlafTest } from './rechnen';
 import { hypothese } from './hypothese';
 import { pruefgroesse, T_START } from './pruefgroesse';
 import { MISCHEN, asFarAs, nullverteilung } from './nullverteilung';
 import { SEITEN, seiten } from './seiten';
+import { ANTEIL, alpha } from './alpha';
 
 /*
  * Referenzwerte des Bereichs B9, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -39,6 +40,12 @@ import { SEITEN, seiten } from './seiten';
  *   # Der Atlas mischt mit einer festen Folge (mulberry32, Startwert 2026): 183 von 200, 1.743 von 2.000 (0,87).
  *   t.test(lz ~ wb, alternative = "greater")$p.value; t.test(lz ~ wb, alternative = "less")$p.value   # 0.4379349, 0.5620651
  *   atlas %>% t_test(lernzeit, group = weiterbildung, alternative = "greater")  # t(175.8) = 0.156, p = 0.438
+ *
+ * C. Weiterbildung gegen 50 % (82 von 200)
+ *   binom.test(82, 200, 0.5)$p.value                                      # 0.013130356
+ *   atlas %>% binomial_test(weiterbildung, p = .5)                        # prop = 0.410 vs 0.500, p = 0.013 *, N = 200
+ *   rej <- sapply(0:200, function(k) binom.test(k, 200, .5)$p.value <= 0.05); sum(dbinom(0:200, 200, .5)[rej])  # 0.040037192
+ *   binom.test(118, 200, .5)$p.value; binom.test(200, 200, .5)$p.value   # 0.013130356 (gleich), 1.244603e-60
  */
 const rows = createSurvey();
 const ctx = (columns: Record<string, string>): SampleCtx => ({ rows, columns: Object.fromEntries(Object.entries(columns).map(([k, v]) => [k, [v]])) });
@@ -46,7 +53,7 @@ const tabs = (id: string): ConceptTabs => b09Testlogik.tabs[id];
 const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.ok(s?.kind === 'analysis', `${id}: Auswertung`); const cols = Object.fromEntries(Object.entries(s.columns ?? {}).map(([k, v]) => [k, [v]])); return s.result({ rows: data, columns: cols }); };
 
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
-  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides'];
+  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level'];
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -130,4 +137,25 @@ test('B9 Seiten: einseitige und zweiseitige p-Werte der Lernzeit nach Weiterbild
   assert.match(seiten.regler!.describe(1), /in etwa 88 von 100 .*\(p ≈ 0,88\)/);
   assert.match(seiten.regler!.describe(2), /in etwa 44 von 100 .*\(p ≈ 0,44\)/);
   assert.match(result('test_sides').kurz, /Ohne minus mit Weiterbildung: 0,07 Stunden, t ≈ 0,16\. Zweiseitig ist p ≈ 0,88\. Rechtsseitig .* p ≈ 0,44, linksseitig .* p ≈ 0,56\./);
+});
+
+test('B9 Signifikanzniveau: Weiterbildung gegen 50 % wie in R, Entscheidung je nach α', () => {
+  const r = anteilTest(ctx({ x: 'weiterbildung' }));
+  assert.deepEqual([r.k, r.n], [ANTEIL.k, ANTEIL.n]);
+  assert.ok(close(r.exact, 0.013130356, 1e-8) && close(ANTEIL.p, 0.013130356, 1e-8), `exakt ${r.exact}`);
+  assert.ok(close(binomExact(118, 200), 0.013130356, 1e-8) && close(binomExact(200, 200), 1.244603e-60, 1e-65), 'umgepolt und alle Ja');
+  let size = 0;
+  for (let k = 0; k <= 200; k++) if (binomExact(k, 200) <= 0.05) size += dbinom(k, 200, 0.5);
+  assert.ok(close(size, 0.040037192, 1e-8) && close(ANTEIL.size05, 0.040037192, 1e-8), `tatsächliche Fehlerquote ${size}`);
+  assert.match(alpha.stellDirVor.text, /82 von 200 .*41 %\. .*R meldet p = 0\.013\. Bei α = 0,05 heißt das signifikant, bei α = 0,01 nicht\./);
+  assert.equal(alpha.bausteine[1].rechnung, 'p ≈ 0,013 < α = 0,05: H₀ verwerfen. Bei α = 0,01 wäre p ≈ 0,013 > 0,01: H₀ nicht verwerfen.');
+  assert.match(alpha.regler!.describe(0.05), /Mit α = 0,05 liegt p ≈ 0,013 darunter: .*signifikant\. .*in etwa 5 % der Studien/);
+  assert.match(alpha.regler!.describe(0.01), /p ≈ 0,013 darüber: Du verwirfst H₀ nicht\. .*in etwa 1 % der Studien/);
+  assert.match(alpha.regler!.describe(0.013), /p ≈ 0,0131 knapp darüber/);
+  assert.match(alpha.regler!.describe(0.014), /p ≈ 0,0131 knapp darunter/);
+  assert.match(alpha.genau.paragraphs[1], /für α = 0,05 bei 0,04\./);
+  assert.match(result('alpha_level').kurz, /82 von 200 .*41 %\. .*in etwa 1 von 100 Stichproben vor \(p ≈ 0,013\)\. Bei α = 0,05 verwirfst du H₀: signifikant\./);
+  assert.match(result('alpha_level').fachlich, /Bei α = 0,01 wäre das nicht signifikant\./);
+  assert.match(result('alpha_level', applyOp(rows, 'weiterbildung', 'reverse')).kurz, /118 von 200 .*p ≈ 0,013/);
+  assert.match(result('alpha_level', applyOp(rows, 'weiterbildung', 'constant', 1)).kurz, /200 von 200 .*p < 0,001/);
 });
