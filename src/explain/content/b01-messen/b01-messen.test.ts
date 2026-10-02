@@ -10,6 +10,7 @@ import { series, seriesTabs } from './series';
 import { pairs, pairsTabs, R_FUENF } from './pairs';
 import { metric, metricTabs } from './metric';
 import { BERUF, nominal, nominalTabs } from './nominal';
+import { FINANZ, ordinal, ordinalTabs } from './ordinal';
 import { surveyColumns } from '../../../domain/survey';
 import { styleProblems } from '../../style';
 
@@ -49,6 +50,13 @@ import { styleProblems } from '../../style';
  *   mean(as.numeric(atlas$berufsabschluss)); mean(8 - as.numeric(atlas$berufsabschluss))   # 3.81; 4.19
  *   29 / 200                                    # 0.145 (je 14,5 % duale und schulische Berufsausbildung)
  *   atlas %>% to_label(erwerbstaetig) %>% frequency(erwerbstaetig)   # Nein 63 (31.50 %), Ja 137, total N=200
+ *
+ * Geordnete Kategorien (ordinal):
+ *   f <- as.numeric(atlas$finanzlage); table(f)   # Codes 1 bis 5: 17 54 57 52 20; cumsum 17 71 128 180 200
+ *   median(f); sort(f)[c(100, 101)]; mean(f)       # 3; 3 3; 3.02
+ *   mean(c(1, 2, 3, 10, 20)[f]); median(c(1, 2, 3, 10, 20)[f])   # 6.08; 3 (Median bleibt „Teils / teils“)
+ *   table(6 - f)[5]                                # 17 (umgepolt: wer „Sehr schwer“ sagte, steht oben)
+ *   atlas %>% frequency(schulabschluss, show_unused = TRUE)   # mean=1.99 sd=1.43, Cum. % 21.00 41.00 59.50 80.00 100.00
  */
 
 const rows = createSurvey();
@@ -133,4 +141,18 @@ test('B1 nominal: Berufsabschlüsse wie in R, Umdrehen der Codes ändert keine G
   assert.match(nominalTabs.sample!.think[0].explain, /von 3,81 auf 4,19/);
   assert.match(at(applyOp(rows, 'berufsabschluss', 'reverse')).fachlich, /Mittelwert der Codes \(4,19\)/);
   assert.match(at(applyOp(rows, 'berufsabschluss', 'constant', 1)).kurz, /„Duale Berufsausbildung“ \(200 von 200\)/);
+});
+
+test('B1 ordinal: finanzielle Lage wie in R, Median und Umpolen', () => {
+  const f = col('finanzlage');
+  assert.deepEqual([1, 2, 3, 4, 5].map(k => f.filter(v => v === k).length), [...FINANZ]);
+  assert.match(ordinal.stellDirVor.text, /17 Befragte sagen „Sehr schwer“, 54 „Eher schwer“, 57 „Teils \/ teils“, 52 „Eher leicht“ und 20 „Sehr leicht“/);
+  assert.match(ordinal.bausteine[2].rechnung!, /sind es 71 Befragte, bis „Teils \/ teils“ 128\./);
+  assert.match(ordinal.bausteine[1].acht, /hier 3,02,/);
+  assert.match(ordinal.ausprobieren[0].explain, /von 3,02 auf 6,08\./);
+  const tab = analysis(ordinalTabs.sample), at = (data = rows) => tab.result(ctx(data, { x: ['finanzlage'] }));
+  assert.equal(at().kurz, 'Die mittlere Person der Reihe nach sagt „Teils / teils“ (Code 3). 71 von 200 kommen eher schwer oder sehr schwer aus, 72 eher leicht oder sehr leicht.');
+  assert.equal(at().zusatz, 'Häufigkeiten von „Sehr schwer“ bis „Sehr leicht“: 17, 54, 57, 52, 20.');
+  assert.equal(at(applyOp(rows, 'finanzlage', 'reverse')).zusatz, 'Häufigkeiten von „Sehr schwer“ bis „Sehr leicht“: 20, 52, 57, 54, 17.');
+  assert.equal(tab.value!(ctx(rows, { x: ['finanzlage'] })), 3);
 });

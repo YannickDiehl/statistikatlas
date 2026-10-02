@@ -5,6 +5,7 @@ import { series, seriesTabs } from './series';
 import { pairs, pairsTabs } from './pairs';
 import { metric, metricTabs } from './metric';
 import { nominal, nominalTabs } from './nominal';
+import { ordinal, ordinalTabs } from './ordinal';
 
 export const b01Messen: AreaIndex = {
   explanations: {
@@ -12,11 +13,13 @@ export const b01Messen: AreaIndex = {
     pairs: { kind: 'begriff', card: pairs },
     metric: { kind: 'begriff', card: metric },
     nominal: { kind: 'begriff', card: nominal },
+    ordinal: { kind: 'begriff', card: ordinal },
   },
   tabs: {
     series: seriesTabs,
     pairs: pairsTabs,
     metric: metricTabs,
     nominal: nominalTabs,
+    ordinal: ordinalTabs,
   },
 };
