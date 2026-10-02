@@ -4,7 +4,7 @@ import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num } from '../../format';
 import { sampleColumn } from '../../sample';
 import { columnById } from '../../../domain/survey';
-import { pearsonOf } from './shared';
+import { relate } from '../../math';
 
 /** cor() der Spalten methoden1 bis methoden5 im Lehrdatensatz (R, sechs Stellen). */
 export const METHODEN_R: number[][] = [
@@ -24,7 +24,7 @@ export const korrelationsmatrix: ConceptCard = {
   wofuer: 'Fragebögen messen ein Thema oft mit mehreren Fragen. Bevor du sie zu einem Wert zusammenfasst, willst du wissen: Hängen alle Fragen miteinander zusammen? Eine Korrelationsmatrix zeigt alle Paare auf einen Blick.',
   kurz: 'Eine Korrelationsmatrix ist eine Tabelle mit Pearson-r für jedes Paar von Variablen. Sie ist spiegelgleich, und auf der Diagonale steht immer 1.',
   stellDirVor: {
-    text: `Fünf Fragen im Lehrdatensatz messen Methoden-Zuversicht, etwa „${question(1)}“, jeweils von 1 bis 7. Wer bei einer Frage zustimmt, stimmt meist auch bei den anderen zu: Je zwei Fragen hängen mit r zwischen ${num(0.607513)} und ${num(0.676335)} zusammen. Die Matrix zeigt alle zehn Paare auf einen Blick.`,
+    text: `Fünf Fragen im Lehrdatensatz messen Methoden-Zuversicht, etwa „${question(1)}“, jeweils von 1 bis 7. Wer bei einer Frage zustimmt, stimmt eher auch bei den anderen zu: Je zwei Fragen hängen mit r zwischen ${num(0.607513)} und ${num(0.676335)} zusammen. Die Matrix zeigt alle zehn Paare auf einen Blick.`,
     figures: [
       { label: 'Fragen', value: '5' },
       { label: 'verschiedene Paare', value: '10' },
@@ -48,7 +48,7 @@ export const korrelationsmatrix: ConceptCard = {
       title: 'Die Diagonale lesen',
       was: 'Auf der Diagonale trifft jede Variable auf sich selbst. Dort steht immer 1.',
       warum: 'Eine Variable hängt mit sich selbst perfekt zusammen. Die Diagonale enthält deshalb keine neue Information.',
-      acht: 'Haben bei einer Variablen alle denselben Wert, ist r nicht definiert. Dann steht in ihrer Zeile NA statt Zahlen, auch auf der Diagonale.',
+      acht: 'Haben bei einer Variablen alle denselben Wert, ist r mit dieser Variablen nicht definiert: cor() zeigt NA, reliability() lässt die Frage weg.',
     },
     {
       title: 'Nur eine Hälfte lesen',
@@ -73,7 +73,7 @@ export const korrelationsmatrix: ConceptCard = {
       kurz: 'k Variablen ergeben k(k − 1) / 2 Paare.',
     },
     {
-      question: 'Frage 2 wird umgepolt: Aus „stimme voll und ganz zu“ wird „stimme überhaupt nicht zu“. Was passiert in ihrer Zeile?',
+      question: 'Frage 2 wird umgepolt: Aus „Stimme voll und ganz zu“ wird „Stimme überhaupt nicht zu“. Was passiert in ihrer Zeile?',
       options: ['nichts', 'die Vorzeichen drehen sich, die Beträge bleiben', 'alle Werte werden 0'], correct: 1, step: 1,
       explain: 'Umpolen dreht die Richtung jedes Zusammenhangs mit Frage 2: Aus 0,65 wird −0,65. Die Diagonale bleibt 1, und Paare ohne Frage 2 bleiben, wie sie sind.',
       kurz: 'Umpolen dreht eine Zeile und eine Spalte.',
@@ -121,7 +121,7 @@ export const korrelationsmatrix: ConceptCard = {
 /** Korrelationsmatrix der fünf Fragen für die aktuellen Daten (Frage 1 aus der Rolle x, Frage 2 aus der Rolle y). */
 export function matrixData(c: SampleCtx) {
   const ids = [c.columns.x?.[0] ?? ITEMS[0], c.columns.y?.[0] ?? ITEMS[1], ...ITEMS.slice(2)], cols = ids.map(id => sampleColumn(c.rows, id));
-  const R = cols.map(a => cols.map(b => pearsonOf(a, b)));
+  const R = cols.map(a => cols.map(b => relate(a, b).r));
   const pairs: { j: number; k: number; r: number }[] = [];
   for (let j = 0; j < 5; j++) for (let k = j + 1; k < 5; k++) { const r = R[j][k]; if (r !== null) pairs.push({ j, k, r }); }
   return { R, pairs, n: c.rows.length };
@@ -137,7 +137,7 @@ export const matrixTabs: ConceptTabs = {
       if (!m.pairs.length) return { kurz: 'Bei den Fragen streut nichts. Dann gibt es keine Korrelationen.', fachlich: 'Alle Paare sind nicht definiert.' };
       const lo = m.pairs.reduce((a, b) => b.r < a.r ? b : a), hi = m.pairs.reduce((a, b) => b.r > a.r ? b : a), same = m.pairs.every(p => p.r > 0) || m.pairs.every(p => p.r < 0);
       return {
-        kurz: `Die fünf Fragen hängen paarweise mit r zwischen ${num(lo.r)} und ${num(hi.r)} zusammen. ${same ? 'Alle Paare zeigen in dieselbe Richtung: Wer einer Frage zustimmt, stimmt meist auch den anderen zu.' : 'Nicht alle Paare zeigen in dieselbe Richtung; eine Frage ist vermutlich andersherum gepolt.'}`,
+        kurz: `Die fünf Fragen hängen paarweise mit r zwischen ${num(lo.r)} und ${num(hi.r)} zusammen. ${same ? 'Alle Paare zeigen in dieselbe Richtung: Wer einer Frage zustimmt, stimmt eher auch den anderen zu.' : 'Nicht alle Paare zeigen in dieselbe Richtung; eine Frage ist vermutlich andersherum gepolt.'}`,
         fachlich: `Pearson-Korrelationen der Fragen 1 bis 5, listenweise mit n = ${m.n}. Zeile 1: ${m.R[0].map(r => r === null ? 'NA' : num(r)).join(', ')}.`,
         zusatz: `Am engsten hängen Frage ${hi.j + 1} und Frage ${hi.k + 1} zusammen, mit r ≈ ${num(hi.r)}.`,
       };

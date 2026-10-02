@@ -4,7 +4,8 @@
 import type { ConceptTabs, SampleCtx, SentenceTemplate } from '../../types';
 import { close, num, paren } from '../../format';
 import { sampleColumn, sampleColumnInfo } from '../../sample';
-import { pearsonOf, T } from './shared';
+import { relate } from '../../math';
+import { T } from './shared';
 
 /** Lehrdatensatz, auf zwei Stellen gerundet: r(Lernplanung, Wissenstest), r(Lernplanung, Lernzeit), r(Wissenstest, Lernzeit). */
 export const PLAN_TEST_ZEIT = { rXY: 0.16, rXZ: 0.34, rYZ: 0.54 } as const;
@@ -65,7 +66,7 @@ export const partielleKorrelation: SentenceTemplate<PcValues, PcStats> = {
   ],
   quick: [
     { label: 'z hängt mit nichts zusammen', mark: 'rXZ', apply: v => ({ ...v, rXZ: 0, rYZ: 0 }) },
-    { label: 'Zusammenhang läuft ganz über z', mark: 'rYZ', apply: v => ({ ...v, rXZ: 0.8, rYZ: 0.8, rXY: Math.max(v.rXY, 0.64) }) },
+    { label: 'Zusammenhang läuft ganz über z', mark: 'rYZ', apply: v => ({ ...v, rXZ: 0.8, rYZ: 0.8, rXY: 0.64 }) },
     { label: 'Lehrdatensatz', mark: 'partial', apply: () => ({ ...PLAN_TEST_ZEIT }) },
   ],
   compare: s => s.partial === null ? 'Diese drei Korrelationen passen nicht zusammen; probier andere Werte.'
@@ -112,7 +113,7 @@ const COLS = { x: 'lernplanung5', y: 'wissenstest', z: 'lernzeit' };
 export function partialData(c: SampleCtx) {
   const id = (role: 'x' | 'y' | 'z') => c.columns[role]?.[0] ?? COLS[role];
   const v = (role: 'x' | 'y' | 'z') => sampleColumn(c.rows, id(role));
-  const rxy = pearsonOf(v('x'), v('y')), rxz = pearsonOf(v('x'), v('z')), ryz = pearsonOf(v('y'), v('z'));
+  const rxy = relate(v('x'), v('y')).r, rxz = relate(v('x'), v('z')).r, ryz = relate(v('y'), v('z')).r;
   return { rxy, rxz, ryz, partial: rxy === null || rxz === null || ryz === null ? null : partialOf(rxy, rxz, ryz), titles: { x: sampleColumnInfo(id('x')).title, y: sampleColumnInfo(id('y')).title, z: sampleColumnInfo(id('z')).title } };
 }
 
@@ -133,7 +134,7 @@ export const partialTabs: ConceptTabs = {
     voraussetzung: 'Kontrolliert wird nur der lineare Teil von z. Die Lernplanung wird dabei mit gleich großen Abständen zwischen den Stufen behandelt.',
     think: [
       {
-        question: 'Die Lernplanung wird umgepolt: Aus „stimme voll zu“ wird „stimme überhaupt nicht zu“. Was passiert mit der partiellen Korrelation?', options: ['bleibt gleich', 'wechselt das Vorzeichen', 'wird 0'], correct: 1,
+        question: 'Die Lernplanung wird umgepolt: Aus „Stimme voll und ganz zu“ wird „Stimme überhaupt nicht zu“. Was passiert mit der partiellen Korrelation?', options: ['bleibt gleich', 'wechselt das Vorzeichen', 'wird 0'], correct: 1,
         explain: 'rXY und rXZ wechseln beide das Vorzeichen, rYZ bleibt. Damit dreht sich der Zähler rXY − rXZ · rYZ, der Nenner bleibt gleich.',
         kurz: 'Umpolen dreht die Richtung, nicht die Stärke.',
         tryIt: { label: 'Lernplanung umpolen (6 minus Antwort)', op: 'reverse', column: 'x' },

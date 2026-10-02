@@ -4,7 +4,7 @@
 import type { Bridge, BridgeCtx, ConceptTabs, Ctx, FNode, Variant, Workshop } from '../../types';
 import type { Pairs } from '../../math';
 import { close, num, pct, signed } from '../../format';
-import { eq, int, T } from './shared';
+import { eq, int, pl, T } from './shared';
 
 /** Ergebnis eines Personenpaars: gleich gerichtet, entgegengesetzt oder Gleichstand (bei x, bei y, bei beiden). */
 export type PairKind = 'C' | 'D' | 'Tx' | 'Ty' | 'Txy';
@@ -71,6 +71,10 @@ function numericFor(s: PairCount, last: number): FNode[] {
     s.tau === null ? ': ' : ` ${eq(s.tau)} `, { part: [s.tau === null ? 'nicht definiert' : num(s.tau)], m: 6 }];
 }
 
+/** „Von den 10 Paaren mit klarer Richtung sind 80 % gleich gerichtet.“, auch für ein einziges Paar richtig gebeugt. */
+const withDirection = (C: number, cpd: number) => cpd === 1 ? `Das eine Paar mit klarer Richtung ist ${C === 1 ? 'gleich gerichtet' : 'entgegengesetzt'}.`
+  : `Von den ${int(cpd)} Paaren mit klarer Richtung sind ${pct(C / cpd, 0)} gleich gerichtet.`;
+
 const CD: FNode[] = [{ part: ['C'], m: 2 }, ' ', { part: ['− D'], m: 3 }];
 /** Deutung der Richtung in den Beispielen: Interesse an Politik und Nachrichten lesen. */
 const direction = (v: number) => v > 0 ? 'Wer sich mehr für Politik interessiert, liest hier eher auch öfter Nachrichten.' : 'Wer sich mehr für Politik interessiert, liest hier eher seltener Nachrichten.';
@@ -104,7 +108,7 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
   ],
   steps: [
     {
-      button: 'N₀', title: 'Jede Person mit jeder vergleichen', sym: 'N₀ = n(n − 1) / 2', say: 'N null gleich n mal n minus eins, durch zwei', concept: 'concordance', perPerson: true,
+      button: 'N₀', title: 'Jede Person mit jeder vergleichen', sym: '', concept: 'concordance', perPerson: true,
       links: [{ id: 'ordinal', label: 'Geordnete Kategorien' }],
       was: 'Wir vergleichen immer zwei Personen miteinander. Jede Person trifft jede andere genau einmal; bei fünf Personen ergibt das zehn Paare.',
       rechnung: c => {
@@ -205,8 +209,8 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
       },
     },
     {
-      button: '÷ √( )', title: 'Mit allen Paaren vergleichen', sym: 'τb', say: 'tau b', concept: 'kendall_tau', perPerson: false,
-      was: 'Wir teilen C − D durch die Wurzel aus zwei Zahlen: den Paaren ohne Gleichstand beim Interesse und den Paaren ohne Gleichstand bei den Nachrichten.',
+      button: '÷ √( )', title: 'Gleichstände im Nenner mitzählen', sym: 'τb', say: 'tau b', concept: 'kendall_tau', perPerson: false,
+      was: 'Wir teilen C − D durch die Wurzel aus dem Produkt zweier Zahlen. Das sind die Paare ohne Gleichstand beim Interesse und die Paare ohne Gleichstand bei den Nachrichten.',
       rechnung: c => c.s.tau === null
         ? 'Bei einer Frage haben alle dieselbe Antwort. Dann ist N₀ − Tₓ oder N₀ − Tᵧ gleich 0, und τb ist nicht definiert.'
         : `τb = ${int(c.s.cd)} / √((${c.s.n0} − ${c.s.Tx}) · (${c.s.n0} − ${c.s.Ty})) = ${int(c.s.cd)} / √${c.s.nx * c.s.ny} ${eq(c.s.tau)} ${num(c.s.tau)}`,
@@ -279,14 +283,14 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
   variants: {
     concordance: variantFor({
       lastStep: 3,
-      kurz: 'Ein Personenpaar ist gleich gerichtet, wenn dieselbe Person bei beiden Merkmalen höher liegt, und entgegengesetzt, wenn sich die Reihenfolgen widersprechen. C − D zählt, welche Sorte überwiegt.',
+      kurz: 'Ein Personenpaar ist gleich gerichtet, wenn dieselbe Person bei beiden Merkmalen höher liegt, und entgegengesetzt, wenn sich die Reihenfolgen widersprechen. Unterm Strich zählt, welche Sorte überwiegt.',
       fachlich: 'Konkordante Paare C stimmen in der Rangfolge beider Variablen überein, diskordante Paare D widersprechen sich; gebundene Paare zählen zu keiner der beiden.',
       symbolic: [...CD],
       aria: 'C minus D: Zahl der konkordanten minus Zahl der diskordanten Personenpaare',
       metrics: [{ label: 'Personenpaare N₀', value: c => String(c.s.n0) }, { label: 'C − D', value: c => int(c.s.cd) }],
       interpret: c => ({
-        kurz: c.s.cd === 0 ? `${c.s.C} Paare sind gleich gerichtet, ebenso viele entgegengesetzt. Kein Muster überwiegt.`
-          : `${c.s.C} Paare sind gleich gerichtet, ${c.s.D} entgegengesetzt. ${direction(c.s.cd)}`,
+        kurz: c.s.cd === 0 ? `${pl(c.s.C, 'Paar ist', 'Paare sind')} gleich gerichtet, ebenso viele entgegengesetzt. Kein Muster überwiegt.`
+          : `${pl(c.s.C, 'Paar ist', 'Paare sind')} gleich gerichtet, ${c.s.D} entgegengesetzt. ${direction(c.s.cd)}`,
         fachlich: `C = ${c.s.C}, D = ${c.s.D}, C − D = ${int(c.s.cd)} bei N₀ = ${c.s.n0} Paaren; ${c.s.ties} ${c.s.ties === 1 ? 'Paar hat' : 'Paare haben'} einen Gleichstand. Ein Maß zwischen −1 und +1 entsteht erst durch Teilen.`,
       }),
       next: { id: 'goodman_gamma', label: 'Weiter zu Goodman–Kruskal-Gamma' },
@@ -304,10 +308,9 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
       metrics: [{ label: 'C − D', value: c => int(c.s.cd) }, { label: 'Gamma γ', value: c => c.s.gamma === null ? 'nicht definiert' : num(c.s.gamma) }],
       interpret: c => {
         if (c.s.gamma === null) return { kurz: 'Kein Paar hat eine klare Richtung. Dann lässt sich Gamma nicht berechnen.', fachlich: 'C + D = 0, deshalb ist γ nicht definiert.' };
-        const share = c.s.C / c.s.cpd;
         return {
           kurz: c.s.cd === 0 ? 'Gleich gerichtete und entgegengesetzte Paare halten sich genau die Waage.'
-            : `Von den ${c.s.cpd} Paaren mit klarer Richtung sind ${pct(share, 0)} gleich gerichtet. ${direction(c.s.cd)}`,
+            : `${withDirection(c.s.C, c.s.cpd)} ${direction(c.s.cd)}`,
           fachlich: `γ = ${num(c.s.gamma)}. Ohne Gleichstände wäre das auch Tau-b; hier ${c.s.ties === 0 ? 'gibt es keine Gleichstände' : `fehlen ${c.s.ties} ${c.s.ties === 1 ? 'Paar' : 'Paare'} mit Gleichstand im Nenner`}. Bei nur fünf Personen ist γ sehr unsicher.`,
         };
       },
@@ -317,7 +320,7 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
         paragraphs: c => [
           `Hier ist (C − D) / (C + D) = ${int(c.s.cd)} / ${c.s.cpd}. Umgerechnet heißt das: Unter den Paaren mit klarer Richtung ist der Anteil gleich gerichteter Paare (1 + γ) / 2.`,
           'Bei geordneten Kategorien mit wenigen Stufen gibt es sehr viele Gleichstände. Dann kann Gamma groß wirken, obwohl nur wenige Paare eine Richtung haben.',
-          'goodman_gamma() aus mariposa gibt nur die Zahl aus. Gibt es kein Paar mit Richtung, meldet es 0 statt „nicht definiert“. Weil es intern auch χ² rechnet, warnt R manchmal vor kleinen erwarteten Zellzahlen; Gamma selbst betrifft das nicht.',
+          'goodman_gamma() aus mariposa gibt nur die Zahl aus. Hat eine Spalte nur eine Kategorie, meldet es NA und warnt, dass der Chi-Quadrat-Test nicht gerechnet wurde. Weil es intern χ² rechnet, warnt R außerdem oft vor kleinen erwarteten Zellzahlen, so auch bei Finanzlage und Schulabschluss; Gamma selbst betrifft das nicht.',
           GENAU_URSACHE,
         ],
       },
@@ -368,24 +371,24 @@ export const bridgePaarvergleich: Bridge<PairCount> = {
       all: c => `${N(c)} Befragte ergeben ${N(c)} · ${N(c) - 1} / 2 = ${int(c.s.n0)} Personenpaare.`,
       person: c => c.who === 0 ? `${PB(c)} kommt als Erste dran: Sie wird mit allen ${N(c) - 1} anderen verglichen.`
         : c.who === N(c) - 1 ? `${PB(c)} kommt als Letzte dran: Mit allen anderen ist sie schon verglichen.`
-        : `${PB(c)} wird mit den ${c.s.later[c.who]} Befragten nach ihr verglichen; mit den ${c.who} davor ist sie schon verglichen.`,
+        : `${PB(c)} wird mit ${c.s.later[c.who] === 1 ? 'der einen Person' : `den ${c.s.later[c.who]} Befragten`} nach ihr verglichen; mit ${c.who === 1 ? 'der einen Person' : `den ${c.who} Befragten`} davor ist sie schon verglichen.`,
     },
     {
       all: c => `In ${int(c.s.C)} Paaren liegt dieselbe Person bei beiden Spalten höher: gleich gerichtet.`,
-      person: c => `Mit den Befragten nach ${PB(c)} ergeben sich ${c.s.ci[c.who]} gleich gerichtete Paare.`,
+      person: c => { const k = c.s.ci[c.who]; return `Mit den Befragten nach ${PB(c)} ${k === 0 ? 'ergibt sich kein gleich gerichtetes Paar' : k === 1 ? 'ergibt sich 1 gleich gerichtetes Paar' : `ergeben sich ${k} gleich gerichtete Paare`}.`; },
     },
     {
       all: c => `${int(c.s.D)} Paare sind entgegengesetzt. C − D = ${int(c.s.C)} − ${int(c.s.D)} = ${int(c.s.cd)}.`,
-      person: c => `Mit den Befragten nach ${PB(c)}: ${c.s.di[c.who]} entgegengesetzte Paare, also ${signed(c.s.ci[c.who] - c.s.di[c.who])} für C − D.`,
+      person: c => `Mit den Befragten nach ${PB(c)}: ${pl(c.s.di[c.who], 'entgegengesetztes Paar', 'entgegengesetzte Paare')}, also ${signed(c.s.ci[c.who] - c.s.di[c.who])} für C − D.`,
     },
     {
       all: c => c.s.gamma === null ? 'Kein Paar hat eine klare Richtung. Dann ist γ nicht definiert.'
-        : `γ = ${int(c.s.cd)} / ${int(c.s.cpd)} ≈ ${num(c.s.gamma)}. Die ${int(c.s.ties)} Paare mit Gleichstand zählen nicht mit.`,
+        : `γ = ${int(c.s.cd)} / ${int(c.s.cpd)} ≈ ${num(c.s.gamma)}. ${c.s.ties === 0 ? 'Paare mit Gleichstand gibt es nicht.' : c.s.ties === 1 ? 'Das eine Paar mit Gleichstand zählt nicht mit.' : `Die ${int(c.s.ties)} Paare mit Gleichstand zählen nicht mit.`}`,
       person: c => `${PB(c)} trägt ${c.s.ci[c.who]} − ${c.s.di[c.who]} = ${signed(c.s.ci[c.who] - c.s.di[c.who])} zu C − D bei.`,
     },
     {
       all: c => `${int(c.s.Tx)} Paare haben bei ${t1(c)} denselben Wert, ${int(c.s.Ty)} bei ${t2(c)}.`,
-      person: c => `${PB(c)}: ${c.s.txi[c.who]} Gleichstände bei ${t1(c)} und ${c.s.tyi[c.who]} bei ${t2(c)} mit den Befragten nach ihr.`,
+      person: c => `${PB(c)}: ${pl(c.s.txi[c.who], 'Gleichstand', 'Gleichstände')} bei ${t1(c)} und ${c.s.tyi[c.who]} bei ${t2(c)} mit den Befragten nach ihr.`,
     },
     {
       all: c => c.s.tau === null ? 'Eine Spalte hat lauter gleiche Werte. Dann ist τb nicht definiert.'
@@ -393,7 +396,7 @@ export const bridgePaarvergleich: Bridge<PairCount> = {
       person: c => {
         const k = c.s.ci[c.who] - c.s.di[c.who], tau = c.s.tau ?? 0;
         return k === 0 || Math.abs(tau) < 0.005 ? `${PB(c)} trägt nichts zur Richtung bei.`
-          : `${PB(c)} ${k * tau > 0 ? 'stützt' : 'schwächt'} den ${tau > 0 ? 'gleichläufigen' : 'gegenläufigen'} Zusammenhang mit ${signed(k)} Paaren.`;
+          : `${PB(c)} ${k * tau > 0 ? 'stützt' : 'schwächt'} den ${tau > 0 ? 'gleichläufigen' : 'gegenläufigen'} Zusammenhang mit ${signed(k)} ${Math.abs(k) === 1 ? 'Paar' : 'Paaren'}.`;
       },
     },
   ],
@@ -407,16 +410,15 @@ export const bridgePaarvergleich: Bridge<PairCount> = {
     const zusatz = `${int(c.s.ties)} von ${int(c.s.n0)} Paaren haben einen Gleichstand bei mindestens einer Spalte.`;
     const value = variant === 'concordance' ? c.s.cd : variant === 'goodman_gamma' ? c.s.gamma : c.s.tau;
     if (value === null) return { kurz: 'Eine der beiden Spalten hat lauter gleiche Werte, oder kein Paar hat eine Richtung. Dann lässt sich das Maß nicht berechnen.', fachlich: 'Der Nenner ist 0, deshalb ist das Maß nicht definiert.', zusatz };
-    const share = c.s.cpd > 0 ? pct(c.s.C / c.s.cpd, 0) : '0 %';
-    const even = `Gleich gerichtete und entgegengesetzte Paare halten sich bei ${t1(c)} und ${t2(c)} fast die Waage.`;
+    const even = `Gleich gerichtete und entgegengesetzte Paare halten sich bei ${t1(c)} und ${t2(c)} ${c.s.cd === 0 ? 'genau' : 'fast'} die Waage.`;
     if (variant === 'concordance') return {
-      kurz: c.s.cd === 0 ? even : `${int(c.s.C)} Paare sind gleich gerichtet, ${int(c.s.D)} entgegengesetzt. ${towards(c, c.s.cd)}`,
+      kurz: c.s.cd === 0 ? even : `${pl(c.s.C, 'Paar ist', 'Paare sind')} gleich gerichtet, ${int(c.s.D)} entgegengesetzt. ${towards(c, c.s.cd)}`,
       fachlich: `C = ${int(c.s.C)}, D = ${int(c.s.D)}, C − D = ${int(c.s.cd)} bei N₀ = ${int(c.s.n0)} Personenpaaren und n = ${N(c)}.`,
       zusatz,
     };
     const near0 = Math.abs(value) < 0.05;
     return {
-      kurz: near0 ? even : `Von den ${int(c.s.cpd)} Paaren mit klarer Richtung sind ${share} gleich gerichtet. ${towards(c, value)}`,
+      kurz: near0 ? even : `${withDirection(c.s.C, c.s.cpd)} ${towards(c, value)}`,
       fachlich: variant === 'goodman_gamma'
         ? `Goodman–Kruskal-Gamma von ${t1(c)} und ${t2(c)}: γ ≈ ${num(value)} bei n = ${N(c)}. Die ${int(c.s.ties)} Paare mit Gleichstand fehlen im Nenner.`
         : `Kendall Tau-b von ${t1(c)} und ${t2(c)}: τb ≈ ${num(value)} bei n = ${N(c)}, mit Tₓ = ${int(c.s.Tx)} und Tᵧ = ${int(c.s.Ty)}. Gamma ist ${c.s.gamma === null ? 'nicht definiert' : num(c.s.gamma)}.`,
@@ -493,7 +495,7 @@ export const gammaTabs: ConceptTabs = {
     entry: 'goodman_gamma', variant: 0,
     tokens: { goodman_gamma: GAMMA_FN },
     outputMap: [
-      { match: '0.1349763', atlas: 'γ', step: 4, explain: 'Das ist Gamma für Finanzlage und Schulabschluss: (C − D) / (C + D) mit allen 200 Befragten.' },
+      { match: '0.1349763', atlas: 'γ', step: 4, explain: 'Das ist Gamma für Finanzlage und Schulabschluss: (C − D) / (C + D) mit allen 200 Befragten. Dieselbe Zahl siehst du im Teil mit den 200 Befragten, wenn du Finanzielle Lage und Schulabschluss wählst.' },
       ONE,
     ],
     check: {
@@ -502,7 +504,7 @@ export const gammaTabs: ConceptTabs = {
     },
   },
   next: {
-    next: { id: 'kendall_tau', why: 'Zählt die Gleichstände im Nenner mit und fällt deshalb bei vielen Gleichständen kleiner aus.' },
+    next: { id: 'kendall_tau', why: 'Zählt die Gleichstände im Nenner mit und fällt deshalb bei vielen Gleichständen im Betrag kleiner aus.' },
     before: [
       { id: 'concordance', why: 'Die gleich gerichteten und entgegengesetzten Paare, aus denen Gamma entsteht.' },
       { id: 'ordinal', why: 'Gamma braucht eine sinnvolle Reihenfolge der Kategorien.' },
@@ -539,7 +541,7 @@ export const tauTabs: ConceptTabs = {
       kendall_tau: { sym: 'kendall_tau()', term: T('kendall_tau'), kurz: 'Berechnet Kendall Tau-b für zwei oder mehr Spalten, dazu den p-Wert und die Zahl der Befragten N.', fehler: 'Mit nur einer Spalte meldet mariposa: At least two variables must be specified for correlation analysis.' },
     },
     outputMap: [
-      { match: 'tau', atlas: 'τb', step: 6, explain: 'tau ist Kendall Tau-b für Finanzlage und Schulabschluss, mit allen Gleichständen im Nenner.' },
+      { match: 'tau', atlas: 'τb', step: 6, explain: 'tau ist Kendall Tau-b für Finanzlage und Schulabschluss. Dieselbe Zahl siehst du im Teil mit den 200 Befragten, wenn du Finanzielle Lage und Schulabschluss wählst.' },
       { match: 'p', atlas: 'p-Wert', explain: 'Gäbe es unter allen Menschen keinen Zusammenhang der Reihenfolgen, käme ein so großes τb in etwa 6 bis 7 von 100 Stichproben vor.' },
       { match: 'N', atlas: 'n', explain: 'N zählt die Befragten mit gültigen Werten in beiden Spalten.' },
     ],

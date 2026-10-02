@@ -5,7 +5,9 @@ import type { Bridge, BridgeCtx, ConceptTabs, Ctx, FNode, Workshop } from '../..
 import type { Pairs } from '../../math';
 import { close, num, paren, signed } from '../../format';
 import { sumNodes, unitText } from '../../sample';
-import { eq, pearsonOf, place, ranks, shown, strength, T, word } from './shared';
+import { eq, pl, place, shown, strength, T, word } from './shared';
+import { relate } from '../../math';
+import { averageRanks } from '../../../domain/descriptive';
 
 /** Kennwerte der Rangkorrelation: Ränge, Abstände zum mittleren Rang, Produkte, Quadratsummen, ρ und zum Vergleich r. */
 export type RankStats = {
@@ -27,7 +29,7 @@ export type RankStats = {
 };
 
 export function rankStats(d: Pairs): RankStats {
-  const n = d.x.length, rx = ranks(d.x), ry = ranks(d.y), mid = (n + 1) / 2;
+  const n = d.x.length, rx = averageRanks(d.x), ry = averageRanks(d.y), mid = (n + 1) / 2;
   const dx = rx.map(v => v - mid), dy = ry.map(v => v - mid);
   const prod = dx.map((v, i) => v * dy[i] || 0);
   const sp = prod.reduce((a, b) => a + b, 0);
@@ -37,7 +39,7 @@ export function rankStats(d: Pairs): RankStats {
   const ties = new Set(d.x).size < n || new Set(d.y).size < n ? 1 : 0;
   return {
     n, xs: [...d.x], ys: [...d.y], rx, ry, mid, dx, dy, prod, sp, pos, neg, absSum: pos - neg, qx, qy, den,
-    rho: den > 1e-12 ? sp / den : null, r: pearsonOf(d.x, d.y), d2, short: n > 1 ? 1 - 6 * d2 / (n * (n * n - 1)) : 0, ties,
+    rho: den > 1e-12 ? sp / den : null, r: relate(d.x, d.y).r, d2, short: n > 1 ? 1 - 6 * d2 / (n * (n * n - 1)) : 0, ties,
   };
 }
 
@@ -180,7 +182,7 @@ export const rangkorrelation: Workshop<Pairs, RankStats> = {
     {
       button: '÷ √( )', title: 'Mit dem Größtmöglichen vergleichen', sym: 'ρ', say: 'rho', concept: 'spearman', perPerson: false,
       links: [{ id: 'pearson', label: 'Pearson-Korrelation' }],
-      was: 'Wir teilen die Summe durch das Größtmögliche: die Wurzel aus dem Produkt der beiden Quadratsummen der Rangabstände. Heraus kommt eine Zahl zwischen −1 und +1.',
+      was: 'Wir teilen die Summe durch das Größtmögliche: die Wurzel aus dem Produkt der beiden Quadratsummen, also der quadrierten Rangabstände zusammengezählt. Heraus kommt eine Zahl zwischen −1 und +1.',
       rechnung: c => c.s.rho === null
         ? 'Bei einer Frage haben alle denselben Rang. Dann ist eine Quadratsumme 0, und durch 0 kann man nicht teilen: ρ ist nicht definiert.'
         : c.s.ties
@@ -228,11 +230,11 @@ export const rangkorrelation: Workshop<Pairs, RankStats> = {
   },
   think: [
     {
-      question: 'Person E hat allein die meisten Lernstunden. Sie lernt noch mehr, 10 Stunden. Was passiert mit ρ?',
+      question: 'In „Meist gleichläufig“ hat Person E allein die meisten Lernstunden, 9. Sie lernt noch eine Stunde mehr. Was passiert mit ρ?',
       options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 1,
-      explain: 'E hat weiter die meisten Stunden, ihr Rang bleibt 5. Alle Ränge bleiben gleich, also auch ρ. Pearson-r würde sich dagegen ändern, weil es mit den Abständen rechnet.',
+      explain: 'E hat weiter die meisten Stunden, ihr Rang bleibt 5. Alle Ränge bleiben gleich, also auch ρ. Pearson-r ändert sich dagegen, weil es mit den Abständen rechnet: von 0,83 auf 0,84.',
       kurz: 'Ränge sind gegen Ausreißer robust.',
-      tryIt: { label: 'E auf 10 Stunden', apply: d => ({ x: d.x.map((v, i) => i === 4 ? 10 : v), y: [...d.y] }) },
+      tryIt: { label: '„Meist gleichläufig“, E auf 10 Stunden', apply: () => ({ x: [2, 4, 5, 7, 10], y: [3, 2, 6, 5, 8] }) },
     },
     {
       question: 'Die Punkte steigen immer, aber in einem Bogen. Welche Zahl ist größer, Pearson-r oder ρ?',
@@ -325,7 +327,7 @@ export const bridgeRangkorrelation: Bridge<RankStats> = {
       },
     },
     {
-      all: c => `Die ${N(c)} Produkte ergeben zusammen ${num(c.s.sp)}. ${c.s.prod.filter(p => p > 1e-9).length} sind positiv, ${c.s.prod.filter(p => p < -1e-9).length} negativ.`,
+      all: c => `Die ${N(c)} Produkte ergeben zusammen ${num(c.s.sp)}. ${pl(c.s.prod.filter(p => p > 1e-9).length, 'ist', 'sind')} positiv, ${c.s.prod.filter(p => p < -1e-9).length} negativ.`,
       person: c => `${PB(c)} steuert ${signed(c.s.prod[c.who])} zur Summe bei.`,
     },
     {
@@ -398,7 +400,7 @@ export const spearmanTabs: ConceptTabs = {
       spearman_rho: { sym: 'spearman_rho()', term: T('spearman'), kurz: 'Berechnet Spearman-ρ für zwei oder mehr Spalten, dazu den p-Wert und die Zahl der Befragten N.', fehler: 'Mit nur einer Spalte meldet mariposa: At least two variables must be specified for correlation analysis.' },
     },
     outputMap: [
-      { match: 'rho', atlas: 'ρ', step: 5, explain: 'rho ist die Spearman-Korrelation: Pearson-r der Ränge von Finanzlage und Schulabschluss.' },
+      { match: 'rho', atlas: 'ρ', explain: 'rho ist die Spearman-Korrelation: Pearson-r der Ränge von Finanzlage und Schulabschluss. Dieselbe Zahl siehst du im Teil mit den 200 Befragten, wenn du Finanzielle Lage und Schulabschluss wählst.' },
       { match: 'p', atlas: 'p-Wert', explain: 'Gäbe es unter allen Menschen keinen Zusammenhang der Reihenfolgen, käme ein so großes ρ in etwa 7 von 100 Stichproben vor.' },
       { match: 'N', atlas: 'n', explain: 'N zählt die Befragten mit gültigen Werten in beiden Spalten.' },
     ],

@@ -3,7 +3,7 @@
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num } from '../../format';
 import { sampleColumn } from '../../sample';
-import { pearsonOf } from './shared';
+import { relate } from '../../math';
 
 /** Lehrdatensatz: mittlerer Wissenstest nach Lernzeit (unter 6, 6 bis unter 9, ab 9 Stunden), Steigung und r. */
 export const LERNZEIT_GRUPPEN = { means: [7.6792, 10.35, 11.791], n: [53, 80, 67], slope: 0.5188908, r: 0.5391689, cov: 5.44, varx: 10.48 } as const;
@@ -11,14 +11,14 @@ export const LERNZEIT_GRUPPEN = { means: [7.6792, 10.35, 11.791], n: [53, 80, 67
 /** Sieben Punkte zwischen Gerade (Bogen 0) und symmetrischem Bogen (Bogen 1): y = (1 − v) · x + v · (1 + (x − 4)² · 2/3). */
 export const BOGEN_X = [1, 2, 3, 4, 5, 6, 7];
 export const bogenY = (v: number) => BOGEN_X.map(x => (1 - v) * x + v * (1 + (x - 4) ** 2 * 2 / 3));
-export const bogenR = (v: number) => pearsonOf(BOGEN_X, bogenY(v));
+export const bogenR = (v: number) => relate(BOGEN_X, bogenY(v)).r;
 
 const L = LERNZEIT_GRUPPEN;
 
 export const linearKarte: ConceptCard = {
   concept: 'linear',
   wofuer: 'Bevor du eine Pearson-Korrelation deutest, brauchst du eine Vorfrage: Folgen die Punkte überhaupt grob einer Geraden? r misst nur diesen geraden Anteil. Ein Bogen kann r klein machen, obwohl die beiden Merkmale eng zusammenhängen.',
-  kurz: 'Ein Zusammenhang ist linear, wenn eine Gerade ihn gut beschreibt: Ein Schritt mehr bei x bringt im Schnitt überall gleich viel mehr bei y. Nur dann erzählt Pearson-r die ganze Geschichte.',
+  kurz: 'Ein Zusammenhang ist linear, wenn eine Gerade ihn gut beschreibt: Je Schritt in x ändert sich y im Schnitt überall um gleich viel. Nur dann erzählt Pearson-r die ganze Geschichte.',
   stellDirVor: {
     text: `Im Lehrdatensatz lösen Befragte, die in den letzten sieben Tagen weniger als 6 Stunden gelernt haben, im Wissenstest im Schnitt ${num(L.means[0])} Aufgaben. Mit 6 bis unter 9 Stunden sind es ${num(L.means[1])}, ab 9 Stunden ${num(L.means[2])}. Eine Gerade beschreibt das grob: etwa ${num(L.slope)} Aufgaben mehr je Stunde, r ≈ ${num(L.r)}. Ganz gleichmäßig sind die Schritte nicht; ob eine Gerade passt, zeigt erst das Streudiagramm.`,
     figures: [
@@ -41,8 +41,8 @@ export const linearKarte: ConceptCard = {
     },
     {
       title: 'Auf Bögen achten',
-      was: 'Steigt y erst und fällt dann wieder, folgen die Punkte einem Bogen. Dann kann r nahe 0 liegen, obwohl x und y eng zusammenhängen.',
-      warum: 'Beim symmetrischen Bogen liegen die Punkte links und rechts gleich hoch. Die Plusflächen rechts und die Minusflächen links heben sich genau auf.',
+      was: 'Fällt y erst und steigt dann wieder, oder umgekehrt, folgen die Punkte einem Bogen. Dann kann r nahe 0 liegen, obwohl x und y eng zusammenhängen.',
+      warum: 'Beim symmetrischen Bogen liegen die Punkte links und rechts gleich hoch. Dann heben sich die Plus- und Minusflächen der Kovarianz genau auf.',
       acht: 'r = 0 heißt nur: kein gerader Zusammenhang. Schau immer auch auf das Streudiagramm.',
       concept: 'covariance',
     },
@@ -97,16 +97,16 @@ export const linearKarte: ConceptCard = {
     question: 'Eine Studie findet zwischen Alter und politischem Interesse r = 0,03. Was folgt daraus?',
     options: [
       'Alter und Interesse hängen nicht zusammen.',
-      'Es gibt keinen geraden Zusammenhang; ein Bogen ist möglich. Das Streudiagramm klärt es.',
+      'Es gibt kaum einen geraden Zusammenhang; ein Bogen ist möglich. Das Streudiagramm klärt es.',
       'Der Zusammenhang ist schwach, aber sicher linear.',
       'Ältere interessieren sich etwas mehr für Politik, weil r positiv ist.',
     ],
     correct: 1,
-    right: 'Genau. r misst nur den geraden Anteil. Ob die Punkte einem Bogen folgen, zeigt erst das Streudiagramm.',
+    right: 'Genau. r misst nur den geraden Anteil, und der ist hier kaum vorhanden. Ob die Punkte einem Bogen folgen, zeigt erst das Streudiagramm.',
     diagnose: {
       0: 'Fast! Das ist der häufigste Fehler. r nahe 0 schließt nur einen geraden Zusammenhang aus, keinen gebogenen.',
       2: 'Fast! Ob ein Zusammenhang linear ist, sagt r nicht. Das zeigt nur das Bild der Punkte.',
-      3: 'Noch nicht ganz. Bei r = 0,03 ist kaum ein gerader Zusammenhang zu sehen, und „weil“ behauptet eine Ursache, die r nicht zeigen kann.',
+      3: 'Fast! Hier wird r als Ursache gelesen. r = 0,03 zeigt kaum einen geraden Zusammenhang, und eine Korrelation kann kein „weil“ belegen.',
     },
   },
   fuerDich: 'Bevor du eine Korrelation deutest, schau dir das Streudiagramm an. Folgen die Punkte grob einer Geraden, beschreibt r den Zusammenhang gut; folgen sie einem Bogen, erzählt r nur die halbe Geschichte.',
@@ -127,11 +127,9 @@ export const linearKarte: ConceptCard = {
 const COLS = { x: 'lernzeit', y: 'wissenstest' };
 /** Steigung der Geraden (Kovarianz durch Varianz von x), r und die mittleren Werte von y in drei Lernzeitgruppen. */
 export function geradeData(c: SampleCtx) {
-  const x = sampleColumn(c.rows, c.columns.x?.[0] ?? COLS.x), y = sampleColumn(c.rows, c.columns.y?.[0] ?? COLS.y), n = x.length;
-  const mx = x.reduce((a, b) => a + b, 0) / n, my = y.reduce((a, b) => a + b, 0) / n;
-  const cov = x.reduce((a, v, i) => a + (v - mx) * (y[i] - my), 0) / (n - 1), varx = x.reduce((a, v) => a + (v - mx) ** 2, 0) / (n - 1);
+  const x = sampleColumn(c.rows, c.columns.x?.[0] ?? COLS.x), y = sampleColumn(c.rows, c.columns.y?.[0] ?? COLS.y), rel = relate(x, y), varx = rel.x.variance;
   const group = (lo: number, hi: number) => { const g = y.filter((_, i) => x[i] >= lo && x[i] < hi); return g.length ? g.reduce((a, b) => a + b, 0) / g.length : null; };
-  return { slope: varx > 0 ? cov / varx : null, r: pearsonOf(x, y), cov, varx, n, groups: [group(-Infinity, 6), group(6, 9), group(9, Infinity)] };
+  return { slope: varx > 0 ? rel.cov / varx : null, r: rel.r, cov: rel.cov, varx, n: x.length, groups: [group(-Infinity, 6), group(6, 9), group(9, Infinity)] };
 }
 const mean = (v: number | null) => v === null ? 'niemand' : num(v);
 

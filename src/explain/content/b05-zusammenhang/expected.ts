@@ -66,7 +66,7 @@ export const erwartet: SentenceTemplate<ExpValues, ExpStats> = {
       : 'Noch nicht ganz. Rechne Zeilensumme mal Spaltensumme und teile durch alle Personen.',
   },
   interpret: s => s.valid ? {
-    kurz: `Gäbe es keinen Zusammenhang, stünden in dieser Zelle ${unit(s.E, 'Person', 'Personen')}. Das sind ${pct(s.colShare)} der Zeile, so viel wie in der ganzen Spalte.`,
+    kurz: `Gäbe es keinen Zusammenhang, stünden in dieser Zelle ${unit(s.E, 'Person', 'Personen')}. Das sind ${pct(s.colShare)} der Zeile, genau der Anteil der Spalte an allen.`,
     fachlich: `Eⱼₖ = nⱼ₊ · n₊ₖ / n = ${num(s.E)}. Unter Unabhängigkeit hat jede Zeile denselben Anteil der Spalte wie die Tabelle insgesamt.`,
   } : {
     kurz: 'Diese Ränder passen nicht zusammen: Eine Zeile oder Spalte kann nicht mehr Personen haben als alle zusammen.',

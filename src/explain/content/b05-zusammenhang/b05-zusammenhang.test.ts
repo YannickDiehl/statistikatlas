@@ -38,7 +38,7 @@ const near = (a: number | null, b: number, tol = 1e-6) => a !== null && Math.abs
  *   rank(x); rank(y)                                        # 1 2 3 4 5; 2 1 4 3 5
  *   cor(x, y, method = "spearman"); cor(x, y)               # 0.8; 0.829383
  *   data.frame(x, y) %>% spearman_rho(x, y)                 # rho = 0.800, p = 0.104, N = 5
- *   cor(c(2, 4, 5, 7, 10), y, method = "spearman")          # 0.8 (E auf 10 Stunden: gleiche Ränge)
+ *   cor(c(2, 4, 5, 7, 10), y, method = "spearman"); cor(c(2, 4, 5, 7, 10), y)   # 0.8 (E auf 10 Stunden: gleiche Ränge); 0.8446878
  *   cor(x, c(9, 7, 5, 3, 2), method = "spearman")           # -1
  *   cor(c(1, 2, 3, 5, 10), c(2, 4, 7, 8, 9), method = "spearman"); cor(c(1, 2, 3, 5, 10), c(2, 4, 7, 8, 9))   # 1; 0.842164
  *   x <- c(2, 4, 4, 7, 9); y <- c(3, 5, 2, 5, 8)
@@ -67,6 +67,7 @@ test('B5 Spearman: Werkstatt, Brücke und R-Ausgabe wie in R', () => {
   assert.ok(near(rankStats(th[0].tryIt!.apply(rangkorrelation.presets[0].data)).rho, 0.8), 'E auf 10');
   assert.ok(near(rankStats(th[3].tryIt!.apply(rangkorrelation.presets[0].data)).rho, -1), 'umgekehrt');
   assert.match(txt(th[1].explain, at(rankStats, rangkorrelation.presets[0].data)), /etwa 0,84/);
+  assert.ok(near(rankStats(th[0].tryIt!.apply(rangkorrelation.presets[0].data)).r, 0.8446878), 'E auf 10: r von 0,83 auf 0,84');
   // Texte mit den Zahlen der Voreinstellungen.
   const s = rangkorrelation.steps, c = at<RankStats>(rankStats, rangkorrelation.presets[2].data, 1);
   assert.equal(txt(s[0].rechnung, c), 'Person B: 4 Stunden haben zwei Personen. Sie teilen sich die Plätze 2 und 3 und bekommen je Rang 2,5. 5 Aufgaben haben zwei Personen. Sie teilen sich die Plätze 3 und 4 und bekommen je Rang 3,5.');
@@ -134,12 +135,15 @@ test('B5 Paarvergleich: konkordante Paare, Gamma und Tau-b wie in R', () => {
   assert.match(s[5].check.diagnose(c, 1)!, /^Fast! Das ist Gamma/); assert.match(s[3].check.diagnose(c, 0.8)!, /durch alle Paare geteilt/);
   assert.match(s[0].check.diagnose(c, 20)!, /doppelt/); assert.match(s[0].check.diagnose(c, 25)!, /mit sich selbst/);
   assert.match(paarvergleich.variants.goodman_gamma.interpret(at(pairCount, paarvergleich.presets[0].data)).kurz, /^Von den 10 Paaren mit klarer Richtung sind 80 % gleich gerichtet\./);
+  assert.match(paarvergleich.variants.concordance.interpret(at(pairCount, paarvergleich.presets[2].data)).kurz, /^1 Paar ist gleich gerichtet, 9 entgegengesetzt\./);
   // Brücke mit den 200 Befragten.
   const b = paarvergleich.bridge!, bc = bridgeContext(pairCount, 'pairs', rows, 'finanzlage', 'schulabschluss', 1);
   assert.deepEqual(counts(bc.s), [6954, 5300, 4679, 3907, 19900], 'C, D, Tx, Ty, N0 wie in R');
   assert.ok(near(bc.s.gamma, 0.1349763) && near(bc.s.tau, 0.1060105), 'γ und τb wie in R');
   assert.deepEqual([bc.s.ci[1], bc.s.di[1], bc.s.txi[1], bc.s.tyi[1]], [88, 36, 50, 40], 'P002');
   assert.equal(b.lines[0].all(bc), '200 Befragte ergeben 200 · 199 / 2 = 19.900 Personenpaare.');
+  assert.equal(b.lines[0].person(bc), 'P002 wird mit den 198 Befragten nach ihr verglichen; mit der einen Person davor ist sie schon verglichen.');
+  assert.equal(b.lines[0].person({ ...bc, who: 198 }), 'P199 wird mit der einen Person nach ihr verglichen; mit den 198 Befragten davor ist sie schon verglichen.');
   assert.equal(b.lines[2].all(bc), '5.300 Paare sind entgegengesetzt. C − D = 6.954 − 5.300 = 1.654.');
   assert.equal(b.lines[3].all(bc), 'γ = 1.654 / 12.254 ≈ 0,13. Die 7.646 Paare mit Gleichstand zählen nicht mit.');
   assert.equal(b.lines[5].all(bc), 'τb = 1.654 / √(15.221 · 15.993) ≈ 0,11. Gamma ist 0,13: Die Gleichstände machen τb im Betrag kleiner.');
@@ -198,7 +202,7 @@ test('B5 erwartete Zellhäufigkeit: Abitur und Weiterbildung wie in R', () => {
   const s = erwartet.compute(erwartet.initial);
   assert.ok(near(s.E, 16.4) && s.prod === 3280 && near(s.colShare, 0.41), 'E = 40 · 82 / 200');
   assert.equal(erwartet.check.answer, 20); assert.match(erwartet.check.diagnose(40), /durch 100 geteilt/); assert.match(erwartet.check.diagnose(4000), /^Fast!/);
-  assert.equal(erwartet.interpret(s).kurz, 'Gäbe es keinen Zusammenhang, stünden in dieser Zelle 16,4 Personen. Das sind 41 % der Zeile, so viel wie in der ganzen Spalte.');
+  assert.equal(erwartet.interpret(s).kurz, 'Gäbe es keinen Zusammenhang, stünden in dieser Zelle 16,4 Personen. Das sind 41 % der Zeile, genau der Anteil der Spalte an allen.');
   const ctx = { rows, columns: { x: ['schulabschluss'], y: ['weiterbildung'] } }, e = erwartetJa(ctx);
   assert.deepEqual(e.rows.map(g => Math.round(g.E * 100) / 100), [17.22, 16.4, 15.17, 16.81, 16.4]); assert.deepEqual(e.rows.map(g => g.ja), [17, 12, 17, 17, 19]);
   const t = tabsFor('expected')!.sample!;
@@ -218,16 +222,25 @@ test('B5 erwartete Zellhäufigkeit: Abitur und Weiterbildung wie in R', () => {
  *   chisq.test(table(weiterbildung, erwerbstaetig), correct = FALSE)$statistic   # 0.7671952
  *   59 / 137; 23 / 63                          # 0.4306569; 0.3650794
  *   (30 * 30 - 10 * 10) / sqrt(40^4)           # 0.5 (Kontrollfrage)
+ * mariposa 0.7.4 meldet φ bei zwei mal zwei Feldern mit Vorzeichen (NEWS 0.7.4, chi_square.R):
+ *   a2 <- atlas %>% mutate(wb_um = rec(weiterbildung, rules = "0=1; 1=0"), erw_um = rec(erwerbstaetig, rules = "0=1; 1=0"))
+ *   a2 %>% phi(wb_um, erwerbstaetig); a2 %>% phi(weiterbildung, erw_um); a2 %>% phi(wb_um, erw_um)   # -0.06193526; -0.06193526; 0.06193526
+ *   atlas %>% phi(schulabschluss, geschlecht)  # 0.2238118 (größere Tabelle: √(χ²/n) ohne Vorzeichen)
  */
 test('B5 Phi: Vierfeldertafel und die 200 wie in R', () => {
   const s = phiSatz.compute(phiSatz.initial);
   assert.deepEqual([s.ad, s.bc, s.diff, s.r1, s.r2, s.k1, s.k2, s.n], [2360, 1794, 566, 82, 118, 137, 63, 200]);
   assert.ok(near(s.phi, 0.06193526) && near(s.chi2, 0.7671952) && near(s.shareA, 0.4306569) && near(s.shareB, 0.3650794), 'φ, χ², Anteile');
   assert.equal(phiSatz.interpret(s).kurz, 'Unter den Erwerbstätigen haben 43,1 % eine Weiterbildung gemacht, unter den anderen 36,5 %. φ ≈ 0,06: Die beiden Merkmale hängen kaum zusammen.');
-  assert.match(phiSatz.check.diagnose(0.25), /zum Quadrat/); assert.match(phiSatz.check.diagnose(-0.5), /Vorzeichen/);
+  assert.match(phiSatz.check.diagnose(0.25), /zum Quadrat/); assert.match(phiSatz.check.diagnose(-0.5), /Andersherum/);
+  const swapped = phiSatz.compute(phiSatz.quick[1].apply(phiSatz.initial));
+  assert.ok(near(swapped.phi, -0.06193526), 'Ja und Nein getauscht: φ mit Minus wie mariposa 0.7.4');
   const ctx = { rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }, p = phiData(ctx);
-  assert.ok(near(p.phi, 0.06193526) && near(p.r, 0.06193526) && near(p.chi2, 0.7671952), 'φ und r aus den Daten');
-  assert.ok(near(phiData({ ...ctx, rows: applyOp(rows, 'weiterbildung', 'reverse') }).r, -0.06193526), 'umgepolt: r dreht sich');
+  assert.ok(near(p.phi, 0.06193526) && near(p.abs, 0.06193526) && near(p.chi2, 0.7671952), 'φ und Betrag aus den Daten');
+  const wb = phiData({ ...ctx, rows: applyOp(rows, 'weiterbildung', 'reverse') }), erw = phiData({ ...ctx, rows: applyOp(rows, 'erwerbstaetig', 'reverse') });
+  const both = phiData({ ...ctx, rows: applyOp(applyOp(rows, 'weiterbildung', 'reverse'), 'erwerbstaetig', 'reverse') });
+  assert.ok(near(wb.phi, -0.06193526) && near(erw.phi, -0.06193526) && near(both.phi, 0.06193526) && near(wb.abs, 0.06193526), 'umgepolt wie phi() in mariposa 0.7.4');
+  assert.ok(near(phiData({ rows, columns: { x: ['schulabschluss'], y: ['geschlecht'] } }).phi, 0.2238118), 'größere Tabelle ohne Vorzeichen');
   assert.equal(locate(CATALOG_OUTPUT['phi:0'].output, '0.06193526')?.text, '0.06193526');
 });
 
@@ -238,6 +251,9 @@ test('B5 Phi: Vierfeldertafel und die 200 wie in R', () => {
  *   sqrt(10.02 / 600); sqrt(40.08 / 2400)      # 0.1292285 (gerundetes χ²), bei n und χ² mal 4 gleich
  *   sqrt(18 / 200); sqrt(18 / 100); sqrt(18 / 300)   # 0.3 (Kontrollfrage); 0.424 ohne k; 0.245 mit k = 3
  *   table(geschlecht)                          # 0: 95, 1: 103, 2 (Divers): 1, 3 (Kein Eintrag): 1
+ *   pchisq(10.01834, 12, lower.tail = FALSE); sqrt(12 / 600)   # 0.6143516 (p); 0.1414214 (V ohne Zusammenhang, etwa)
+ *   set.seed(20261002); mittleres V aus 4000 unabhängigen Tabellen mit n = 200 (chisq.test, correct = FALSE)
+ *   #   2 × 2: 0.0571; 5 × 4: 0.1388 (Genau genommen: „etwa 0,06“ und „etwa 0,14“)
  */
 test('B5 Cramér-V: Formel als Satz und die 200 wie in R', () => {
   const s = cramerSatz.compute(cramerSatz.initial);
@@ -249,6 +265,14 @@ test('B5 Cramér-V: Formel als Satz und die 200 wie in R', () => {
   assert.ok(near(v.V, 0.1292178) && near(v.chi2, 10.01834, 1e-5) && v.r === 5 && v.k === 4, 'V, χ², 5 × 4 wie in R');
   assert.equal(locate(CATALOG_OUTPUT['cramers_v:0'].output, '0.1292178')?.text, '0.1292178');
   assert.deepEqual([2, 3].map(code => rows.filter(r => r.values.geschlecht === code).length), [1, 1], 'Divers und Kein Eintrag je eine Person');
+  assert.ok(near(v.p, 0.6143516) && near(v.chance, 0.1414214) && v.df === 12, 'p und V ohne Zusammenhang');
+  assert.equal(cramerSatz.interpret(s).kurz, 'V ≈ 0,13. So viel käme bei 5 mal 4 Feldern und 200 Befragten auch ganz ohne Zusammenhang leicht zustande: Im Mittel läge V dann bei etwa 0,14.');
+  const t = tabsFor('cramers_v')!.sample!;
+  if (t.kind === 'analysis') {
+    const r = t.result({ rows, columns: { x: ['schulabschluss'], y: ['geschlecht'] } });
+    assert.equal(r.kurz, '„Schulabschluss“ und „Geschlecht“: V ≈ 0,13. Ein V in dieser Höhe käme bei 5 mal 4 Feldern und 200 Befragten auch ganz ohne Zusammenhang leicht zustande. Im Mittel läge es dann bei etwa 0,14.');
+    assert.match(r.fachlich, /in etwa 61 von 100 Stichproben vor \(p ≈ 0,61\)/);
+  }
 });
 
 /*

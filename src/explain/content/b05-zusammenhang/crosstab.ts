@@ -76,7 +76,7 @@ export const kreuztabelle: TableTool = {
       warum: 'Hier gibt es viermal so viele Erwerbstätige wie Personen ohne Erwerb. Erst Anteile machen die beiden Gruppen vergleichbar.',
       acht: 'Zeilen- und Spaltenprozente beantworten verschiedene Fragen. Zeilenprozente: Wie viele Erwerbstätige machen eine Weiterbildung? Spaltenprozente: Wie viele mit Weiterbildung sind erwerbstätig?',
       sym: 'nⱼₖ / nⱼ₊', say: 'n j k durch n j plus',
-      fach: 'Zeilenprozente sind bedingte relative Häufigkeiten: der Anteil einer Spaltenkategorie innerhalb einer Zeilenkategorie, mal 100.',
+      fach: 'Zeilenprozente sind bedingte relative Häufigkeiten: der Anteil einer Spaltenkategorie innerhalb einer Zeilenkategorie, mal 100. In Daten schätzen sie eine bedingte Wahrscheinlichkeit.',
       concept: 'conditional_probability',
     },
   ],
@@ -167,14 +167,14 @@ const share = (part: number, whole: number) => whole > 0 ? part / whole * 100 : 
 export const crosstabTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { x: X, y: Y },
-    kurz: 'Dieselbe Tabelle mit allen 200 Befragten: Schulabschluss in den Zeilen, Weiterbildung in den Spalten, mit Zeilenprozenten.',
+    kurz: 'Eine Kreuztabelle mit allen 200 Befragten: Schulabschluss in den Zeilen, Weiterbildung in den Spalten, mit Zeilenprozenten.',
     value: c => { const a = abschlussNachWeiterbildung(c), g = a.groups[4]; return share(g.ja, g.n); },
     result: c => {
       const a = abschlussNachWeiterbildung(c), withShare = a.groups.filter(g => g.n > 0).map(g => ({ ...g, p: share(g.ja, g.n) }));
       const hi = withShare.reduce((b, g) => g.p > b.p ? g : b), lo = withShare.reduce((b, g) => g.p < b.p ? g : b);
       return {
         kurz: hi.p - lo.p < 0.05
-          ? `In jeder Gruppe haben gleich viele eine Weiterbildung gemacht: ${num(hi.p, 1)} %.`
+          ? `In jeder Gruppe ist der Anteil mit Weiterbildung gleich: ${num(hi.p, 1)} %.`
           : `Insgesamt haben ${num(share(a.ja, a.n), 1)} % der ${a.n} Befragten in den letzten zwölf Monaten eine Weiterbildung gemacht. Am häufigsten mit „${hi.label}“ (${num(hi.p, 1)} %), am seltensten mit „${lo.label}“ (${num(lo.p, 1)} %).`,
         fachlich: `Zeilenprozente für Weiterbildung = Ja: ${withShare.map(g => `${g.label} ${num(g.p, 1)} %`).join(', ')}.`,
         zusatz: `${a.ja} von ${a.n} Befragten haben eine Weiterbildung gemacht.`,

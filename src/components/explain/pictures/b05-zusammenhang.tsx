@@ -1,7 +1,7 @@
 // Bilder des Bereichs B5 „Zusammenhang“ für alle Vorlagen. Schlüssel = `picture` der Erklärung, Bausteine und
 // `forWorkshop`/`forCard`/`forSentence`/`forTable` aus ./kit.tsx.
 // Eigene Stile in src/explain/areas/b05-zusammenhang.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
-import type { KeyboardEvent, ReactNode } from 'react';
+import { useId, type KeyboardEvent, type ReactNode } from 'react';
 import type { Pairs } from '../../../explain/math';
 import { num, signed } from '../../../explain/format';
 import type { RankStats } from '../../../explain/content/b05-zusammenhang/spearman';
@@ -33,16 +33,17 @@ function DragScatter({ d, W, L, T, plot, xTitle, yTitle, help, extra }: { d: Dra
   const { svg, start, handlers } = useDrag((i, p) => set(i, clamp((p.x - L) / u + bounds.min, bounds), clamp((B - p.y) / u + bounds.min, bounds)));
   const key = (e: KeyboardEvent, i: number) => {
     const x = data.x[i], y = data.y[i];
-    const next = e.key === 'ArrowRight' ? [x + 1, y] : e.key === 'ArrowLeft' ? [x - 1, y] : e.key === 'ArrowUp' ? [x, y + 1] : e.key === 'ArrowDown' ? [x, y - 1] : null;
+    const next = e.key === 'ArrowRight' ? [x + 1, y] : e.key === 'ArrowLeft' ? [x - 1, y] : e.key === 'ArrowUp' ? [x, y + 1] : e.key === 'ArrowDown' ? [x, y - 1]
+      : e.key === 'Home' ? [bounds.min, y] : e.key === 'End' ? [bounds.max, y] : e.key === 'PageDown' ? [x, bounds.min] : e.key === 'PageUp' ? [x, bounds.max] : null;
     if (!next) return;
     e.preventDefault(); onWho(i); set(i, clamp(next[0], bounds), clamp(next[1], bounds));
   };
   const ticks = Array.from({ length: bounds.max - bounds.min + 1 }, (_, k) => bounds.min + k);
-  const helpId = `b05-help-${yTitle.length}-${xTitle.length}`;
+  const helpId = useId();
   const H = B + 44;
   return (
     <svg ref={svg} className="xw-svg xw-drag" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`Streudiagramm der fünf Beispielpersonen: ${xTitle} und ${yTitle}`} {...handlers}>
-      <desc id={helpId}>{help}</desc>
+      <desc id={helpId}>{help} Pos1 und Ende setzen x an den Rand, Bild auf und Bild ab y.</desc>
       {ticks.map(t => <g key={`t${t}`}>
         <line className="xw-guide" x1={X(t)} x2={X(t)} y1={Y(bounds.max)} y2={Y(bounds.min)} />
         <line className="xw-guide" x1={X(bounds.min)} x2={X(bounds.max)} y1={Y(t)} y2={Y(t)} />
