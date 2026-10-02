@@ -282,7 +282,7 @@ test('B1 fehlende Angaben: die Übungskopie und ihre Mittelwerte wie in R', () =
   assert.match(missing.wofuer, /ALLBUS 2023 \(ungewichtet\) machten 13,8 %/);
   assert.match(missing.genau.paragraphs[1], /446 von 5\.246 .* Weitere 251/);
   const tab = analysis(missingTabs.sample), r = tab.result(ctx(rows, { x: ['einkommen'] }));
-  assert.equal(r.kurz, 'Alle 200 von 200 Befragten haben eine gültige Angabe zum Haushaltsnettoeinkommen. Der Mittelwert 3.154,62 €/Monat beruht deshalb auf allen 200.');
+  assert.equal(r.kurz, 'Alle 200 Befragten haben eine gültige Angabe zum Haushaltsnettoeinkommen. Der Mittelwert 3.154,62 €/Monat beruht deshalb auf allen 200.');
   assert.match(CATALOG_OUTPUT['missing_tools:0'].output, /einkommen\s+3147\.613\s+1426\.790\s+199\s+1/);
   assert.ok(ALLBUS_HHINC.fehlend === 696 + 28 && ALLBUS_INC.fehlend === 362 + 84, 'Summen der ALLBUS-Codes');
 });

@@ -169,7 +169,9 @@ export const missingTabs: ConceptTabs = {
     result: c => {
       const { n, valid, m, u } = einkommenOf(c);
       return {
-        kurz: `${valid === n ? `Alle ${valid}` : valid} von ${n} Befragten haben eine gültige Angabe zum Haushaltsnettoeinkommen. Der Mittelwert ${u(m)} beruht deshalb auf ${valid === n ? `allen ${n}` : `${valid} Personen`}.`,
+        kurz: valid === n
+          ? `Alle ${n} Befragten haben eine gültige Angabe zum Haushaltsnettoeinkommen. Der Mittelwert ${u(m)} beruht deshalb auf allen ${n}.`
+          : `${valid} von ${n} Befragten haben eine gültige Angabe zum Haushaltsnettoeinkommen. Der Mittelwert ${u(m)} beruht nur auf ihnen.`,
         fachlich: `n gültig = ${valid}, n fehlend = ${n - valid}; Mittelwert x̄ ≈ ${u(m)}.`,
         zusatz: `Im ALLBUS 2023 (ungewichtet) fehlte das Haushaltseinkommen bei ${pct(ALLBUS_HHINC.fehlend / ALLBUS_HHINC.n)} der Befragten: keine Angabe oder verweigert.`,
       };
