@@ -360,9 +360,9 @@ export const modeTabs: ConceptTabs = {
     },
   },
   next: {
-    next: { id: 'median', why: 'Bei geordneten Antworten die Mitte der Reihe nach, statt der häufigsten Antwort.' },
+    next: { id: 'median', why: 'Bei geordneten Antworten der mittlere Wert der Reihe nach, statt der häufigsten Antwort.' },
     before: [
-      { id: 'frequency', why: 'Der Modus ist der Wert mit der größten Häufigkeit.' },
+      { id: 'frequency', why: 'Erst je Antwort zählen, dann die größte Zählung nehmen.' },
       { id: 'nominal', why: 'Für den Modus reicht es, Kategorien zu unterscheiden.' },
     ],
     after: [{ id: 'crosstab', why: 'Häufigkeiten zweier Fragen zugleich; der Modus je Gruppe ist ein erster Vergleich.' }],

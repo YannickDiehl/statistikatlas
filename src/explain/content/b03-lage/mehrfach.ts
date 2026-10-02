@@ -257,7 +257,7 @@ export const multipleResponseTabs: ConceptTabs = {
       { id: 'frequency', why: 'Jede Option einzeln gezählt, wie in einer gewöhnlichen Häufigkeitstabelle.' },
       { id: 'validn', why: 'Die gültigen Fälle sind die Basis der Fallprozente.' },
     ],
-    after: [{ id: 'dummy', why: 'Jede Option ist eine Spalte mit 0 und 1, wie eine Dummyvariable.' }],
+    after: [{ id: 'dummy', why: 'Jede Option ist eine Spalte mit 0 und 1, die nur ja oder nein sagt.' }],
     more: [{ id: 'labels', why: 'In der Ausgabe heißen die Optionen nach ihren Variablenlabels, etwa Lernquelle Buch.' }],
   },
 };

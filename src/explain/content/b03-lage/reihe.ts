@@ -232,7 +232,7 @@ export const derReiheNach: Workshop<number[], Reihe> = {
         const s = c.s, who = (k: number) => k === 1 ? 'Eine Person hat' : `${k} Personen haben`;
         const pull = s.mean - s.median > 1 ? ` Der Mittelwert liegt mit ${h(s.mean)} darüber: Ein großer Wert zieht ihn nach oben, den Median nicht.` : '';
         return {
-          kurz: `Der Reihe nach liegt in der Mitte ${h(s.median)}. ${who(s.below)} weniger gelernt, ${s.above} mehr.${pull}`,
+          kurz: `Der mittlere Wert der Reihe nach ist ${h(s.median)}. ${who(s.below)} weniger gelernt, ${s.above} mehr.${pull}`,
           fachlich: `x̃ = ${num(s.median)} h, x̄ = ${num(s.mean)} h. Der Median nutzt nur die Reihenfolge; wie weit der größte Wert entfernt ist, spielt keine Rolle.`,
         };
       },
@@ -354,8 +354,8 @@ export const bridgeReihe: Bridge<Reihe> = {
     };
     return {
       kurz: lernzeit(c)
-        ? `Der Reihe nach liegt die Mitte der ${n} Befragten bei ${h(s.median)} Lernzeit in den letzten sieben Tagen. Im Durchschnitt sind es ${h(s.mean)}.`
-        : `Der Reihe nach liegt die Mitte der ${n} Befragten bei „${c.col.title}“: ${medianText(c)}.`,
+        ? `Der mittlere Wert der ${n} Befragten der Reihe nach liegt bei ${h(s.median)} Lernzeit in den letzten sieben Tagen. Im Durchschnitt sind es ${h(s.mean)}.`
+        : `Bei „${c.col.title}“ liegt der mittlere Wert der ${n} Befragten der Reihe nach ${medianText(c).startsWith('zwischen') ? '' : 'bei '}${medianText(c)}.`,
       fachlich: `Der Median von „${c.col.title}“ beträgt x̃ ${eq(s.median)} ${c.u(s.median)} bei n = ${n}; der Mittelwert x̄ ${eq(s.mean)} ${c.u(s.mean)}.`,
       zusatz: `${s.below} von ${n} Befragten liegen unter dem Median, ${s.above} darüber und ${s.same} genau darauf.`,
     };
@@ -377,21 +377,21 @@ export const medianTabs: ConceptTabs = {
     think: [
       {
         question: 'Eine Person hat plötzlich gar nicht gelernt (0 Stunden). Was passiert mit dem Median?', options: ['bleibt gleich', 'sinkt deutlich', 'steigt'], correct: 0, step: 3,
-        explain: 'Wer vorher über der Mitte lag, rutscht ans untere Ende. Um die Mitte liegen hier aber mehrere Befragte mit genau 7,6 Stunden, deshalb bleibt der Median. Der Mittelwert sinkt dagegen um bis zu 0,09 Stunden.',
+        explain: 'Wer vorher über dem Median lag, rutscht ans untere Ende. Auf den mittleren Plätzen der Reihe stehen hier aber mehrere Befragte mit genau 7,6 Stunden, deshalb bleibt der Median. Der Mittelwert sinkt dagegen um bis zu 0,09 Stunden.',
         kurz: 'Der Median hängt an der Reihenfolge, nicht an der Größe.',
         tryIt: { label: 'die gewählte Person auf 0 Stunden', op: 'outlier', column: 'x', value: 0 },
         expect: { change: 'same' },
       },
       {
         question: 'Alle lernen eine Stunde mehr. Was passiert mit dem Median?', options: ['bleibt gleich', 'steigt um 1 Stunde', 'steigt um 200 Stunden'], correct: 1, step: 3,
-        explain: 'Die Reihenfolge bleibt dieselbe, nur jeder Wert ist eine Stunde größer. Also auch der Wert in der Mitte.',
+        explain: 'Die Reihenfolge bleibt dieselbe, nur jeder Wert ist eine Stunde größer. Also auch der mittlere Wert der Reihe nach.',
         kurz: 'Verschieben verschiebt den Median um genau so viel.',
         tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
         expect: { change: 'plus', amount: 1 },
       },
       {
         question: 'Alle lernen doppelt so lange. Was passiert mit dem Median?', options: ['bleibt gleich', 'verdoppelt sich', 'vervierfacht sich'], correct: 1, step: 3,
-        explain: 'Die Reihenfolge bleibt, und jeder Wert verdoppelt sich. Also verdoppelt sich auch der Wert in der Mitte.',
+        explain: 'Die Reihenfolge bleibt, und jeder Wert verdoppelt sich. Also verdoppelt sich auch der mittlere Wert der Reihe nach.',
         kurz: 'Malnehmen wirkt auf den Median genauso.',
         tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
         expect: { change: 'factor', factor: 2 },

@@ -190,7 +190,7 @@ export const rangeTabs: ConceptTabs = {
     },
   },
   next: {
-    next: { id: 'quantile', why: 'Der Interquartilsabstand misst nur die mittlere Hälfte und lässt die Ränder weg.' },
+    next: { id: 'quantile', why: 'Misst nur die Breite der mittleren Hälfte und lässt die Ränder weg.' },
     before: [
       { id: 'series', why: 'Die Werte, deren kleinster und größter zählen.' },
       { id: 'sorting', why: 'Geordnet stehen Minimum und Maximum am Anfang und am Ende.' },

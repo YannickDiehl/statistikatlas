@@ -194,7 +194,7 @@ export const shapeTabs: ConceptTabs = {
     ],
     after: [
       { id: 'normality_test', why: 'Prüft, ob Daten zu einer Normalverteilung passen; Schiefe und Exzess geben erste Hinweise.' },
-      { id: 'median', why: 'Bei schiefen Verteilungen beschreibt er die Mitte besser als der Mittelwert.' },
+      { id: 'median', why: 'Der mittlere Wert der Reihe nach beschreibt schiefe Verteilungen oft besser als der Mittelwert.' },
     ],
     more: [{ id: 'outliers_influence', why: 'Einzelne extreme Werte verändern Schiefe und Kurtosis stark.' }],
   },

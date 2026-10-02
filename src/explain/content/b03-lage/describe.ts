@@ -131,14 +131,14 @@ export const describeTabs: ConceptTabs = {
     think: [
       {
         question: 'Eine Person hat plötzlich gar nicht gelernt (0 Stunden). Was passiert mit dem Median?', options: ['bleibt gleich', 'sinkt deutlich', 'steigt'], correct: 0,
-        explain: 'Wer vorher über der Mitte lag, rutscht nach unten. Um die Mitte liegen hier aber mehrere Befragte mit genau 7,6 Stunden, deshalb bleibt der Median. Der Mittelwert sinkt dagegen um bis zu 0,09 Stunden.',
+        explain: 'Wer vorher über dem Median lag, rutscht ans untere Ende. Auf den mittleren Plätzen der Reihe stehen hier aber mehrere Befragte mit genau 7,6 Stunden, deshalb bleibt der Median. Der Mittelwert sinkt dagegen um bis zu 0,09 Stunden.',
         kurz: 'Der Median hängt an der Reihenfolge, nicht an der Größe.',
         tryIt: { label: 'die gewählte Person auf 0 Stunden', op: 'outlier', column: 'x', value: 0 },
         expect: { change: 'same', measure: c => overviewOf(c).median },
       },
       {
         question: 'Alle lernen eine Stunde mehr. Was passiert mit dem Median?', options: ['bleibt gleich', 'steigt um 1 Stunde', 'verdoppelt sich'], correct: 1,
-        explain: 'Die Reihenfolge bleibt dieselbe, nur jeder Wert ist eine Stunde größer. Also auch der Wert in der Mitte.',
+        explain: 'Die Reihenfolge bleibt dieselbe, nur jeder Wert ist eine Stunde größer. Also auch der mittlere Wert der Reihe nach.',
         kurz: 'Verschieben verschiebt alle Lagewerte.',
         tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
         expect: { change: 'plus', amount: 1, measure: c => overviewOf(c).median },
@@ -180,7 +180,7 @@ export const describeTabs: ConceptTabs = {
       { id: 'mean', why: 'Die Lage, die jeden Wert gleich zählt.' },
       { id: 'median', why: 'Die Lage nach der Reihenfolge.' },
       { id: 'sd', why: 'Die Streuung mit allen Werten.' },
-      { id: 'quantile', why: 'Q25, Q75 und der Interquartilsabstand.' },
+      { id: 'quantile', why: 'Q25, Q75 und die Breite der mittleren Hälfte.' },
     ],
     after: [
       { id: 'shape', why: 'Schiefe und Kurtosis aus der Tabelle genauer erklärt.' },
