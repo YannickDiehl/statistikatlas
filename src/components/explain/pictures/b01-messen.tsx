@@ -7,7 +7,10 @@ import { attenuation, MF } from '../../../explain/content/b01-messen/measurement
 import { ohneSpitze } from '../../../explain/content/b01-messen/missing-mechanisms';
 import { mean } from '../../../explain/content/b01-messen/shared';
 import { baseSurvey } from '../../../explain/sample';
-import { Axis, forCard, linear, MarkLine, useWidth, type Picture } from './kit';
+import type { KeyboardEvent } from 'react';
+import type { Gewichtet, GewichtetS } from '../../../explain/content/b01-messen/weights';
+import { REGION } from '../../../explain/content/b01-messen/weights';
+import { Axis, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Fünf Wertepaare (Lernzeit, Wissenstest) als Streudiagramm, wie erhoben oder mit getrennt sortierten Spalten. */
 function Paare({ sorted }: { sorted: boolean }) {
@@ -84,8 +87,52 @@ function Fehlmuster({ k }: { k: number }) {
   );
 }
 
+/**
+ * Werkstatt Gewichte: eine Zeile je Person auf der Skala 1 bis 7, ziehbar; rechts Region und Gewicht. Ab Schritt 2 steht
+ * der Beitrag wᵢ · xᵢ am Punkt, in Schritt 5 die Mitte ohne Gewichte (gestrichelt) und die gewichtete Mitte (durchgezogen).
+ */
+function Gewichte({ data, s, step, who, names, bounds, onChange, onWho }: {
+  data: Gewichtet; s: GewichtetS; step: number; who: number; names: readonly string[]; bounds: Bounds;
+  onChange: (d: Gewichtet) => void; onWho: (i: number) => void;
+}) {
+  const [box, W] = useWidth();
+  const left = 40, right = W - 112, X = linear([bounds.min, bounds.max], [left, right]), Y = (i: number) => 46 + i * 36, AXIS = 216;
+  const set = (i: number, v: number) => { if (v !== data.x[i]) onChange({ x: data.x.map((x, k) => k === i ? v : x), w: data.w }); };
+  const { svg, start, handlers } = useDrag((i, p) => set(i, clamp(X.invert(p.x), bounds)));
+  const key = (e: KeyboardEvent, i: number) => { const next = keyStep(e, data.x[i], bounds); if (next !== null) { e.preventDefault(); onWho(i); set(i, next); } };
+  const same = Math.abs(s.meanW - s.mean) < 0.005, up = s.meanW > s.mean;
+  return (
+    <div ref={box}>
+      <svg ref={svg} className="xw-svg xw-drag" width={W} height={276} viewBox={`0 0 ${W} 276`} role="group" aria-label="Skala von 1 bis 7 mit den fünf Beispielpersonen und ihren Gewichten" {...handlers}>
+        {data.x.map((_, i) => <g key={`row${i}`}>
+          <line className="xw-guide" x1={left - 10} x2={right + 10} y1={Y(i)} y2={Y(i)} />
+          <text className="xw-t" x={10} y={Y(i) + 4}>{names[i]}</text>
+          <text className="xw-t" x={right + 18} y={Y(i) + 4}>{REGION[i] === 'Westen' ? 'West' : 'Ost'}, w = {num(data.w[i])}</text>
+        </g>)}
+        {step >= 5 && <g>
+          <line className="xw-mean" x1={X(s.mean)} x2={X(s.mean)} y1={22} y2={AXIS} />
+          <line className="b01-weighted" x1={X(s.meanW)} x2={X(s.meanW)} y1={22} y2={AXIS} />
+          {same
+            ? <text className="xw-t xw-strong" x={X(s.mean)} y={AXIS + 50} textAnchor="middle">x̄ = x̄w = {num(s.mean)}</text>
+            : <g>
+              <text className="xw-t" x={X(s.mean) + (up ? -6 : 6)} y={AXIS + 50} textAnchor={up ? 'end' : 'start'}>x̄ = {num(s.mean)}</text>
+              <text className="xw-t xw-strong" x={X(s.meanW) + (up ? 6 : -6)} y={AXIS + 50} textAnchor={up ? 'start' : 'end'}>x̄w ≈ {num(s.meanW)}</text>
+            </g>}
+        </g>}
+        <Axis scale={X} ticks={[1, 2, 3, 4, 5, 6, 7]} at={AXIS} from={left} to={right} labelGap={22} />
+        {data.x.map((v, i) => <g key={`dot${i}`}>
+          {step >= 2 && <text className="xw-t b01-halo" x={X(v)} y={Y(i) - 16} textAnchor="middle">{num(data.w[i])} · {num(v)} = {num(s.prod[i])}</text>}
+          <DragPoint x={X(v)} y={Y(i)} label={`Person ${names[i]}, Gewicht ${num(data.w[i])}`} selected={i === who} valueNow={v} bounds={bounds}
+            onPointerDown={e => { onWho(i); start(i, e); }} onKeyDown={e => key(e, i)}>{v}</DragPoint>
+        </g>)}
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b01-paare': forCard(p => <Paare sorted={(p.value ?? 0) >= 0.5} />),
   'b01-messfehler': forCard(p => <Messfehler sigma={p.value ?? 2} />),
   'b01-fehlmuster': forCard(p => <Fehlmuster k={Math.round(p.value ?? 20)} />),
+  'b01-gewichte': forWorkshop(p => <Gewichte data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
 };

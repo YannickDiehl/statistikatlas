@@ -20,6 +20,8 @@ import { ALLBUS_HHINC, ALLBUS_INC, MITTEL, missing, missingTabs } from './missin
 import { readFileSync } from 'node:fs';
 import { readSav, type SavFile } from '../../../sandbox/readSav';
 import { ALLBUS_SPLIT, missingMechanisms, missingMechanismsTabs, ohneJedeZehnte, ohneSpitze } from './missing-mechanisms';
+import { ALLBUS_GEWICHT, bildungsgewicht, gewichte, gewichtet, weightsTabs, ZIEL_HOCHSCHULREIFE } from './weights';
+import { txt } from '../../types';
 import { surveyColumns } from '../../../domain/survey';
 import { styleProblems } from '../../style';
 
@@ -108,6 +110,23 @@ import { styleProblems } from '../../style';
  *   mean(ein[-seq(10, 200, by = 10)])               # 3138.45 (jede zehnte Person fehlt)
  *   o <- order(ein, decreasing = TRUE)[1:20]
  *   mean((ein + 100)[-o]) - mean(ein + 100); mean((2 * ein)[-o]) - mean(2 * ein)   # -317.7033; -635.4067
+ *
+ * Gewichte (weights), Werkstatt mit fünf Beispielpersonen:
+ *   tibble(x = c(5, 4, 5, 2, 4), w = c(2, 2, 2, 1, 1)) %>% w_mean(x, weights = w)   # Mean 4.250, N 8 (N = Σw)
+ *   ... mit w = 2 * w                                                                 # Mean 4.250, N 16
+ *   tibble(x = c(5, 4, 5, 7, 7), w = c(2, 2, 2, 1, 1)) %>% w_mean(x, weights = w)   # Mean 5.250 (ohne Gewichte 5.6)
+ *   tibble(x = c(3, 5, 4, 4, 4), w = c(2, 2, 2, 1, 1)) %>% w_mean(x, weights = w)   # Mean 4.000
+ * Reiter „Mit 200 Befragten“: Gewichte auf den Anteil mit Hochschulreife im ALLBUS 2023:
+ *   hr <- as.numeric(atlas$schulabschluss) >= 3; mean(hr)                            # 0.405 (81 von 200)
+ *   g <- if_else(hr, 0.4937 / 0.405, 0.5063 / 0.595)                                 # 1.219012, 0.850924
+ *   atlas %>% mutate(gewicht = g) %>% w_mean(lernzeit, weights = gewicht)            # Mean 7.942 (genau 7.941670), N 200
+ *   atlas %>% mutate(gewicht = 1) %>% w_mean(lernzeit, weights = gewicht)            # Mean 7.752, N 200, Weights: gewicht
+ * ALLBUS 2023 (haven::read_sav(user_na = TRUE), w <- wghtpew, ew <- eastwest):
+ *   sum(ew == 2); mean(ew == 2); sum(w[ew == 2]) / sum(w)                            # 1679; 0.3201; 0.1684
+ *   mean(w[ew == 1]); mean(w[ew == 2])                                               # 1.2231; 0.5261
+ *   t <- pt03; ok <- t >= 1: mean(t[ok]); sum(w[ok] * t[ok]) / sum(w[ok])            # 3.9468; 4.0139
+ *   mean(t[ok & ew == 1]); mean(t[ok & ew == 2])                                     # 4.0821; 3.6664
+ *   e <- educ; ok <- e %in% 1:5: sum(w[ok & e %in% 4:5]) / sum(w[ok])                # 0.493728
  */
 
 const rows = createSurvey();
@@ -278,6 +297,18 @@ test('B1 ALLBUS 2023: Aggregate wie in R (nur mit der eigenen GESIS-Datei)', { s
   assert.deepEqual([codeCount('hhincc', -9), codeCount('hhincc', -7)], [696, 28]);
   assert.deepEqual([codeCount('incc', -9), codeCount('incc', -7), codeCount('incc', -50)], [362, 84, 251]);
   assert.equal(codeCount('pt03', -11), 1596, 'Vertrauen in den Bundestag: durch den Split nicht gefragt');
+  const sav = loadAllbus(), ew = sav.byName.get('eastwest')!.values, w = sav.byName.get('wghtpew')!.values;
+  const t = sav.byName.get('pt03')!.values, e = sav.byName.get('educ')!.values;
+  const sum = (f: (i: number) => number) => { let a = 0; for (let i = 0; i < sav.nCases; i++) a += f(i); return a; };
+  const A = ALLBUS_GEWICHT;
+  assert.equal(sum(i => ew[i] === 2 ? 1 : 0), A.ost);
+  assert.ok(close(sum(i => ew[i] === 2 ? w[i] : 0) / sum(i => w[i]), A.anteilOstGewichtet, 1e-4), 'Anteil Ost gewichtet');
+  assert.ok(close(sum(i => ew[i] === 1 ? w[i] : 0) / sum(i => ew[i] === 1 ? 1 : 0), A.wWest, 1e-4) && close(sum(i => ew[i] === 2 ? w[i] : 0) / A.ost, A.wOst, 1e-4), 'mittlere Gewichte');
+  const ok = (i: number) => t[i] >= 1, meanOf = (f: (i: number) => boolean) => sum(i => ok(i) && f(i) ? t[i] : 0) / sum(i => ok(i) && f(i) ? 1 : 0);
+  assert.ok(close(meanOf(() => true), A.vertrauen, 1e-4) && close(sum(i => ok(i) ? w[i] * t[i] : 0) / sum(i => ok(i) ? w[i] : 0), A.vertrauenGewichtet, 1e-4), 'Vertrauen in den Bundestag');
+  assert.ok(close(meanOf(i => ew[i] === 1), A.vertrauenWest, 1e-4) && close(meanOf(i => ew[i] === 2), A.vertrauenOst, 1e-4), 'Vertrauen nach Region');
+  const valid = (i: number) => e[i] >= 1 && e[i] <= 5;
+  assert.ok(close(sum(i => valid(i) && e[i] >= 4 ? w[i] : 0) / sum(i => valid(i) ? w[i] : 0), ZIEL_HOCHSCHULREIFE, 1e-4), 'Anteil mit Hochschulreife, gewichtet');
 });
 
 test('B1 warum fehlen Angaben: Spitzenverdiener verschweigen ihr Einkommen, Werte wie in R', () => {
@@ -296,4 +327,26 @@ test('B1 warum fehlen Angaben: Spitzenverdiener verschweigen ihr Einkommen, Wert
   assert.match(at().fachlich, /n = 180; Verzerrung des Mittelwerts −317,7 €\./);
   assert.match(at(applyOp(rows, 'einkommen', 'double')).fachlich, /−635,41 €\./);
   assert.match(at().zusatz!, /bei 3\.138,45 €\./);
+});
+
+test('B1 Gewichte: Werkstatt und Reiter wie in R mit mariposa::w_mean', () => {
+  const v = gewichtet(gewichte.presets[0].data), g = gewichtet(gewichte.presets[1].data);
+  assert.deepEqual([v.sumWX, v.sumW, v.meanW, v.mean, v.perN], [34, 8, 4.25, 4, 6.8]);
+  assert.deepEqual([g.sumWX, g.sumW, g.meanW, g.mean], [32, 8, 4, 4]);
+  const seven = gewichtet(gewichte.think[2].tryIt!.apply(gewichte.presets[0].data));
+  assert.deepEqual([seven.mean, seven.meanW], [5.6, 5.25], 'D und E auf 7 wie in R');
+  assert.equal(gewichtet(gewichte.think[1].tryIt!.apply(gewichte.presets[0].data)).meanW, 4.25, 'doppelte Gewichte wie in R');
+  const c = { s: v, who: 0, names: gewichte.names };
+  assert.equal(txt(gewichte.steps[0].was, c), 'Jede Person bekommt eine Zahl, die sagt, wie stark sie zählt. Hier zählen A, B und C je 2, D und E je 1.');
+  assert.equal(txt(gewichte.steps[4].acht, c), 'Wer durch 5 teilt, bekommt 6,8 statt 4,25. Bei Gewichten teilst du durch Σ wᵢ.');
+  assert.match(gewichte.variants.weights.interpret(c).kurz, /Gewichtet liegt das Vertrauen in den Bundestag bei 4,25 Punkten, ohne Gewichte bei 4\. .* höher und ziehen die Mitte nach oben/);
+  assert.match(gewichte.wofuer, /\(32 %\), gewichtet nur jede sechste \(16,8 %\)\. .* 3,67 gegen 4,08 .* bei 3,95 statt 4,01\./);
+  assert.ok(close(ALLBUS_GEWICHT.ost / ALLBUS_GEWICHT.n, ALLBUS_GEWICHT.anteilOst, 1e-4), 'Anteil Ost');
+  const b = bildungsgewicht(ctx(rows, { x: ['lernzeit'], group: ['schulabschluss'] }));
+  assert.ok(close(b.share, 0.405, 1e-12) && close(b.wHr, 1.219012, 1e-6) && close(b.wOther, 0.850924, 1e-6) && close(b.meanW, 7.94167, 1e-5), JSON.stringify(b));
+  const tab = analysis(weightsTabs.sample), r = tab.result(ctx(rows, { x: ['lernzeit'], group: ['schulabschluss'] }));
+  assert.match(r.kurz, /im Schnitt 7,75 Stunden gelernt, gewichtet 7,94 Stunden\. .* zählt 1,22-mal, alle anderen 0,85-mal\./);
+  assert.match(r.fachlich, /auf 49,4 % mit Hochschulreife .* statt 40,5 %/);
+  assert.match(CATALOG_OUTPUT['mean:1'].output, /Weights: gewicht[\s\S]*lernzeit\s+7\.752\s+200/);
+  assert.equal(ZIEL_HOCHSCHULREIFE, 0.4937);
 });

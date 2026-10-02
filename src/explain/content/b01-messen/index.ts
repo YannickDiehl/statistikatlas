@@ -11,6 +11,7 @@ import { measurementError, measurementErrorTabs } from './measurement-error';
 import { validity, validityTabs } from './validity';
 import { missing, missingTabs } from './missing';
 import { missingMechanisms, missingMechanismsTabs } from './missing-mechanisms';
+import { gewichte, weightsTabs } from './weights';
 
 export const b01Messen: AreaIndex = {
   explanations: {
@@ -24,6 +25,7 @@ export const b01Messen: AreaIndex = {
     validity: { kind: 'begriff', card: validity },
     missing: { kind: 'tabelle', tool: missing },
     missing_mechanisms: { kind: 'begriff', card: missingMechanisms },
+    weights: { kind: 'werkstatt', workshop: gewichte, variant: 'weights' },
   },
   tabs: {
     series: seriesTabs,
@@ -36,5 +38,6 @@ export const b01Messen: AreaIndex = {
     validity: validityTabs,
     missing: missingTabs,
     missing_mechanisms: missingMechanismsTabs,
+    weights: weightsTabs,
   },
 };

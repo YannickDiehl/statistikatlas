@@ -3,3 +3,5 @@
 .b01-pt-fake{fill:var(--paper);stroke:var(--muted);stroke-dasharray:3 2}
 .b01-gone{fill:none;stroke:var(--xw-neg);stroke-width:1.5}
 .b01-rest{stroke:var(--xw-neg);stroke-width:2}
+.b01-weighted{stroke:var(--green);stroke-width:2.5}
+.b01-halo{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
