@@ -5,7 +5,8 @@ import { num } from '../../../explain/format';
 import { rangeWithTop, LERNZEIT } from '../../../explain/content/b03-lage/range';
 import { formWithTop, FORM } from '../../../explain/content/b03-lage/shape';
 import { niceTicks } from './sample';
-import { Axis, forCard, linear, useWidth, type Picture } from './kit';
+import type { Reihe as ReiheStats } from '../../../explain/content/b03-lage/reihe';
+import { Axis, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Punktdiagramm: gleiche (in Pixeln nahe) Werte stapeln sich; liefert die Punkte und die Höhe des höchsten Stapels. */
 function stacked(values: readonly number[], X: (v: number) => number, dot: number) {
@@ -74,7 +75,68 @@ function Schiefe({ top }: { top: number }) {
   );
 }
 
+/**
+ * Werkstatt „Der Reihe nach“: oben die fünf Lernzeiten zum Ziehen (eine Zeile je Person), darunter dieselben Werte
+ * der Reihe nach auf Plätzen. Ab Schritt 2 die Mitte, ab 3 der Median, ab 4 die Plätze der Quartile, ab 5 die
+ * Quartile, in Schritt 6 das Band der mittleren Hälfte.
+ */
+function ReihePicture({ values, s, step, who, names, bounds, onChange, onWho }: {
+  values: number[]; s: ReiheStats; step: number; who: number; names: readonly string[]; bounds: Bounds;
+  onChange: (v: number[]) => void; onWho: (i: number) => void;
+}) {
+  const [box, W] = useWidth();
+  const left = 44, right = W - 26, X = linear([bounds.min, bounds.max], [left, right]), Y = (i: number) => 54 + i * 28, AXIS = 52 + values.length * 28;
+  const set = (i: number, v: number) => { if (v !== values[i]) onChange(values.map((x, k) => k === i ? v : x)); };
+  const { svg, start, handlers } = useDrag((i, p) => set(i, clamp(X.invert(p.x), bounds)));
+  const n = values.length, gap = 10, sw = Math.min(58, (W - 40 - gap * (n - 1)) / n), x0 = (W - (n * sw + (n - 1) * gap)) / 2;
+  const PX = (place: number) => x0 + (place - 1) * (sw + gap) + sw / 2, y0 = AXIS + 66, sh = 34, my = y0 + sh + 40, H = my + (step >= 6 ? 64 : 40);
+  const byPlace = values.map((_, i) => i).sort((a, b) => s.place[a] - s.place[b]);
+  const mark = (v: number, label: string, y: number, cls: string) => <g>
+    <line className={cls} x1={X(v)} x2={X(v)} y1={y + 4} y2={AXIS} />
+    <text className="xw-t xw-halo" x={Math.min(right - 20, Math.max(left + 20, X(v)))} y={y} textAnchor="middle">{label}</text>
+  </g>;
+  return (
+    <div ref={box}>
+      <svg ref={svg} className="xw-svg xw-drag" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group" aria-label={`Zahlenstrahl mit den fünf Beispielpersonen, darunter ihre Werte der Reihe nach: ${s.sorted.map(v => num(v)).join(', ')}`} {...handlers}>
+        {step >= 6 && <rect className="xw-band" x={X(s.q1)} y={40} width={Math.max(2, X(s.q3) - X(s.q1))} height={AXIS - 40} />}
+        {values.map((_, i) => <g key={`row${i}`}><line className="xw-guide" x1={left - 10} x2={right + 10} y1={Y(i)} y2={Y(i)} /><text className="xw-t" x={10} y={Y(i) + 4}>{names[i]}</text></g>)}
+        {step >= 3 && mark(s.median, `x̃ = ${num(s.median)}`, 14, 'b03-mark')}
+        {step >= 5 && <>{mark(s.q1, `Q₁ = ${num(s.q1)}`, 32, 'b03-mark-q')}{mark(s.q3, `Q₃ = ${num(s.q3)}`, 32, 'b03-mark-q')}</>}
+        <Axis scale={X} ticks={[0, 5, 10, 15, 20].filter(t => t >= bounds.min && t <= bounds.max)} at={AXIS} from={left} to={right} labelGap={20} />
+        <text className="xw-t" x={(left + right) / 2} y={AXIS + 40} textAnchor="middle">Lernzeit in Stunden</text>
+        {values.map((v, i) => (
+          <DragPoint key={`dot${i}`} x={X(v)} y={Y(i)} label={`Person ${names[i]}, Lernzeit in Stunden`} selected={i === who} valueNow={v} bounds={bounds}
+            onPointerDown={e => { onWho(i); start(i, e); }}
+            onKeyDown={e => { const next = keyStep(e, v, bounds); if (next !== null) { e.preventDefault(); onWho(i); set(i, next); } }}>{v}</DragPoint>
+        ))}
+        {byPlace.map((i, k) => {
+          const on = step >= 2 && Math.abs(k + 1 - s.mid) < 1e-9;
+          return <g key={`slot${i}`}>
+            <text className="xw-t" x={PX(k + 1)} y={y0 - 8} textAnchor="middle">Platz {k + 1}</text>
+            <rect className={`b03-slot${on ? ' on' : ''}`} x={PX(k + 1) - sw / 2} y={y0} width={sw} height={sh} />
+            <text className="xw-t xw-strong" x={PX(k + 1)} y={y0 + sh / 2 + 5} textAnchor="middle">{num(values[i])}</text>
+            <text className={`xw-t${i === who ? ' xw-strong' : ''}`} x={PX(k + 1)} y={y0 + sh + 18} textAnchor="middle">{names[i]}</text>
+          </g>;
+        })}
+        {step >= 4 && [s.h1, s.h3].map((hp, k) => <g key={`h${k}`}>
+          <polygon className="xw-fulcrum" points={`${PX(hp)},${my - 12} ${PX(hp) - 7},${my} ${PX(hp) + 7},${my}`} />
+          <text className="xw-t" x={PX(hp)} y={my + 18} textAnchor="middle">{step >= 5 ? `${k ? 'Q₃' : 'Q₁'} = ${num(k ? s.q3 : s.q1)}` : `Platz ${num(hp)}`}</text>
+        </g>)}
+        {step === 2 && <text className="xw-t" x={PX(s.mid)} y={my + 4} textAnchor="middle">Mitte: Platz {num(s.mid)}</text>}
+        {step === 3 && <text className="xw-t" x={PX(s.mid)} y={my + 4} textAnchor="middle">x̃ = {num(s.median)}</text>}
+        {step >= 6 && <g className="b03-bracket b03-range">
+          <line x1={PX(s.h1)} x2={PX(s.h3)} y1={my + 40} y2={my + 40} />
+          <line x1={PX(s.h1)} x2={PX(s.h1)} y1={my + 34} y2={my + 46} />
+          <line x1={PX(s.h3)} x2={PX(s.h3)} y1={my + 34} y2={my + 46} />
+          <text className="xw-t xw-strong" x={(PX(s.h1) + PX(s.h3)) / 2} y={my + 60} textAnchor="middle">IQR = {num(s.q3)} − {num(s.q1)} = {num(s.iqr)}</text>
+        </g>}
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b03-reihe': forWorkshop(p => <ReihePicture values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b03-schiefe': forCard(p => <Schiefe top={p.value ?? FORM.einkommen.max} />),
   'b03-spannweite': forCard(p => <Spannweite top={p.value ?? LERNZEIT.max} />),
 };

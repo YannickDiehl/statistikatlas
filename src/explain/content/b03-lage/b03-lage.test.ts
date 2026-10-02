@@ -13,6 +13,8 @@ import { FORM, formOf, formWithTop, shape, shapeTabs } from './shape';
 import { UEBERBLICK, describeCard, describeTabs, overviewOf } from './describe';
 import { CATALOG_OUTPUT } from '../../catalogOutput';
 import { sdOf } from './lage';
+import { bridgeReihe, derReiheNach, reihe } from './reihe';
+import { bridgeContext } from '../../sample';
 
 /*
  * Referenzwerte des Bereichs B3, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -57,6 +59,17 @@ import { sdOf } from './lage';
  *   mean(as.numeric(atlas$schulabschluss))                           # 1.985
  *   sapply(1:200, function(k) { xx <- x; xx[k] <- 0; median(xx) })  # immer 7.6 (auch nach x + 1 bzw. 2 * x: 8.6 bzw. 15.2)
  *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 0; mean(xx) - mean(x) }))   # -0.092 0
+ *
+ * Median und Quantile (Werkstatt „Der Reihe nach“), q <- function(v, p, t = 6) unname(quantile(v, p, type = t)):
+ *   d <- c(3, 12, 5, 8, 6); median(d); mean(d); q(d, .25); q(d, .75); q(d, .25, 7); q(d, .75, 7)   # 6 6.8 4 10 5 8
+ *   d <- c(3, 20, 5, 8, 6); median(d); mean(d); q(d, .25); q(d, .75)                                # 6 8.4 4 14
+ *   atlas %>% w_median(lernzeit)                                       # Median 7.600
+ *   atlas %>% w_quantile(lernzeit, probs = c(.25, .5, .75))            # 5.800 7.600 9.750
+ *   sort(x)[c(50, 51, 100, 101, 150, 151)]                             # 5.8 5.8 7.6 7.6 9.6 9.8
+ *   sum(x < 7.6); sum(x > 7.6); sum(x == 7.6); sum(x >= 5.8 & x <= 9.75)   # 97 99 4 103
+ *   rank(x, ties.method = "min")[atlas$id == "P002"]; rank(x, ties.method = "max")[atlas$id == "P002"]   # 113 114
+ *   q(x, .25, 7); q(x, .75, 7)                                         # 5.8 9.65 (Type 7, nah an Type 6)
+ *   q(x + 1, .75) - q(x + 1, .25); q(2 * x, .75) - q(2 * x, .25)       # 3.95 7.9
  */
 
 const rows = createSurvey();
@@ -162,4 +175,25 @@ test('B3 Deskriptiver Überblick: Kennzahlen, R-Ausgabe und Vorhersagen wie in R
     const dm = rows.map((_, k) => mean(applyOp(rows, 'lernzeit', 'outlier', 0, k).map(r => r.values.lernzeit)) - mean(lz));
     near(Math.min(...dm), -0.092, 1e-9); assert.ok(s.think[0].explain.includes('um bis zu 0,09 Stunden'));
   }
+});
+
+test('B3 Der Reihe nach: Median, Quartile und IQR der fünf und der 200 wie in R', () => {
+  const a = reihe([3, 12, 5, 8, 6]), b = reihe([3, 20, 5, 8, 6]);
+  assert.deepEqual([a.median, a.mean, a.q1, a.q3, a.iqr, a.range], [6, 6.8, 4, 10, 6, 9]);
+  assert.deepEqual([b.median, b.mean, b.q1, b.q3, b.iqr], [6, 8.4, 4, 14, 10]);
+  assert.deepEqual(derReiheNach.presets.map(p => p.data), [[3, 12, 5, 8, 6], [3, 20, 5, 8, 6]]);
+  const ctx = { s: a, who: 0, names: derReiheNach.names };
+  assert.match(derReiheNach.variants.quantile.genau.paragraphs(ctx)[0], /Q₁ = 5 statt 4 und Q₃ = 8 statt 10/);
+  assert.match(String(typeof derReiheNach.steps[4].rechnung === 'function' ? derReiheNach.steps[4].rechnung(ctx) : ''), /Q₁ = 3 \+ 0,5 · \(5 − 3\) = 4\. Q₃ = 8 \+ 0,5 · \(12 − 8\) = 10\./);
+  const c = bridgeContext(reihe, 'series', rows, 'lernzeit', '', 1), s = c.s;
+  assert.deepEqual([s.median, s.q1, s.q3], [7.6, 5.8, 9.75]);
+  assert.ok(close(s.iqr, 3.95, 1e-9));
+  assert.deepEqual([s.below, s.above, s.same, s.placeLo[1], s.placeHi[1]], [97, 99, 4, 113, 114]);
+  assert.equal(bridgeReihe.lines[4].all(c), 'Q₁ = 5,8 + 0,25 · (5,8 − 5,8) = 5,8 h. Q₃ = 9,6 + 0,75 · (9,8 − 9,6) = 9,75 h.');
+  assert.equal(bridgeReihe.lines[2].all(c), 'Auf Platz 100 und 101 stehen 7,6 h und 7,6 h; die Mitte dazwischen ist x̃ = 7,6 h.');
+  assert.equal(bridgeReihe.interpret(c, 'quantile').zusatz, '103 von 200 Befragten liegen zwischen Q₁ und Q₃, die Grenzen eingeschlossen.');
+  assert.equal(bridgeReihe.interpret(c, 'median').zusatz, '97 von 200 Befragten liegen unter dem Median, 99 darüber und 4 genau darauf.');
+  assert.equal(bridgeReihe.lines[0].person(c), 'P002 hat 8,3 h und steht der Reihe nach auf einem der Plätze 113 bis 114.');
+  const iqrOf = (d: typeof rows) => bridgeReihe.value(bridgeContext(reihe, 'series', d, 'lernzeit', '', 0), 'quantile')!;
+  assert.ok(close(iqrOf(applyOp(rows, 'lernzeit', 'shift', 1)), 3.95, 1e-9) && close(iqrOf(applyOp(rows, 'lernzeit', 'double', 2)), 7.9, 1e-9));
 });

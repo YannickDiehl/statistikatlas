@@ -5,6 +5,7 @@ import { validn, validnTabs } from './validn';
 import { range, rangeTabs } from './range';
 import { shape, shapeTabs } from './shape';
 import { describeCard, describeTabs } from './describe';
+import { derReiheNach, medianTabs, quantileTabs } from './reihe';
 
 export const b03Lage: AreaIndex = {
   explanations: {
@@ -12,11 +13,15 @@ export const b03Lage: AreaIndex = {
     range: { kind: 'begriff', card: range },
     shape: { kind: 'begriff', card: shape },
     describe: { kind: 'begriff', card: describeCard },
+    median: { kind: 'werkstatt', workshop: derReiheNach, variant: 'median' },
+    quantile: { kind: 'werkstatt', workshop: derReiheNach, variant: 'quantile' },
   },
   tabs: {
     validn: validnTabs,
     range: rangeTabs,
     shape: shapeTabs,
     describe: describeTabs,
+    median: medianTabs,
+    quantile: quantileTabs,
   },
 };
