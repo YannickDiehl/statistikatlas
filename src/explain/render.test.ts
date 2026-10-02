@@ -24,7 +24,7 @@ import { asNumber, catalogLead, RTab } from '../components/explain/RTab';
 import { TAB_IDS, tabsFor } from './registry';
 import { applyOp } from './sample';
 import { columnById, createSurvey, defaultSelection, projectPairs, surveyColumns, type ColumnSelection, type SurveyRow } from '../domain/survey';
-import { lessonContext, ref } from '../domain/learning';
+import { inputs, lessonContext, ref, type Ref } from '../domain/learning';
 import { entryById } from '../domain/mariposaCatalog';
 import { eligible } from '../domain/mariposaRoles';
 import { initialRSettings, rolesFor, startBlock, type RSettings } from '../domain/mariposa';
@@ -253,11 +253,11 @@ test('picture kit: building blocks draw in screen pixels and keep the slider rol
 // ---------- Reiter (Aufgabe F3) ----------
 
 const surveyRows = createSurvey();
-const inspector = (id: string, opts: { rows?: SurveyRow[]; selection?: ColumnSelection; rSettings?: RSettings } = {}) => {
+const inspector = (target: string | Ref, opts: { rows?: SurveyRow[]; selection?: ColumnSelection; rSettings?: RSettings } = {}) => {
   const selection = opts.selection ?? defaultSelection, rows = opts.rows ?? surveyRows;
   const context = lessonContext(projectPairs(rows, selection), 'P002', 'covariance', { x: columnById[selection.x], y: columnById[selection.y] }, selection.likertMetric);
   return renderToStaticMarkup(createElement(ConceptInspector, {
-    selected: ref(id), context, selection, rows, rSettings: opts.rSettings, onColumns: noop, onData: noop, onRows: noop, highlight: null, onHighlight: noop, onSelect: noop, onHover: noop, onClose: noop,
+    selected: typeof target === 'string' ? ref(target) : target, context, selection, rows, rSettings: opts.rSettings, onColumns: noop, onData: noop, onRows: noop, highlight: null, onHighlight: noop, onSelect: noop, onHover: noop, onClose: noop,
     onFocusMap: noop, onCase: noop, onPairs: noop, onReset: noop, resetRevision: 0, onVariable: noop, onRoute: noop, trace: false, onTrace: noop,
     experimentOpen: false, experimentRequest: 0, onExperimentFocused: noop, onExperiment: noop,
   }));
@@ -322,6 +322,21 @@ test('tabs: the seven pilot step cards have Verstehen, the bridge of their works
     assert.ok(text(sample).includes(`Schritt ${card.step} für alle 200`), `${id}: Schrittzeile für alle 200 fehlt`);
     assert.ok(!html.includes('Weitere Übung'), `${id}: die bisherige Rechnung steht nicht mehr doppelt da`);
   }
+});
+
+test('tabs: only the z route of a step card hides the tabs; the operation cards of the Baukasten keep Verstehen and Weiter', () => {
+  forgetTabs();
+  // Die Rechenschritte stehen im Baukasten mit ihrem Ziel als use (ref('add', 'x', 'sum')) und bleiben Schrittkarten mit Reitern.
+  const direct = [ref('add', 'x', 'sum'), ref('subtract', 'x', 'deviation'), ref('square', 'x', 'squared_deviation'), ref('divide', 'x', 'variance'), ref('sqrt', 'x', 'sd'), ref('multiply', 'x', 'crossproduct')];
+  const fromInputs = ['sum', 'deviation', 'squared_deviation', 'ss', 'df', 'variance', 'sd', 'mean', 'crossproduct', 'crossproduct_sum', 'covariance', 'sd_product', 'pearson']
+    .flatMap(id => inputs(ref(id), 'covariance')).filter(r => STEP_CARD_IDS.includes(r.id) && r.use);
+  assert.ok(fromInputs.length >= 6, 'der Baukasten gibt Rechenschritte mit use');
+  for (const r of [...direct, ...fromInputs]) {
+    const names = tabNames(inspector(r));
+    assert.ok(names.includes('Verstehen') && names.at(-1) === 'Weiter', `${r.id} (${r.use}): Reiter „Verstehen“ und „Weiter“ fehlen, gefunden: ${names.join(', ') || 'keine'}`);
+  }
+  // Im Rechenweg über z-Werte bleibt die bisherige Ansicht ohne Reiter (Ruling IB19).
+  for (const r of [ref('crossproduct', 'x', 'z'), ref('crossproduct_sum', 'x', 'z')]) assert.deepEqual(tabNames(inspector(r)), [], `${r.id}: z-Weg ohne Reiter`);
 });
 
 test('tabs: the pilot contents in each tab of the standard deviation', () => {
