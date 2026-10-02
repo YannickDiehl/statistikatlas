@@ -8,6 +8,7 @@ import { close } from '../../format';
 import { ALLBUS, INTERESSE, VERTRAUEN } from './daten';
 import { haelften, kopienSE, sampling, samplingTabs } from './sampling';
 import { parameter, populationParameter, populationParameterTabs } from './population-parameter';
+import { LERNZEIT, estimator, estimatorTabs, schaetzungen } from './estimator';
 
 /*
  * Referenzwerte des Bereichs B8, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand).
@@ -21,6 +22,10 @@ import { parameter, populationParameter, populationParameterTabs } from './popul
  *   cor(1:200, x)                                             # 0.0168: Die Nummern sagen nichts über die Lernzeit
  *   atlas %>% slice(1:20) %>% summarise(xq = mean(lernzeit), p = mean(weiterbildung))   # 7.43  0.35 (P001 bis P020)
  *   mean(as.numeric(atlas$weiterbildung))                     # 0.41
+ *   sum(x); median(x); var(x); var(x) * 199 / 200             # 1550.3  7.6  10.48150528  10.42909775
+ *   atlas %>% describe(lernzeit, show = c("mean", "median", "var"))   # Mean 7.752, Median 7.600, Variance 10.482
+ *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; mean(xx) - mean(x) }))   # +0.108 bis +0.200: steigt immer
+ *   median(x + 1)                                             # 8.6
  *
  * ALLBUS 2023 (ZA8831_v1-3-0.sav, nur lesen, Pfad in ALLBUS_SAV), nur Aggregate:
  *   d <- haven::read_sav(Sys.getenv("ALLBUS_SAV"))
@@ -84,6 +89,18 @@ test('B8 population_parameter: Anteil der stark Interessierten und die 200 als g
     assert.match(r.fachlich, /P001 bis P020: x̄ = 7,43 h/);
     assert.match(r.zusatz!, /π = 41 % aller 200, aber 35 % unter den ersten 20/);
   }
+});
+
+test('B8 estimator: zwei Regeln für die Lernzeit und die Varianz mit n − 1 gegen n wie in R', () => {
+  const e = schaetzungen(ctx());
+  for (const [mine, data, r] of [[LERNZEIT.sum, e.sum, 1550.3], [LERNZEIT.mean, e.mean, 7.7515], [LERNZEIT.median, e.median, 7.6], [LERNZEIT.s2, e.s2, 10.48150528], [LERNZEIT.ssN, e.ssN, 10.42909775]])
+    { assert.ok(close(mine, r, 1e-5), `${mine} ≠ R ${r}`); assert.ok(close(data, r, 1e-8), `Lehrdatensatz ${data} ≠ R ${r}`); }
+  assert.equal(schaetzungen(ctx(applyOp(rows, 'lernzeit', 'shift', 1))).median, 8.6, 'Median nach +1 Stunde');
+  assert.match(estimator.stellDirVor.text, /ergibt für die 200 Befragten 7,75 Stunden .* ergibt 7,6 Stunden\./);
+  assert.equal(estimator.bausteine[1].rechnung, 'x̄ = 1.550,3 / 200 ≈ 7,75 h');
+  assert.match(estimator.genau.paragraphs[1], /ergibt sie 10,43 statt 10,48 h²/);
+  const s = estimatorTabs.sample!;
+  if (s.kind === 'analysis') assert.match(s.result(ctx()).kurz, /ergibt 7,75 Stunden\. .* ergibt 7,6 Stunden\./);
 });
 
 test('B8: ALLBUS-Aggregate aus der Datei nachgerechnet (nur mit ALLBUS_SAV)', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, () => {

@@ -3,14 +3,17 @@
 import type { AreaIndex } from '../../types';
 import { sampling, samplingTabs } from './sampling';
 import { populationParameter, populationParameterTabs } from './population-parameter';
+import { estimator, estimatorTabs } from './estimator';
 
 export const b08Schaetzen: AreaIndex = {
   explanations: {
     sampling: { kind: 'begriff', card: sampling },
     population_parameter: { kind: 'begriff', card: populationParameter },
+    estimator: { kind: 'begriff', card: estimator },
   },
   tabs: {
     sampling: samplingTabs,
     population_parameter: populationParameterTabs,
+    estimator: estimatorTabs,
   },
 };
