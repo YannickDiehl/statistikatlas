@@ -4,6 +4,7 @@
 import { lgamma } from '../../../tasks/kit/dist';
 import type { TStats } from '../../../explain/content/b09-testlogik/pruefgroesse';
 import { MISCHEN, asFarAs, mixCount } from '../../../explain/content/b09-testlogik/nullverteilung';
+import { SEITEN, sideOf } from '../../../explain/content/b09-testlogik/seiten';
 import { MU0, SCHLAF, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
 import { baseSurvey } from '../../../explain/sample';
@@ -100,7 +101,33 @@ function Nullverteilung({ value }: { value: number }) {
   );
 }
 
+/** Nullverteilung t mit 175,8 Freiheitsgraden; je nach Schalter ist der linke, der rechte oder beide Ränder jenseits von t markiert. */
+function Seiten({ value }: { value: number }) {
+  const [box, W] = useWidth();
+  const side = sideOf(value), t = LW.t, lim = 4, base = 160;
+  const x = linear([-lim, lim], [28, W - 28]), y = linear([0, 0.42], [base, 50]), f = (v: number) => tDensity(v, LW.df);
+  const p = [SEITEN.left, SEITEN.two, SEITEN.right][side];
+  const what = ['nur der linke Rand bis t', 'beide Ränder jenseits von ±t', 'nur der rechte Rand ab t'][side];
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={214} viewBox={`0 0 ${W} 214`} role="img"
+        aria-label={`t-Verteilung, wenn es keinen Unterschied gäbe. Beobachtet ist t = ${num(t)}. Markiert ist ${what}; die Fläche ist p ≈ ${num(p)}.`}>
+        <text className="xw-t xw-strong" x={28} y={16}>Markierte Fläche: p ≈ {num(p)}</text>
+        {side === 0 && <AreaUnder f={f} from={-lim} to={t} x={x} y={y} tone="neg" />}
+        {side === 1 && <><AreaUnder f={f} from={-lim} to={-t} x={x} y={y} tone="neg" /><AreaUnder f={f} from={t} to={lim} x={x} y={y} tone="neg" /></>}
+        {side === 2 && <AreaUnder f={f} from={t} to={lim} x={x} y={y} tone="neg" />}
+        <Curve f={f} from={-lim} to={lim} x={x} y={y} />
+        <MarkLine x={x(t)} from={44} to={base} />
+        {side === 1 && <MarkLine x={x(-t)} from={44} to={base} />}
+        <text className="xw-t" x={x(t) + 4} y={38} textAnchor="start">t = {side === 1 ? '±' : ''}{num(t)}</text>
+        <Axis scale={x} ticks={[-4, -2, 0, 2, 4]} at={base} from={28} to={W - 28} labelGap={20} title="t, wenn es keinen Unterschied gäbe" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-seiten': forCard(p => <Seiten value={p.value ?? 1} />),
   'b09-nullverteilung': forCard(p => <Nullverteilung value={p.value ?? 200} />),
   'b09-pruefgroesse': forSentence(p => <Pruefgroesse s={p.s as TStats} />),
   'b09-hypothese': forCard(p => <Hypothese mu0={p.value ?? MU0} />),

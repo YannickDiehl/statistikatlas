@@ -9,6 +9,7 @@ import { SCHLAF, gruppenTest, mischen, schlafP, schlafTest } from './rechnen';
 import { hypothese } from './hypothese';
 import { pruefgroesse, T_START } from './pruefgroesse';
 import { MISCHEN, asFarAs, nullverteilung } from './nullverteilung';
+import { SEITEN, seiten } from './seiten';
 
 /*
  * Referenzwerte des Bereichs B9, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -36,6 +37,8 @@ import { MISCHEN, asFarAs, nullverteilung } from './nullverteilung';
  *   set.seed(1); perm <- replicate(100000, { g <- sample(wb); mean(lz[g == 0]) - mean(lz[g == 1]) })
  *   sd(perm); quantile(perm, c(.025, .975)); mean(abs(perm) >= 0.0728193)  # 0.4654806; -0.9172592, 0.9161430; 0.87694
  *   # Der Atlas mischt mit einer festen Folge (mulberry32, Startwert 2026): 183 von 200, 1.743 von 2.000 (0,87).
+ *   t.test(lz ~ wb, alternative = "greater")$p.value; t.test(lz ~ wb, alternative = "less")$p.value   # 0.4379349, 0.5620651
+ *   atlas %>% t_test(lernzeit, group = weiterbildung, alternative = "greater")  # t(175.8) = 0.156, p = 0.438
  */
 const rows = createSurvey();
 const ctx = (columns: Record<string, string>): SampleCtx => ({ rows, columns: Object.fromEntries(Object.entries(columns).map(([k, v]) => [k, [v]])) });
@@ -43,7 +46,7 @@ const tabs = (id: string): ConceptTabs => b09Testlogik.tabs[id];
 const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.ok(s?.kind === 'analysis', `${id}: Auswertung`); const cols = Object.fromEntries(Object.entries(s.columns ?? {}).map(([k, v]) => [k, [v]])); return s.result({ rows: data, columns: cols }); };
 
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
-  const ids = ['hypothesis', 'test_statistic', 'null_distribution'];
+  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides'];
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -115,4 +118,16 @@ test('B9 Nullverteilung: Mischen der Weiterbildung wie in R, die feste Mischfolg
   assert.match(result('null_distribution').kurz, /zwischen −0,91 und \+0,91 Stunden\. Beobachtet sind 0,07 Stunden\. Das liegt innerhalb/);
   assert.match(result('null_distribution').fachlich, /≈ 0,47 h\. R nähert sie mit der t-Verteilung mit 175,8 Freiheitsgraden\./);
   assert.match(result('null_distribution', applyOp(rows, 'lernzeit', 'double')).kurz, /zwischen −1,82 und \+1,82 Stunden\. Beobachtet sind 0,15 Stunden/);
+});
+
+test('B9 Seiten: einseitige und zweiseitige p-Werte der Lernzeit nach Weiterbildung wie in R', () => {
+  const g = gruppenTest(ctx({ x: 'lernzeit', group: 'weiterbildung' }))!;
+  for (const [mine, data, ref] of [[SEITEN.two, g.two, 0.8758698], [SEITEN.right, g.right, 0.4379349], [SEITEN.left, g.left, 0.5620651]] as const)
+    { assert.ok(close(mine, ref, 1e-6), `${mine} ≠ R ${ref}`); assert.ok(close(data, ref, 1e-6), `Daten ${data} ≠ R ${ref}`); }
+  assert.match(seiten.stellDirVor.text, /ohne Weiterbildung im Schnitt 7,78 Stunden, die mit Weiterbildung 7,71 Stunden\. .*t ≈ 0,16\. Zweiseitig meldet R p = 0\.876\. .*p = 0\.438, .*p = 0\.562\./);
+  assert.equal(seiten.bausteine[1].rechnung, 'p ≈ 0,44 + 0,44 ≈ 0,88');
+  assert.match(seiten.regler!.describe(0), /in etwa 56 von 100 .*\(p ≈ 0,56\)/);
+  assert.match(seiten.regler!.describe(1), /in etwa 88 von 100 .*\(p ≈ 0,88\)/);
+  assert.match(seiten.regler!.describe(2), /in etwa 44 von 100 .*\(p ≈ 0,44\)/);
+  assert.match(result('test_sides').kurz, /Ohne minus mit Weiterbildung: 0,07 Stunden, t ≈ 0,16\. Zweiseitig ist p ≈ 0,88\. Rechtsseitig .* p ≈ 0,44, linksseitig .* p ≈ 0,56\./);
 });
