@@ -1,6 +1,7 @@
 // Bereich B6 „Wahrscheinlichkeit“. Begriffe (Spezifikation Ausbau, Abschnitt 6): probability, conditional_probability, stochastic_independence, random_variable, empirical_distribution, theoretical_distribution, discrete_continuous, probability_mass, density_function, cumulative_probability, theoretical_quantile, expectation, population_variance.
 // Je Begriff eine Datei in diesem Ordner (Erklärung und Reiter), hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
 import type { AreaIndex } from '../../types';
+import { erwartung, expectationTabs, populationVarianceTabs } from './erwartung';
 import { probability, probabilityTabs } from './probability';
 import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
 import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic_independence';
@@ -26,6 +27,8 @@ export const b06Wahrscheinlichkeit: AreaIndex = {
     density_function: { kind: 'begriff', card: densityFunction },
     cumulative_probability: { kind: 'begriff', card: cumulativeProbability },
     theoretical_quantile: { kind: 'begriff', card: theoreticalQuantile },
+    expectation: { kind: 'werkstatt', workshop: erwartung, variant: 'expectation' },
+    population_variance: { kind: 'werkstatt', workshop: erwartung, variant: 'population_variance' },
   },
   tabs: {
     probability: probabilityTabs,
@@ -39,5 +42,7 @@ export const b06Wahrscheinlichkeit: AreaIndex = {
     density_function: densityFunctionTabs,
     cumulative_probability: cumulativeProbabilityTabs,
     theoretical_quantile: theoreticalQuantileTabs,
+    expectation: expectationTabs,
+    population_variance: populationVarianceTabs,
   },
 };

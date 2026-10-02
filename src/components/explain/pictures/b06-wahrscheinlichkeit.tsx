@@ -2,12 +2,13 @@
 // `forWorkshop`/`forCard`/`forSentence`/`forTable` aus ./kit.tsx.
 // Eigene Stile in src/explain/areas/b06-wahrscheinlichkeit.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { useMemo } from 'react';
-import { num, pct } from '../../../explain/format';
+import { num, pct, signed } from '../../../explain/format';
 import { baseSurvey, sampleColumn } from '../../../explain/sample';
 import { HAUSHALT, SCHLAF, dnorm, schlafModell, sleepMu } from '../../../explain/content/b06-wahrscheinlichkeit/gemeinsam';
 import { massOf, massUpTo } from '../../../explain/content/b06-wahrscheinlichkeit/probability_mass';
 import { areaAround7 } from '../../../explain/content/b06-wahrscheinlichkeit/density_function';
-import { AreaUnder, Axis, Bar, Curve, forCard, linear, MarkLine, useWidth, type Picture } from './kit';
+import { AreaUnder, Axis, Bar, clamp, Curve, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
+import type { Erw } from '../../../explain/content/b06-wahrscheinlichkeit/erwartung';
 
 /** Schlafdauer der 200 Befragten in Klassen von einer halben Stunde, als Dichte (Anteil je Stunde). */
 function useSleepBins() {
@@ -135,7 +136,50 @@ function Quantil({ p }: { p: number }) {
   );
 }
 
+/**
+ * Werkstatt Erwartung: eine Zeile je Person mit ziehbarem Punkt (Haushaltsgröße). Ab Schritt 2 die Linie μ, ab
+ * Schritt 3 die Abstände zu μ, ab Schritt 4 rechts das Quadrat jedes Abstands, in Schritt 5 σ² darüber.
+ */
+function ErwartungLine({ values, s, step, who, names, bounds, onChange, onWho }: {
+  values: number[]; s: Erw; step: number; who: number; names: readonly string[]; bounds: Bounds;
+  onChange: (v: number[]) => void; onWho: (i: number) => void;
+}) {
+  const [box, W] = useWidth();
+  const squares = step >= 4, left = 44, right = W - (squares ? 70 : 26), X = linear([bounds.min, bounds.max], [left, right]), Y = (i: number) => 40 + i * 28, AXIS = 186;
+  const set = (i: number, v: number) => { if (v !== values[i]) onChange(values.map((x, k) => k === i ? v : x)); };
+  const { svg, start, handlers } = useDrag((i, p) => set(i, clamp(X.invert(p.x), bounds)));
+  const m = s.mu;
+  return (
+    <div ref={box}>
+      <svg ref={svg} className="xw-svg xw-drag" width={W} height={224} viewBox={`0 0 ${W} 224`} role="group" aria-label="Haushaltsgrößen der fünf Beispielpersonen; jede wird mit der Chance 0,2 gezogen" {...handlers}>
+        <text className="xw-t" x={10} y={14}>{step >= 5 ? `σ² = ${num(s.ss)} · 0,2 = ${num(s.sigma2)}` : step >= 2 ? `μ = ${num(m)}` : 'Chance je Person: 0,2'}</text>
+        {squares && <text className="xw-t" x={W - 8} y={14} textAnchor="end">Quadrat</text>}
+        {values.map((_, i) => <g key={`row${i}`}>
+          <line className="xw-guide" x1={left - 10} x2={right + 10} y1={Y(i)} y2={Y(i)} />
+          <text className="xw-t" x={10} y={Y(i) + 4}>{names[i]}</text>
+          {squares && <text className="xw-t" x={W - 8} y={Y(i) + 4} textAnchor="end">{num(s.sq[i])}</text>}
+        </g>)}
+        {step >= 2 && <line className="xw-mean" x1={X(m)} x2={X(m)} y1={24} y2={AXIS} />}
+        {step >= 3 && s.dev.map((d, i) => Math.abs(d) > 1e-9 && <g key={`dev${i}`}>
+          <line className={d > 0 ? 'xw-pos' : 'xw-neg'} strokeWidth={i === who ? 4.5 : 3} x1={X(m)} x2={X(values[i])} y1={Y(i)} y2={Y(i)} />
+          <text className="xw-t" x={(X(m) + X(values[i])) / 2} y={Y(i) - 6} textAnchor="middle">{signed(d)}</text>
+        </g>)}
+        <Axis scale={X} ticks={Array.from({ length: bounds.max - bounds.min + 1 }, (_, k) => bounds.min + k)} at={AXIS} from={left} to={right} labelGap={24} title="Personen im Haushalt" />
+        {values.map((v, i) => (
+          <DragPoint key={`dot${i}`} x={X(v)} y={Y(i)} label={`Person ${names[i]}, Haushaltsgröße`} selected={i === who} valueNow={v} bounds={bounds}
+            onPointerDown={e => { onWho(i); start(i, e); }}
+            onKeyDown={e => {
+              const next = keyStep(e, v, bounds);
+              if (next !== null) { e.preventDefault(); onWho(i); set(i, next); }
+            }}>{v}</DragPoint>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b06-erwartung': forWorkshop(p => <ErwartungLine values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b06-quantil': forCard(p => <Quantil p={p.value ?? 0.1} />),
   'b06-kumuliert': forCard(p => <Kumuliert cut={p.value ?? 6} />),
   'b06-dichte': forCard(p => <Dichte h={p.value ?? 0.5} />),

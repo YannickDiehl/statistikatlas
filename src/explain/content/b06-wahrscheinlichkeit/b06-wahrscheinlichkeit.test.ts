@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSurvey } from '../../../domain/survey';
-import { sampleColumn } from '../../sample';
+import { bridgeContext, sampleColumn } from '../../sample';
 import { close } from '../../format';
-import type { SampleCtx, SampleTab } from '../../types';
+import { txt, type SampleCtx, type SampleTab } from '../../types';
 import { ABSCHLUSS, HAUSHALT, SCHLAF, WISSEN, meanSd } from './gemeinsam';
 import { probability, probabilityTabs } from './probability';
 import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
@@ -16,6 +16,7 @@ import { probabilityMass, probabilityMassTabs, massUpTo } from './probability_ma
 import { densityFunction, densityFunctionTabs, areaAround7 } from './density_function';
 import { cumulativeProbability, cumulativeProbabilityTabs, observedUpTo } from './cumulative_probability';
 import { theoreticalQuantile, theoreticalQuantileTabs } from './theoretical_quantile';
+import { bridgeErwartung, erwartung } from './erwartung';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -291,4 +292,42 @@ test('B6 theoretical_quantile: Quantile des Schlafmodells und kritische Werte wi
   const r = tab.result(ctxFor(tab));
   assert.equal(r.kurz, 'Im Normalmodell mit μ = 7,08 h und σ = 0,82 h liegt das 10-%-Quantil bei 6,03 Stunden. In den Daten schlafen 22 von 200 höchstens so lange.');
   assert.ok(close(tab.value!(ctxFor(tab))!, 6.031937, 1e-6));
+});
+
+/*
+ *   pv <- function(x) mean((x - mean(x))^2)                       # Populationsvarianz: durch N
+ *   x <- c(1, 2, 2, 3, 5); mean(x); sum((x - mean(x))^2); pv(x); sqrt(pv(x)); var(x)   # 2.6 9.2 1.84 1.356466 2.3
+ *   x <- c(2, 3, 3, 4, 7); mean(x); sum((x - mean(x))^2); pv(x); sqrt(pv(x)); var(x)   # 3.8 14.8 2.96 1.720465 3.7
+ *   l <- as.numeric(atlas$lernzeit); mean(l); pv(l); sqrt(pv(l)); var(l)               # 7.7515 10.4291 3.229411 10.48151
+ *   sprintf("%.8f", c(pv(l), var(l)))                                                  # 10.42909775 10.48150528
+ *   var(l) * 199 / 200                                                                  # 10.4291
+ *   which.max((l - mean(l))^2); max((l - mean(l))^2)                                    # 175 (P175), 113.3906
+ *   range(sapply(1:200, function(k) { x <- l; x[k] <- 40; mean(x) - mean(l) }))         # 0.108 0.2
+ *   range(sapply(1:200, function(k) { x <- l; x[k] <- 40; pv(x) - pv(l) }))             # 4.62 5.17
+ *   atlas %>% describe(lernzeit, show = c("mean", "var"))                               # Mean 7.752, Variance 10.482
+ */
+test('B6 Werkstatt Erwartung: μ, σ² und s² der fünf Personen und der 200 Befragten wie in R', () => {
+  const ctx = (data: number[], who = 0) => ({ s: erwartung.compute(data), who, names: erwartung.names });
+  const a = ctx([1, 2, 2, 3, 5]), b = ctx([2, 3, 3, 4, 7]);
+  for (const [c, r] of [[a, [2.6, 9.2, 1.84, 1.356466, 2.3]], [b, [3.8, 14.8, 2.96, 1.720465, 3.7]]] as const)
+    assert.ok([c.s.mu, c.s.ss, c.s.sigma2, c.s.sigma, c.s.s2].every((v, i) => close(v, r[i], 1e-6)), `Kennwerte ${c.s.xs}`);
+  const st = erwartung.steps;
+  assert.equal(txt(st[1].rechnung, a), 'Person A: 1 · 0,2 = 0,2. Alle zusammen: 0,2 + 0,4 + 0,4 + 0,6 + 1 = 2,6.');
+  assert.equal(txt(st[0].fach, a), 'Bei einer Ziehung mit gleichen Chancen hat jede der n Personen die Wahrscheinlichkeit 1/n. Gleiche Werte sammeln ihre Chancen: P(X = 2) = 2 · 0,2 = 0,4.');
+  assert.equal(txt(st[4].rechnung, a), '(2,56 + 0,36 + 0,36 + 0,16 + 5,76) · 0,2 = 9,2 / 5 = 1,84. Die Wurzel daraus: σ ≈ 1,36.');
+  assert.match(txt(st[4].acht, a), /durch 4 teilt, bekommt 2,3 statt 1,84/);
+  assert.equal(erwartung.table.lines[1].text(a), 'Nach Werten zusammengefasst: 1 · 0,2 + 2 · 0,4 + 3 · 0,2 + 5 · 0,2 = 2,6');
+  assert.match(st[4].check.diagnose(a, 2.3)!, /durch 4 geteilt/);
+  assert.match(st[1].check.diagnose(a, 13)!, /ohne Gewicht/);
+  assert.match(st[0].check.diagnose(a, 5)!, /Zahl der Personen/);
+  assert.match(erwartung.variants.population_variance.interpret(a).fachlich, /9,2 \/ 5 = 1,84, σ ≈ 1,36\. Teilst du durch n − 1 = 4, erhältst du s² = 2,3/);
+  // Brücke mit den 200 Befragten (Lernzeit)
+  const bc = bridgeContext(erwartung.compute, 'series', rows, 'lernzeit', '', 1), br = bridgeErwartung;
+  assert.ok(close(bc.s.mu, 7.7515, 1e-9) && close(bc.s.sigma2, 10.42909775, 1e-8) && close(bc.s.s2, 10.48150528, 1e-8), 'μ, σ², s² wie in R');
+  assert.equal(br.lines[1].person(bc), 'P002 steuert 8,3 · 1 / 200 ≈ 0,04 h bei.');
+  assert.equal(br.lines[3].all(bc), 'Jeder Abstand wird mit sich selbst malgenommen. Das größte Quadrat liefert P175: 113,4 h².');
+  assert.equal(br.lines[4].all(bc), '2.085,82 · 1 / 200 ≈ 10,43 h². Durch 200 − 1 geteilt wäre es s² ≈ 10,48 h².');
+  assert.equal(br.metrics(bc, 'population_variance').at(-1)!.value, '10,43 h²');
+  assert.equal(br.interpret(bc, 'expectation').kurz, 'Ziehst du sehr oft zufällig eine der 200 Befragten, kommen im Mittel 7,75 Stunden Lernzeit heraus. Das ist genau ihr Mittelwert.');
+  assert.ok(close(10.48 * 199 / 200, 10.43, 0.005), 'Rechnung im R-Reiter mit den sichtbaren Zahlen');
 });
