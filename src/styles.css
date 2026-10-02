@@ -131,7 +131,7 @@
 .organic-edge-caption{bottom:138px}.organic-edge-caption.flow-incoming,.organic-edge-caption.flow-ancestor{border-color:#8db3d3}.organic-edge-caption.flow-outgoing{border-color:#ceaa86}
 .organic-edge-caption.flow-incoming span,.organic-edge-caption.flow-ancestor span{color:var(--flow-incoming)}.organic-edge-caption.flow-outgoing span{color:var(--flow-outgoing)}
 .network-legend i,.network-legend i.condition,.network-legend i.optional,.network-legend i.meaning{border-color:#7b8775}
-@media(max-width:760px){.map-direction-key{right:12px;bottom:44px;max-width:calc(100% - 74px);padding:8px 10px}.map-direction-key>div{gap:7px 12px}.map-direction-key p{margin-bottom:5px}.has-inspector .map-direction-key{right:12px;bottom:calc(51% + 49px);max-width:calc(100% - 74px)}.has-inspector .organic-edge-caption{bottom:calc(51% + 155px)}}
+@media(max-width:760px){.map-direction-key{right:12px;bottom:100px;max-width:calc(100% - 74px);padding:8px 10px}.map-direction-key>div{gap:7px 12px}.map-direction-key p{margin-bottom:5px}.has-inspector .map-direction-key{right:12px;bottom:calc(51% + 49px);max-width:calc(100% - 74px)}.has-inspector .organic-edge-caption{bottom:calc(51% + 155px)}}
 
 /* Hit targets and arrows stay screen-sized without graph-wide zoom updates. */
 .organic-map .react-flow__edge-interaction{stroke-width:14px;vector-effect:non-scaling-stroke}
@@ -139,6 +139,8 @@
 /* Größere Schrift (1. Oktober 2026): Ist ein Begriff offen, steht die Bezugslegende über dem (auch zweizeiligen) Kartenhinweis,
    und beide bleiben links vom Inspector (Hinweis ab left:115px, Legende rechts der Zoomknöpfe). */
 @media(min-width:761px){.has-inspector .network-map-note{max-width:calc(100% - 597px)}.has-inspector .organic-edge-caption{bottom:186px}}
+/* Die Legende der Bezüge steht über der Notiz unten in der Karte, auch wenn diese in zwei Zeilen umbricht. */
+@media(min-width:761px) and (max-width:1150px){.map-direction-key{bottom:80px}}
 @media(min-width:761px) and (max-width:1100px){.has-inspector .organic-zoom-note{display:none}.has-inspector .network-map-note{max-width:calc(100% - 561px)}.has-inspector .map-direction-key{right:430px;max-width:calc(100% - 498px)}}
 
 /* Größere Schrift (1. Oktober 2026): <small> ohne eigene Größe fällt nicht unter 13 px. */
