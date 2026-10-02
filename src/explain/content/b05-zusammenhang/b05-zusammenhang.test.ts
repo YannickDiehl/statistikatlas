@@ -6,6 +6,7 @@ import { applyOp, bridgeContext } from '../../sample';
 import { txt, type Ctx } from '../../types';
 import { tabsFor } from '../../registry';
 import { rangkorrelation, rankStats, type RankStats } from './spearman';
+import { paarvergleich, pairCount, type PairCount } from './paarvergleich';
 
 /*
  * Referenzwerte des Bereichs B5 „Zusammenhang“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -80,4 +81,62 @@ test('B5 Spearman: Werkstatt, Brücke und R-Ausgabe wie in R', () => {
   // „In R“: p = 0.066 heißt in etwa 7 von 100.
   assert.match(tabsFor('spearman')!.r!.outputMap[1].explain, /in etwa 7 von 100/);
   assert.ok(close(0.066 * 100, 7, 0.5));
+});
+
+/*
+ * Konkordante und diskordante Paare, Gamma, Tau-b, Werkstatt (fünf Personen; C, D, Tₓ, Tᵧ von Hand über alle Paare i < j):
+ *   cdt <- function(x, y) { n <- length(x); C <- 0; D <- 0; Tx <- 0; Ty <- 0
+ *     for (i in 1:(n - 1)) for (j in (i + 1):n) { dx <- sign(x[j] - x[i]); dy <- sign(y[j] - y[i])
+ *       if (dx * dy > 0) C <- C + 1 else if (dx * dy < 0) D <- D + 1; if (dx == 0) Tx <- Tx + 1; if (dy == 0) Ty <- Ty + 1 }
+ *     N0 <- n * (n - 1) / 2; c(C = C, D = D, Tx = Tx, Ty = Ty, N0 = N0, gamma = (C - D) / (C + D), tau = (C - D) / sqrt((N0 - Tx) * (N0 - Ty))) }
+ *   meist:      x <- c(1, 2, 3, 4, 5); y <- c(2, 1, 3, 5, 4)   # C = 8, D = 2, Tx = 0, Ty = 0, gamma 0.6, tau 0.6
+ *   bindungen:  x <- c(1, 2, 2, 4, 5); y <- c(1, 3, 2, 3, 5)   # C = 8, D = 0, Tx = 1, Ty = 1, gamma 1, tau 0.888889
+ *   gegen:      x <- c(1, 2, 3, 4, 5); y <- c(5, 3, 4, 2, 1)   # C = 1, D = 9, gamma -0.8, tau -0.8
+ *   cor(x, y, method = "kendall")                             # 0.6; 0.888889; -0.8 (Tau-b)
+ *   data.frame(x, y) %>% goodman_gamma(x, y)                  # 0.6; 1; -0.8
+ *   data.frame(x, y) %>% kendall_tau(x, y)                    # tau = 0.600; 0.889; -0.800
+ *   cor(c(1, 2, 3, 4, 5), 6 - c(2, 1, 3, 5, 4), method = "kendall")   # -0.6 (Nachrichten umgedreht: C und D tauschen)
+ * Brücke, x = finanzlage, y = schulabschluss:
+ *   cdt(finanzlage, schulabschluss)                           # C 6954, D 5300, Tx 4679, Ty 3907, N0 19900
+ *   atlas %>% goodman_gamma(finanzlage, schulabschluss)       # 0.1349763
+ *   atlas %>% kendall_tau(finanzlage, schulabschluss, use = "listwise")   # tau = 0.106, p = 0.065, N = 200
+ *   cor(finanzlage, schulabschluss, method = "kendall")       # 0.1060105
+ *   cdt(finanzlage, 4 - schulabschluss); cdt(6 - finanzlage, schulabschluss)   # C 5300, D 6954: Vorzeichen gedreht
+ *   6954 / (6954 + 5300); 19900 - 6954 - 5300                 # 0.5674882; 7646
+ *   P002 mit P003 bis P200: C 88, D 36, Tx 50, Ty 40
+ */
+test('B5 Paarvergleich: konkordante Paare, Gamma und Tau-b wie in R', () => {
+  const [meist, bindungen, gegen] = paarvergleich.presets.map(p => pairCount(p.data));
+  const counts = (s: PairCount) => [s.C, s.D, s.Tx, s.Ty, s.n0];
+  assert.deepEqual(counts(meist), [8, 2, 0, 0, 10]); assert.deepEqual(counts(bindungen), [8, 0, 1, 1, 10]); assert.deepEqual(counts(gegen), [1, 9, 0, 0, 10]);
+  assert.ok(near(meist.gamma, 0.6) && near(meist.tau, 0.6) && near(bindungen.gamma, 1) && near(bindungen.tau, 0.888889) && near(gegen.gamma, -0.8) && near(gegen.tau, -0.8), 'γ und τb');
+  const flipped = pairCount(paarvergleich.think[1].tryIt!.apply(paarvergleich.presets[0].data));
+  assert.deepEqual([flipped.C, flipped.D], [2, 8], 'umgedreht: C und D tauschen'); assert.ok(near(flipped.tau, -0.6));
+  const same = pairCount(paarvergleich.think[0].tryIt!.apply(paarvergleich.presets[0].data));
+  assert.equal(same.Txy, 1, 'B antwortet wie A: ein Paar mit Gleichstand bei beiden');
+  const flat = pairCount(paarvergleich.think[3].tryIt!.apply(paarvergleich.presets[0].data));
+  assert.deepEqual([flat.C, flat.D, flat.gamma, flat.tau], [0, 0, null, null], 'alle beim Interesse auf 3');
+  // Texte der Werkstatt.
+  const s = paarvergleich.steps, c = at<PairCount>(pairCount, paarvergleich.presets[1].data, 1);
+  assert.equal(txt(s[1].rechnung, at(pairCount, paarvergleich.presets[0].data, 0)), 'Person A hat Interesse 1 und Nachrichten 2. Mit B (2, 1): entgegengesetzt. Mit C (3, 3): gleich gerichtet. Mit D (4, 5): gleich gerichtet. Mit E (5, 4): gleich gerichtet. Davon gleich gerichtet: 3. Alle zusammen: C = 8.');
+  assert.equal(txt(s[4].rechnung, c), 'Person B: Gleichstand beim Interesse mit C, bei den Nachrichten mit D. Alle zusammen: Tₓ = 1, Tᵧ = 1.');
+  assert.equal(txt(s[5].rechnung, c), 'τb = 8 / √((10 − 1) · (10 − 1)) = 8 / √81 ≈ 0,89');
+  assert.equal(txt(s[3].rechnung, at(pairCount, paarvergleich.presets[0].data)), 'γ = (8 − 2) / (8 + 2) = 6 / 10 = 0,6');
+  assert.match(s[5].check.diagnose(c, 1)!, /^Fast! Das ist Gamma/); assert.match(s[3].check.diagnose(c, 0.8)!, /durch alle Paare geteilt/);
+  assert.match(s[0].check.diagnose(c, 20)!, /doppelt/); assert.match(s[0].check.diagnose(c, 25)!, /mit sich selbst/);
+  assert.match(paarvergleich.variants.goodman_gamma.interpret(at(pairCount, paarvergleich.presets[0].data)).kurz, /^Von den 10 Paaren mit klarer Richtung sind 80 % gleich gerichtet\./);
+  // Brücke mit den 200 Befragten.
+  const b = paarvergleich.bridge!, bc = bridgeContext(pairCount, 'pairs', rows, 'finanzlage', 'schulabschluss', 1);
+  assert.deepEqual(counts(bc.s), [6954, 5300, 4679, 3907, 19900], 'C, D, Tx, Ty, N0 wie in R');
+  assert.ok(near(bc.s.gamma, 0.1349763) && near(bc.s.tau, 0.1060105), 'γ und τb wie in R');
+  assert.deepEqual([bc.s.ci[1], bc.s.di[1], bc.s.txi[1], bc.s.tyi[1]], [88, 36, 50, 40], 'P002');
+  assert.equal(b.lines[0].all(bc), '200 Befragte ergeben 200 · 199 / 2 = 19.900 Personenpaare.');
+  assert.equal(b.lines[2].all(bc), '5.300 Paare sind entgegengesetzt. C − D = 6.954 − 5.300 = 1.654.');
+  assert.equal(b.lines[3].all(bc), 'γ = 1.654 / 12.254 ≈ 0,13. Die 7.646 Paare mit Gleichstand zählen nicht mit.');
+  assert.equal(b.lines[5].all(bc), 'τb = 1.654 / √(15.221 · 15.993) ≈ 0,11. Gamma ist 0,13: Die Gleichstände machen τb im Betrag kleiner.');
+  assert.match(b.interpret(bc, 'goodman_gamma').kurz, /^Von den 12\.254 Paaren mit klarer Richtung sind 57 % gleich gerichtet\./);
+  for (const [col, op] of [['schulabschluss', 'reverse'], ['finanzlage', 'reverse']] as const) {
+    const flippedRows = applyOp(rows, col, op), f = bridgeContext(pairCount, 'pairs', flippedRows, 'finanzlage', 'schulabschluss', 1);
+    assert.deepEqual([f.s.C, f.s.D], [5300, 6954], `${col} umgepolt`);
+  }
 });

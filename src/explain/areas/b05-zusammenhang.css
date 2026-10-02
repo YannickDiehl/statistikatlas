@@ -1,0 +1,7 @@
+/* Bereich B5 „Zusammenhang“: Linien der Personenpaare (Werkstatt Paarvergleich). Farbe ist nie der einzige Träger:
+   Die Linien tragen „+“, „−“ oder „=“, Gleichstände sind zusätzlich gestrichelt. */
+.b05-pair-plain{stroke:var(--muted);stroke-width:1.5}
+.b05-pair-pos{stroke:var(--green);stroke-width:2.5}
+.b05-pair-neg{stroke:var(--xw-neg);stroke-width:2.5}
+.b05-pair-tie{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 4}
+.b05-count{margin:.25rem 0 0}

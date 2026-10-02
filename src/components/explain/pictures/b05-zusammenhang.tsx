@@ -5,6 +5,7 @@ import type { KeyboardEvent, ReactNode } from 'react';
 import type { Pairs } from '../../../explain/math';
 import { num, signed } from '../../../explain/format';
 import type { RankStats } from '../../../explain/content/b05-zusammenhang/spearman';
+import { pairKind, type PairCount, type PairKind } from '../../../explain/content/b05-zusammenhang/paarvergleich';
 import { clamp, DragPoint, forWorkshop, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 type Drag = { data: Pairs; names: readonly string[]; who: number; bounds: Bounds; onChange: (d: Pairs) => void; onWho: (i: number) => void };
@@ -114,7 +115,48 @@ function RankPicture({ d, s, step }: { d: Drag; s: RankStats; step: number }) {
   );
 }
 
+
+// ---------- Paarvergleich (konkordant, Gamma, Tau-b) ----------
+
+const PAIR_CLASS: Record<PairKind, string> = { C: 'b05-pair-pos', D: 'b05-pair-neg', Tx: 'b05-pair-tie', Ty: 'b05-pair-tie', Txy: 'b05-pair-tie' };
+const PAIR_MARK: Record<PairKind, string> = { C: '+', D: '−', Tx: '=', Ty: '=', Txy: '=' };
+
+/**
+ * Streudiagramm der fünf Personen mit Verbindungslinien der Personenpaare: bis Schritt 3 die Paare der gewählten Person
+ * mit den Personen nach ihr, danach alle zehn. Grün mit „+“ gleich gerichtet, braunrot mit „−“ entgegengesetzt,
+ * grau gestrichelt mit „=“ Gleichstand; darunter die Zählung.
+ */
+function PairPicture({ d, s, step }: { d: Drag; s: PairCount; step: number }) {
+  const [box, W] = useWidth();
+  const plot = Math.min(W - 72, 260), L = 50, T = 16;
+  const pairs: { i: number; j: number; kind: PairKind }[] = [];
+  for (let i = 0; i < s.n; i++) for (let j = i + 1; j < s.n; j++) if (step >= 4 || i === d.who) pairs.push({ i, j, kind: pairKind(s.xs[i], s.ys[i], s.xs[j], s.ys[j]) });
+  const shownKind = (k: PairKind) => step === 1 ? 'b05-pair-plain' : step === 2 && k !== 'C' ? 'b05-pair-plain' : PAIR_CLASS[k];
+  const count = step <= 1 ? '' : step === 2 ? `C = ${s.C}` : step === 3 ? `C = ${s.C}, D = ${s.D}, C − D = ${num(s.cd)}`
+    : step === 4 ? `C = ${s.C}, D = ${s.D}, Gleichstand ${s.ties}: γ ${s.gamma === null ? 'nicht definiert' : `≈ ${num(s.gamma)}`}`
+    : `Tₓ = ${s.Tx}, Tᵧ = ${s.Ty}${step >= 6 ? `: τb ${s.tau === null ? 'nicht definiert' : `≈ ${num(s.tau)}`}` : ''}`;
+  return (
+    <div ref={box}>
+      <DragScatter d={d} W={W} L={L} T={T} plot={plot} xTitle="Interesse an Politik" yTitle="Nachrichten lesen"
+        help="Pfeiltasten links und rechts ändern das Interesse, oben und unten, wie oft jemand Nachrichten liest."
+        extra={g => <g aria-hidden="true">
+          {pairs.map(({ i, j, kind }) => {
+            const x1 = g.X(s.xs[i]), y1 = g.Y(s.ys[i]), x2 = g.X(s.xs[j]), y2 = g.Y(s.ys[j]);
+            const cls = shownKind(kind), mark = cls === 'b05-pair-plain' ? '' : PAIR_MARK[kind];
+            return <g key={`l${i}-${j}`}>
+              <line className={cls} x1={x1} x2={x2} y1={y1} y2={y2} />
+              {mark && (Math.abs(x2 - x1) + Math.abs(y2 - y1) > 30) && <text className="xw-t xw-strong" x={(x1 + x2) / 2 + 6} y={(y1 + y2) / 2 - 6}>{mark}</text>}
+            </g>;
+          })}
+        </g>} />
+      {count && <p className="xw-note b05-count" aria-live="polite">{count}</p>}
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b05-rangkorrelation': forWorkshop(p => <RankPicture s={p.s} step={p.step}
+    d={{ data: p.data, names: p.workshop.names, who: p.who, bounds: p.workshop.bounds, onChange: p.setData, onWho: p.pickWho }} />),
+  'b05-paarvergleich': forWorkshop(p => <PairPicture s={p.s} step={p.step}
     d={{ data: p.data, names: p.workshop.names, who: p.who, bounds: p.workshop.bounds, onChange: p.setData, onWho: p.pickWho }} />),
 };
