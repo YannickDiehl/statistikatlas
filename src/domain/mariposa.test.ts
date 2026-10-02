@@ -7,10 +7,11 @@ import {PackageInspector} from '../components/PackageInspector';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {mariposaExports,mariposaEntries,entryById,functionToConcept,formulaParts,formulaTargets} from './mariposaCatalog';
 import {exampleVariants,analysisCode,startBlock,initialRSettings,validateRSettings,eligible,surveyCsv,rolesFor,roleExplanation} from './mariposa';
-import {createSurvey,migrateSurvey,surveyColumns,columnById,defaultSelection} from './survey';
+import {createSurvey,migrateSurvey,surveyColumns,columnById,defaultSelection,surveySources} from './survey';
 import {concepts,conceptById,connections} from './concepts';
 import {mapRelations,incomingPaths,regions,regionConcepts,places,referenceInMap} from './network';
 import {ref} from './learning';
+import {styleProblems} from '../explain/style';
 import {MariposaPanel} from '../components/MariposaPanel';
 import {initialExploration,visit,step} from './exploration';
 const rows=createSurvey(),noop=()=>{};
@@ -83,4 +84,16 @@ test('the R panel leads with Kurz gesagt, offers the .sav and shows no developer
   assert.match(html,/mariposa 0\.7\.4/,id);assert.match(html,/Lehrdatensatz als SPSS-Datei \(\.sav\)/,id);assert.match(html,/auch als CSV/,id);assert.match(html,/library\(dplyr\)\nlibrary\(mariposa\)\n\natlas &lt;- read_spss/,id);
   if(id!=='data_import')assert.match(html,/<strong>Kurz gesagt:<\/strong>/,id);
  }
+});
+
+// Titel sind Fachbegriffe in den Erklärungen (Sprachleitfaden, Regeln 2 und 11): „·“ nie als Trenner im Titel.
+test('concept titles never use „·“ as a separator and pass the style rules',()=>{
+ for(const c of concepts){
+  assert.ok(!c.title.includes('·'),`${c.id}: ${c.title}`);
+  assert.deepEqual(styleProblems(c.title),[],`${c.id}: ${c.title}`);
+ }
+ assert.equal(conceptById.power.title,'Teststärke (Power)','Titel der Teststärke');
+ assert.equal(conceptById.pomps.title,'POMPS (Skalen auf 0–100)','Titel von POMPS');
+ // Sichtbare Quellentitel („Fachlich nachlesen“, Datensatz-Dialog) ebenfalls ohne „·“ als Trenner.
+ for(const source of [...mariposaEntries.flatMap(e=>e.sources??[]),...surveySources])assert.ok(!source.title.includes('·'),source.title);
 });

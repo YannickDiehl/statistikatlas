@@ -341,3 +341,14 @@ test('B5 Korrelationsmatrix: Methoden-Zuversicht wie in R', () => {
   const lineOf = (m: string) => { const at = locate(out, m)!.start; return out.slice(out.lastIndexOf('\n', at) + 1, at).trim(); };
   assert.deepEqual(['0.676', '1.000', '0.650'].map(m => lineOf(m).split(/\s+/).slice(0, 2).join(' ')), ['(2) methoden2', '(1) methoden1', '(1) methoden1'], 'Zahlen stehen in der Matrix: 0.676 in Zeile (2), Diagonale und 0.650 in Zeile (1)');
 });
+
+/*
+ * Integration (deferred minors aus B5): mariposa 0.7.4 phi() gibt nur die Zahl zurück (.extract_chi_effect_size),
+ * ohne p-Wert; bei 2 × 2 mit Vorzeichen: phi(atlas, weiterbildung, erwerbstaetig) = 0.06193526.
+ */
+test('B5 Wortlaut: φ-Codekarte mit Verb und ohne p-Wert, Zufallsniveau von V mit Fallzahl, Spearman-Nenner', () => {
+  const phiTok = tabsFor('phi')!.r!.tokens!.phi;
+  assert.equal(phiTok.kurz, 'Berechnet φ für zwei Spalten; R gibt nur die Zahl aus, ohne p-Wert. Bei zwei mal zwei Feldern trägt φ ein Vorzeichen wie Pearson-r der 0/1-Spalten, bei größeren Tabellen ist es √(χ² / n) ohne Vorzeichen.');
+  assert.ok(cramerSatz.genau.paragraphs.some(p => p.endsWith('Vergleiche V deshalb immer mit dem, was Tabellengröße und Fallzahl schon durch Zufall liefern.')), 'Zufallsniveau nennt n');
+  assert.ok(rangkorrelation.steps.some(s => typeof s.was === 'string' && s.was.includes('der beiden Quadratsummen (die quadrierten Rangabstände, zusammengezählt).')), 'Spearman-Nenner');
+});

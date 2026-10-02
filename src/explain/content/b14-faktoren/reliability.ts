@@ -1,8 +1,9 @@
-// Werkstatt „Cronbachs Alpha“ für den Begriff `reliability` (Reliabilität · Alpha & Omega): fünf Personen, drei Fragen
+// Werkstatt „Cronbachs Alpha“ für den Begriff `reliability` (Reliabilität: Alpha und Omega): fünf Personen, drei Fragen
 // zur Methoden-Zuversicht (1 bis 7), sechs Schritte. Ton nach der Streuung (src/explain/content/streuung.ts).
 // Alle Zahlen in R nachgerechnet, siehe b14-faktoren.test.ts.
 import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
 import { close, fixed, num, paren } from '../../format';
+import { ref, titleFor } from '../../../domain/learning';
 import { cronbach, FRAGE, itemColumns, SPALTEN, variance } from './rechnen';
 
 /** Fünf Personen (Zeilen) mal drei Fragen (Spalten), Antworten von 1 bis 7. */
@@ -335,7 +336,7 @@ export const reliabilityTabs: ConceptTabs = {
       const edge = alphaText(a.alpha).startsWith('knapp') ? `; das liegt knapp unter ${alphaText(a.alpha).slice(6)}` : '';
       return {
         kurz,
-        fachlich: `k = ${k} Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = ${k}/${k - 1} · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${weg} Aus den Korrelationen gerechnet (standardisiert) ergibt sich ${fixed(a.alphaStd)}. ${r}${edge}. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good und ab 0,7 mit Acceptable; hier heißt das sehr gut, gut und ausreichend. Das sind Faustregeln, keine festen Grenzen.`,
+        fachlich: `k = ${k} Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = ${k}/${k - 1} · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${weg} ${r}${edge}. Aus den Korrelationen gerechnet (standardisiert) ergibt sich ${fixed(a.alphaStd)}. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good, ab 0,7 mit Acceptable, ab 0,6 mit Questionable und von 0 bis unter 0,6 mit Poor. Im Atlas heißt das sehr gut, gut, ausreichend, nur bedingt und schlecht. Das sind Faustregeln, keine festen Grenzen.`,
         zusatz: a.sumItemVar > 1e-12 ? `Die Summenwerte streuen ${num(a.totalVar / a.sumItemVar)}-mal so stark wie die ${ZAHLWORT[k]} Fragen einzeln zusammen.` : undefined,
       };
     },
@@ -362,7 +363,7 @@ export const reliabilityTabs: ConceptTabs = {
   r: {
     entry: 'reliability', variant: 0,
     tokens: {
-      reliability: { sym: 'reliability()', term: 'Reliabilität: Alpha und Omega', kurz: 'Rechnet Cronbachs Alpha und McDonalds Omega für Fragen, die zusammen eine Skala bilden sollen. Die Fragen stehen durch Kommas getrennt in der Klammer.', fehler: 'Mit nur einer Frage bricht mariposa ab: `reliability()` requires at least 2 items.' },
+      reliability: { sym: 'reliability()', term: titleFor(ref('reliability')), kurz: 'Rechnet Cronbachs Alpha und McDonalds Omega für Fragen, die zusammen eine Skala bilden sollen. Die Fragen stehen durch Kommas getrennt in der Klammer.', fehler: 'Mit nur einer Frage bricht mariposa ab: `reliability()` requires at least 2 items.' },
       summary: { sym: 'summary()', term: 'Ausführliche Ausgabe', kurz: 'Zeigt alle Tabellen der Reliabilitätsanalyse: Kennwerte je Frage, die Korrelationen und Alpha ohne jede einzelne Frage.', fehler: 'Ohne summary() zeigt R nur zwei Zeilen: Cronbach\'s Alpha = 0.898 (Good), McDonald\'s Omega = 0.899 und N.' },
     },
     outputMap: [

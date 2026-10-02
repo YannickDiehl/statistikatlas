@@ -5,6 +5,7 @@ import type { Bridge, BridgeCtx, ConceptTabs, Ctx, FNode, SampleCtx, Workshop } 
 import type { Pairs } from '../../math';
 import { close, count, num, pct, signed } from '../../format';
 import { sumNodes } from '../../sample';
+import { ref, titleFor } from '../../../domain/learning';
 import { columnsOf, midRanks, signedRank, type SignedRank } from './rank';
 import { pOften, pText, rWord, signif } from './words';
 
@@ -337,7 +338,7 @@ export const wilcoxonTabs: ConceptTabs = {
   r: {
     entry: 'wilcoxon_test', variant: 0,
     tokens: {
-      wilcoxon_test: { sym: 'wilcoxon_test()', term: 'Wilcoxon, verbunden', kurz: 'Vergleicht zwei Messungen derselben Personen über die Ränge ihrer Veränderungen. Meldet z, p und die Effektgröße r.', fehler: 'Ein drittes Argument nimmt wilcoxon_test() als Gewicht. wilcoxon_test(wissenstest, wissenstest_t2, wissenstest_t3) rechnet deshalb gewichtet und meldet N = 2324.' },
+      wilcoxon_test: { sym: 'wilcoxon_test()', term: titleFor(ref('wilcoxon_test')), kurz: 'Vergleicht zwei Messungen derselben Personen über die Ränge ihrer Veränderungen. Meldet z, p und die Effektgröße r.', fehler: 'Ein drittes Argument nimmt wilcoxon_test() als Gewicht. wilcoxon_test(wissenstest, wissenstest_t2, wissenstest_t3) rechnet deshalb gewichtet und meldet N = 2324.' },
     },
     outputMap: [
       { match: 'wissenstest_t2 - wissenstest', atlas: 'dᵢ = yᵢ − xᵢ', step: 1, explain: 'Die Richtung der Differenz: zweiter minus erster Messzeitpunkt, also die zweite Spalte im Aufruf minus die erste.' },

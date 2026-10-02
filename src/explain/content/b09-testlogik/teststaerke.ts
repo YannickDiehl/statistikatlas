@@ -31,7 +31,7 @@ export const teststaerke: SentenceTemplate<PValues, PStats> = {
     { label: 'Teststärke 1 − β', value: s => num(s.power) },
   ],
   glyphs: [
-    { key: 'power', sym: '1 − β', say: 'eins minus beta', term: 'Teststärke', plain: 'wie oft der Test einen echten Unterschied dieser Größe findet' },
+    { key: 'power', sym: '1 − β', say: 'eins minus beta', term: 'Teststärke (Power)', plain: 'wie oft der Test einen echten Unterschied dieser Größe findet', concept: 'power' },
     { key: 'phi', sym: 'Φ', say: 'Phi', term: 'Kumulierte Wahrscheinlichkeit', plain: 'der Anteil der Normalverteilung links von einer Stelle', concept: 'cumulative_probability' },
     { key: 'd', sym: 'd', say: 'd', term: 'Effektgröße', plain: 'der Unterschied in Standardabweichungen', concept: 'effect' },
     { key: 'n', sym: 'n', say: 'n', term: 'Fallzahl je Gruppe', plain: 'wie viele Personen in jeder der beiden Gruppen sind' },

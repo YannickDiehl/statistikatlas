@@ -153,7 +153,7 @@ export const rotationTabs: ConceptTabs = {
       const [d1, d2] = z.p.values, first = z.p.loadings.map(r => r[0]);
       const before = Math.min(...first) >= 0.5 ? `Vor der Rotation laden alle fünf Fragen stark auf der ersten Komponente, zwischen ${num(Math.min(...first))} und ${num(Math.max(...first))}.` : 'Vor der Rotation laden die Fragen vor allem auf der ersten Komponente.';
       return {
-        kurz: `${before} Nach Varimax teilen sich die Fragen auf beide Komponenten auf; zusammen erfassen sie wie vorher ${pct1(z.total)}. ${d2 < 1 ? 'Dabei unterscheiden sich die Befragten im Wesentlichen nur in einer Sache.' : 'Die zweite Komponente hat einen Eigenwert über 1.'}`,
+        kurz: `${before} Nach Varimax verteilen sich die Fragen auf beide Komponenten, die zusammen wie vorher ${pct1(z.total)} erfassen. ${d2 < 1 ? 'Dabei unterscheiden sich die Befragten im Wesentlichen nur in einer Sache.' : 'Die zweite Komponente hat einen Eigenwert über 1.'}`,
         fachlich: `Ungedreht ${pct1(d1 / 5)} und ${pct1(d2 / 5)}, nach Varimax ${pct1(z.ss[0] / 5)} und ${pct1(z.ss[1] / 5)}. Der zweite Eigenwert ist ${num(d2)}${d2 < 1 ? ', also unter 1: Die Aufteilung ist hier ein Kunstprodukt der erzwungenen zweiten Komponente' : ''}.`,
         zusatz: `Nach der Rotation: ${gruppen(z.vm.loadings)}`,
       };

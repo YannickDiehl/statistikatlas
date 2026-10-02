@@ -14,6 +14,9 @@ import { dunnCard, dunnSample, dunnTabs, DUNN_MIN_P } from './dunn';
 import { bonferroniFor, pairwiseWilcoxonCard, pairwiseWilcoxonTabs, pwImproved, pwSample } from './pairwise-wilcoxon';
 import { basePairs, hurdle40, tukeyHurdle } from './posthoc';
 import { qt } from '../../../tasks/kit/dist';
+import { type ReactElement } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { pictures } from '../../../components/explain/pictures/b11-rangtests';
 import { qtukey } from '../../../tasks/kit/means';
 import { qf } from './rank';
 import { kruskalWallisTabs, kruskalWallisWorkshop as kwW, kwMeanRank, kwSample, KW_EVEN, KW_START, KW_TIES } from './kruskal-wallis';
@@ -475,7 +478,7 @@ test('B11 Paarweiser Wilcoxon: Lehrdatensatz wie in R', () => {
   assert.equal(pwImproved(ctx(applyOp(rows, 'wissenstest_t2', 'shift', -1), columns), 1, 2), 135);
   assert.deepEqual([3, 4, 8].map(k => bonferroniFor(k).m), [3, 6, 28]);
   assert.match(pairwiseWilcoxonCard.regler!.describe(4), /6 Paare\. .* 0,05 \/ 6 ≈ 0,0083/);
-  assert.match(pairwiseWilcoxonCard.stellDirVor.text, /115 Befragte, 53 werden schlechter\. Vom zweiten zum dritten verbessern sich 108, und 65 .* r ≈ 0,29 statt 0,41/);
+  assert.match(pairwiseWilcoxonCard.stellDirVor.text, /115 Befragte, 53 werden schlechter\. Vom zweiten zum dritten verbessern sich 108, und 65 werden schlechter\. Der Schritt ist kleiner: Die Effektgröße r sinkt von 0,41 auf 0,29\./);
   assert.ok(near(ps[0].test.r, 0.413405) && near(ps[1].test.r, 0.643856), `r ${ps[0].test.r} ${ps[1].test.r}`);
   assert.deepEqual(pairwiseWilcoxonCard.stellDirVor.figures!.slice(1).map(f => f.value), ['r ≈ 0,41', 'r ≈ 0,29', 'r ≈ 0,64']);
   assert.match(pairwiseWilcoxonCard.check.diagnose[1]!, /r ≈ 0,41 vom ersten zum zweiten, r ≈ 0,29 vom zweiten/);
@@ -518,4 +521,19 @@ test('B11 Nachbesserung: Hürde als Quantil, Skala der Prüfgröße, p statt H, 
   for (const t of [mwW.think[0], kwW.think[0], wxW.think[0], frW.think[0]]) assert.match(t.question, /^Mit den Startdaten:/);
   // M12: Jedes Paar hat seine eigene Hürde.
   assert.match(tukeyCard.regler!.describe(0.05), /ihre eigene Hürde/);
+});
+
+// Integration (deferred minor aus B11): Mehrere Punkte je Zeile stehen immer 22 px versetzt, damit Zeilen und Achse
+// beim Ziehen nicht springen. Die Bildhöhe hängt deshalb nicht davon ab, ob Werte gleich, benachbart oder weit weg sind.
+test('B11 Bild: Zeilen behalten ihre Höhe, wenn Werte gleich werden oder auseinanderrücken', () => {
+  const height = (key: string, w: typeof wxW | typeof frW, data: unknown) => {
+    const pic = pictures[key];
+    const html = pic.kind === 'werkstatt' ? renderToStaticMarkup(pic.draw({ workshop: w, data, s: (w.compute as (d: unknown) => unknown)(data), step: 1, who: 0, setData: () => {}, pickWho: () => {} }) as ReactElement) : '';
+    return html.match(/<svg[^>]*height="([\d.]+)"/)?.[1];
+  };
+  const gleich = { x: WX_START.x, y: [...WX_START.x] }, weit = { x: WX_START.x.map(() => 0), y: WX_START.x.map(() => 20) };
+  const wx = [WX_START, gleich, weit].map(d => height('b11-wilcoxon', wxW, d));
+  assert.ok(wx[0] && wx.every(h => h === wx[0]), `Wilcoxon-Bild gleich hoch: ${wx}`);
+  const fr = [FR_START, FR_START.map(r => [r[0], r[0], r[0]]), FR_START.map(() => [0, 10, 20])].map(d => height('b11-friedman', frW, d));
+  assert.ok(fr[0] && fr.every(h => h === fr[0]), `Friedman-Bild gleich hoch: ${fr}`);
 });

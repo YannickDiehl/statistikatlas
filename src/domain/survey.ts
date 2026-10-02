@@ -94,8 +94,8 @@ export function projectPairs(rows:SurveyRow[],selection:ColumnSelection):DataPai
 export function validSurvey(value:unknown):value is SurveyRow[]{return Array.isArray(value)&&value.length===200&&new Set(value.map(r=>r?.id)).size===200&&value.every(r=>r&&typeof r.id==='string'&&/^P\d{3}$/.test(r.id)&&r.values&&surveyColumns.every(c=>typeof r.values[c.id]==='number'&&validColumnValue(c,r.values[c.id])));}
 export function updateProjectedPairs(rows:SurveyRow[],selection:ColumnSelection,pairs:DataPair[]){const updates=new Map(pairs.map(p=>[p.id,p]));return rows.map(row=>{const p=updates.get(row.id);if(!p)return row;const values={...row.values};for(const axis of ['x','y'] as const){const c=columnById[selection[axis]];if(p[axis]!==row.values[c.id]&&validColumnValue(c,p[axis]))values[c.id]=p[axis];}return {...row,values};});}
 export const surveySources=[
- {title:'GESIS · Allgemeinbildender Schulabschluss',url:'https://pretest.gesis.org/frage/showFrage?frage=1149&lang=de&selectedProj=123'},
- {title:'GESIS · Berufs- und Hochschulabschlüsse',url:'https://pretest.gesis.org/frage/showFrage?frage=1150&lang=de&selectedProj=123'},
- {title:'DQR · Verschiedene Qualifikationen auf gleichem Niveau',url:'https://www.dqr.de/dqr/de/der-dqr/faq/deutscher-qualifikationsrahmen-faq.html'},
- {title:'GESIS · Gestaltung von Ratingskalen',url:'https://www.gesis.org/fileadmin/admin/Dateikatalog/pdf/guidelines/gestaltung_ratingskalen_frageboegen_menold_bogner_2015.pdf'},
+ {title:'GESIS: Allgemeinbildender Schulabschluss',url:'https://pretest.gesis.org/frage/showFrage?frage=1149&lang=de&selectedProj=123'},
+ {title:'GESIS: Berufs- und Hochschulabschlüsse',url:'https://pretest.gesis.org/frage/showFrage?frage=1150&lang=de&selectedProj=123'},
+ {title:'DQR: Verschiedene Qualifikationen auf gleichem Niveau',url:'https://www.dqr.de/dqr/de/der-dqr/faq/deutscher-qualifikationsrahmen-faq.html'},
+ {title:'GESIS: Gestaltung von Ratingskalen',url:'https://www.gesis.org/fileadmin/admin/Dateikatalog/pdf/guidelines/gestaltung_ratingskalen_frageboegen_menold_bogner_2015.pdf'},
 ];

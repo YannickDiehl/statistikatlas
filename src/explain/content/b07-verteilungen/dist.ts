@@ -72,7 +72,7 @@ export function binomTest(k: number, n: number, p0: number): number {
   return twoSided(Array.from({ length: n + 1 }, (_, i) => dbinom(i, n, p0)), k);
 }
 
-/** Exakter Test von Fisher für eine 2×2-Tabelle [[a, b], [c, d]], zweiseitig wie R fisher.test. */
+/** Exakter Test nach Fisher für eine 2×2-Tabelle [[a, b], [c, d]], zweiseitig wie R fisher.test. */
 export function fisherTest(t: number[][]): number {
   const [[a, b], [c, d]] = t, row1 = a + b, col1 = a + c, n = a + b + c + d;
   const lo = Math.max(0, row1 + col1 - n), hi = Math.min(row1, col1);

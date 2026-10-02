@@ -49,7 +49,7 @@ Jede neue Karte enthält eine Erklärung, verknüpfte Formeln, fachliche Hinweis
 | Signifikanzniveau α | `alpha_level` |
 | Kritischer Wert & Ablehnungsbereich | `critical_value` |
 | Fehler erster & zweiter Art | `type_errors` |
-| Teststärke · Power | `power` |
+| Teststärke (Power) | `power` |
 | Freiheitsgrade im Modell | `general_df` |
 | Exakte Verteilung & Näherung | `exact_asymptotic` |
 | Zufallsauswahl | `random_sampling` |
@@ -61,11 +61,11 @@ Jede neue Karte enthält eine Erklärung, verknüpfte Formeln, fachliche Hinweis
 | Gleiche Fehlervarianz | `variance_assumption` |
 | Ausreißer & Einfluss | `outliers_influence` |
 | Multikollinearität | `multicollinearity` |
-| Erklärter Varianzanteil · R² | `explained_variance` |
+| Erklärter Varianzanteil (R²) | `explained_variance` |
 | Überanpassung | `overfitting` |
 | Vorhersageintervall | `prediction_interval` |
-| Confounding · gemeinsame Ursachen | `confounding` |
-| Kausalität · was würde sich ändern? | `causality` |
+| Confounding (gemeinsame Ursachen) | `confounding` |
+| Kausalität: Was würde sich ändern? | `causality` |
 | Zufällige Zuweisung | `random_assignment` |
 
 ### Messung und Skalenbildung

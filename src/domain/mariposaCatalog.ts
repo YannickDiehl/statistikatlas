@@ -1140,7 +1140,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "ancova",
-  "title": "Kovarianzanalyse · ANCOVA",
+  "title": "Kovarianzanalyse (ANCOVA)",
   "region": "groups",
   "intro": "Verbinde Gruppenvergleiche mit metrischen Kovariaten. Adjustierte Mittel sind Modellvorhersagen bei festgelegten Kovariatenwerten.",
   "formula": "Y = μ + A + βX + ε → [[adjustierte Mittel|prediction|Vorhersage bei Kovariatenmittelwerten]]",
@@ -1483,7 +1483,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "wilcoxon_test",
-  "title": "Wilcoxon · verbunden",
+  "title": "Wilcoxon, verbunden",
   "region": "groups",
   "intro": "Vergleiche zwei Messungen derselben Personen mit dem Vorzeichen-Rang-Test. Entscheidend sind die geordneten absoluten Differenzen und ihre Vorzeichen.",
   "formula": "dᵢ = [[yᵢ−xᵢ|paired_difference|Differenzen derselben Personen]]; V = W⁺ = Σ [[R(|dᵢ|)|ranks|Mittlere Ränge der Differenzbeträge]] für dᵢ > 0",
@@ -1801,7 +1801,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "chi_square",
-  "title": "Chi-Quadrat · Unabhängigkeit",
+  "title": "Chi-Quadrat (Unabhängigkeit)",
   "region": "categorical",
   "intro": "Prüfe, ob die gemeinsame Verteilung zweier kategorialer Merkmale mit Unabhängigkeit vereinbar ist.",
   "formula": "χ² = Σ ([[Oⱼₖ|crosstab|Beobachtete Zellzahl]] − [[Eⱼₖ|expected|Erwartete Zellzahl]])² / Eⱼₖ",
@@ -1873,7 +1873,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "chisq_gof",
-  "title": "Chi-Quadrat · Anpassung",
+  "title": "Chi-Quadrat (Anpassung)",
   "region": "categorical",
   "intro": "Vergleiche eine beobachtete Kategorienverteilung mit einer vorab festgelegten Verteilung. Ohne expected nimmt mariposa gleiche Wahrscheinlichkeiten an.",
   "formula": "χ² = Σ ([[Oⱼ|frequency|Beobachtete Häufigkeit]] − n p₀ⱼ)² / (n p₀ⱼ)",
@@ -1921,7 +1921,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "fisher_test",
-  "title": "Fisher · exakter Test",
+  "title": "Exakter Test nach Fisher",
   "region": "categorical",
   "intro": "Prüfe Unabhängigkeit anhand der möglichen Kreuztabellen bei festen Randhäufigkeiten. Das funktioniert auch bei kleinen Zellzahlen.",
   "formula": "P(Tabelle | Ränder) → [[p exakt|p_value|Summe mindestens ebenso ungewöhnlicher Tabellen]]",
@@ -2027,14 +2027,14 @@ export const mariposaEntries:AtlasEntry[]=[
   "id": "phi",
   "title": "Phi",
   "region": "categorical",
-  "intro": "Beschreibe die Zusammenhangsstärke zweier binärer Merkmale. mariposa liefert einen nichtnegativen Wert.",
-  "formula": "φ = √([[χ²|chi_square|Unkorrigierte Chi-Quadrat-Prüfgröße]] / [[n|validn|Anzahl Fälle]])",
+  "intro": "Beschreibe Stärke und Richtung des Zusammenhangs zweier binärer Merkmale. Bei einer 2×2-Tabelle liefert mariposa φ mit Vorzeichen.",
+  "formula": "|φ| = √([[χ²|chi_square|Unkorrigierte Chi-Quadrat-Prüfgröße]] / [[n|validn|Anzahl Fälle]])",
   "requires": [],
   "notes": [
-   "Bei 2×2 ist das der Betrag der Pearson-Korrelation zweier 0/1-Indikatoren. Er zeigt keine Richtung.",
-   "Das Paket erzwingt 2×2 nicht; bei größeren Tabellen kann Phi über 1 liegen. Der Atlas bietet dafür Cramér-V."
+   "Bei 2×2 ist φ die Pearson-Korrelation zweier 0/1-Indikatoren, mit dem Vorzeichen von ad − bc (Produkt der Diagonale minus Produkt der Gegendiagonale). Positiv heißt: Wer bei dem einen Merkmal eine 1 hat, hat eher auch bei dem anderen eine 1. Das Vorzeichen hängt also an der Kodierung.",
+   "Das Paket erzwingt 2×2 nicht; bei größeren Tabellen ist Phi √(χ²/n) ohne Vorzeichen und kann über 1 liegen. Der Atlas bietet dafür Cramér-V."
   ],
-  "output": "Einheitenfreie Stärke des binären Zusammenhangs.",
+  "output": "Einheitenfreie Stärke des binären Zusammenhangs, bei 2×2 mit Richtung zwischen −1 und +1.",
   "variants": [
    {
     "label": "Zwei binäre Merkmale",
@@ -2434,7 +2434,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "reliability",
-  "title": "Reliabilität · Alpha & Omega",
+  "title": "Reliabilität: Alpha und Omega",
   "region": "scales",
   "intro": "Beschreibe die interne Konsistenz zusammengehöriger Items. Alpha verwendet Item- und Summenvarianzen; Omega verwendet ein Einfaktor-Modell.",
   "formula": "α = k/(k−1) · (1 − Σ[[sⱼ²|variance|Varianz einzelner Items]] / [[s²Summe|item_score|Varianz des Summenwerts]]); ω = (Σλⱼ)² / ((Σλⱼ)² + Σθⱼ)",
@@ -2958,7 +2958,7 @@ export const mariposaEntries:AtlasEntry[]=[
  },
  {
   "id": "pomps",
-  "title": "POMPS · Skalen auf 0–100",
+  "title": "POMPS (Skalen auf 0–100)",
   "region": "scales",
   "intro": "Rechne eine Antwort anhand ihrer theoretischen Skalenendpunkte in Prozent des möglichen Wertebereichs um.",
   "formula": "POMP = 100 · ([[x|series|Beobachteter Wert]] − min) / (max − min)",

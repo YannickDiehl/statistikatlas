@@ -14,7 +14,7 @@ export const pairwiseWilcoxonCard: ConceptCard = {
   wofuer: 'Im Lehrdatensatz lösen die Befragten zu drei Messzeitpunkten unterschiedlich viele Aufgaben im Wissenstest. Gäbe es keine Unterschiede zwischen den Zeitpunkten, wäre ein so großes Q nach Friedman sehr überraschend (p < 0,001). Aber zwischen welchen Zeitpunkten liegt der Unterschied?',
   kurz: 'Der paarweise Wilcoxon-Test vergleicht nach Friedman jedes Paar von Messzeitpunkten mit dem Wilcoxon-Test für verbundene Stichproben. Die p-Werte werden für die Zahl der Vergleiche korrigiert.',
   stellDirVor: {
-    text: 'Vom ersten zum zweiten Messzeitpunkt verbessern sich 115 Befragte, 53 werden schlechter. Vom zweiten zum dritten verbessern sich 108, und 65 werden schlechter: Der Schritt ist kleiner, r ≈ 0,29 statt 0,41. Drei Zeitpunkte ergeben drei Paare, und nach der Holm-Korrektur liegen die p-Werte aller drei unter α = 0,05.',
+    text: 'Vom ersten zum zweiten Messzeitpunkt verbessern sich 115 Befragte, 53 werden schlechter. Vom zweiten zum dritten verbessern sich 108, und 65 werden schlechter. Der Schritt ist kleiner: Die Effektgröße r sinkt von 0,41 auf 0,29. Drei Zeitpunkte ergeben drei Paare, und nach der Holm-Korrektur liegen die p-Werte aller drei unter α = 0,05.',
     figures: [
       { label: 'Paare', value: '3' },
       { label: 'erster gegen zweiten', value: 'r ≈ 0,41' },

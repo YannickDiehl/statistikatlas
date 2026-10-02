@@ -149,7 +149,7 @@ export const sortingTabs: ConceptTabs = {
     result: c => {
       const r = lernzeit(c);
       return {
-        kurz: `Am wenigsten hat jemand mit ${num(r.min)} h gelernt (x₍₁₎), am meisten jemand mit ${num(r.max)} h (x₍${tief(r.n)}₎). Der Median, der mittlere Wert der Reihe nach, liegt bei ${num(r.median)} h: Die eine Hälfte lernt höchstens so lange, die andere mindestens so lange.`,
+        kurz: `Am wenigsten hat jemand ${num(r.min)} h gelernt (x₍₁₎), am meisten jemand ${num(r.max)} h (x₍${tief(r.n)}₎). Der Median, der mittlere Wert der Reihe nach, liegt bei ${num(r.median)} h. Die eine Hälfte hat höchstens so lange gelernt, die andere mindestens so lange.`,
         fachlich: r.n % 2 === 0
           ? `Ordnungsstatistiken der Lernzeit: Minimum x₍₁₎ = ${num(r.min)} h, Maximum x₍${tief(r.n)}₎ = ${num(r.max)} h; der Median ist der Durchschnitt der Werte an den Positionen ${r.n / 2} und ${r.n / 2 + 1}, ${num(r.unten)} h und ${num(r.oben)} h.`
           : `Ordnungsstatistiken der Lernzeit: Minimum x₍₁₎ = ${num(r.min)} h, Maximum x₍${tief(r.n)}₎ = ${num(r.max)} h; der Median ist der Wert an Position ${(r.n + 1) / 2}, ${num(r.median)} h.`,

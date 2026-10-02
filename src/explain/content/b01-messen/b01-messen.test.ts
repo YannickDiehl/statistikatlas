@@ -259,6 +259,10 @@ test('B1 Messfehler: Messmodell, Regler und Reiter wie in R', () => {
   const t1 = col('wissenstest'), t2 = col('wissenstest_t2');
   assert.ok(close(t1.reduce((a, b) => a + b, 0) / 200, MF.wissenT1, 1e-9) && close(t2.reduce((a, b) => a + b, 0) / 200, MF.wissenT2, 1e-9), 'Mittelwerte der zwei Zeitpunkte wie in R');
   assert.match(measurementError.genau.paragraphs[0], /beim zweiten Mal 0,75 Aufgaben mehr \(10,13 gegen 10,88\)/);
+  // r misst die Lage der Personen zueinander (z-Werte), nicht die Rangfolge; eine Verschiebung aller ändert r nicht.
+  assert.match(measurementError.genau.paragraphs[0], /ihre Lage zueinander weitgehend behalten\. Dass alle im Schnitt 0,75 Aufgaben mehr lösen, ändert r nicht\./);
+  assert.ok(close(pearson(t1, t2.map(v => v - 0.75))!, pearson(t1, t2)!, 1e-12), 'r ohne die Verschiebung um 0,75 gleich');
+  assert.match(missingMechanisms.bausteine[0].acht!, /nur unter denen, für die der Fragebogen geteilt war\./);
   assert.match(measurementError.bausteine[2].rechnung!, /Var\(X\) = 10,48 h² \+ 4 h² = 14,48 h²\. Echt sind 10,48 \/ 14,48 ≈ 0,72 davon\./);
   assert.match(measurementError.regler!.describe(2), /wächst die Streuung auf 14,48 h²\. Nur 72 % davon sind echt, .* von 0,54 auf etwa 0,46\./);
   assert.match(measurementError.ausprobieren[1].explain, /auf etwa 0,4\./);

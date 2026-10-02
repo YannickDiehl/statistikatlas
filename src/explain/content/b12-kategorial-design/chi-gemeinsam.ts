@@ -17,8 +17,13 @@ export function chiParts(o: number[], e: number[], df: number): ChiParts {
 
 /** Deutsche Zahl zurück in eine Zahl („1.234,5“ → 1234.5, „−3“ → −3). */
 const parse = (t: string) => Number(t.replace(/\./g, '').replace(',', '.').replace('−', '-'));
+/**
+ * Rundet wie auf dem Papier: Ein genaues Halb rundet vom Nullpunkt weg, auch wenn die Gleitkommazahl knapp darunter
+ * liegt (19,865 · 100 ergibt 1986,4999…; im Alter-Beispiel ist der Beitrag von Zelle d genau 19,865).
+ */
+const onPaper = (v: number, digits: number) => Math.sign(v) * Math.round(Number((Math.abs(v) * 10 ** digits).toPrecision(12))) / 10 ** digits;
 /** Beitrag zu χ²: zwei Nachkommastellen, unter 0,1 zwei gültige Ziffern („0,025“). */
-export const partText = (v: number) => num(v, v > 0 && v < 0.1 ? 3 : 2);
+export const partText = (v: number) => { const d = v > 0 && v < 0.1 ? 3 : 2; return num(onPaper(v, d), d); };
 /** „=“, wenn die angezeigte Zahl genau stimmt, sonst „≈“. */
 export const eqFor = (shown: string, v: number) => Math.abs(parse(shown) - v) < 1e-9 ? '=' : '≈';
 

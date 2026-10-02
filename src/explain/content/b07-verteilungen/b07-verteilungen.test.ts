@@ -121,6 +121,8 @@ test('B7 t-Verteilung: t-Test der Schlafdauer gegen 7 Stunden und Grenzen wie in
   assert.match(tVerteilung.wofuer, /^Schlafen die 200 Befragten im Mittel anders lange als 7 Stunden pro Nacht\? Ihr Mittel liegt knapp 5 Minuten darüber\./);
   assert.match(tVerteilung.stellDirVor.text, /^Die 200 Befragten schlafen im Mittel 7,08 Stunden pro Nacht, 4,95 Minuten länger als 7 Stunden\. .* 3,48 Minuten: t ≈ 1,42 bei 199 Freiheitsgraden\./);
   assert.match(tVerteilung.bausteine[2].rechnung!, /±2,78\. .* ±2,04\. .* ±1,97\./);
+  // s ist die Streuung der Befragten; geschätzt wird damit die unbekannte wahre Streuung (Kompakt nennt beides).
+  assert.match(tVerteilung.bausteine[1].was, /^Statt mit der wahren Streuung rechnet t mit s, der Streuung der Befragten\. Deshalb schwankt t etwas stärker als ein z-Wert/);
   assert.equal(tVerteilung.regler!.describe(4), 'Bei 4 Freiheitsgraden liegen die äußeren 5 % jenseits von ±2,78, bei der Standardnormalverteilung jenseits von ±1,96. Der t-Test der Schlafdauer hat 199 Freiheitsgrade. Hätte er nur 4, käme ohne Unterschied ein t von 1,42 oder weiter außen in etwa 23 von 100 Stichproben vor.');
   assert.match(tVerteilung.regler!.describe(199), /Der t-Test der Schlafdauer hat 199 Freiheitsgrade: Gäbe es keinen Unterschied, käme ein t von 1,42 oder weiter außen in etwa 16 von 100 Stichproben vor\.$/);
   assert.match(tVerteilung.regler!.describe(200), /Hätte er 200, käme/);
@@ -192,17 +194,21 @@ test('B7 F-Verteilung: ANOVA der Lernzeit nach Schulabschluss wie in R', async (
   const ctx: SampleCtx = { rows, columns: { x: ['lernzeit'], group: ['schulabschluss'] } }, f = fFit(ctx)!;
   ok(f.f, 8.638858, 'F'); assert.deepEqual([f.df1, f.df2, f.k], [4, 195, 5]); ok(f.msb, 78.49563, 'MS zwischen', 1e-4); ok(f.msw, 9.086344, 'MS innerhalb', 1e-5);
   ok(f.between, 313.9825, 'SS zwischen', 1e-3); ok(f.inside, 1771.837, 'SS innerhalb', 1e-3); ok(f.crit, 2.417963, 'Grenze'); ok(f.p, 1.936406e-6, 'p', 1e-9);
-  ok(f.lowest, 5.883333, 'kleinstes Gruppenmittel');
+  ok(f.lowest, 5.883333, 'kleinstes Gruppenmittel'); ok(f.highest, 9.355, 'größtes Gruppenmittel');
   // Nur noch eine Gruppe: keine ANOVA, aber ein lesbarer Text statt eines Fehlers.
   const one = { rows: applyOp(rows, 'schulabschluss', 'constant', 2), columns: ctx.columns };
   assert.equal(fFit(one), null);
-  if (fTabs.sample?.kind === 'analysis') { assert.match(fTabs.sample.result(one).kurz, /einer einzigen Gruppe/); assert.equal(fTabs.sample.value!(one), null); } ok(f.highest, 9.355, 'größtes Gruppenmittel');
+  if (fTabs.sample?.kind === 'analysis') { assert.match(fTabs.sample.result(one).kurz, /einer einzigen Gruppe/); assert.equal(fTabs.sample.value!(one), null); }
   for (const [k, v] of Object.entries({ f: f.f, msb: f.msb, msw: f.msw, crit: f.crit })) ok(ANOVA[k as 'f'], v, `ANOVA.${k}`, 1e-4);
   [[1, 0.408754], [2, 0.0960657], [2.42, 0.0498391], [3, 0.0196893], [5, 0.000739]].forEach(([v, p]) => ok(fTail(v), p, `pf(${v})`, 1e-6));
   ok(qf(0.95, 4, 195), 2.417963, 'qf');
   for (const d of [applyOp(rows, 'lernzeit', 'double'), applyOp(rows, 'lernzeit', 'shift', 1)]) ok(fFit({ rows: d, columns: ctx.columns })!.f, 8.638858, 'F bleibt');
   assert.match(fVerteilung.stellDirVor.text, /zwischen 5,9 Stunden \(ohne Schulabschluss\) und 9,4 Stunden \(Abitur\).* F ≈ 8,64 bei 4 und 195 .* unter 2,42\./);
   assert.match(fVerteilung.bausteine[0].rechnung!, /^Quadratsumme zwischen den Gruppen 313,98: .* 313,98 \/ 4 ≈ 78,5\.$/);
+  // SS zwischen = Σ über alle Personen (Gruppenmittel − Gesamtmittel)² = 313,9825 (R): „für jede Person zusammengezählt“.
+  assert.match(fVerteilung.bausteine[0].rechnung!, /zur Mitte aller 200, für jede Person zusammengezählt\./);
+  assert.match(fVerteilung.bausteine[1].was, /zum eigenen Gruppenmittel, zusammengezählt und geteilt durch die Freiheitsgrade\./);
+  assert.match(fVerteilung.bausteine[1].rechnung!, /jeder Person zum Mittel ihrer Gruppe, zusammengezählt\./);
   assert.match(fVerteilung.bausteine[1].rechnung!, /^Quadratsumme innerhalb der Gruppen 1\.771,84: .* 1\.771,84 \/ 195 ≈ 9,09\.$/);
   assert.equal(fVerteilung.bausteine[2].rechnung, 'F = 78,5 / 9,09 ≈ 8,64.');
   assert.equal(Math.round(78.5 / 9.09 * 100) / 100, 8.64, 'die Rechnung geht mit den sichtbaren Zahlen auf');
@@ -294,12 +300,15 @@ test('B7 Binomialverteilung: Reihenfolgen, Wahrscheinlichkeit und Binomialtest w
  *   atlas %>% fisher_test(row = weiterbildung, col = erwerbstaetig)            # p = 0.440, OR = 1.315 [0.712, 2.432], N = 200
  *   atlas %>% fisher_test(row = weiterbildung)          # Fehler: Argument `col` is missing, with no default.
  */
-test('B7 Hypergeometrische Verteilung: 10 aus 200 und der Test von Fisher wie in R', async () => {
+test('B7 Hypergeometrische Verteilung: 10 aus 200 und der Test nach Fisher wie in R', async () => {
   const { HYPER, fisherFit, hypergeometrisch, hyperTabs, spread } = await import('./hypergeometric');
   const { dhyper, dbinom, choose } = await import('./dist');
   const probs = Array.from({ length: 11 }, (_, k) => dhyper(k, 82, 200, 10));
   assert.equal(probs.indexOf(Math.max(...probs)), 4); ok(probs[4], 0.2567104, 'dhyper(4)'); ok(HYPER.p4, probs[4], 'HYPER.p4'); ok(dbinom(4, 10, 0.41), HYPER.b4, 'dbinom(4)');
   ok(probs.reduce((a, b) => a + b, 0), 1, 'Summe 1');
+  // Ein Name für den Test auf der ganzen Karte: der Kartentitel „Exakter Test nach Fisher“ (Regel 2).
+  const shown = JSON.stringify([hypergeometrisch.wofuer, hypergeometrisch.bausteine, hypergeometrisch.genau, hyperTabs.sample, hyperTabs.r, hyperTabs.next]);
+  assert.ok(!shown.includes('von Fisher') && hypergeometrisch.bausteine.some(b => b.title === 'Den exakten Test nach Fisher verstehen'), 'Fisher heißt überall „nach Fisher“');
   ok(spread(10).without, 1.519736, 'SD ohne'); ok(spread(10).with, 1.555313, 'SD mit'); ok(spread(200).with, 6.955573, 'SD mit, 200'); ok(spread(200).without, 0, 'SD ohne, 200');
   assert.deepEqual([choose(4, 1) * choose(6, 2), choose(10, 3)], [60, 120]); ok(dhyper(1, 4, 10, 3), 0.5, 'kleine Gruppe'); ok(dbinom(1, 3, 0.4), 0.432, 'mit Zurücklegen');
   ok(dhyper(2, 2, 6, 2), 1 / 15, 'Kontrollfrage');
@@ -327,26 +336,26 @@ test('B7 Wortlaut: Streuung ohne Zurücklegen, übersetzte Fachwörter, du-Form,
   const { standardnormal } = await import('./standard-normal');
   const { bernoulli } = await import('./bernoulli');
   const { binomial, binomialTabs } = await import('./binomial');
-  // I2: ohne Zurücklegen nie mehr Streuung als mit, gleich nur bei n = 1, bei 200 keine.
+  // Ohne Zurücklegen nie mehr Streuung als mit, gleich nur bei n = 1, bei 200 keine.
   for (let n = 1; n <= 200; n++) { const s = spread(n); assert.ok(s.without <= s.with + 1e-12 && (n === 1 || s.without < s.with), `n = ${n}`); }
   ok(spread(1).without, spread(1).with, 'n = 1 gleich'); ok(spread(100).without, 3.486514, 'n = 100'); assert.equal(spread(200).without, 0);
   assert.equal(hypergeometrisch.ausprobieren[0].kurz, 'Ohne Zurücklegen streut das Ergebnis weniger als mit Zurücklegen, sobald du mehr als eine Person ziehst. Ziehst du alle 200, bleibt kein Zufall.');
-  // I5 und M12
+  // Fisher als Vierfeldertafel, Zählen und Malnehmen, mittlere Quadratsumme, „du“ statt „man“
   assert.match(hypergeometrisch.bausteine[3].was, /^Fisher prüft eine Kreuztabelle mit zwei mal zwei Feldern, eine Vierfeldertafel\./);
   assert.match(hypergeometrisch.bausteine[0].was, /Du zählst beide Teile und nimmst sie mal\./);
   assert.match(fVerteilung.bausteine[0].was, /mittlere Quadratsumme zwischen den Gruppen: ihre Quadratsumme geteilt durch ihre Freiheitsgrade/);
   assert.match(fVerteilung.bausteine[1].acht, /Vertauschst du sie/); assert.match(fVerteilung.ausprobieren[0].explain, /erwartest du/);
   for (const card of [hypergeometrisch, fVerteilung]) for (const b of card.bausteine) assert.ok(!/\bman\b/i.test(`${b.was} ${b.warum} ${b.acht}`), `„man“ in ${b.title}`);
-  // M6
+  // F-Verteilung: mindestens zwei Gruppen, Welch-Test bei ungleicher Varianz
   assert.match(fVerteilung.bausteine[3].acht, /mindestens zwei Gruppen/); assert.match(fVerteilung.genau.kurz, /Bei ungleicher Varianz hilft der Welch-Test\.$/);
-  // M8, M9, M10
+  // Standardnormalverteilung als Anteil, Bernoulli-Deutung und Toleranz der Kontrollfrage
   assert.match(standardnormal.sentence.at(-1) as string, /der Anteil der Werte, die höchstens so groß sind\.$/);
   assert.match(bernoulli.interpret(bernoulli.compute({ p: 0.41 })).kurz, /Ja und Nein kommen beide häufig vor/);
   assert.equal(bernoulli.check.tolerance, 0.011);
-  // M11
+  // Binomial: Rückmeldung 3 / 8 und p-Wert des Binomialtests im Reiter
   assert.match(binomial.check.right, /3 \/ 8, also etwa 0,38\.$/);
   if (binomialTabs.sample?.kind === 'analysis') assert.match(binomialTabs.sample.result({ rows, columns: { x: ['weiterbildung'] } }).fachlich, /B\(n = 200, p = 0,5\).* p-Wert ≈ 0,013\./);
-  // M13, M14
+  // Normalverteilung: Rückmeldung zum p-Wert, Kennzahl „Modell“, Zusatz der hypergeometrischen Auswertung
   assert.match(normalTabs.r!.check.wrong.p, /wenn die Schlafdauer normalverteilt wäre/);
   assert.equal(normalverteilung.stellDirVor.figures![3].label, 'Modell: innerhalb x̄ ± s');
   if (hyperTabs.sample?.kind === 'analysis') assert.match(hyperTabs.sample.result({ rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }).zusatz!, /^Erwerbstätig sind 72,0 % der Befragten mit und 66,1 % der Befragten ohne Weiterbildung\.$/);

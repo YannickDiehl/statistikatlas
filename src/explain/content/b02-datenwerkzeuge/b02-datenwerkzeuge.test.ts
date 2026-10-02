@@ -217,7 +217,7 @@ test('Sortieren: Reihenfolge, Positionen und die 200 wie in R', () => {
   const s = sortingTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const res = s.result(ctx(rows, 'lernzeit'));
-  assert.equal(res.kurz, 'Am wenigsten hat jemand mit 0 h gelernt (x₍₁₎), am meisten jemand mit 18,4 h (x₍₂₀₀₎). Der Median, der mittlere Wert der Reihe nach, liegt bei 7,6 h: Die eine Hälfte lernt höchstens so lange, die andere mindestens so lange.');
+  assert.equal(res.kurz, 'Am wenigsten hat jemand 0 h gelernt (x₍₁₎), am meisten jemand 18,4 h (x₍₂₀₀₎). Der Median, der mittlere Wert der Reihe nach, liegt bei 7,6 h. Die eine Hälfte hat höchstens so lange gelernt, die andere mindestens so lange.');
   assert.match(res.fachlich, /Positionen 100 und 101, 7,6 h und 7,6 h\.$/);
   assert.match(res.zusatz!, /^Unter den 200 Lernzeiten gibt es nur 99 verschiedene Werte/);
   // „steigt deutlich, auf 40“: Für jede der 200 Personen und auch nach dem Verschieben ist x₍₂₀₀₎ danach genau 40 (R: max(replace(x, k, 40))).

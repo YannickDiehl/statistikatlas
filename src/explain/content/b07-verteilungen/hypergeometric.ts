@@ -1,10 +1,11 @@
 // Begriffskarte „Hypergeometrische Verteilung“ (Bereich B7). Beispiel: 10 der 200 Befragten ziehen, 82 haben eine
-// Weiterbildung gemacht; dazu der exakte Test von Fisher für Weiterbildung und Erwerbstätigkeit. Zahlen in R nachgerechnet.
+// Weiterbildung gemacht; dazu der exakte Test nach Fisher für Weiterbildung und Erwerbstätigkeit. Zahlen in R nachgerechnet.
 // Grenzfall Vorlage: Die Formel ist ein Zählen von Auswahlen, das als Rechnung in zwei Bausteinen steht; der Kern ist
 // die Idee „ohne Zurücklegen“ im Vergleich zur Binomialverteilung. Deshalb Begriffskarte mit einem Regler für n.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { fixed, num, unit } from '../../format';
 import { sampleColumn } from '../../sample';
+import { ref, titleFor } from '../../../domain/learning';
 import { dbinom, dhyper, fisherTest, often, prob, pValue } from './dist';
 
 /** 10 aus 200 mit 82 Erfolgen (R: dhyper, dbinom) und die Vierfeldertafel Weiterbildung × Erwerbstätig (R: fisher.test). */
@@ -19,7 +20,7 @@ export const spread = (n: number) => {
 export const hypergeometrisch: ConceptCard = {
   concept: 'hypergeometric_distribution',
   picture: 'b07-hyper',
-  wofuer: 'Du ziehst 10 der 200 Befragten für ein Interview, ohne jemanden zweimal zu ziehen. Wie viele davon haben eine Weiterbildung gemacht? Das beschreibt die hypergeometrische Verteilung. Sie steckt auch im exakten Test von Fisher.',
+  wofuer: 'Du ziehst 10 der 200 Befragten für ein Interview, ohne jemanden zweimal zu ziehen. Wie viele davon haben eine Weiterbildung gemacht? Das beschreibt die hypergeometrische Verteilung. Sie steckt auch im exakten Test nach Fisher.',
   kurz: 'Die hypergeometrische Verteilung zählt Treffer, wenn du aus einer begrenzten Gruppe ohne Zurücklegen ziehst. Jede Ziehung verändert, was für die nächste übrig bleibt.',
   stellDirVor: {
     text: `Unter den 200 Befragten haben ${H.K} in den letzten zwölf Monaten eine Weiterbildung gemacht, ${H.N - H.K} nicht. Du ziehst ${H.n} Personen für ein Interview, ohne jemanden zweimal zu ziehen. Am wahrscheinlichsten sind 4 mit Weiterbildung dabei, mit P ≈ ${prob(H.p4)}. Im Schnitt erwartest du ${H.n} · ${H.K} / ${H.N} = ${num(spread(H.n).e)}.`,
@@ -60,7 +61,7 @@ export const hypergeometrisch: ConceptCard = {
       concept: 'binomial_distribution',
     },
     {
-      title: 'Den exakten Test von Fisher verstehen',
+      title: 'Den exakten Test nach Fisher verstehen',
       was: 'Fisher prüft eine Kreuztabelle mit zwei mal zwei Feldern, eine Vierfeldertafel. Er fragt: Wie wahrscheinlich ist genau diese Verteilung auf die vier Felder, wenn die Summen je Zeile und je Spalte feststehen?',
       rechnung: `Von den ${H.row1} mit Weiterbildung sind ${H.a} erwerbstätig, zu erwarten wären ${num(H.expected)}. Gäbe es keinen Zusammenhang, käme eine mindestens so große Abweichung ${often(H.fisherP)} Stichproben vor (R: p = 0.440).`,
       warum: 'Stehen diese Summen fest, reicht ein Feld; die anderen drei folgen daraus. Die Zahl in diesem Feld ist hypergeometrisch verteilt.',
@@ -115,13 +116,13 @@ export const hypergeometrisch: ConceptCard = {
     paragraphs: [
       'P(X = k) = C(K, k) · C(N − K, n − k) / C(N, n). Die möglichen Werte reichen von max(0, n − (N − K)) bis min(n, K).',
       `Varianz: n · K / N · (1 − K / N) · (N − n) / (N − 1). Der letzte Faktor heißt Endlichkeitskorrektur. Bei 10 aus 200 ist er 190 / 199 ≈ ${num(190 / 199)}.`,
-      'Beim exakten Test von Fisher hält man die Randsummen der Vierfeldertafel fest, also die Summen je Zeile und je Spalte. Die Zahl in einer Zelle ist dann unter der Nullhypothese hypergeometrisch verteilt. Der p-Wert summiert alle Tafeln, die höchstens so wahrscheinlich sind wie die beobachtete.',
+      'Beim exakten Test nach Fisher hält man die Randsummen der Vierfeldertafel fest, also die Summen je Zeile und je Spalte. Die Zahl in einer Zelle ist dann unter der Nullhypothese hypergeometrisch verteilt. Der p-Wert summiert alle Tafeln, die höchstens so wahrscheinlich sind wie die beobachtete.',
       `In R liefert dhyper(4, 82, 118, 10) die Wahrscheinlichkeit für genau 4 Treffer, ${prob(dhyper(4, H.K, H.N, H.n))}.`,
     ],
   },
 };
 
-/** Vierfeldertafel Weiterbildung × Erwerbstätig in den aktuellen Daten und der exakte Test von Fisher. */
+/** Vierfeldertafel Weiterbildung × Erwerbstätig in den aktuellen Daten und der exakte Test nach Fisher. */
 export function fisherFit(c: SampleCtx) {
   const xs = sampleColumn(c.rows, c.columns.x?.[0] ?? 'weiterbildung'), ys = sampleColumn(c.rows, c.columns.y?.[0] ?? 'erwerbstaetig');
   const cnt = (x: number, y: number) => xs.filter((v, i) => v === x && ys[i] === y).length;
@@ -132,13 +133,13 @@ export function fisherFit(c: SampleCtx) {
 export const hyperTabs: ConceptTabs = {
   sample: {
     kind: 'analysis', columns: { x: 'weiterbildung', y: 'erwerbstaetig' },
-    kurz: 'Dieselbe Verteilung mit allen 200 Befragten: Hängt eine Weiterbildung mit der Erwerbstätigkeit zusammen? Der exakte Test von Fisher prüft das.',
+    kurz: 'Dieselbe Verteilung mit allen 200 Befragten: Hängt eine Weiterbildung mit der Erwerbstätigkeit zusammen? Der exakte Test nach Fisher prüft das.',
     value: c => fisherFit(c).p,
     result: c => {
       const f = fisherFit(c), rest = f.n - f.row1;
       return {
         kurz: `Von den ${f.row1} Befragten mit Weiterbildung sind ${f.a} erwerbstätig; bei festen Summen je Zeile und Spalte wären ${num(f.expected)} zu erwarten. Gäbe es keinen Zusammenhang, käme eine mindestens so große Abweichung ${often(f.p)} Stichproben vor.`,
-        fachlich: `Exakter Test von Fisher, zweiseitig: Vierfeldertafel ${f.a}, ${f.b}, ${f.c}, ${f.d}. Bei festen Randsummen ist die erste Zelle hypergeometrisch verteilt mit Erwartungswert ${num(f.expected)}; p ${pValue(f.p)}.`,
+        fachlich: `Exakter Test nach Fisher, zweiseitig: Vierfeldertafel ${f.a}, ${f.b}, ${f.c}, ${f.d}. Bei festen Randsummen ist die erste Zelle hypergeometrisch verteilt mit Erwartungswert ${num(f.expected)}; p ${pValue(f.p)}.`,
         zusatz: f.row1 > 0 && rest > 0
           ? `Erwerbstätig sind ${fixed(f.a / f.row1 * 100, 1)} % der Befragten mit und ${fixed(f.c / rest * 100, 1)} % der Befragten ohne Weiterbildung.`
           : 'Alle stehen jetzt in einer Zeile der Tafel; einen Vergleich gibt es nicht mehr.',
@@ -147,7 +148,7 @@ export const hyperTabs: ConceptTabs = {
     voraussetzung: 'Der Test hält die Summen je Zeile und Spalte fest: wie viele eine Weiterbildung gemacht haben und wie viele erwerbstätig sind. Die Befragten sind unabhängig voneinander.',
     think: [
       {
-        question: 'Weiterbildung wird umgepolt: 1 heißt jetzt keine Weiterbildung. Was passiert mit dem p-Wert von Fisher?',
+        question: 'Weiterbildung wird umgepolt: 1 heißt jetzt keine Weiterbildung. Was passiert mit dem p-Wert des Tests nach Fisher?',
         options: ['bleibt gleich', 'steigt', 'sinkt'], correct: 0,
         explain: 'Die beiden Zeilen der Tafel tauschen nur die Plätze. Die hypergeometrische Verteilung spiegelt sich mit, der zweiseitige p-Wert bleibt.',
         kurz: 'Umpolen ändert die Beschriftung, nicht den Zusammenhang.',
@@ -167,7 +168,7 @@ export const hyperTabs: ConceptTabs = {
   r: {
     entry: 'fisher_test', variant: 0,
     tokens: {
-      fisher_test: { sym: 'fisher_test()', term: 'Exakter Test von Fisher', kurz: 'Rechnet den exakten Test von Fisher für zwei Spalten mit Kategorien. Bei einer Vierfeldertafel nutzt er die hypergeometrische Verteilung.', fehler: 'Ohne zweite Spalte meldet mariposa: Argument `col` is missing, with no default.' },
+      fisher_test: { sym: 'fisher_test()', term: titleFor(ref('fisher_test')), kurz: 'Rechnet den exakten Test nach Fisher für zwei Spalten mit Kategorien. Bei einer Vierfeldertafel nutzt er die hypergeometrische Verteilung.', fehler: 'Ohne zweite Spalte meldet mariposa: Argument `col` is missing, with no default.' },
     },
     outputMap: [
       { match: 'p', atlas: 'p-Wert', step: 4, explain: 'Gäbe es keinen Zusammenhang, käme eine mindestens so große Abweichung in etwa 44 von 100 Stichproben vor. Die Wahrscheinlichkeiten liefert die hypergeometrische Verteilung.' },
@@ -189,7 +190,7 @@ export const hyperTabs: ConceptTabs = {
       { id: 'binomial_distribution', why: 'Dasselbe Zählen mit Zurücklegen, also mit festem p.' },
     ],
     after: [
-      { id: 'crosstab', why: 'Die Vierfeldertafel, deren Zellen der Test von Fisher betrachtet.' },
+      { id: 'crosstab', why: 'Die Vierfeldertafel, deren Zellen der Test nach Fisher betrachtet.' },
     ],
     more: [
       { id: 'random_sampling', why: 'Bei Umfragen wird ohne Zurücklegen gezogen; bei großen Bevölkerungen spielt das kaum eine Rolle.' },

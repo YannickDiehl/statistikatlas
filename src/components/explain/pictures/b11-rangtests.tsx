@@ -31,15 +31,15 @@ function DotRows({ rows, bounds, axisTitle, who, onPick, onChange, label, tickSt
 }) {
   const [box, W] = useWidth();
   const left = 40, right = W - 26 - textWidth(noteChars), X = linear([bounds.min, bounds.max], [left, right]);
-  // Mehrere Punkte je Zeile stehen versetzt übereinander, damit nahe Werte lesbar bleiben: gleiche Werte ganz getrennt
-  // (22 px, Kreise berühren sich nicht), benachbarte 14 px, sonst 10 px.
+  // Mehrere Punkte je Zeile stehen versetzt übereinander, immer 22 px, damit auch gleiche Werte lesbar bleiben. Fest,
+  // damit Zeilen und Achse beim Ziehen nicht springen. Bei gleichem Wert berühren sich die Kreise gerade (Radius 11);
+  // in der gewählten Zeile (Radius 13) überlappen sie um 4 px, die Ziffern darin bleiben getrennt.
   const heads = rows.filter(r => r.head).length, HEAD = 24;
-  const gap = (r: Row) => Math.min(...r.points.flatMap((a, i) => r.points.filter((_, j) => j !== i).map(b => Math.abs(a.value - b.value))), Infinity);
-  const shift = rows.map(r => gap(r) < 0.5 ? 22 : gap(r) <= 1 ? 14 : 10);
+  const SHIFT = 22;
   const ys: number[] = [];
   let y = 22;
-  rows.forEach((r, k) => { const half = (r.points.length - 1) * shift[k] / 2; if (r.head) y += HEAD; y += half; ys.push(y); y += 30 + half; });
-  const py = (row: number, j: number) => ys[row] + (j - (rows[row].points.length - 1) / 2) * shift[row];
+  rows.forEach((r, k) => { const half = (r.points.length - 1) * SHIFT / 2; if (r.head) y += HEAD; y += half; ys.push(y); y += 30 + half; });
+  const py = (row: number, j: number) => ys[row] + (j - (rows[row].points.length - 1) / 2) * SHIFT;
   const AXIS = y - 6, H = AXIS + 50;
   const flat = rows.flatMap((r, k) => r.points.map((p, j) => ({ ...p, row: k, j })));
   const { svg, start, handlers } = useDrag((i, p) => { const pt = flat[i]; const v = clamp(X.invert(p.x), bounds); if (v !== pt.value) onChange(pt.at, v); });

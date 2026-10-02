@@ -13,6 +13,7 @@ import { SEITEN, seiten } from './seiten';
 import { ANTEIL, alpha } from './alpha';
 import { kritisch } from './kritisch';
 import { betaFor, fehlerarten } from './fehlerarten';
+import { tabsFor } from '../../registry';
 import { teststaerke } from './teststaerke';
 import { DF, freiheitsgrade } from './freiheitsgrade';
 import { exakt, vergleich } from './exakt';
@@ -147,6 +148,9 @@ test('B9 Prüfgröße: t für die Schlafdauer wie in R, mit den sichtbaren Zahle
   const flat = (ns: unknown[]): string => ns.map(n => typeof n === 'string' ? n : n && typeof n === 'object' && 'part' in n ? flat((n as { part: unknown[] }).part) : '').join('');
   assert.equal(flat(pruefgroesse.numeric(s)), 't = 0,083 / (0,82 / √200) ≈ 0,083 / 0,058 ≈ 1,43, mit allen Nachkommastellen ≈ 1,42');
   assert.equal(flat(pruefgroesse.numeric(pruefgroesse.compute({ d: 0.2, s: 1, n: 100 }))), 't = 0,2 / (1 / √100) ≈ 0,2 / 0,1 ≈ 2');
+  // Mit Rundungshinweis bleibt das Ergebnis antippbar: der genaue Wert trägt die Markierung von t.
+  const tail = pruefgroesse.numeric(s).at(-1) as { part: unknown[]; m: string };
+  assert.deepEqual([tail.part, tail.m], [['1,42'], 't'], 'Ergebnis t markiert');
   assert.match(pruefgroesse.kurz, /gemessen am üblichen Schwanken von Stichprobe zu Stichprobe/);
   assert.match(pruefgroesse.fehler, /0,08 Stunden sind bei 200 Befragten etwa 1,4 Standardfehler, bei 20\.000 Befragten wären es über 14\./);
   assert.match(pruefgroesse.interpret(s).kurz, /1,42 Standardfehler über dem Vergleichswert\. .*ein mindestens so großer Abstand in etwa 16 von 100 Stichproben/);
@@ -210,6 +214,10 @@ test('B9 Signifikanzniveau: Weiterbildung gegen 50 % wie in R, Entscheidung je n
   assert.match(alpha.regler!.describe(0.05), /Mit α = 0,05 liegt p ≈ 0,013 darunter: .*signifikant\. .*in höchstens 5 % der Studien/);
   assert.match(alpha.bausteine[2].acht, /Quote über viele Studien, in denen es in Wahrheit keinen Unterschied gibt\./);
   assert.match(alpha.check.diagnose[0]!, /ohne echten Unterschied: In etwa 5 von 100 davon meldet der Test trotzdem einen\./);
+  // Frage und Rückmeldungen nennen dieselbe Schwelle wie mariposa: ein Stern bei p ≤ 0,05.
+  const starCheck = tabsFor('alpha_level')!.r!.check!;
+  assert.match(starCheck.question, /dass p höchstens 0,05 ist\?/);
+  for (const w of Object.values(starCheck.wrong)) assert.match(w, /p ≤ 0,05/);
   assert.match(alpha.regler!.describe(0.01), /p ≈ 0,013 darüber: Du verwirfst H₀ nicht\. .*in höchstens 1 % der Studien/);
   assert.match(alpha.regler!.describe(0.013), /p ≈ 0,0131 knapp darüber/);
   assert.match(alpha.regler!.describe(0.014), /p ≈ 0,0131 knapp darunter/);
@@ -243,6 +251,9 @@ test('B9 Fehlerarten: Übersehen einer Stunde Unterschied wie in R', () => {
   assert.match(fehlerarten.regler!.describe(0.05), /in etwa 5 % der Studien .*in 43 % der Studien/);
   assert.match(fehlerarten.regler!.describe(0.001), /in etwa 0,1 % der Studien .*in 87 % der Studien/);
   assert.match(fehlerarten.genau.paragraphs[0], /Φ\(1 \/ 0,47 − 1,96\) ≈ 0,57, also β ≈ 0,43\./);
+  // R: 1 - 0.95^20 = 0.6415141 (mindestens ein Fehler erster Art bei 20 unabhängigen Tests ohne echten Unterschied).
+  assert.ok(close(1 - 0.95 ** 20, 0.6415141, 1e-7), '1 − 0,95²⁰');
+  assert.ok(fehlerarten.genau.paragraphs.some(p => /Rechnet eine Studie 20 unabhängige Tests ohne echten Unterschied mit α = 0,05, passiert er in etwa 64 von 100 solchen Studien mindestens einmal\./.test(p)), 'Mehrfachtests ohne „fast sicher“');
   assert.match(result('type_errors').kurz, /0,47 Stunden, übersähe .* in 43 % der Studien\./);
   const doubled = gruppenTest({ rows: applyOp(rows, 'lernzeit', 'double'), columns: { x: ['lernzeit'], group: ['weiterbildung'] } })!;
   assert.ok(close(doubled.se, 0.9309868, 1e-6) && close(betaFor(0.05, doubled.se), 0.8109404, 1e-6), 'verdoppelt wie R');

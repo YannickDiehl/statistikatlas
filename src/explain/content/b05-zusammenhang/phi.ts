@@ -166,7 +166,7 @@ export const phiTabs: ConceptTabs = {
   r: {
     entry: 'phi', variant: 0,
     tokens: {
-      phi: { sym: 'phi()', term: T('phi'), kurz: 'Berechnet φ für zwei Spalten. Bei zwei mal zwei Feldern mit Vorzeichen wie Pearson-r der 0/1-Spalten, bei größeren Tabellen √(χ² / n) ohne Vorzeichen.', fehler: 'Mit nur einer Spalte meldet mariposa: Exactly two variables must be specified for `chi_square()`.' },
+      phi: { sym: 'phi()', term: T('phi'), kurz: 'Berechnet φ für zwei Spalten; R gibt nur die Zahl aus, ohne p-Wert. Bei zwei mal zwei Feldern trägt φ ein Vorzeichen wie Pearson-r der 0/1-Spalten, bei größeren Tabellen ist es √(χ² / n) ohne Vorzeichen.', fehler: 'Mit nur einer Spalte meldet mariposa: Exactly two variables must be specified for `chi_square()`.' },
     },
     outputMap: [
       { match: '0.06193526', atlas: 'φ', explain: 'Das ist φ für Weiterbildung und Erwerbstätigkeit, mit Vorzeichen, weil die Tabelle zwei mal zwei Felder hat. Das Plus heißt: Ja geht eher mit Ja einher.' },

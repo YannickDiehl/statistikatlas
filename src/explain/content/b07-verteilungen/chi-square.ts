@@ -7,6 +7,7 @@ import { num, unit } from '../../format';
 import { often, pchisq, pValue, qchisq } from './dist';
 import { chiSquare, cramersV, crosstab } from '../../../tasks/kit/stats';
 import { sampleColumn } from '../../sample';
+import { ref, titleFor } from '../../../domain/learning';
 
 /** Schulabschluss × Weiterbildung (R: chisq.test(table(sa, wb), correct = FALSE)); Zelle Haupt-/Volksschule mit Weiterbildung. */
 export const CHI = { chi2: 3.082033, df: 4, p: 0.5441925, crit: 9.487729, cellB: 12, cellE: 16.4, minE: 15.17, doubled: 6.164065 } as const;
@@ -100,7 +101,7 @@ export const chiQuadratVerteilung: ConceptCard = {
     kurz: 'Für Kreuztabellen ist die χ²-Verteilung eine Näherung. Sie passt, wenn die erwarteten Häufigkeiten nicht zu klein sind.',
     paragraphs: [
       'Eine χ²-verteilte Größe mit ν Freiheitsgraden ist die Summe von ν quadrierten, unabhängigen, standardnormalverteilten Größen. Erwartungswert ν, Varianz 2ν. Mit wachsendem ν wird die Verteilung symmetrischer.',
-      `Die Prüfgröße des Chi-Quadrat-Tests folgt der χ²-Verteilung nur näherungsweise, für große Stichproben. Als Faustregel sollen alle erwarteten Häufigkeiten mindestens 5 betragen; sonst hilft der exakte Test von Fisher. Hier ist die kleinste ${num(C.minE)}.`,
+      `Die Prüfgröße des Chi-Quadrat-Tests folgt der χ²-Verteilung nur näherungsweise, für große Stichproben. Als Faustregel sollen alle erwarteten Häufigkeiten mindestens 5 betragen; sonst hilft der exakte Test nach Fisher. Hier ist die kleinste ${num(C.minE)}.`,
       'Auch die Varianz normalverteilter Daten hängt mit ihr zusammen: (n − 1) · s² / σ² ist χ²-verteilt mit n − 1 Freiheitsgraden. Daraus entstehen Intervalle für σ.',
       `In R liefert qchisq(0.95, 4) die Grenze ${num(C.crit)} und pchisq(3.08, 4, lower.tail = FALSE) den p-Wert.`,
     ],
@@ -164,7 +165,7 @@ export const chiTabs: ConceptTabs = {
   r: {
     entry: 'chi_square', variant: 0,
     tokens: {
-      chi_square: { sym: 'chi_square()', term: 'Chi-Quadrat-Test', kurz: 'Rechnet den Chi-Quadrat-Test für zwei Spalten mit Kategorien. R meldet χ² als chi2, die Freiheitsgrade in Klammern, p und Cramérs V.', fehler: 'Mit nur einer Spalte meldet mariposa: Exactly two variables must be specified for `chi_square()`.' },
+      chi_square: { sym: 'chi_square()', term: titleFor(ref('chi_square')), kurz: 'Rechnet den Chi-Quadrat-Test für zwei Spalten mit Kategorien. R meldet χ² als chi2, die Freiheitsgrade in Klammern, p und Cramérs V.', fehler: 'Mit nur einer Spalte meldet mariposa: Exactly two variables must be specified for `chi_square()`.' },
     },
     outputMap: [
       { match: 'chi2', atlas: 'χ²', step: 1, explain: 'Die Summe aller quadrierten Abweichungen, jede geteilt durch ihre Erwartung.' },

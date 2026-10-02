@@ -100,7 +100,7 @@ export const alpha: ConceptCard = {
     paragraphs: [
       '0,05 ist eine Konvention, kein Naturgesetz. Wo ein Fehlalarm teuer ist, wählt man kleinere Werte wie 0,01 oder 0,001. Wer viele Tests rechnet, muss α für die ganze Familie anpassen (Begriff „Mehrere Vergleiche“).',
       `Beim Binomialtest gibt es nur ganze Zahlen von Personen. Deshalb trifft die tatsächliche Fehlerquote α selten genau: Bei 200 Befragten und 50 % liegt sie für α = 0,05 bei ${num(ANTEIL.size05, 3)}.`,
-      'mariposa markiert p < 0,05 mit einem Stern, p < 0,01 mit zwei und p < 0,001 mit drei. Die Sterne ersetzen keine vorab gewählte Schwelle.',
+      'mariposa markiert p ≤ 0,05 mit einem Stern, p ≤ 0,01 mit zwei und p ≤ 0,001 mit drei. Die Sterne ersetzen keine vorab gewählte Schwelle.',
       'Ob gerade diese eine Entscheidung ein Irrtum war, weiß man bei einer einzelnen Studie nicht. α beschreibt nur, wie oft die Regel über viele Studien hinweg irrt, wenn H₀ stimmt.',
     ],
   },
@@ -144,13 +144,13 @@ export const alphaTabs: ConceptTabs = {
     },
     outputMap: [
       { match: 'p', atlas: 'p-Wert', step: 2, explain: 'Liegt unter 0,05: Bei α = 0,05 verwirfst du H₀, bei α = 0,01 nicht.' },
-      { match: '*', atlas: 'Signifikanzstern', step: 2, explain: 'Ein Stern heißt p < 0,05. Die Schwelle α legst du trotzdem selbst und vorher fest.' },
+      { match: '*', atlas: 'Signifikanzstern', step: 2, explain: 'Ein Stern heißt p ≤ 0,05. Die Schwelle α legst du trotzdem selbst und vorher fest.' },
       { match: 'prop', atlas: 'Anteil mit Weiterbildung', explain: '82 von 200 sind 0,41. Verglichen wird mit 0,5 aus der Nullhypothese.' },
       { match: 'N', atlas: 'n', explain: 'N zählt alle Befragten.' },
     ],
     check: {
-      question: 'Welches Zeichen zeigt, dass p unter 0,05 liegt? Tippe es an.', correct: '*',
-      wrong: { prop: 'Fast! Das ist der Anteil mit Weiterbildung. Das Zeichen für p < 0,05 steht direkt hinter p.', N: 'Fast! N ist die Zahl der Befragten. Das Zeichen für p < 0,05 steht direkt hinter p.' },
+      question: 'Welches Zeichen zeigt, dass p höchstens 0,05 ist? Tippe es an.', correct: '*',
+      wrong: { prop: 'Fast! Das ist der Anteil mit Weiterbildung. Das Zeichen für p ≤ 0,05 steht direkt hinter p.', N: 'Fast! N ist die Zahl der Befragten. Das Zeichen für p ≤ 0,05 steht direkt hinter p.' },
     },
   },
   next: {

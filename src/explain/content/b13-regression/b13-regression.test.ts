@@ -272,7 +272,8 @@ test('B13 Logistische Regression: S-Kurve und Katalogmodell wie in R', () => {
   if (t.kind === 'analysis') {
     const r = t.result({ rows, columns: { x: ['lernzeit'], y: ['weiterbildung'] } });
     assert.match(r.kurz, /mit 0,99 malgenommen, bei gleichem Alter\. Sie ändern sich also so gut wie gar nicht/);
-    assert.match(r.fachlich, /0,01 − 0,00596 · Lernzeit − 0,00702 · Alter\. Die Odds Ratio der Lernzeit ist e\^b₁ ≈ 0,994/);
+    // Kleine Koeffizienten mit zwei gültigen Ziffern (AUTHORING 2a), gerundet wie R sie druckt (−0.006, −0.007).
+    assert.match(r.fachlich, /0,01 − 0,006 · Lernzeit − 0,007 · Alter\. Die Odds Ratio der Lernzeit ist e\^b₁ ≈ 0,994/);
     assert.match(r.zusatz!, /von 0,35 bis 0,46/);
   }
 });
@@ -287,7 +288,13 @@ test('B13 Marginale Effekte: Formel, Beispiel und AME wie in R', () => {
   const pass = Y.map(v => v >= 10 ? 1 : 0), m = logistic([X], pass)!;
   assert.ok(close(m.p.reduce((a, p) => a + m.b[1] * p * (1 - p), 0) / 200, BESTANDEN.ame, 1e-7), 'AME bestanden wie R');
   const t = marginaleEffekteTabs.sample!;
-  if (t.kind === 'analysis') assert.match(t.result({ rows, columns: { x: ['lernzeit'], y: ['weiterbildung'] } }).kurz, /im Schnitt um −0,14 Prozentpunkte, bei gleichem Alter\. Das ist so gut wie nichts/);
+  if (t.kind === 'analysis') {
+    const r = t.result({ rows, columns: { x: ['lernzeit'], y: ['weiterbildung'] } });
+    assert.match(r.kurz, /im Schnitt um −0,14 Prozentpunkte, bei gleichem Alter\. Das ist so gut wie nichts/);
+    // R: AME −0.001436868, b₁ −0.005960168, |b₁| / 4 = 0.001490042; zwei gültige Ziffern.
+    assert.match(r.fachlich, /≈ −0,0014, mit b₁ ≈ −0,006\.$/);
+    assert.match(r.zusatz!, /\|b₁\| \/ 4 ≈ 0,0015 kann/);
+  }
 });
 
 test('B13 Ausreißer und Einfluss: Hebel, Cooks Distanz und Steigungen wie in R', () => {
@@ -359,6 +366,10 @@ test('B13 Fixrunde 1: Zahlen der geänderten Texte wie in R', () => {
   const c = bridgeContext(gerade.compute, 'pairs', rows, 'einkommen', 'wissenstest', 0);
   for (const k of [2, 3]) assert.doesNotMatch(bridgeGerade.lines[k].person(c) + bridgeGerade.lines[k].all(c), / 0 · /, `Schritt ${k + 1}: b₁ als 0`);
   assert.match(bridgeGerade.lines[3].person(c), /\+ 0,000\d+ · /, 'b₁ mit gültigen Ziffern');
+  // Deferred minor: drei gültige Ziffern nur in den Rechnungen der Brücke, in Aussagen und Kennzahlen zwei (AUTHORING 2a).
+  assert.match(bridgeGerade.lines[3].person(c), /\+ 0,000366 · /, 'Rechnung mit drei gültigen Ziffern');
+  assert.match(bridgeGerade.interpret(c, 'linear_regression').kurz, /im Schnitt 0,00037 Aufgaben höher/, 'Aussage mit zwei gültigen Ziffern');
+  assert.equal(bridgeGerade.metrics(c, 'linear_regression').at(-1)!.value, '0,00037', 'Kennzahl b₁');
   // I5: plausible Werte für b₃ aus der Katalogausgabe.
   assert.match(interaktion.bausteine[2].acht, /von −0,14 bis 0,32/);
   assert.ok(close(-0.142541, -0.14, 0.005) && close(0.322084, 0.32, 0.005), 'Intervall gerundet');

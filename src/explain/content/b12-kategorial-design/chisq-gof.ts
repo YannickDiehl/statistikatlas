@@ -1,9 +1,10 @@
-// Werkstatt „Chi-Quadrat · Anpassung“ (chisq_gof): Sind die fünf Schulabschlüsse unter den 200 Befragten so häufig,
+// Werkstatt „Chi-Quadrat (Anpassung)“ (chisq_gof): Sind die fünf Schulabschlüsse unter den 200 Befragten so häufig,
 // wie eine vorher festgelegte Verteilung sagt? Ton nach der Streuung (src/explain/content/streuung.ts).
 // Zahlen in R nachgerechnet: b12-kategorial-design.test.ts (chisq.test, mariposa::chisq_gof 0.7.4).
 import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
 import { num, signed, paren, close, unit } from '../../format';
 import { columnById } from '../../../domain/survey';
+import { ref, titleFor } from '../../../domain/learning';
 import { chiParts, eqFor, fine, fineParen, fineSigned, partSum, partText, shareOf, type ChiParts } from './chi-gemeinsam';
 import { counts, often, pText } from './rechnen';
 
@@ -307,7 +308,7 @@ export const gofTabs: ConceptTabs = {
   r: {
     entry: 'chisq_gof', variant: 0,
     tokens: {
-      chisq_gof: { sym: 'chisq_gof()', term: 'Chi-Quadrat-Anpassungstest', kurz: 'Vergleicht die Häufigkeiten einer Spalte mit einer vorgegebenen Verteilung. Ohne expected nimmt mariposa gleich große Anteile an.', fehler: 'Mit einer Spalte voller Kommazahlen meldet mariposa: `lernzeit` appears to be a continuous variable.' },
+      chisq_gof: { sym: 'chisq_gof()', term: titleFor(ref('chisq_gof')), kurz: 'Vergleicht die Häufigkeiten einer Spalte mit einer vorgegebenen Verteilung. Ohne expected nimmt mariposa gleich große Anteile an.', fehler: 'Mit einer Spalte voller Kommazahlen meldet mariposa: `lernzeit` appears to be a continuous variable.' },
     },
     outputMap: [
       { match: 'chi2', atlas: 'χ²', step: 5, explain: 'Die Prüfgröße aus Schritt 5. In Klammern stehen die Freiheitsgrade: 5 − 1 = 4.' },

@@ -85,6 +85,7 @@ import { GESETZ_N, daneben, gesetz, lawLargeNumbers, lawLargeNumbersTabs, wieOft
  *   # 80 %: 3.912064 3.981588 (t 1.281787);  90 %: 3.902207 3.991445 (t 1.645278)
  *   # 95 %: 3.893654 3.999998 (t 1.960625);  99 %: 3.876933 4.016719 (t 2.577199);  qt(.975, 9) = 2.262157
  *   # gewichtet 4.013856: bei 95 % knapp außerhalb (> 3.999998), bei 99 % knapp innerhalb (< 4.016719)
+ *   # 97 %: 3.887950 4.005702;  98 %: 3.883708 4.009944 (obere Grenze und gewichtetes Mittel beide „4,01“)
  *   # n mal 4 (14368): 3.946826 + c(-1, 1) * qt(.975, 14367) * 1.625373 / sqrt(14368)   # 3.920247 3.973405
  *   t.test(x)$conf.int                                         # 7.300066 8.202934 (wie oneSampleT)
  *   sqrt(1.0201); sqrt(0.0201)                                  # 1.01  0.1417745 (Kontrollfrage Vorhersageintervall)
@@ -308,10 +309,21 @@ test('B8 confidence: Konfidenzintervalle für das Vertrauen in den Bundestag und
   assert.equal(confidence.interpret(k).kurz, 'Rechnet man den ALLBUS wie eine einfache Zufallsstichprobe, sind für das mittlere Vertrauen Werte zwischen 3,89 und 4,00 plausibel. Bei wiederholten Zufallsstichproben mit 3.592 Befragten enthielten etwa 95 % solcher Intervalle den wahren Mittelwert. Das Intervall erfasst nur den Zufallsfehler: Gewichtet liegt der Mittelwert bei 4,01, knapp außerhalb.');
   assert.ok(VERTRAUEN.gewichtet > k.hi, 'gewichtet außerhalb des 95-%-Intervalls');
   assert.match(confidence.interpret(confidence.compute({ ...confidence.initial, t: 99 })).kurz, /Gewichtet liegt der Mittelwert bei 4,01, hier knapp innerhalb\.$/);
+  // Bei 97 und 98 % zeigt das Intervall „bis 4,01“: Dann stehen gewichtetes Mittel und Grenze mit drei Stellen da.
+  for (const [L, hi, shown] of [[97, 4.005702, '4,006'], [98, 4.009944, '4,010']] as const) {
+    const kL = confidence.compute({ ...confidence.initial, t: L }), text = confidence.interpret(kL).kurz;
+    assert.ok(close(kL.hi, hi, 1e-6), `${L} %: obere Grenze wie in R`);
+    assert.match(text, / und 4,01 plausibel\./, `${L} %: Intervall mit zwei Stellen`);
+    assert.ok(text.endsWith(`Gewichtet liegt der Mittelwert bei 4,014, knapp über der oberen Grenze ${shown}.`), `${L} %: ${text}`);
+  }
+  for (let L = 80; L <= 99; L++) {
+    const kL = confidence.compute({ ...confidence.initial, t: L }), text = confidence.interpret(kL).kurz;
+    assert.ok(VERTRAUEN.gewichtet > kL.hi ? /knapp (außerhalb|über)/.test(text) : /knapp (innerhalb|unter)/.test(text), `${L} %: ${text}`);
+  }
   const vier = confidence.compute(confidence.quick[0].apply(confidence.initial));
   assert.ok(close(vier.lo, 3.920246943, 1e-7) && close(vier.hi, 3.973405057, 1e-7), 'n mal 4 wie in R');
   assert.equal(confidence.interpret(vier).kurz, 'Rechnet man wie bei einer einfachen Zufallsstichprobe mit 14.368 Befragten, wären für das mittlere Vertrauen Werte zwischen 3,92 und 3,97 plausibel. Bei wiederholten Zufallsstichproben dieser Größe enthielten etwa 95 % solcher Intervalle den wahren Mittelwert.');
-  assert.match(confidence.genau.paragraphs[2], /4,01, also knapp außerhalb des Intervalls: Ein Konfidenzintervall misst nur den Zufallsfehler/);
+  assert.match(confidence.genau.paragraphs[2], /4,01, also knapp außerhalb des 95-%-Intervalls: Ein Konfidenzintervall misst nur den Zufallsfehler/);
   assert.match(confidence.interpret(k).fachlich, /3,95 ± 1,96 · 0,027, also von 3,89 bis 4,00\. t ist das 97,5-%-Quantil der t-Verteilung mit 3\.591 Freiheitsgraden\./);
   assert.deepEqual(confidence.worked(k).map(w => w.text), [
     '1,63 / √3.592 ≈ 1,63 / 59,93 ≈ 0,027.', 'Für 95 % und 3.591 Freiheitsgrade liefert die t-Verteilung t ≈ 1,96.',

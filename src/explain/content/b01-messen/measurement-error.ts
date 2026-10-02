@@ -112,7 +112,7 @@ export const measurementError: ConceptCard = {
   genau: {
     kurz: 'Zufälliger Messfehler senkt die Reliabilität und schwächt Korrelationen ab. Systematischer Fehler verzerrt Mittelwerte und kann im wahren Wert T stecken.',
     paragraphs: [
-      `Im Schnitt lösen die 200 beim zweiten Mal ${num(MF.wissenT2 - MF.wissenT1)} Aufgaben mehr (${num(MF.wissenT1)} gegen ${num(MF.wissenT2)}). r ≈ ${num(MF.rRetest)} sagt nur, dass die Reihenfolge der Personen weitgehend erhalten bleibt.`,
+      `Im Schnitt lösen die 200 beim zweiten Mal ${num(MF.wissenT2 - MF.wissenT1)} Aufgaben mehr (${num(MF.wissenT1)} gegen ${num(MF.wissenT2)}). r ≈ ${num(MF.rRetest)} sagt nur, dass die Personen ihre Lage zueinander weitgehend behalten. Dass alle im Schnitt ${num(MF.wissenT2 - MF.wissenT1)} Aufgaben mehr lösen, ändert r nicht.`,
       'Im klassischen Modell ist T der Erwartungswert einer Person über gedachte Wiederholungen derselben Messung; E hat den Erwartungswert 0. Die Zerlegung Var(X) = Var(T) + Var(E) setzt voraus, dass T und E nicht zusammenhängen.',
       'Reliabilität ist der Anteil Var(T) / Var(X). Sind beide Merkmale mit unabhängigen Fehlern gemessen, gilt für die beobachtete Korrelation r(X, Y) = r(T_X, T_Y) · √(Rel_X · Rel_Y). Der Regler rechnet so, mit einem fehlerfreien Wissenstest.',
       'Der wahre Wert garantiert nicht, dass das gemeinte Konstrukt getroffen wird. Gleichbleibende Verzerrungen, etwa geschöntes Antworten, stecken im wahren Wert T und fallen erst bei der Frage nach der Validität auf.',

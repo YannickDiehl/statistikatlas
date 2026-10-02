@@ -10,11 +10,11 @@ Alle **80 öffentlichen Exporte** sind genau einem fachlichen Kartenknoten zugeo
 
 | Öffentlicher Export | Erklärung im Atlas | Karten-ID |
 |---|---|---|
-| `ancova` | Kovarianzanalyse · ANCOVA | `ancova` |
+| `ancova` | Kovarianzanalyse (ANCOVA) | `ancova` |
 | `binomial_test` | Binomialtest | `binomial_test` |
 | `center` | Zentrieren | `centering` |
-| `chi_square` | Chi-Quadrat · Unabhängigkeit | `chi_square` |
-| `chisq_gof` | Chi-Quadrat · Anpassung | `chisq_gof` |
+| `chi_square` | Chi-Quadrat (Unabhängigkeit) | `chi_square` |
+| `chisq_gof` | Chi-Quadrat (Anpassung) | `chisq_gof` |
 | `codebook` | Codebuch & Variablensuche | `codebook` |
 | `copy_labels` | Variablen- & Wertelabels | `labels` |
 | `cramers_v` | Cramér-V | `cramers_v` |
@@ -25,7 +25,7 @@ Alle **80 öffentlichen Exporte** sind genau einem fachlichen Kartenknoten zugeo
 | `efa` | Komponenten- & Faktorenanalyse | `efa` |
 | `factorial_anova` | Mehrfaktorielle ANOVA | `factorial_anova` |
 | `find_var` | Codebuch & Variablensuche | `codebook` |
-| `fisher_test` | Fisher · exakter Test | `fisher_test` |
+| `fisher_test` | Exakter Test nach Fisher | `fisher_test` |
 | `fre` | Häufigkeiten | `frequency` |
 | `frequency` | Häufigkeiten | `frequency` |
 | `friedman_test` | Friedman | `friedman_test` |
@@ -46,7 +46,7 @@ Alle **80 öffentlichen Exporte** sind genau einem fachlichen Kartenknoten zugeo
 | `partial_cor` | Partielle Korrelation | `partial_cor` |
 | `pearson_cor` | Pearson-Korrelation | `pearson` |
 | `phi` | Phi | `phi` |
-| `pomps` | POMPS · Skalen auf 0–100 | `pomps` |
+| `pomps` | POMPS (Skalen auf 0–100) | `pomps` |
 | `read_por` | Daten nach R einlesen | `data_import` |
 | `read_sas` | Daten nach R einlesen | `data_import` |
 | `read_spss` | Daten nach R einlesen | `data_import` |
@@ -54,7 +54,7 @@ Alle **80 öffentlichen Exporte** sind genau einem fachlichen Kartenknoten zugeo
 | `read_xlsx` | Daten nach R einlesen | `data_import` |
 | `read_xpt` | Daten nach R einlesen | `data_import` |
 | `rec` | Rekodieren & Umpolen | `recode` |
-| `reliability` | Reliabilität · Alpha & Omega | `reliability` |
+| `reliability` | Reliabilität: Alpha und Omega | `reliability` |
 | `row_count` | Rechnen innerhalb einer Person | `row_operations` |
 | `row_means` | Rechnen innerhalb einer Person | `row_operations` |
 | `row_sums` | Rechnen innerhalb einer Person | `row_operations` |
@@ -85,7 +85,7 @@ Alle **80 öffentlichen Exporte** sind genau einem fachlichen Kartenknoten zugeo
 | `w_se` | Standardfehler | `se` |
 | `w_skew` | Schiefe & Kurtosis | `shape` |
 | `w_var` | Varianz | `variance` |
-| `wilcoxon_test` | Wilcoxon · verbunden | `wilcoxon_test` |
+| `wilcoxon_test` | Wilcoxon, verbunden | `wilcoxon_test` |
 | `write_spss` | Daten & Ergebnisse weitergeben | `data_export` |
 | `write_stata` | Daten & Ergebnisse weitergeben | `data_export` |
 | `write_xlsx` | Daten & Ergebnisse weitergeben | `data_export` |
