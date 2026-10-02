@@ -8,7 +8,9 @@ import type { RankStats } from '../../../explain/content/b05-zusammenhang/spearm
 import { pairKind, type PairCount, type PairKind } from '../../../explain/content/b05-zusammenhang/paarvergleich';
 import { crossCounts } from '../../../explain/content/b05-zusammenhang/crosstab';
 import type { PhiStats } from '../../../explain/content/b05-zusammenhang/phi';
-import { clamp, DragPoint, forSentence, forTable, GridCell, forWorkshop, useDrag, useWidth, type Bounds, type Picture, type SentencePictureProps, type TablePictureProps } from './kit';
+import { BOGEN_X, bogenR, bogenY } from '../../../explain/content/b05-zusammenhang/linear';
+import { METHODEN_R } from '../../../explain/content/b05-zusammenhang/correlation-matrix';
+import { Axis, clamp, DragPoint, forCard, forSentence, forTable, GridCell, linear, forWorkshop, useDrag, useWidth, type Bounds, type Picture, type SentencePictureProps, type TablePictureProps } from './kit';
 
 type Drag = { data: Pairs; names: readonly string[]; who: number; bounds: Bounds; onChange: (d: Pairs) => void; onWho: (i: number) => void };
 
@@ -212,11 +214,58 @@ function FourFold({ p }: { p: SentencePictureProps<PhiStats> }) {
   );
 }
 
+// ---------- Linearer Zusammenhang (Begriffskarte) ----------
+
+/** Sieben Punkte zwischen Gerade und Bogen, dazu die Gerade der kleinsten Quadrate; der Regler stellt den Bogen ein. */
+function BowPicture({ v }: { v: number }) {
+  const [box, W] = useWidth();
+  const L = 46, R = W - 16, T = 30, B = 210, H = 262;
+  const ys = bogenY(v), r = bogenR(v), n = BOGEN_X.length;
+  const mx = BOGEN_X.reduce((a, b) => a + b, 0) / n, my = ys.reduce((a, b) => a + b, 0) / n;
+  const b = BOGEN_X.reduce((a, x, i) => a + (x - mx) * (ys[i] - my), 0) / BOGEN_X.reduce((a, x) => a + (x - mx) ** 2, 0), a0 = my - b * mx;
+  const x = linear([0.5, 7.5], [L, R]), y = linear([0, 8], [B, T]);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Sieben Punkte, ${v < 0.005 ? 'genau auf einer Geraden' : v > 0.995 ? 'auf einem symmetrischen Bogen' : 'leicht gebogen'}. Die beste Gerade dazu, Pearson-r ${r === null ? 'nicht definiert' : num(r)}.`}>
+        <text className="xw-t xw-strong" x={L} y={16}>{`Pearson-r ≈ ${r === null ? 'nicht definiert' : num(Math.abs(r) < 0.005 ? 0 : r)}`}</text>
+        <line className="xw-mean" x1={x(0.5)} x2={x(7.5)} y1={y(a0 + b * 0.5)} y2={y(a0 + b * 7.5)} />
+        <text className="xw-t" x={R} y={y(a0 + b * 7.5) - 8} textAnchor="end">beste Gerade</text>
+        {BOGEN_X.map((xv, i) => <circle key={xv} className="b05-dot" cx={x(xv)} cy={y(ys[i])} r={6} />)}
+        <Axis scale={x} ticks={BOGEN_X} at={B} from={L} to={R} labelGap={20} title="x" />
+        <Axis scale={y} ticks={[0, 2, 4, 6, 8]} at={L} from={B} to={T} orient="left" title="y" />
+      </svg>
+    </div>
+  );
+}
+
+// ---------- Korrelationsmatrix (Begriffskarte) ----------
+
+/** Die Matrix der fünf Fragen; Zeile und Spalte der gewählten Frage sind hervorgehoben, die Diagonale bleibt hell. */
+function MatrixPicture({ k }: { k: number }) {
+  const [box, W] = useWidth();
+  const first = 70, cw = Math.min(72, (W - first - 8) / 5), ch = 40, top = 34, H = top + 5 * ch + 8, sel = Math.min(5, Math.max(1, Math.round(k))) - 1;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Korrelationsmatrix der fünf Fragen, Frage ${sel + 1} hervorgehoben: ${METHODEN_R[sel].map((r, j) => `mit Frage ${j + 1} ${num(r)}`).join(', ')}.`}>
+        {METHODEN_R.map((_, j) => <text key={`c${j}`} className={`xw-t${j === sel ? ' xw-strong' : ''}`} x={first + (j + 0.5) * cw} y={top - 10} textAnchor="middle">{`F${j + 1}`}</text>)}
+        {METHODEN_R.map((row, i) => <g key={`r${i}`}>
+          <text className={`xw-t${i === sel ? ' xw-strong' : ''}`} x={8} y={top + i * ch + ch / 2 + 5}>{`Frage ${i + 1}`}</text>
+          {row.map((r, j) => <GridCell key={j} x={first + j * cw} y={top + i * ch} w={cw} h={ch} text={num(r)} tone={i === j ? 'plain' : 'pos'} selected={(i === sel || j === sel) && i !== j} />)}
+        </g>)}
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b05-rangkorrelation': forWorkshop(p => <RankPicture s={p.s} step={p.step}
     d={{ data: p.data, names: p.workshop.names, who: p.who, bounds: p.workshop.bounds, onChange: p.setData, onWho: p.pickWho }} />),
   'b05-kreuztabelle': forTable(p => <CrossGrid p={p} />),
   'b05-phi': forSentence(p => <FourFold p={p} />),
+  'b05-linear': forCard(p => <BowPicture v={p.value ?? 0} />),
+  'b05-matrix': forCard(p => <MatrixPicture k={p.value ?? 1} />),
   'b05-paarvergleich': forWorkshop(p => <PairPicture s={p.s} step={p.step}
     d={{ data: p.data, names: p.workshop.names, who: p.who, bounds: p.workshop.bounds, onChange: p.setData, onWho: p.pickWho }} />),
 };

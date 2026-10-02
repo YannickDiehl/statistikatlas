@@ -8,6 +8,8 @@ import { erwartet, expectedTabs } from './expected';
 import { phiSatz, phiTabs } from './phi';
 import { cramerSatz, cramersTabs } from './cramers-v';
 import { partialTabs, partielleKorrelation } from './partial-cor';
+import { linearKarte, linearTabs } from './linear';
+import { korrelationsmatrix, matrixTabs } from './correlation-matrix';
 
 export const b05Zusammenhang: AreaIndex = {
   explanations: {
@@ -20,6 +22,8 @@ export const b05Zusammenhang: AreaIndex = {
     phi: { kind: 'satz', template: phiSatz },
     cramers_v: { kind: 'satz', template: cramerSatz },
     partial_cor: { kind: 'satz', template: partielleKorrelation },
+    linear: { kind: 'begriff', card: linearKarte },
+    correlation_matrix: { kind: 'begriff', card: korrelationsmatrix },
   },
   tabs: {
     spearman: spearmanTabs,
@@ -31,5 +35,7 @@ export const b05Zusammenhang: AreaIndex = {
     phi: phiTabs,
     cramers_v: cramersTabs,
     partial_cor: partialTabs,
+    linear: linearTabs,
+    correlation_matrix: matrixTabs,
   },
 };

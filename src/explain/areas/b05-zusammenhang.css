@@ -5,3 +5,4 @@
 .b05-pair-neg{stroke:var(--xw-neg);stroke-width:2.5}
 .b05-pair-tie{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 4}
 .b05-count{margin:.25rem 0 0}
+.b05-dot{fill:var(--green);stroke:var(--paper);stroke-width:1.5}

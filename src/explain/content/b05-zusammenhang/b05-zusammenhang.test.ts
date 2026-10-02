@@ -12,6 +12,8 @@ import { erwartet, erwartetJa } from './expected';
 import { phiData, phiSatz } from './phi';
 import { cramerSatz, vData } from './cramers-v';
 import { partialData, partielleKorrelation } from './partial-cor';
+import { bogenR, geradeData, LERNZEIT_GRUPPEN, linearKarte } from './linear';
+import { korrelationsmatrix, matrixData, METHODEN_R } from './correlation-matrix';
 import { CATALOG_OUTPUT } from '../../catalogOutput';
 import { locate } from '../../rRead';
 
@@ -269,4 +271,47 @@ test('B5 partielle Korrelation: Lernplanung, Wissenstest und Lernzeit wie in R',
   assert.ok(near(partialData({ ...ctx, rows: applyOp(rows, 'lernplanung5', 'reverse') }).partial, 0.02678178) && near(partialData({ ...ctx, rows: applyOp(rows, 'wissenstest', 'reverse') }).partial, 0.02678178), 'umgepolt');
   const out = CATALOG_OUTPUT['partial_cor:0'].output;
   assert.deepEqual(['partial r', 'zero-order r', 'p', 'N'].map(m => locate(out, m)?.text), ['0.528', '0.539', '0.001', '200']);
+});
+
+/*
+ * Linearer Zusammenhang (x = lernzeit, y = wissenstest):
+ *   g <- cut(lernzeit, c(-Inf, 6, 9, Inf), right = FALSE); table(g); tapply(wissenstest, g, mean)
+ *   #   53 80 67; 7.679245 10.35 11.791045
+ *   cov(lernzeit, wissenstest) / var(lernzeit); cor(lernzeit, wissenstest)   # 0.5188908; 0.5391689
+ *   cov(2 * lernzeit, wissenstest) / var(2 * lernzeit)                       # 0.2594454 (halbiert)
+ *   x <- 1:7; for (v in c(0, 0.25, 0.5, 0.75, 1)) cor(x, (1 - v) * x + v * (1 + (x - 4)^2 * 2 / 3))
+ *   #   1; 0.9332565; 0.6546537; 0.2773501; 0 (bis auf Rundung)
+ */
+test('B5 linearer Zusammenhang: Gruppen, Steigung und Bogen wie in R', () => {
+  const g = geradeData({ rows, columns: { x: ['lernzeit'], y: ['wissenstest'] } });
+  assert.ok(near(g.slope, 0.5188908) && near(g.r, 0.5391689), 'Steigung und r');
+  g.groups.forEach((m, i) => assert.ok(near(m, LERNZEIT_GRUPPEN.means[i], 1e-3), `Gruppe ${i}: ${m}`));
+  assert.ok(near(geradeData({ rows: applyOp(rows, 'lernzeit', 'double'), columns: { x: ['lernzeit'], y: ['wissenstest'] } }).slope, 0.2594454), 'verdoppelt: Steigung halbiert');
+  for (const [v, r] of [[0, 1], [0.25, 0.9332565], [0.5, 0.6546537], [0.75, 0.2773501], [1, 0]]) assert.ok(near(bogenR(v), r), `Bogen ${v}`);
+  assert.match(linearKarte.stellDirVor.text, /im Schnitt 7,68 Aufgaben\. Mit 6 bis unter 9 Stunden sind es 10,35, ab 9 Stunden 11,79\. Eine Gerade beschreibt das grob: etwa 0,52 Aufgaben mehr je Stunde, r ≈ 0,54\./);
+  assert.equal(linearKarte.regler!.describe(0.5), 'Mit diesem Bogen ist r ≈ 0,65. y folgt weiter genau aus x, aber die Gerade passt immer schlechter.');
+  assert.match(linearKarte.genau.paragraphs[1], /0,54² ≈ 0,29/);
+});
+
+/*
+ * Korrelationsmatrix (methoden1 bis methoden5):
+ *   round(cor(atlas[, paste0("methoden", 1:5)]), 6)
+ *   #   0.649597 0.627416 0.655291 0.659453 / 0.607513 0.676335 0.610519 / 0.632465 0.635840 / 0.644928
+ *   min und max außerhalb der Diagonale: 0.6075127; 0.6763345 (Frage 2 und Frage 4)
+ *   cor(8 - methoden1, methoden2); cor(methoden2, methoden3)   # -0.649597; 0.607513
+ * R-Ausgabe (Katalog): rel <- atlas %>% reliability(methoden1, …, methoden5, na.rm = TRUE); summary(rel)
+ *   #   Inter-Item Correlation Matrix: (2) methoden2 0.650 1.000 0.608 0.676 0.611
+ */
+test('B5 Korrelationsmatrix: Methoden-Zuversicht wie in R', () => {
+  const ctx = { rows, columns: { x: ['methoden1'], y: ['methoden2'] } }, m = matrixData(ctx);
+  m.R.forEach((row, i) => row.forEach((r, j) => assert.ok(near(r, METHODEN_R[i][j], 1e-6), `R[${i}][${j}] = ${r}`)));
+  const flipped = matrixData({ ...ctx, rows: applyOp(rows, 'methoden1', 'reverse') });
+  assert.ok(near(flipped.R[0][1], -0.649597) && near(flipped.R[1][2], 0.607513), 'Frage 1 umgepolt');
+  assert.match(korrelationsmatrix.stellDirVor.text, /zwischen 0,61 und 0,68 zusammen/);
+  assert.equal(korrelationsmatrix.regler!.describe(3), 'Frage 3 („Ich kann ein statistisches Ergebnis erklären“) hängt mit den anderen vier zwischen r = 0,61 und r = 0,64 zusammen.');
+  const s = tabsFor('correlation_matrix')!.sample!;
+  if (s.kind === 'analysis') assert.equal(s.result(ctx).zusatz, 'Am engsten hängen Frage 2 und Frage 4 zusammen, mit r ≈ 0,68.');
+  const out = CATALOG_OUTPUT['reliability:0'].output;
+  const lineOf = (m: string) => { const at = locate(out, m)!.start; return out.slice(out.lastIndexOf('\n', at) + 1, at).trim(); };
+  assert.deepEqual(['0.676', '1.000', '0.650'].map(m => lineOf(m).split(/\s+/).slice(0, 2).join(' ')), ['(2) methoden2', '(1) methoden1', '(1) methoden1'], 'Zahlen stehen in der Matrix: 0.676 in Zeile (2), Diagonale und 0.650 in Zeile (1)');
 });
