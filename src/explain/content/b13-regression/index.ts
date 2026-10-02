@@ -6,6 +6,8 @@ import { gerade } from './gerade';
 import { linearRegressionTabs, predictionTabs, residualsTabs } from './gerade-tabs';
 import { erklaerteVarianz, erklaerteVarianzTabs } from './explained-variance';
 import { interaktion, interaktionTabs } from './interaction';
+import { logitSatz, logitTabs } from './logit';
+import { likelihoodKarte, likelihoodTabs } from './likelihood';
 
 export const b13Regression: AreaIndex = {
   explanations: {
@@ -14,6 +16,8 @@ export const b13Regression: AreaIndex = {
     residuals: { kind: 'werkstatt', workshop: gerade, variant: 'residuals' },
     explained_variance: { kind: 'satz', template: erklaerteVarianz },
     interaction: { kind: 'begriff', card: interaktion },
+    logit: { kind: 'satz', template: logitSatz },
+    likelihood: { kind: 'begriff', card: likelihoodKarte },
   },
   tabs: {
     linear_regression: linearRegressionTabs,
@@ -21,5 +25,7 @@ export const b13Regression: AreaIndex = {
     residuals: residualsTabs,
     explained_variance: erklaerteVarianzTabs,
     interaction: interaktionTabs,
+    logit: logitTabs,
+    likelihood: likelihoodTabs,
   },
 };

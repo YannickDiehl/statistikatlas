@@ -5,8 +5,9 @@ import type { KeyboardEvent } from 'react';
 import { num, signed } from '../../../explain/format';
 import type { Fit, Pairs } from '../../../explain/content/b13-regression/fit';
 import { IA } from '../../../explain/content/b13-regression/interaction';
+import { llWb } from '../../../explain/content/b13-regression/likelihood';
 import { baseSurvey, sampleColumn } from '../../../explain/sample';
-import { Axis, clamp, DragPoint, forCard, forSentence, forWorkshop, linear, useDrag, useWidth, type Bounds, type Picture } from './kit';
+import { Axis, clamp, Curve, DragPoint, forCard, forSentence, forWorkshop, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /**
  * Streudiagramm der fünf Personen mit der Regressionsgeraden: Mitten (Schritt 1), Gerade mit Steigungsdreieck (2),
@@ -156,7 +157,50 @@ function InteractionLines({ b3 }: { b3: number }) {
   );
 }
 
+const pTicks = (v: number) => num(v);
+/** Logistische Kurve: Logit (waagerecht) und Wahrscheinlichkeit (senkrecht), markiert bei p. */
+function LogitCurve({ p }: { p: number }) {
+  const [box, W] = useWidth();
+  const L = 50, R = W - 16, T = 16, B = T + 180, H = B + 52;
+  const X = linear([-5, 5], [L, R]), Y = linear([0, 1], [B, T]);
+  const z = Math.log(p / (1 - p)), zc = Math.max(-5, Math.min(5, z));
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Logistische Kurve; markiert ist p = ${num(p)} mit dem Logit ${num(z)}`}>
+        <Curve f={v => 1 / (1 + Math.exp(-v))} from={-5} to={5} x={X} y={Y} />
+        <MarkLine x={X(zc)} from={Y(p)} to={B} />
+        <MarkLine y={Y(p)} from={L} to={X(zc)} />
+        <circle className="b13-mark" cx={X(zc)} cy={Y(p)} r={6} />
+        <text className="xw-t xw-strong" x={X(zc) + (zc > 0 ? -10 : 10)} y={Y(p) + (p > 0.5 ? 22 : -12)} textAnchor={zc > 0 ? 'end' : 'start'}>Logit ≈ {num(z)}</text>
+        <Axis scale={X} ticks={[-4, -2, 0, 2, 4]} at={B} from={L} to={R} labelGap={20} title="Logit" />
+        <Axis scale={Y} ticks={[0, 0.25, 0.5, 0.75, 1]} at={L} from={B} to={T} orient="left" format={pTicks} title="p" />
+      </svg>
+    </div>
+  );
+}
+
+/** Log-Likelihood von 82 Ja unter 200 für jedes angenommene p, markiert beim Wert des Reglers. */
+function LikelihoodCurve({ p }: { p: number }) {
+  const [box, W] = useWidth();
+  const L = 58, R = W - 16, T = 30, B = T + 170, H = B + 52;
+  const X = linear([0.05, 0.95], [L, R]), Y = linear([-360, -120], [B, T]);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Log-Likelihood für jedes p; am größten bei 0,41; markiert ist p = ${num(p)} mit ℓ ≈ ${num(llWb(p))}`}>
+        <MarkLine x={X(0.41)} from={T} to={B} label="bestes p = 0,41" />
+        <Curve f={llWb} from={0.05} to={0.95} x={X} y={Y} />
+        <circle className="b13-mark" cx={X(p)} cy={Y(llWb(p))} r={6} />
+        <text className="xw-t xw-strong" x={X(p) + (p > 0.6 ? -10 : 10)} y={Y(llWb(p)) + 22} textAnchor={p > 0.6 ? 'end' : 'start'}>ℓ ≈ {num(llWb(p))}</text>
+        <Axis scale={X} ticks={[0.1, 0.3, 0.5, 0.7, 0.9]} at={B} from={L} to={R} labelGap={20} format={pTicks} title="angenommenes p" />
+        <Axis scale={Y} ticks={[-350, -300, -250, -200, -150]} at={L} from={B} to={T} orient="left" title="ℓ" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b13-likelihood': forCard(p => <LikelihoodCurve p={p.value ?? 0.41} />),
+  'b13-logit': forSentence(p => <LogitCurve p={p.values.p} />),
   'b13-interaktion': forCard(p => <InteractionLines b3={p.value ?? IA.b3} />),
   'b13-r2': forSentence(p => <R2Bars sse={p.values.sse} sst={p.values.sst} />),
   'b13-gerade': forWorkshop(p => <Gerade data={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),

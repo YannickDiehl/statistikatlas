@@ -8,6 +8,9 @@ import { fitLine, ols } from './fit';
 import { gerade, bridgeGerade, BEISPIEL, AUSREISSER } from './gerade';
 import { erklaerteVarianz, erklaerteVarianzTabs, QS } from './explained-variance';
 import { IA, interaktion, interactionFor, interaktionTabs } from './interaction';
+import { logitSatz, logitTabs, shareFor } from './logit';
+import { likelihoodKarte, llWb } from './likelihood';
+import { WB_MODELL, wbModel } from './logistisch-kit';
 
 /*
  * Referenzwerte des Bereichs B13 „Regression“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -59,6 +62,17 @@ import { IA, interaktion, interactionFor, interaktionTabs } from './interaction'
  *   coef(mi)        # 6.46656417701  0.48240625911  -0.88941068393  0.08977126592
  *   # Steigung mit Weiterbildung 0.5721775, Achsenabschnitt 5.577153; p(b3) = 0.4469257; sum(w) = 82; w[1] = 1
  *   coef(lm(y ~ x:w))  # nur das Produkt: B 0.106, p .038 (Token-Karte zu *)
+ *
+ * Logit und Likelihood (Weiterbildung):
+ *   k <- sum(w); p <- k / 200; c(k, p, p / (1 - p), log(p / (1 - p)))   # 82  0.41  0.6949153  -0.3639654
+ *   ll <- function(p) k * log(p) + (200 - k) * log(1 - p)
+ *   ll(.41); ll(.5); ll(.9); -2 * ll(.41)            # -135.3717  -138.6294  -280.3446  270.7434
+ *   g <- glm(w ~ x + as.numeric(atlas$alter), family = binomial)
+ *   coef(g)        # 0.011477758418  -0.005960168232  -0.007023127517
+ *   deviance(g); g$null.deviance                     # 270.0636  270.7434 (R: -2 Log Likelihood 270.064, Chi-square 0.680, Sig. .712)
+ *   range(fitted(g))                                 # 0.3543686  0.4644712
+ *   pp <- fitted(g); mean(coef(g)[2] * pp * (1 - pp)); mean(coef(g)[3] * pp * (1 - pp))   # -0.001436868  -0.001693125
+ *   atlas %>% logistic_regression(weiterbildung ~ lernzeit + alter) %>% marginal_effects()   # AME -0.00144, -0.00169 (SE 0.01075, p 0.894)
  */
 
 const rows = createSurvey();
@@ -164,4 +178,35 @@ test('B13 Interaktion: Modell mit Produkt wie in R', () => {
   assert.ok(close(doubled.b[3], IA.b3 / 2, 1e-9), 'verdoppelte Lernzeit halbiert b₃');
   const sample = interaktionTabs.sample!;
   if (sample.kind === 'analysis') assert.match(sample.result({ rows, columns: { x: ['lernzeit'], y: ['wissenstest'], group: ['weiterbildung'] } }).kurz, /je Stunde 0,48 Aufgaben mehr voraus, mit Weiterbildung 0,57 Aufgaben mehr\. Der Unterschied b₃ beträgt 0,09/);
+});
+
+test('B13 Logit: Anteil, Odds und Logit der Weiterbildung wie in R', () => {
+  const s = shareFor(rows, 'weiterbildung');
+  assert.deepEqual([s.k, s.n], [82, 200], 'Anzahlen');
+  assert.ok(close(s.odds, 0.6949153, 1e-7) && close(s.logit, -0.3639654, 1e-7), 'Odds und Logit');
+  const st = logitSatz.compute(logitSatz.initial);
+  assert.ok(close(st.logit, s.logit, 1e-12), 'Formel als Satz startet bei den Daten');
+  assert.match(logitSatz.worked(st)[2].text, /ln\(0,69\) ≈ −0,36 \(mit allen Nachkommastellen\)/, 'Rundung angesagt');
+  assert.match(logitSatz.interpret(st).kurz, /Auf 100 Nein-Fälle kommen etwa 69 Ja-Fälle\. Der Logit ist −0,36, negativ/);
+  assert.ok(close(1 / (1 + Math.exp(0.36)), 0.41, 0.005), 'zurück zu 0,41');
+  const t = logitTabs.sample!;
+  if (t.kind === 'analysis') assert.match(t.result({ rows, columns: { x: ['weiterbildung'] } }).fachlich, /Odds = 82 \/ 118 ≈ 0,69, logit = ln\(82 \/ 118\) ≈ −0,36/);
+});
+
+test('B13 Likelihood: Log-Likelihood und Modellvergleich wie in R', () => {
+  assert.ok(close(llWb(0.41), -135.3717, 1e-4) && close(llWb(0.5), -138.6294, 1e-4) && close(llWb(0.9), -280.3446, 1e-4), 'ℓ bei 0,41, 0,5, 0,9');
+  assert.ok(close(82 * Math.log(0.41), -73.11, 0.005) && close(118 * Math.log(0.59), -62.26, 0.005), 'die beiden Summanden');
+  assert.equal(Math.round(Math.exp(llWb(0.41) - llWb(0.5))), 26, 'etwa 26-mal');
+  let best = 0.05;
+  for (let p = 0.05; p <= 0.95; p += 0.001) if (llWb(p) > llWb(best)) best = p;
+  assert.ok(close(best, 0.41, 0.001), `Maximum bei ${best}`);
+  const m = wbModel({ rows, columns: {} })!;
+  [WB_MODELL.b0, WB_MODELL.b1, WB_MODELL.b2].forEach((b, k) => assert.ok(close(m.b[k], b, 1e-8), `b${k}: ${m.b[k]}`));
+  assert.ok(close(m.dev, WB_MODELL.dev, 1e-4) && close(m.nullDev, WB_MODELL.nullDev, 1e-4), 'Devianzen');
+  assert.ok(close(m.chi2, 0.6798, 1e-4), 'Chi-Quadrat');
+  assert.ok(close(m.ame, WB_MODELL.ameX, 1e-8), `AME ${m.ame}`);
+  assert.ok(close(Math.min(...m.p), 0.3543686, 1e-6) && close(Math.max(...m.p), 0.4644712, 1e-6), 'Spanne der Wahrscheinlichkeiten');
+  assert.match(likelihoodKarte.stellDirVor.text, /−135,37, bei p = 0,9 nur −280,34/);
+  assert.match(likelihoodKarte.bausteine[3].rechnung!, /270,74 − 270,06 = 0,68/);
+  assert.match(likelihoodKarte.ausprobieren[0].explain, /etwa 26-mal weniger wahrscheinlich/);
 });
