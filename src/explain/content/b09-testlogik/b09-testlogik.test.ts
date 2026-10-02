@@ -15,6 +15,7 @@ import { kritisch } from './kritisch';
 import { betaFor, fehlerarten } from './fehlerarten';
 import { teststaerke } from './teststaerke';
 import { DF, freiheitsgrade } from './freiheitsgrade';
+import { exakt, vergleich } from './exakt';
 
 /*
  * Referenzwerte des Bereichs B9, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -67,6 +68,11 @@ import { DF, freiheitsgrade } from './freiheitsgrade';
  *   atlas %>% binomial_test(weiterbildung, p = .5)                        # prop = 0.410 vs 0.500, p = 0.013 *, N = 200
  *   rej <- sapply(0:200, function(k) binom.test(k, 200, .5)$p.value <= 0.05); sum(dbinom(0:200, 200, .5)[rej])  # 0.040037192
  *   binom.test(118, 200, .5)$p.value; binom.test(200, 200, .5)$p.value   # 0.013130356 (gleich), 1.244603e-60
+ *   z <- (82 - 100) / sqrt(50); 2 * pnorm(-abs(z))                        # -2.5455844, 0.010909498
+ *   2 * pnorm(-(abs(82 - 100) - 0.5) / sqrt(50))                          # 0.013328329 (Stetigkeitskorrektur)
+ *   for (n in c(10, 20, 50, 100, 200)) { k <- (n * 41) %/% 100; binom.test(k, n)$p.value; 2 * pnorm(-abs(k - n/2) / sqrt(n/4)) }
+ *   # n 10, k 4: 0.75390625, 0.52708926; n 20, k 8: 0.50344467, 0.37109337; n 50, k 20: 0.20263875, 0.15729921;
+ *   # n 100, k 41: 0.08862608, 0.07186064; n 200, k 82: 0.01313036, 0.01090950
  */
 const rows = createSurvey();
 const ctx = (columns: Record<string, string>): SampleCtx => ({ rows, columns: Object.fromEntries(Object.entries(columns).map(([k, v]) => [k, [v]])) });
@@ -74,7 +80,7 @@ const tabs = (id: string): ConceptTabs => b09Testlogik.tabs[id];
 const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.ok(s?.kind === 'analysis', `${id}: Auswertung`); const cols = Object.fromEntries(Object.entries(s.columns ?? {}).map(([k, v]) => [k, [v]])); return s.result({ rows: data, columns: cols }); };
 
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
-  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power', 'general_df'];
+  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power', 'general_df', 'exact_asymptotic'];
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -239,4 +245,22 @@ test('B9 Freiheitsgrade: Zählregeln und Grenzen wie in R', () => {
   assert.match(freiheitsgrade.genau.paragraphs[1], /4 und 195 Freiheitsgrade, im Welch-Test 4 und 96,7\./);
   assert.match(result('general_df').kurz, /Student hat 198 Freiheitsgrade\. Welch kommt auf 175,8,/);
   assert.match(result('general_df').fachlich, /bei Welch: 1,97\./);
+});
+
+test('B9 Exakt und genähert: Binomialtest gegen Normalnäherung wie in R', () => {
+  for (const [n, k, e, a] of [[10, 4, 0.75390625, 0.52708926], [20, 8, 0.50344467, 0.37109337], [50, 20, 0.20263875, 0.15729921], [100, 41, 0.08862608, 0.07186064], [200, 82, 0.01313036, 0.01090950]]) {
+    const b = vergleich(n);
+    assert.equal(b.k, k, `n ${n}`);
+    assert.ok(close(b.exact, e, 1e-7) && close(b.approx, a, 1e-7), `n ${n}: ${b.exact}, ${b.approx}`);
+  }
+  assert.ok(close(binomApprox(82, 200).z, -2.5455844, 1e-6) && close(binomApprox(82.5, 200).p, 0.013328329, 1e-8), 'z und Stetigkeitskorrektur');
+  assert.match(exakt.stellDirVor.text, /R meldet p = 0\.013\. Die Normalverteilung als Näherung liefert p ≈ 0,011\./);
+  assert.equal(exakt.bausteine[1].rechnung, 'z = (82 − 100) / 7,07 ≈ −2,55; p ≈ 0,011');
+  assert.match(exakt.bausteine[1].acht, /liefert sie 0,37 statt 0,5\./);
+  assert.match(exakt.ausprobieren[0].explain, /p ≈ 0,75, die Näherung liefert 0,53\. .*0,013 und 0,011\./);
+  assert.match(exakt.regler!.describe(200), /82 Ja ergibt sich exakt p ≈ 0,013, .*p ≈ 0,011\. Die Näherung liegt nah/);
+  assert.match(exakt.regler!.describe(100), /41 Ja .*p ≈ 0,089, .*p ≈ 0,072\. Die Näherung weicht noch spürbar ab\./);
+  assert.match(exakt.genau.paragraphs[0], /≈ 2,47 ergibt p ≈ 0,013, fast wie exakt\./);
+  assert.match(result('exact_asymptotic').kurz, /Exakt ergibt sich p ≈ 0,013, mit der Normalverteilung genähert p ≈ 0,011\. Bei 200 Befragten liegen beide nah beieinander\./);
+  assert.match(result('exact_asymptotic').fachlich, /z = \(82 − 100\) \/ √50 ≈ −2,55, p ≈ 0,011\./);
 });

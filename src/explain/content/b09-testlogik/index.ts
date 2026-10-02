@@ -11,6 +11,7 @@ import { kritisch, kritischTabs } from './kritisch';
 import { fehlerarten, fehlerartenTabs } from './fehlerarten';
 import { teststaerke, teststaerkeTabs } from './teststaerke';
 import { freiheitsgrade, freiheitsgradeTabs } from './freiheitsgrade';
+import { exakt, exaktTabs } from './exakt';
 
 export const b09Testlogik: AreaIndex = {
   explanations: {
@@ -23,6 +24,7 @@ export const b09Testlogik: AreaIndex = {
     type_errors: { kind: 'begriff', card: fehlerarten },
     power: { kind: 'satz', template: teststaerke },
     general_df: { kind: 'begriff', card: freiheitsgrade },
+    exact_asymptotic: { kind: 'begriff', card: exakt },
   },
   tabs: {
     hypothesis: hypotheseTabs,
@@ -34,5 +36,6 @@ export const b09Testlogik: AreaIndex = {
     type_errors: fehlerartenTabs,
     power: teststaerkeTabs,
     general_df: freiheitsgradeTabs,
+    exact_asymptotic: exaktTabs,
   },
 };

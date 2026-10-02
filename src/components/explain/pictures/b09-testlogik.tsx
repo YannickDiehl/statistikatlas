@@ -10,7 +10,8 @@ import type { CStats } from '../../../explain/content/b09-testlogik/kritisch';
 import { betaFor, percent } from '../../../explain/content/b09-testlogik/fehlerarten';
 import type { PStats } from '../../../explain/content/b09-testlogik/teststaerke';
 import { dfOf } from '../../../explain/content/b09-testlogik/freiheitsgrade';
-import { MU0, SCHLAF, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
+import { nOf, vergleich } from '../../../explain/content/b09-testlogik/exakt';
+import { MU0, SCHLAF, dbinom, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
 import { baseSurvey } from '../../../explain/sample';
 import { count, num } from '../../../explain/format';
@@ -256,7 +257,35 @@ function Freiheitsgrade({ value }: { value: number }) {
   );
 }
 
+/**
+ * Binomialverteilung der Ja-Anzahl unter H₀ (50 %) als Säulen, die Ränder ab der beobachteten Anzahl markiert, dazu die
+ * Normalverteilung als Näherung (Kurve).
+ */
+function Exakt({ value }: { value: number }) {
+  const [box, W] = useWidth();
+  const b = vergleich(nOf(value)), n = b.n, sd = Math.sqrt(n / 4), lo = Math.max(0, Math.floor(n / 2 - 4.2 * sd)), hi = Math.min(n, Math.ceil(n / 2 + 4.2 * sd));
+  const ks = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i), top = dbinom(Math.floor(n / 2), n, 0.5) * 1.08, base = 160;
+  const x = linear([lo - 0.5, hi + 0.5], [24, W - 24]), y = linear([0, top], [base, 48]), bw = Math.max(1, x(1) - x(0) - (n <= 60 ? 2 : 0.5));
+  const f = (v: number) => Math.exp(-((v - n / 2) ** 2) / (2 * sd * sd)) / (sd * Math.sqrt(2 * Math.PI));
+  const step = n <= 30 ? 2 : n <= 80 ? 5 : 10, ticks = ks.filter(k => k % step === 0);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={236} viewBox={`0 0 ${W} 236`} role="img"
+        aria-label={`Säulen: Binomialverteilung der Ja-Anzahl bei ${n} Befragten, wenn die Hälfte Ja sagen würde. Markiert sind die Ränder bis ${b.k} und ab ${n - b.k}; zusammen ergeben sie exakt p ≈ ${small(b.exact)}. Die Kurve ist die Normalverteilung als Näherung, sie liefert p ≈ ${small(b.approx)}.`}>
+        <text className="xw-t xw-strong" x={24} y={16}>exakt p ≈ {small(b.exact)}, Näherung p ≈ {small(b.approx)}</text>
+        {ks.map(k => { const q = dbinom(k, n, 0.5), tail = k <= b.k || k >= n - b.k; return <rect key={k} className={tail ? 'xw-bar-neg' : 'xw-bar-plain'} x={x(k) - bw / 2} y={y(q)} width={bw} height={base - y(q)} />; })}
+        <Curve f={f} from={lo - 0.5} to={hi + 0.5} x={x} y={y} samples={160} />
+        <MarkLine x={x(b.k)} from={40} to={base} className="xw-mean b09-reject" />
+        <text className="xw-t" x={x(b.k)} y={36} textAnchor={x(b.k) < 80 ? 'start' : 'middle'}>{b.k} Ja</text>
+        <Axis scale={x} ticks={ticks} at={base} from={24} to={W - 24} labelGap={20} title={`Ja-Anzahl unter ${n} Befragten, wenn H₀ stimmt`} />
+        <text className="xw-t" x={24} y={230}>Säulen: exakt; Kurve: Näherung</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-exakt': forCard(p => <Exakt value={p.value ?? 200} />),
   'b09-freiheitsgrade': forCard(p => <Freiheitsgrade value={p.value ?? 4} />),
   'b09-teststaerke': forSentence(p => <Teststaerke s={p.s as PStats} />),
   'b09-fehlerarten': forCard(p => <Fehlerarten a={p.value ?? 0.05} />),
