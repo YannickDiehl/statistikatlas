@@ -28,7 +28,7 @@ export function MariposaPanel(p:RPanelProps){
  if(!entry.variants.length)return null;
  function change(next:RSettings){p.onSettings?p.onSettings(next):setLocal(next);}
  async function copy(){try{await navigator.clipboard.writeText(code);setFeedback('R-Aufruf kopiert.');}catch{setFeedback('Kopieren ist hier nicht verfügbar. Du kannst das R-Skript herunterladen.');}}
- return <section className={`mariposa-panel${p.embedded?' embedded':''}`} aria-label="Passender mariposa-Aufruf">{!p.embedded&&<div className="package-heading"><span className="eyebrow">In R · mariposa {mariposaVersion}</span><code>{variant.fn}()</code></div>}
+ return <section className={`mariposa-panel${p.embedded?' embedded':''}`} aria-label="Passender mariposa-Aufruf">{!p.embedded&&<div className="package-heading"><span className="eyebrow">In R (mariposa {mariposaVersion})</span><code>{variant.fn}()</code></div>}
   {entry.variants.length>1&&<label className="variant-label">{entry.existing?'R-Aufruf wählen':'Rechenweg / R-Aufruf'}<select value={s.variant} onChange={e=>change(initialRSettings(entry,Number(e.target.value)))}>{entry.variants.map((v,i)=><option key={i} value={i}>{v.label}</option>)}</select></label>}
   {entry.existing&&variant.formula&&<><p className="small-copy">Dieser R-Rechenweg verwendet einen eigenen Maßstab:</p><LinkedFormula contextAnchor={p.contextAnchor} route={p.route} formula={variant.formula} reference={p.reference} onSelect={p.onSelect} onHover={p.onHover}/></>}
   {variant.note&&<p className="context-note">{variant.note}</p>}
