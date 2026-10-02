@@ -1,5 +1,48 @@
 // Bereich B6 „Wahrscheinlichkeit“. Begriffe (Spezifikation Ausbau, Abschnitt 6): probability, conditional_probability, stochastic_independence, random_variable, empirical_distribution, theoretical_distribution, discrete_continuous, probability_mass, density_function, cumulative_probability, theoretical_quantile, expectation, population_variance.
-// Je Begriff eine Datei in diesem Ordner, hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
+// Je Begriff eine Datei in diesem Ordner (Erklärung und Reiter), hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
 import type { AreaIndex } from '../../types';
+import { erwartung, expectationTabs, populationVarianceTabs } from './erwartung';
+import { probability, probabilityTabs } from './probability';
+import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
+import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic_independence';
+import { randomVariable, randomVariableTabs } from './random_variable';
+import { empiricalDistribution, empiricalDistributionTabs } from './empirical_distribution';
+import { theoreticalDistribution, theoreticalDistributionTabs } from './theoretical_distribution';
+import { discreteContinuous, discreteContinuousTabs } from './discrete_continuous';
+import { probabilityMass, probabilityMassTabs } from './probability_mass';
+import { densityFunction, densityFunctionTabs } from './density_function';
+import { cumulativeProbability, cumulativeProbabilityTabs } from './cumulative_probability';
+import { theoreticalQuantile, theoreticalQuantileTabs } from './theoretical_quantile';
 
-export const b06Wahrscheinlichkeit: AreaIndex = { explanations: {}, tabs: {} };
+export const b06Wahrscheinlichkeit: AreaIndex = {
+  explanations: {
+    probability: { kind: 'begriff', card: probability },
+    conditional_probability: { kind: 'begriff', card: conditionalProbability },
+    stochastic_independence: { kind: 'begriff', card: stochasticIndependence },
+    random_variable: { kind: 'begriff', card: randomVariable },
+    empirical_distribution: { kind: 'begriff', card: empiricalDistribution },
+    theoretical_distribution: { kind: 'begriff', card: theoreticalDistribution },
+    discrete_continuous: { kind: 'begriff', card: discreteContinuous },
+    probability_mass: { kind: 'begriff', card: probabilityMass },
+    density_function: { kind: 'begriff', card: densityFunction },
+    cumulative_probability: { kind: 'begriff', card: cumulativeProbability },
+    theoretical_quantile: { kind: 'begriff', card: theoreticalQuantile },
+    expectation: { kind: 'werkstatt', workshop: erwartung, variant: 'expectation' },
+    population_variance: { kind: 'werkstatt', workshop: erwartung, variant: 'population_variance' },
+  },
+  tabs: {
+    probability: probabilityTabs,
+    conditional_probability: conditionalProbabilityTabs,
+    stochastic_independence: stochasticIndependenceTabs,
+    random_variable: randomVariableTabs,
+    empirical_distribution: empiricalDistributionTabs,
+    theoretical_distribution: theoreticalDistributionTabs,
+    discrete_continuous: discreteContinuousTabs,
+    probability_mass: probabilityMassTabs,
+    density_function: densityFunctionTabs,
+    cumulative_probability: cumulativeProbabilityTabs,
+    theoretical_quantile: theoreticalQuantileTabs,
+    expectation: expectationTabs,
+    population_variance: populationVarianceTabs,
+  },
+};
