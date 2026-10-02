@@ -213,7 +213,7 @@ test('Sortieren: Reihenfolge, Positionen und die 200 wie in R', () => {
   const s = sortingTabs.sample!;
   if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
   const res = s.result(ctx(rows, 'lernzeit'));
-  assert.match(res.kurz, /x₍₁₎ = 0 h und endet bei x₍₂₀₀₎ = 18,4 h\. An den Positionen 100 und 101 .* Median: 7,6 h\./);
+  assert.match(res.kurz, /x₍₁₎ = 0 h und endet bei x₍₂₀₀₎ = 18,4 h\. Der Median, der mittlere Wert der Reihe nach, ist der Durchschnitt der Werte an den Positionen 100 und 101: 7,6 h\./);
   assert.match(res.zusatz!, /^Nur 99 der 200 Lernzeiten/);
   assert.equal(s.value!(ctx(applyOp(rows, 'lernzeit', 'shift', 1), 'lernzeit')), 1);
   const next = sortingTabs.next.next.why;

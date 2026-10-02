@@ -50,7 +50,7 @@ export const codebook: ConceptCard = {
     },
     {
       title: 'Die passende Spalte suchen',
-      was: 'find_var() sucht in Namen und Fragetexten. find_var("lern") findet im Lehrdatensatz sechs Spalten, von lernzeit bis quelle_kurs.',
+      was: 'find_var() sucht in Namen und Labels, also den Fragetexten. find_var("lern") findet im Lehrdatensatz sechs Spalten, von lernzeit bis quelle_kurs.',
       warum: 'Große Datensätze haben Hunderte Spalten. Eine Suche nach einem Stichwort ist schneller als Blättern.',
       acht: 'find_var() sucht Buchstabenfolgen, keine Bedeutungen. „Bildung“ findet die Weiterbildung, aber nicht den Schulabschluss.',
     },

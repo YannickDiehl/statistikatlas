@@ -148,7 +148,7 @@ export const sortingTabs: ConceptTabs = {
     result: c => {
       const r = lernzeit(c);
       return {
-        kurz: `Sortiert beginnt die Reihe bei x₍₁₎ = ${num(r.min)} h und endet bei x₍${tief(r.n)}₎ = ${num(r.max)} h. An ${mittePositionen(r.n)} steht der mittlere Wert der Reihe nach, der Median: ${num(r.median)} h.`,
+        kurz: `Sortiert beginnt die Reihe bei x₍₁₎ = ${num(r.min)} h und endet bei x₍${tief(r.n)}₎ = ${num(r.max)} h. Der Median, der mittlere Wert der Reihe nach, ${r.n % 2 === 0 ? `ist der Durchschnitt der Werte an ${mittePositionen(r.n)}` : `steht an ${mittePositionen(r.n)}`}: ${num(r.median)} h.`,
         fachlich: `Ordnungsstatistiken der Lernzeit: Minimum x₍₁₎ = ${num(r.min)} h, Maximum x₍${tief(r.n)}₎ = ${num(r.max)} h; der Median ist der Durchschnitt der Werte an ${mittePositionen(r.n)}, ${num(r.unten)} h und ${num(r.oben)} h.`,
         zusatz: `Nur ${r.verschieden} der ${r.n} Lernzeiten sind verschieden: Gleiche Werte stehen in der sortierten Reihe direkt hintereinander.`,
       };
@@ -158,7 +158,7 @@ export const sortingTabs: ConceptTabs = {
       {
         question: 'Alle lernen eine Stunde mehr. Was passiert mit x₍₁₎, dem kleinsten Wert?',
         options: ['er steigt um 1', 'er bleibt gleich', 'das hängt von der Person ab'], correct: 0,
-        explain: 'Alle rücken um eine Stunde nach oben, die Reihenfolge bleibt. Der kleinste Wert gehört zur selben Person und ist eine Stunde größer.',
+        explain: 'Alle rücken um eine Stunde nach oben, die Reihenfolge bleibt. Deshalb ist auch der kleinste Wert genau eine Stunde größer.',
         kurz: 'Verschieben ändert die Werte, nicht die Reihenfolge.',
         tryIt: { label: 'alle eine Stunde mehr', op: 'shift', column: 'x', value: 1 },
         expect: { change: 'plus', amount: 1 },
