@@ -169,7 +169,7 @@ function SaeulenPicture({ values, s, step, who, names, bounds, onChange, onWho }
           <text className="xw-t xw-strong" x={X(k)} y={B + 20} textAnchor="middle">{k}</text>
           <text className="xw-t" x={X(k)} y={B + 38} textAnchor="middle">{SHORT[k] ?? ''}</text>
           {step >= 4 && <text className="xw-t" x={X(k)} y={B + 58} textAnchor="middle">{pct(count(k) / values.length)}</text>}
-          {step >= 5 && <text className="xw-t" x={X(k)} y={B + 78} textAnchor="middle">{`≤ ${pct(upTo(k))}`}</text>}
+          {step >= 5 && <text className="xw-t" x={X(k)} y={B + 78} textAnchor="middle">{pct(upTo(k))}</text>}
         </g>)}
         {values.map((v, i) => (
           <DragPoint key={`dot${i}`} x={X(v)} y={B - 14 - level[i] * ROW} label={`Person ${names[i]}, Schulabschluss`} valueText={`Code ${v}: ${labelOf('schulabschluss', v)}`}
@@ -223,7 +223,7 @@ function KreuzePicture({ rows, s, step, who, names, onChange, onWho }: {
             <text className="xw-t" x={bx + Math.max(2, bw * s.casePct[j] / 100) + 6} y={barY + j * rowH + 32}>{num(s.casePct[j])} % der Personen</text>
           </>}
         </g>)}
-        {step >= 5 && <text className="xw-t xw-strong" x={12} y={H - 8}>Personen zusammen {num(s.caseSum)} %, Kreuze zusammen 100 %</text>}
+        {step >= 5 && <text className="xw-t xw-strong" x={12} y={H - 8}>Fälle zusammen {num(s.caseSum)} %, Kreuze 100 %</text>}
       </svg>
     </div>
   );

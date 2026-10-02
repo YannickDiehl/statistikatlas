@@ -177,7 +177,7 @@ export const haeufigkeiten: Workshop<number[], Haeufigkeit> = {
     2: 'Der höchste Stapel ist der Modus, grün umrandet.',
     3: 'Alle Stapel zusammen ergeben die acht Personen.',
     4: 'Unter jedem Stapel sein Anteil an allen acht.',
-    5: 'Die kumulierten Anteile wachsen von links nach rechts bis 100 %.',
+    5: 'Darunter die kumulierten Anteile, also höchstens dieser Abschluss. Sie wachsen von links nach rechts bis 100 %.',
   },
   think: [
     {
