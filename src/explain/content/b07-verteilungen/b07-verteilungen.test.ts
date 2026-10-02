@@ -121,6 +121,8 @@ test('B7 t-Verteilung: t-Test der Schlafdauer gegen 7 Stunden und Grenzen wie in
   assert.match(tVerteilung.wofuer, /^Schlafen die 200 Befragten im Mittel anders lange als 7 Stunden pro Nacht\? Ihr Mittel liegt knapp 5 Minuten darüber\./);
   assert.match(tVerteilung.stellDirVor.text, /^Die 200 Befragten schlafen im Mittel 7,08 Stunden pro Nacht, 4,95 Minuten länger als 7 Stunden\. .* 3,48 Minuten: t ≈ 1,42 bei 199 Freiheitsgraden\./);
   assert.match(tVerteilung.bausteine[2].rechnung!, /±2,78\. .* ±2,04\. .* ±1,97\./);
+  // s ist die Streuung der Befragten; geschätzt wird damit die unbekannte wahre Streuung (Kompakt nennt beides).
+  assert.match(tVerteilung.bausteine[1].was, /^Statt mit der wahren Streuung rechnet t mit s, der Streuung der Befragten\. Deshalb schwankt t etwas stärker als ein z-Wert/);
   assert.equal(tVerteilung.regler!.describe(4), 'Bei 4 Freiheitsgraden liegen die äußeren 5 % jenseits von ±2,78, bei der Standardnormalverteilung jenseits von ±1,96. Der t-Test der Schlafdauer hat 199 Freiheitsgrade. Hätte er nur 4, käme ohne Unterschied ein t von 1,42 oder weiter außen in etwa 23 von 100 Stichproben vor.');
   assert.match(tVerteilung.regler!.describe(199), /Der t-Test der Schlafdauer hat 199 Freiheitsgrade: Gäbe es keinen Unterschied, käme ein t von 1,42 oder weiter außen in etwa 16 von 100 Stichproben vor\.$/);
   assert.match(tVerteilung.regler!.describe(200), /Hätte er 200, käme/);
@@ -298,12 +300,15 @@ test('B7 Binomialverteilung: Reihenfolgen, Wahrscheinlichkeit und Binomialtest w
  *   atlas %>% fisher_test(row = weiterbildung, col = erwerbstaetig)            # p = 0.440, OR = 1.315 [0.712, 2.432], N = 200
  *   atlas %>% fisher_test(row = weiterbildung)          # Fehler: Argument `col` is missing, with no default.
  */
-test('B7 Hypergeometrische Verteilung: 10 aus 200 und der Test von Fisher wie in R', async () => {
+test('B7 Hypergeometrische Verteilung: 10 aus 200 und der Test nach Fisher wie in R', async () => {
   const { HYPER, fisherFit, hypergeometrisch, hyperTabs, spread } = await import('./hypergeometric');
   const { dhyper, dbinom, choose } = await import('./dist');
   const probs = Array.from({ length: 11 }, (_, k) => dhyper(k, 82, 200, 10));
   assert.equal(probs.indexOf(Math.max(...probs)), 4); ok(probs[4], 0.2567104, 'dhyper(4)'); ok(HYPER.p4, probs[4], 'HYPER.p4'); ok(dbinom(4, 10, 0.41), HYPER.b4, 'dbinom(4)');
   ok(probs.reduce((a, b) => a + b, 0), 1, 'Summe 1');
+  // Ein Name für den Test auf der ganzen Karte: der Kartentitel „Exakter Test nach Fisher“ (Regel 2).
+  const shown = JSON.stringify([hypergeometrisch.wofuer, hypergeometrisch.bausteine, hypergeometrisch.genau, hyperTabs.sample, hyperTabs.r, hyperTabs.next]);
+  assert.ok(!shown.includes('von Fisher') && hypergeometrisch.bausteine.some(b => b.title === 'Den exakten Test nach Fisher verstehen'), 'Fisher heißt überall „nach Fisher“');
   ok(spread(10).without, 1.519736, 'SD ohne'); ok(spread(10).with, 1.555313, 'SD mit'); ok(spread(200).with, 6.955573, 'SD mit, 200'); ok(spread(200).without, 0, 'SD ohne, 200');
   assert.deepEqual([choose(4, 1) * choose(6, 2), choose(10, 3)], [60, 120]); ok(dhyper(1, 4, 10, 3), 0.5, 'kleine Gruppe'); ok(dbinom(1, 3, 0.4), 0.432, 'mit Zurücklegen');
   ok(dhyper(2, 2, 6, 2), 1 / 15, 'Kontrollfrage');

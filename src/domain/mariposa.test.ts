@@ -7,7 +7,7 @@ import {PackageInspector} from '../components/PackageInspector';
 import {renderToStaticMarkup} from 'react-dom/server';
 import {mariposaExports,mariposaEntries,entryById,functionToConcept,formulaParts,formulaTargets} from './mariposaCatalog';
 import {exampleVariants,analysisCode,startBlock,initialRSettings,validateRSettings,eligible,surveyCsv,rolesFor,roleExplanation} from './mariposa';
-import {createSurvey,migrateSurvey,surveyColumns,columnById,defaultSelection} from './survey';
+import {createSurvey,migrateSurvey,surveyColumns,columnById,defaultSelection,surveySources} from './survey';
 import {concepts,conceptById,connections} from './concepts';
 import {mapRelations,incomingPaths,regions,regionConcepts,places,referenceInMap} from './network';
 import {ref} from './learning';
@@ -94,4 +94,6 @@ test('concept titles never use „·“ as a separator and pass the style rules'
  }
  assert.equal(conceptById.power.title,'Teststärke (Power)','Titel der Teststärke');
  assert.equal(conceptById.pomps.title,'POMPS (Skalen auf 0–100)','Titel von POMPS');
+ // Sichtbare Quellentitel („Fachlich nachlesen“, Datensatz-Dialog) ebenfalls ohne „·“ als Trenner.
+ for(const source of [...mariposaEntries.flatMap(e=>e.sources??[]),...surveySources])assert.ok(!source.title.includes('·'),source.title);
 });

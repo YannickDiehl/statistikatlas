@@ -17,7 +17,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Penn State · Ereignisse und Wahrscheinlichkeit",
+        "title": "Penn State: Ereignisse und Wahrscheinlichkeit",
         "url": "https://online.stat.psu.edu/stat414/Lesson02"
       }
     ]
@@ -39,7 +39,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Princeton · Bedingte Wahrscheinlichkeit",
+        "title": "Princeton: Bedingte Wahrscheinlichkeit",
         "url": "https://www.cs.princeton.edu/courses/archive/fall04/cos341/probability.pdf#page=2"
       }
     ]
@@ -61,7 +61,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Princeton · Unabhängigkeit",
+        "title": "Princeton: Unabhängigkeit",
         "url": "https://www.cs.princeton.edu/courses/archive/fall04/cos341/probability.pdf#page=3"
       }
     ]
@@ -83,7 +83,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Princeton · Zufallsvariablen",
+        "title": "Princeton: Zufallsvariablen",
         "url": "https://www.cs.princeton.edu/courses/archive/fall04/cos341/probability.pdf#page=3"
       }
     ]
@@ -105,7 +105,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Wahrscheinlichkeitsverteilungen",
+        "title": "NIST: Wahrscheinlichkeitsverteilungen",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda36.htm"
       }
     ]
@@ -127,7 +127,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Wahrscheinlichkeitsverteilungen",
+        "title": "NIST: Wahrscheinlichkeitsverteilungen",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda36.htm"
       }
     ]
@@ -149,7 +149,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Diskrete Masse und stetige Dichte",
+        "title": "NIST: Diskrete Masse und stetige Dichte",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda361.htm"
       }
     ]
@@ -175,7 +175,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Diskrete Masse und stetige Dichte",
+        "title": "NIST: Diskrete Masse und stetige Dichte",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda361.htm"
       }
     ]
@@ -202,7 +202,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Diskrete Masse und stetige Dichte",
+        "title": "NIST: Diskrete Masse und stetige Dichte",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda361.htm"
       }
     ]
@@ -229,7 +229,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Verteilungsfunktion und Quantile",
+        "title": "NIST: Verteilungsfunktion und Quantile",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda362.htm"
       }
     ]
@@ -251,7 +251,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Verteilungsfunktion und Quantile",
+        "title": "NIST: Verteilungsfunktion und Quantile",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda362.htm"
       }
     ]
@@ -278,7 +278,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Normalverteilung",
+        "title": "NIST: Normalverteilung",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3661.htm"
       }
     ]
@@ -304,7 +304,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Normalverteilung",
+        "title": "NIST: Normalverteilung",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3661.htm"
       }
     ]
@@ -331,7 +331,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · t-Verteilung",
+        "title": "NIST: t-Verteilung",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3664.htm"
       }
     ]
@@ -357,7 +357,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Chi-Quadrat-Verteilung",
+        "title": "NIST: Chi-Quadrat-Verteilung",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3666.htm"
       }
     ]
@@ -379,7 +379,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · F-Verteilung",
+        "title": "NIST: F-Verteilung",
         "url": "https://www.itl.nist.gov/div898/handbook/eda/section3/eda3665.htm"
       }
     ]
@@ -401,7 +401,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "R stats · Binomialverteilung",
+        "title": "R stats: Binomialverteilung",
         "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Binomial.html"
       }
     ]
@@ -432,7 +432,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "R stats · Binomialverteilung",
+        "title": "R stats: Binomialverteilung",
         "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Binomial.html"
       }
     ]
@@ -454,7 +454,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "R stats · Hypergeometrische Verteilung",
+        "title": "R stats: Hypergeometrische Verteilung",
         "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/Hypergeometric.html"
       }
     ]
@@ -981,11 +981,11 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Penn State STAT 501 · Multicollinearity & Other Regression Pitfalls, §12.9",
+        "title": "Penn State STAT 501: Multicollinearity & Other Regression Pitfalls, §12.9",
         "url": "https://online.stat.psu.edu/stat501/Lesson12"
       },
       {
-        "title": "NIST · Detecting Non-Constant Variation",
+        "title": "NIST: Detecting Non-Constant Variation",
         "url": "https://itl.nist.gov/div898/handbook/pmd/section4/pmd442.htm"
       }
     ]
@@ -1013,7 +1013,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Penn State STAT 501 · Influential Points",
+        "title": "Penn State STAT 501: Influential Points",
         "url": "https://online.stat.psu.edu/stat501/Lesson11"
       }
     ]
@@ -1041,7 +1041,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Penn State STAT 501 · Multicollinearity & Other Regression Pitfalls, §12.9",
+        "title": "Penn State STAT 501: Multicollinearity & Other Regression Pitfalls, §12.9",
         "url": "https://online.stat.psu.edu/stat501/Lesson12"
       }
     ]
@@ -1064,7 +1064,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Penn State STAT 501 · Multiple Linear Regression",
+        "title": "Penn State STAT 501: Multiple Linear Regression",
         "url": "https://online.stat.psu.edu/stat501/Lesson05"
       }
     ]
@@ -1087,15 +1087,15 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Penn State STAT 501 · Model Building",
+        "title": "Penn State STAT 501: Model Building",
         "url": "https://online.stat.psu.edu/stat501/Lesson10"
       },
       {
-        "title": "scikit-learn · Common Pitfalls and Recommended Practices",
+        "title": "scikit-learn: Common Pitfalls and Recommended Practices",
         "url": "https://scikit-learn.org/stable/common_pitfalls.html"
       },
       {
-        "title": "scikit-learn · Cross-validation: Evaluating Estimator Performance",
+        "title": "scikit-learn, Cross-validation: Evaluating Estimator Performance",
         "url": "https://scikit-learn.org/stable/modules/cross_validation.html"
       }
     ]
@@ -1127,11 +1127,11 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Penn State STAT 462 · Prediction Interval for a New Response",
+        "title": "Penn State STAT 462: Prediction Interval for a New Response",
         "url": "https://online.stat.psu.edu/stat462/node/151/"
       },
       {
-        "title": "Penn State STAT 415 · A Prediction Interval for a New Y",
+        "title": "Penn State STAT 415: A Prediction Interval for a New Y",
         "url": "https://online.stat.psu.edu/stat415/lesson/8/8.2"
       }
     ]
@@ -1154,11 +1154,11 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Hernán & Robins · Causal Inference: What If",
+        "title": "Hernán & Robins, Causal Inference: What If",
         "url": "https://miguelhernan.org/whatifbook"
       },
       {
-        "title": "Penn State STAT 100 · Good Sample Surveys and Comparative Studies",
+        "title": "Penn State STAT 100: Good Sample Surveys and Comparative Studies",
         "url": "https://online.stat.psu.edu/stat100/Lesson02"
       }
     ]
@@ -1181,7 +1181,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Hernán & Robins · Causal Inference: What If",
+        "title": "Hernán & Robins, Causal Inference: What If",
         "url": "https://miguelhernan.org/whatifbook"
       }
     ]
@@ -1204,11 +1204,11 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Penn State STAT 100 · Good Sample Surveys and Comparative Studies",
+        "title": "Penn State STAT 100: Good Sample Surveys and Comparative Studies",
         "url": "https://online.stat.psu.edu/stat100/Lesson02"
       },
       {
-        "title": "Hernán & Robins · Causal Inference: What If",
+        "title": "Hernán & Robins, Causal Inference: What If",
         "url": "https://miguelhernan.org/whatifbook"
       }
     ]
@@ -1231,7 +1231,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Schmidt & Lechner (2020) · Documenting Measurement Instruments",
+        "title": "Schmidt & Lechner (2020): Documenting Measurement Instruments",
         "url": "https://www.gesis.org/fileadmin/admin/Dateikatalog/pdf/guidelines/documenting_measurement_instruments_schmidt_2020.pdf"
       }
     ]
@@ -1254,7 +1254,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Danner (2016) · Reliability – The Precision of a Measurement",
+        "title": "Danner (2016): Reliability – The Precision of a Measurement",
         "url": "https://www.gesis.org/fileadmin/admin/Dateikatalog/pdf/guidelines/reliability_precision_measurement_danner_2016.pdf"
       }
     ]
@@ -1277,7 +1277,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Repke, Birkenmaier & Lechner (2024) · Validity in Survey Research",
+        "title": "Repke, Birkenmaier & Lechner (2024): Validity in Survey Research",
         "url": "https://www.gesis.org/fileadmin/admin/Dateikatalog/pdf/guidelines/validity_in_survey_research_repke_birkenmaier_lechner_2024.pdf"
       }
     ]
@@ -1305,11 +1305,11 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "Repke, Birkenmaier & Lechner (2024) · Validity in Survey Research",
+        "title": "Repke, Birkenmaier & Lechner (2024): Validity in Survey Research",
         "url": "https://www.gesis.org/fileadmin/admin/Dateikatalog/pdf/guidelines/validity_in_survey_research_repke_birkenmaier_lechner_2024.pdf"
       },
       {
-        "title": "R Core · Factor Analysis",
+        "title": "R Core: Factor Analysis",
         "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/factanal.html"
       }
     ]
@@ -1332,7 +1332,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "R Core · Correlation, Variance and Covariance (Matrices)",
+        "title": "R Core: Correlation, Variance and Covariance (Matrices)",
         "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cor.html"
       }
     ]
@@ -1360,15 +1360,15 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "R Core · Factor Analysis",
+        "title": "R Core: Factor Analysis",
         "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/factanal.html"
       },
       {
-        "title": "UCLA OARC · A Practical Introduction to Factor Analysis",
+        "title": "UCLA OARC: A Practical Introduction to Factor Analysis",
         "url": "https://stats.oarc.ucla.edu/spss/seminars/introduction-to-factor-analysis/a-practical-introduction-to-factor-analysis/"
       },
       {
-        "title": "NIST · Principal Components: Numerical Example",
+        "title": "NIST, Principal Components: Numerical Example",
         "url": "https://www.itl.nist.gov/div898/handbook/pmc/section5/pmc552.htm"
       }
     ]
@@ -1391,7 +1391,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "NIST · Properties of Principal Components",
+        "title": "NIST: Properties of Principal Components",
         "url": "https://www.itl.nist.gov/div898/handbook/pmc/section5/pmc551.htm"
       }
     ]
@@ -1414,11 +1414,11 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "UCLA OARC · A Practical Introduction to Factor Analysis",
+        "title": "UCLA OARC: A Practical Introduction to Factor Analysis",
         "url": "https://stats.oarc.ucla.edu/spss/seminars/introduction-to-factor-analysis/a-practical-introduction-to-factor-analysis/"
       },
       {
-        "title": "R Core · Factor Analysis",
+        "title": "R Core: Factor Analysis",
         "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/factanal.html"
       }
     ]
@@ -1441,7 +1441,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "UCLA OARC · A Practical Introduction to Factor Analysis",
+        "title": "UCLA OARC: A Practical Introduction to Factor Analysis",
         "url": "https://stats.oarc.ucla.edu/spss/seminars/introduction-to-factor-analysis/a-practical-introduction-to-factor-analysis/"
       }
     ]
@@ -1464,7 +1464,7 @@ export const foundationEntries:AtlasEntry[]=[
     "existing": false,
     "sources": [
       {
-        "title": "National Research Council (2010) · Drawing Inferences from Incomplete Data",
+        "title": "National Research Council (2010): Drawing Inferences from Incomplete Data",
         "url": "https://www.ncbi.nlm.nih.gov/books/NBK209900/"
       }
     ]

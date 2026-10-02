@@ -159,13 +159,15 @@ test('B14 Cronbachs Alpha mit 200 Befragten wie in R', () => {
   const r = s.result(ctx());
   assert.equal(r.kurz, 'Die fünf Fragen zur Methoden-Zuversicht passen gut zusammen: Cronbachs Alpha ist knapp 0,9 (R meldet 0.898). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.');
   // Reihenfolge: rohes α, gleich danach R, dann erst das standardisierte α (R standardisiert: 0.899).
-  assert.match(r.fachlich, /≈ 0,90\. R meldet 0\.898 \(Good\); das liegt knapp unter 0,9\. Aus den Korrelationen gerechnet \(standardisiert\) ergibt sich 0,90\. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good, ab 0,7 mit Acceptable, ab 0,6 mit Questionable und darunter mit Poor\./);
+  assert.match(r.fachlich, /≈ 0,90\. R meldet 0\.898 \(Good\); das liegt knapp unter 0,9\. Aus den Korrelationen gerechnet \(standardisiert\) ergibt sich 0,90\. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good, ab 0,7 mit Acceptable, ab 0,6 mit Questionable und von 0 bis unter 0,6 mit Poor\./);
   // N2: Frage 2 ohne Streuung lässt R weg und rechnet mit vier Fragen (0.877); so auch der Reiter.
   const r2 = s.result(ctx(con));
   assert.equal(r2.kurz, 'Die übrigen vier Fragen zur Methoden-Zuversicht passen gut zusammen: Cronbachs Alpha ist 0,88 (R meldet 0.877). Wer einer Frage zustimmt, stimmt meist auch den anderen zu.');
   assert.match(r2.fachlich, /^k = 4 Fragen, Σsⱼ² = 7,98, sₓ² = 23,3: α = 4\/3 · \(1 − 7,98 \/ 23,3\) ≈ 0,88\. Frage 2 streut nicht: R lässt sie weg/);
   assert.match(r2.fachlich, /gerechnet ist mit den übrigen vier\. R meldet 0\.877 \(Good\)\. Aus den Korrelationen gerechnet \(standardisiert\) ergibt sich 0,88\./);
   assert.match(s.result(ctx(applyOp(rev, 'methoden2', 'constant', 4))).kurz, /^Alpha ist negativ \(−0,04\): Die übrigen vier Fragen/);
+  // Negatives α: R meldet keine Stufe; Poor gilt nur von 0 bis unter 0,6 (.alpha_interpretation in mariposa 0.7.4).
+  assert.match(s.result(ctx(applyOp(rev, 'methoden2', 'constant', 4))).fachlich, /R meldet −0\.042 \(negative; check item coding\)\..* von 0 bis unter 0,6 mit Poor\./);
   assert.match(r.fachlich, /Σsⱼ² = 10,16, sₓ² = 36,09: α = 5\/4 · \(1 − 10,16 \/ 36,09\) ≈ 0,90\. .* 0,90\./);
   assert.equal(r.zusatz, 'Die Summenwerte streuen 3,55-mal so stark wie die fünf Fragen einzeln zusammen.');
   assert.ok(close(s.value!(ctx(rev))!, 0.4064987, 1e-6), 'umgepolt wie R');
@@ -247,6 +249,8 @@ test('B14 Dimensionalität: Texte und Reiter mit den Zahlen aus R', () => {
 
 test('B14 Eigenwerte: Karte, Regler und Reiter mit den Zahlen aus R', () => {
   assert.match(eigenvalues.stellDirVor.text, /erste Eigenwert 3,56\. Die übrigen vier sind klein: 0,41; 0,37; 0,34; 0,31\. .* 3,56 \/ 5 ≈ 71,2 %/);
+  // „Ihre Varianz“ bezieht sich auf die gewichtete Summe, die am stärksten streut.
+  assert.ok(eigenvalues.bausteine.some(b => /die am stärksten streut, bei Gewichten, deren Quadrate zusammen 1 ergeben\. Ihre Varianz ist der erste Eigenwert\./.test(b.was)), 'Bezug der Varianz');
   assert.match(eigenvalues.regler!.describe(0.64), /1 \+ 4 · 0,64 = 3,56\. Die erste Komponente bündelt 71,2 %, die anderen vier je 0,36\./);
   assert.deepEqual(equalCorrelation(0).map(v => Math.round(v * 1e9) / 1e9), [1, 1, 1, 1, 1]);
   assert.ok(close(equalCorrelation(0.6399357)[0], METHODEN_PCA.eigen[0], 1e-3), 'mittlere Korrelation 0.6399 (R) trifft den ersten Eigenwert fast');

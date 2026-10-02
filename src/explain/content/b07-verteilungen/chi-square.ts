@@ -101,7 +101,7 @@ export const chiQuadratVerteilung: ConceptCard = {
     kurz: 'Für Kreuztabellen ist die χ²-Verteilung eine Näherung. Sie passt, wenn die erwarteten Häufigkeiten nicht zu klein sind.',
     paragraphs: [
       'Eine χ²-verteilte Größe mit ν Freiheitsgraden ist die Summe von ν quadrierten, unabhängigen, standardnormalverteilten Größen. Erwartungswert ν, Varianz 2ν. Mit wachsendem ν wird die Verteilung symmetrischer.',
-      `Die Prüfgröße des Chi-Quadrat-Tests folgt der χ²-Verteilung nur näherungsweise, für große Stichproben. Als Faustregel sollen alle erwarteten Häufigkeiten mindestens 5 betragen; sonst hilft der exakte Test von Fisher. Hier ist die kleinste ${num(C.minE)}.`,
+      `Die Prüfgröße des Chi-Quadrat-Tests folgt der χ²-Verteilung nur näherungsweise, für große Stichproben. Als Faustregel sollen alle erwarteten Häufigkeiten mindestens 5 betragen; sonst hilft der exakte Test nach Fisher. Hier ist die kleinste ${num(C.minE)}.`,
       'Auch die Varianz normalverteilter Daten hängt mit ihr zusammen: (n − 1) · s² / σ² ist χ²-verteilt mit n − 1 Freiheitsgraden. Daraus entstehen Intervalle für σ.',
       `In R liefert qchisq(0.95, 4) die Grenze ${num(C.crit)} und pchisq(3.08, 4, lower.tail = FALSE) den p-Wert.`,
     ],

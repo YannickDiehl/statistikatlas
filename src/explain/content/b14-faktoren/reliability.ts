@@ -336,7 +336,7 @@ export const reliabilityTabs: ConceptTabs = {
       const edge = alphaText(a.alpha).startsWith('knapp') ? `; das liegt knapp unter ${alphaText(a.alpha).slice(6)}` : '';
       return {
         kurz,
-        fachlich: `k = ${k} Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = ${k}/${k - 1} · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${weg} ${r}${edge}. Aus den Korrelationen gerechnet (standardisiert) ergibt sich ${fixed(a.alphaStd)}. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good, ab 0,7 mit Acceptable, ab 0,6 mit Questionable und darunter mit Poor. Im Atlas heißt das sehr gut, gut, ausreichend, nur bedingt und schlecht. Das sind Faustregeln, keine festen Grenzen.`,
+        fachlich: `k = ${k} Fragen, Σsⱼ² = ${num(a.sumItemVar)}, sₓ² = ${num(a.totalVar)}: α = ${k}/${k - 1} · (1 − ${num(a.sumItemVar)} / ${num(a.totalVar)}) ≈ ${fixed(a.alpha)}.${weg} ${r}${edge}. Aus den Korrelationen gerechnet (standardisiert) ergibt sich ${fixed(a.alphaStd)}. mariposa beschriftet Werte ab 0,9 mit Excellent, ab 0,8 mit Good, ab 0,7 mit Acceptable, ab 0,6 mit Questionable und von 0 bis unter 0,6 mit Poor. Im Atlas heißt das sehr gut, gut, ausreichend, nur bedingt und schlecht. Das sind Faustregeln, keine festen Grenzen.`,
         zusatz: a.sumItemVar > 1e-12 ? `Die Summenwerte streuen ${num(a.totalVar / a.sumItemVar)}-mal so stark wie die ${ZAHLWORT[k]} Fragen einzeln zusammen.` : undefined,
       };
     },

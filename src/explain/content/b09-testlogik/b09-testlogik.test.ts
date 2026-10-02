@@ -13,6 +13,7 @@ import { SEITEN, seiten } from './seiten';
 import { ANTEIL, alpha } from './alpha';
 import { kritisch } from './kritisch';
 import { betaFor, fehlerarten } from './fehlerarten';
+import { tabsFor } from '../../registry';
 import { teststaerke } from './teststaerke';
 import { DF, freiheitsgrade } from './freiheitsgrade';
 import { exakt, vergleich } from './exakt';
@@ -213,6 +214,10 @@ test('B9 Signifikanzniveau: Weiterbildung gegen 50 % wie in R, Entscheidung je n
   assert.match(alpha.regler!.describe(0.05), /Mit α = 0,05 liegt p ≈ 0,013 darunter: .*signifikant\. .*in höchstens 5 % der Studien/);
   assert.match(alpha.bausteine[2].acht, /Quote über viele Studien, in denen es in Wahrheit keinen Unterschied gibt\./);
   assert.match(alpha.check.diagnose[0]!, /ohne echten Unterschied: In etwa 5 von 100 davon meldet der Test trotzdem einen\./);
+  // Frage und Rückmeldungen nennen dieselbe Schwelle wie mariposa: ein Stern bei p ≤ 0,05.
+  const starCheck = tabsFor('alpha_level')!.r!.check!;
+  assert.match(starCheck.question, /dass p höchstens 0,05 ist\?/);
+  for (const w of Object.values(starCheck.wrong)) assert.match(w, /p ≤ 0,05/);
   assert.match(alpha.regler!.describe(0.01), /p ≈ 0,013 darüber: Du verwirfst H₀ nicht\. .*in höchstens 1 % der Studien/);
   assert.match(alpha.regler!.describe(0.013), /p ≈ 0,0131 knapp darüber/);
   assert.match(alpha.regler!.describe(0.014), /p ≈ 0,0131 knapp darunter/);
@@ -248,7 +253,7 @@ test('B9 Fehlerarten: Übersehen einer Stunde Unterschied wie in R', () => {
   assert.match(fehlerarten.genau.paragraphs[0], /Φ\(1 \/ 0,47 − 1,96\) ≈ 0,57, also β ≈ 0,43\./);
   // R: 1 - 0.95^20 = 0.6415141 (mindestens ein Fehler erster Art bei 20 unabhängigen Tests ohne echten Unterschied).
   assert.ok(close(1 - 0.95 ** 20, 0.6415141, 1e-7), '1 − 0,95²⁰');
-  assert.ok(fehlerarten.genau.paragraphs.some(p => /Bei 20 unabhängigen Tests ohne echten Unterschied und α = 0,05 passiert er in etwa 64 von 100 Fällen mindestens einmal/.test(p)), 'Mehrfachtests ohne „fast sicher“');
+  assert.ok(fehlerarten.genau.paragraphs.some(p => /Rechnet eine Studie 20 unabhängige Tests ohne echten Unterschied mit α = 0,05, passiert er in etwa 64 von 100 solchen Studien mindestens einmal\./.test(p)), 'Mehrfachtests ohne „fast sicher“');
   assert.match(result('type_errors').kurz, /0,47 Stunden, übersähe .* in 43 % der Studien\./);
   const doubled = gruppenTest({ rows: applyOp(rows, 'lernzeit', 'double'), columns: { x: ['lernzeit'], group: ['weiterbildung'] } })!;
   assert.ok(close(doubled.se, 0.9309868, 1e-6) && close(betaFor(0.05, doubled.se), 0.8109404, 1e-6), 'verdoppelt wie R');

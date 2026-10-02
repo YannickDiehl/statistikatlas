@@ -149,7 +149,7 @@ export const alphaTabs: ConceptTabs = {
       { match: 'N', atlas: 'n', explain: 'N zählt alle Befragten.' },
     ],
     check: {
-      question: 'Welches Zeichen zeigt, dass p unter 0,05 liegt? Tippe es an.', correct: '*',
+      question: 'Welches Zeichen zeigt, dass p höchstens 0,05 ist? Tippe es an.', correct: '*',
       wrong: { prop: 'Fast! Das ist der Anteil mit Weiterbildung. Das Zeichen für p ≤ 0,05 steht direkt hinter p.', N: 'Fast! N ist die Zahl der Befragten. Das Zeichen für p ≤ 0,05 steht direkt hinter p.' },
     },
   },
