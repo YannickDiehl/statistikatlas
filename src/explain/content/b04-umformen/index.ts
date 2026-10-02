@@ -8,6 +8,7 @@ import { skalieren, tabsScaling } from './skalieren';
 import { raenge, tabsRanks } from './raenge';
 import { pomps, tabsPomps } from './pomps';
 import { zeilen, tabsRowOperations } from './zeilen';
+import { skalenwert, tabsItemScore } from './skalenwert';
 
 export const b04Umformen: AreaIndex = {
   explanations: {
@@ -17,6 +18,7 @@ export const b04Umformen: AreaIndex = {
     ranks: { kind: 'werkstatt', workshop: raenge, variant: 'ranks' },
     pomps: { kind: 'satz', template: pomps },
     row_operations: { kind: 'tabelle', tool: zeilen },
+    item_score: { kind: 'begriff', card: skalenwert },
   },
   // Die Quadratsumme behält ihre Schrittkarte aus der Werkstatt Streuung (Pilot); B4 liefert nur ihre Reiter.
   tabs: {
@@ -27,5 +29,6 @@ export const b04Umformen: AreaIndex = {
     ranks: tabsRanks,
     pomps: tabsPomps,
     row_operations: tabsRowOperations,
+    item_score: tabsItemScore,
   },
 };

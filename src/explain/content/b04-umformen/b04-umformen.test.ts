@@ -14,6 +14,7 @@ import { LERNZEIT, proTag, skalieren, tabsScaling } from './skalieren';
 import { bridgeRaenge, raenge, rankStats } from './raenge';
 import { pompLernplanung, pomps, tabsPomps } from './pomps';
 import { ITEMS, itemMeans, tabsRowOperations, zeilen } from './zeilen';
+import { METHODEN, itemRest, skalenwert, tabsItemScore } from './skalenwert';
 
 /*
  * Referenzwerte des Bereichs B4 „Umformen“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -84,6 +85,10 @@ import { ITEMS, itemMeans, tabsRowOperations, zeilen } from './zeilen';
  *   table(rowSums(sapply(c("buch", "video", "kurs"), function(n) as.numeric(atlas[[paste0("quelle_", n)]]))))   # 0: 17, 1: 68, 2: 76, 3: 39
  *   atlas %>% mutate(m = row_means(pick(methoden1, methoden2), min_valid = 3))    # Warnung: `min_valid` (3) is greater than the number of items (2). All rows will be "NA".
  *   atlas %>% mutate(m = row_means(pick(methoden1, methoden2), min_valid = 2.5))  # Fehler: `min_valid` must be a positive whole number of items.
+ * Skalenwert pro Person:
+ *   sum(score >= 5)                                                             # 41
+ *   cor(M[, 3], rowMeans(M[, -3])); cor(8 - M[, 3], rowMeans(M[, -3]))          # 0.7289871; -0.7289871
+ *   reliability(atlas, methoden1, methoden2, methoden3, methoden4, methoden5)   # Cronbach's Alpha = 0.898, McDonald's Omega = 0.899, N = 200
  */
 
 const rows = createSurvey();
@@ -245,4 +250,19 @@ test('B4 Rechnen innerhalb einer Person: fünf Befragte und alle 200 wie in R', 
   const quellen = [0, 1, 2, 3].map(k => rows.filter(row => row.values.quelle_buch + row.values.quelle_video + row.values.quelle_kurs === k).length);
   assert.deepEqual(quellen, [17, 68, 76, 39]);
   assert.match(zeilen.genau.paragraphs[2], /17 Befragte keine der drei Quellen gewählt, 39 alle drei/);
+});
+
+test('B4 Skalenwert pro Person: Zahlen der Begriffskarte und der 200 Befragten wie in R', () => {
+  const c = { rows, columns: { x: ['methoden3'] } }, m = itemMeans(c);
+  assert.ok(close(m.mean, METHODEN.mean, 1e-9) && m.min === METHODEN.min && m.max === METHODEN.max, 'Skalenwerte wie in R');
+  assert.equal(m.means.filter(v => v >= 5).length, METHODEN.atLeast5);
+  assert.ok(close(itemRest(c, 'methoden3')!, METHODEN.itemRest3, 1e-6), 'Frage 3 und die übrigen vier wie in R');
+  assert.ok(close(itemRest({ ...c, rows: applyOp(rows, 'methoden3', 'reverse') }, 'methoden3')!, -METHODEN.itemRest3, 1e-6), 'umgepolt wie in R');
+  assert.match(skalenwert.stellDirVor.text, /21 \/ 5 = 4,2\. Über alle 200 Befragten reichen die Skalenwerte von 1,2 bis 7, im Schnitt liegen sie bei 4,01\./);
+  assert.match(skalenwert.ausprobieren[0].explain, /r ≈ 0,73 zusammen\. Umgepolt wären es −0,73/);
+  assert.equal(skalenwert.regler!.describe(3), 'Mit einer 3 bei Frage 3 kommt P003 auf (5 + 5 + 3 + 4 + 4) / 5 = 4,2. Jede Stufe mehr bei einer Frage hebt den Skalenwert um 0,2.');
+  const sample = tabsItemScore.sample!;
+  if (sample.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  assert.equal(sample.result(c).kurz, 'Die Skalenwerte der 200 Befragten liegen im Schnitt bei 4,01, etwa auf der Skalenmitte 4 („Weder noch“). 41 Befragte kommen auf 5 oder mehr, stimmen also im Mittel eher zu.');
+  assert.match(tabsItemScore.next.next.why as string, /Cronbachs Alpha von 0,9\./);
 });
