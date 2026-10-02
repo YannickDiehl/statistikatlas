@@ -10,3 +10,4 @@ Statistikatlas-Prototyp.html
 *.sav
 *.zsav
 !src/sandbox/fixtures/*.sav
+*.tsbuildinfo
