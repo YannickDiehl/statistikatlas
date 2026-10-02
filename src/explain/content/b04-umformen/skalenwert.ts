@@ -2,7 +2,7 @@
 // Zahl je Person. Vorbild src/explain/content/muster/p-wert.ts, Ton nach streuung.ts. Zahlen aus dem Lehrdatensatz,
 // in R nachgerechnet (rowMeans, cor, mariposa::reliability), siehe b04-umformen.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
-import { num } from '../../format';
+import { fixed, num } from '../../format';
 import { relate } from '../../math';
 import { sampleColumn } from '../../sample';
 import { ITEMS, itemMeans } from './zeilen';
@@ -28,7 +28,7 @@ export const skalenwert: ConceptCard = {
       { label: 'Antworten von P003', value: '5, 5, 3, 4, 4' },
       { label: 'Skalenwert von P003', value: '4,2' },
       { label: 'Mittel der 200 Skalenwerte', value: num(M.mean) },
-      { label: 'Cronbachs Alpha der fünf Fragen', value: num(M.alpha) },
+      { label: 'Cronbachs Alpha der fünf Fragen', value: fixed(M.alpha, 2) },
     ],
   },
   heisst: {
@@ -109,7 +109,7 @@ export const skalenwert: ConceptCard = {
   genau: {
     kurz: 'Ein Skalenwert setzt voraus, dass die Fragen ein gemeinsames Merkmal messen. Eine hohe Reliabilität allein beweist das nicht.',
     paragraphs: [
-      `Die fünf Fragen zur Methoden-Zuversicht im Lehrdatensatz sind gemeinsam synthetisch erzeugt und gleich gepolt. Sie sind ein Rechenbeispiel, keine geprüfte Skala. Cronbachs Alpha liegt bei ${num(M.alpha)}.`,
+      `Die fünf Fragen zur Methoden-Zuversicht im Lehrdatensatz sind gemeinsam synthetisch erzeugt und gleich gepolt. Sie sind ein Rechenbeispiel, keine geprüfte Skala. Cronbachs Alpha liegt bei rund ${fixed(M.alpha, 2)}.`,
       'Die drei einzelnen Zustimmungsfragen mit 5, 7 und 10 Stufen (Lernplanung, Lernzuversicht, Statistikinteresse) solltest du nicht ohne Weiteres mitteln. Sie fragen Verschiedenes, und die Frage mit 10 Stufen zählte stärker.',
       'Mittelwert und Summe ergeben bei vollständigen Antworten dieselbe Reihenfolge der Personen. Fehlen Antworten, ist der Mittelwert über die gültigen Antworten fairer; min_valid legt fest, wie viele es mindestens sein müssen.',
       'Wer den Skalenwert metrisch auswertet, nimmt gleich große Abstände zwischen den Antwortstufen an. Ob ein einziger Wert der Struktur der Fragen gerecht wird, prüfen Dimensionalität und Faktorenanalyse.',
@@ -164,7 +164,7 @@ export const tabsItemScore: ConceptTabs = {
     },
   },
   next: {
-    next: { id: 'reliability', why: `Prüft, ob die fünf Fragen genug zusammenhängen. Für die Methoden-Zuversicht meldet R ein Cronbachs Alpha von ${num(M.alpha)}.` },
+    next: { id: 'reliability', why: 'Prüft, ob die fünf Fragen genug zusammenhängen. Für die Methoden-Zuversicht meldet R Cronbach\'s Alpha = 0.898.' },
     before: [
       { id: 'operationalization', why: 'Der Skalenwert ist Teil der Messregel: welche Fragen, wie verrechnet.' },
       { id: 'dimensionality', why: 'Ein Wert für mehrere Fragen setzt voraus, dass sie ein gemeinsames Merkmal messen.' },

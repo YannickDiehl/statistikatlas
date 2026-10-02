@@ -23,7 +23,7 @@ const STEP_STREUUNG: Step<ZStats> = {
   fach: 'Die Standardabweichung s ist die Wurzel aus der Quadratsumme geteilt durch n − 1. Sie dient gleich als Maßstab.',
   warum: 'Ob 3 Stunden unter der Mitte viel sind, hängt davon ab, wie stark die Gruppe streut. s liefert dafür den Maßstab.',
   acht: c => c.s.sd > 1e-9
-    ? `Teile durch n − 1 = 4, nicht durch 5. Sonst kommt ${num(c.s.sdN)} statt ${num(c.s.sd)} heraus, und alle z-Werte werden etwas zu groß.`
+    ? `Teile durch n − 1 = 4, nicht durch 5. Sonst kommt ${num(c.s.sdN)} statt ${num(c.s.sd)} heraus, und alle z-Werte rücken etwas zu weit von der 0 weg.`
     : 'Hier ist s = 0. Durch 0 kann man nicht teilen, z-Werte gibt es dann nicht.',
   check: {
     question: 'Wie groß ist s? Zwei Nachkommastellen reichen.',
@@ -46,7 +46,7 @@ const STEP_TEILEN: Step<ZStats> = {
     return z === null ? 'Hier ist s = 0. Teilen durch 0 geht nicht, z ist nicht definiert.'
       : `Person ${P(c)}: ${signed(c.s.dev[c.who])} / ${num(c.s.sd)} ${eq(z)} ${signed(z)}.`;
   },
-  fach: 'Alle zentrierten Werte werden durch dieselbe positive Zahl s geteilt. Die Abstände schrumpfen im Verhältnis 1 / s, ihre Reihenfolge bleibt.',
+  fach: 'Alle zentrierten Werte werden durch dieselbe positive Zahl s geteilt. Die Abstände ändern sich im Verhältnis 1 / s, ihre Reihenfolge bleibt.',
   warum: 'Danach ist s die Einheit: 1 heißt eine Standardabweichung. Die Stunden kürzen sich weg, übrig bleibt eine Zahl ohne Einheit.',
   acht: c => {
     const z = zOf(c);
@@ -200,7 +200,7 @@ export const standardisieren: Workshop<number[], ZStats> = {
     1: 'Die fünf Lernzeiten auf einem Lineal in Stunden. Du kannst die Punkte ziehen.',
     2: 'Das zweite Lineal misst von der Mitte aus: Die Mitte ist dort 0.',
     3: 'Der helle Streifen reicht von x̄ − s bis x̄ + s.',
-    4: 'Das dritte Lineal zählt in Standardabweichungen: Ein Strich ist s.',
+    4: 'Das dritte Lineal zählt in Standardabweichungen: Die Zahl sagt, wie viele s ein Punkt von der Mitte entfernt ist.',
     5: 'Die Punkte bleiben, wo sie sind. Nur das Lineal hat sich geändert.',
   },
   think: [
@@ -251,10 +251,10 @@ export const standardisieren: Workshop<number[], ZStats> = {
       genau: {
         kurz: 'Standardisieren erzeugt keine Normalverteilung. Ein z-Wert beschreibt die Lage innerhalb genau dieser Gruppe.',
         paragraphs: () => [
-          'Im Atlas teilt man durch die korrigierte Stichproben-Standardabweichung mit n − 1. Dann haben die z-Werte genau die Standardabweichung 1. Manche Lehrbücher teilen durch die Standardabweichung mit n; die z-Werte werden dann etwas größer.',
+          'Im Atlas teilt man durch die korrigierte Stichproben-Standardabweichung mit n − 1. Dann haben die z-Werte genau die Standardabweichung 1. Manche Lehrbücher teilen durch die Standardabweichung mit n; die z-Werte liegen dann etwas weiter von der 0 entfernt.',
           'Ein z-Wert hängt von der Gruppe ab. Dieselben 10 Stunden sind in einer Gruppe, die viel lernt, unterdurchschnittlich. Wer z-Werte zweier Gruppen vergleicht, vergleicht Lagen, keine Stunden.',
           'Nur wenn die Werte annähernd normalverteilt sind, lässt sich aus z ein Anteil ablesen, etwa: Unter z = 1 liegen dann rund 84 %. Ohne diese Annahme geht das nicht; die Form der Verteilung bleibt beim Standardisieren erhalten.',
-          'In R: std(lernzeit, method = "sd", suffix = "_z"). Andere Maßstäbe ersetzen s: "2sd" teilt durch zwei Standardabweichungen, "mad" und "gmd" durch robustere Streuungsmaße.',
+          'In R: std(lernzeit, method = "sd", suffix = "_z"). "2sd" teilt durch zwei Standardabweichungen, "gmd" durch die Gini-Mitteldifferenz. "mad" zieht statt der Mitte den Median ab, den mittleren Wert der Reihe nach, und teilt durch den Median der Abstände zu ihm (mal 1,4826).',
         ],
       },
     },

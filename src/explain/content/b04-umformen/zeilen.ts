@@ -30,7 +30,7 @@ const P003 = FUENF[2].answers;
 export const zeilen: TableTool = {
   concept: 'row_operations',
   wofuer: 'Fünf Fragen im Lehrdatensatz messen, wie sicher sich Befragte bei Methoden fühlen, jeweils von 1 (stimme überhaupt nicht zu) bis 7 (stimme voll und ganz zu). Du willst für jede Person eine Zahl, die ihre fünf Antworten zusammenfasst. Dafür rechnest du quer durch ihre Zeile.',
-  kurz: 'Rechnen innerhalb einer Person heißt: Mehrere Antworten derselben Person werden zu einer Zahl zusammengefasst. Jede Person bekommt ihren eigenen neuen Wert.',
+  kurz: 'Rechnen innerhalb einer Person heißt: Du fasst mehrere Antworten derselben Person zu einer Zahl zusammen. Jede Person bekommt ihren eigenen neuen Wert.',
   mut: 'Hier rechnest du nur mit fünf Zahlen je Person: zusammenzählen, teilen oder abzählen. Das übernimmt später R für alle 200 auf einmal.',
   columns: [{ key: 'person', label: 'Person' }, ...ITEMS.map(k => ({ key: k, label: k }))],
   rows: FUENF.map(r => ({ person: r.person, ...Object.fromEntries(ITEMS.map((k, i) => [k, r.answers[i]])) })),
@@ -52,7 +52,7 @@ export const zeilen: TableTool = {
       title: 'Zusammenfassen',
       was: 'Je nach Wahl bilden wir den Mittelwert der fünf Antworten, ihre Summe oder zählen, wie oft 5, 6 oder 7 vorkommt.',
       warum: 'Mittelwert und Summe beschreiben, wie zuversichtlich jemand insgesamt ist. Die Zählung sagt, wie oft jemand zustimmt.',
-      acht: 'Der Mittelwert bleibt auf der Antwortskala von 1 bis 7 und ist leichter zu lesen. Die Summe reicht von 5 bis 35.',
+      acht: 'Mittelwert und Summe nicht verwechseln: 4,2 ist ein Mittelwert auf der Skala von 1 bis 7, 21 eine Summe auf der Skala von 5 bis 35.',
       fach: 'row_means() bildet den Zeilenmittelwert, row_sums() die Zeilensumme, row_count() die Zahl der Zellen mit bestimmten Werten.',
     },
     {
@@ -120,7 +120,7 @@ export const zeilen: TableTool = {
       'pick() gibt row_means() die ausgewählten Spalten als kleine Tabelle weiter. Mit pick(starts_with("methoden")) wählst du alle fünf auf einmal.',
       'Ohne min_valid rechnet row_means() mit jeder Zahl gültiger Antworten, auch mit einer einzigen. Für Skalen legt man vorher fest, wie viele es mindestens sein müssen, etwa vier von fünf.',
       'row_count() zählt bestimmte Werte, etwa gewählte Lernquellen: Im Lehrdatensatz haben 17 Befragte keine der drei Quellen gewählt, 39 alle drei.',
-      'Wer den Mittelwert bildet, behandelt die Antwortstufen als gleich weit auseinander. Ob die fünf Fragen dasselbe messen, prüft die Reliabilität.',
+      'Wer den Mittelwert bildet, behandelt die Antwortstufen als gleich weit auseinander. Wie eng die fünf Fragen zusammenhängen, zeigt die Reliabilität; ob sie wirklich ein gemeinsames Merkmal messen, prüfen Dimensionalität und Faktorenanalyse.',
     ],
   },
 };

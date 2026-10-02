@@ -2,15 +2,13 @@
 // (Schritt 4, src/explain/registry.ts); hier stehen nur die Reiter. Zahlen in R nachgerechnet, siehe b04-umformen.test.ts.
 import type { ConceptTabs, SampleCtx } from '../../types';
 import { num, pct } from '../../format';
-import { columnStats } from './shared';
+import { sampleSeries } from '../../sample';
 
 /** Quadratsumme der Lernzeit für die aktuellen Daten, mit dem größten Beitrag und dem Anteil der 20 größten. */
 export function ssOf(c: SampleCtx) {
-  const st = columnStats(c, c.columns.x?.[0] ?? 'lernzeit');
-  let big = 0;
-  st.sq.forEach((q, i) => { if (q > st.sq[big]) big = i; });
-  const top = [...st.sq].sort((a, b) => b - a).slice(0, Math.round(st.n / 10)).reduce((a, b) => a + b, 0);
-  return { ...st, big, topShare: st.ss > 0 ? top / st.ss : 0, bigShare: st.ss > 0 ? st.sq[big] / st.ss : 0, tenth: Math.round(st.n / 10) };
+  const st = sampleSeries(c.rows, c.columns.x?.[0] ?? 'lernzeit'), n = st.values.length, big = st.biggest, tenth = Math.round(n / 10);
+  const top = [...st.sq].sort((a, b) => b - a).slice(0, tenth).reduce((a, b) => a + b, 0);
+  return { ...st, n, xs: st.values, big, tenth, topShare: st.ss > 0 ? top / st.ss : 0, bigShare: st.ss > 0 ? st.sq[big] / st.ss : 0 };
 }
 
 export const tabsSs: ConceptTabs = {
@@ -27,7 +25,7 @@ export const tabsSs: ConceptTabs = {
         zusatz: `Die ${s.tenth} Befragten mit den größten Abständen liefern zusammen ${pct(s.topShare, 1)} der Quadratsumme, obwohl sie nur ein Zehntel sind.`,
       };
     },
-    voraussetzung: 'Die Quadratsumme wächst mit jeder weiteren Person. Vergleichbar wird sie erst geteilt durch n − 1, als Varianz.',
+    voraussetzung: 'Die Quadratsumme kann mit jeder weiteren Person nur gleich bleiben oder wachsen. Vergleichbar wird sie erst geteilt durch n − 1, als Varianz.',
     think: [
       {
         question: 'Alle lernen eine Stunde mehr. Was macht die Quadratsumme?', options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1,

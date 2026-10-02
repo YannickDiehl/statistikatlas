@@ -1,9 +1,8 @@
 // Gemeinsame Helfer des Bereichs B4 „Umformen“: Personen, Zahlen mit Einheit, Sätze über die Spalte der Brücke und
 // die Kennwerte der Werkstätten Zentrieren und Standardisieren. Ton nach src/explain/content/streuung.ts.
-import type { BridgeCtx, SampleCtx } from '../../types';
+import type { BridgeCtx } from '../../types';
 import { series, type Series } from '../../math';
 import { num, unit } from '../../format';
-import { sampleColumn } from '../../sample';
 
 export const NAMES = ['A', 'B', 'C', 'D', 'E'] as const;
 /** Name der gewählten Person (Werkstatt: A bis E, Brücke: P001 bis P200). */
@@ -65,11 +64,3 @@ export const shiftWithin = (d: number[], lo: number, hi: number) => {
   const up = hi - Math.max(...d), down = Math.min(...d) - lo;
   return up >= 2 ? 2 : down >= 2 ? -2 : up >= 1 ? 1 : down >= 1 ? -1 : 0;
 };
-
-// ---------- Auswertungen mit den 200 Befragten ----------
-
-/** Mittelwert und Standardabweichung (n − 1) einer Spalte der aktuellen Daten. */
-export function columnStats(c: SampleCtx, column: string) {
-  const xs = sampleColumn(c.rows, column), s = series(xs);
-  return { xs, n: s.n, mean: s.mean, sd: s.sd, variance: s.variance, ss: s.ss, sq: s.sq };
-}

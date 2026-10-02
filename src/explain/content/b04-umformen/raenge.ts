@@ -58,7 +58,9 @@ export const bridgeRaenge: Bridge<RankStats> = {
     const b = c.s.below[c.who], e = c.s.equal[c.who];
     return [
       `${P(c)}: `, { part: [`${b} Werte kleiner`], m: 1 }, ', ', { part: [`${e} gleich (mit ${P(c)})`], m: 2 }, { br: true },
-      { part: [`R(${P(c)})`], m: 2 }, ' = ', { part: [String(b)], m: 1 }, ' + (', { part: [String(e)], m: 2 }, ' + 1) / 2 = ', { part: [num(c.s.rank[c.who])], m: 2 },
+      { part: [`R(${P(c)})`], m: 2 }, ' = ',
+      ...(e > 1 ? [{ part: [`(${c.s.first[c.who]} + ${c.s.last[c.who]}) / 2`], m: 2 }, ' = '] as FNode[] : [{ part: [`Platz ${c.s.first[c.who]}`], m: 1 }, ' = '] as FNode[]),
+      { part: [num(c.s.rank[c.who])], m: 2 },
     ];
   },
   lines: [
@@ -89,7 +91,9 @@ export const bridgeRaenge: Bridge<RankStats> = {
     const more = lernzeit(c) ? 'mehr' : 'einen größeren';
     return {
       kurz: `${P(c)} steht auf Rang ${num(c.s.rank[c.who])} von ${N(c)}. ${b === 1 ? `1 Person ${less[0]}` : `${b} Befragte ${less[1]}`}, ${a} ${more}.`,
-      fachlich: `Der mittlere Rang ist die Zahl der kleineren Werte plus (Zahl der gleichen Werte + 1) / 2: R = ${b} + (${c.s.equal[c.who]} + 1) / 2 = ${num(c.s.rank[c.who])}. Die Abstände zwischen den Werten gehen dabei verloren.`,
+      fachlich: c.s.equal[c.who] > 1
+        ? `Gleiche Werte bekommen den Mittelwert der Plätze, die sie sich teilen: R = (${c.s.first[c.who]} + ${c.s.last[c.who]}) / 2 = ${num(c.s.rank[c.who])}, denn ${b} Werte sind kleiner. Die Abstände zwischen den Werten gehen dabei verloren.`
+        : `Ohne Gleichstand ist der Rang der Platz: ${b} Werte sind kleiner, also R = ${num(c.s.rank[c.who])}. Die Abstände zwischen den Werten gehen dabei verloren.`,
       zusatz: `Die Ränge haben immer den Mittelwert (n + 1) / 2 = ${num((N(c) + 1) / 2)}, egal wie die Werte verteilt sind.`,
     };
   },
@@ -138,9 +142,11 @@ export const raenge: Workshop<number[], RankStats> = {
         answer: c => c.s.below[c.who],
         diagnose: (c, v) => {
           if (v === 'NA') return null;
-          const b = c.s.below[c.who], a = c.s.above[c.who];
+          const b = c.s.below[c.who], a = c.s.above[c.who], place = c.s.place[c.who];
           if (a !== b && close(v, a)) return 'Fast! Das sind die Personen, die mehr lernen. Gezählt werden die mit weniger Stunden.';
-          if (close(v, b + 1)) return 'Fast! Das ist schon ihr Platz. Gefragt ist, wie viele davor stehen.';
+          if (close(v, place)) return 'Fast! Das ist schon ihr Platz in der Reihe. Gefragt ist, wie viele Personen weniger lernen.';
+          if (place - 1 !== b && close(v, place - 1)) return 'Fast! Du hast auch Personen mitgezählt, die gleich lange lernen. Gefragt ist, wie viele weniger lernen.';
+          if (close(v, b + 1)) return 'Fast! Das ist der erste Platz nach diesen Personen. Gefragt ist, wie viele Personen weniger lernen.';
           return null;
         },
       },
@@ -157,7 +163,7 @@ export const raenge: Workshop<number[], RankStats> = {
       warum: 'So hat niemand einen Vorteil, nur weil er zufällig zuerst genannt wurde. Und alle Ränge zusammen ergeben weiter n · (n + 1) / 2, hier 15.',
       acht: c => {
         const t = firstTie(c);
-        return t ? `Gleich Lange bekommen nicht beide den kleineren Platz. Bei ${t.who.map(i => c.names[i]).join(' und ')} (${placesText(t.first, t.last)}) ist der Rang ${num(t.rank)}, nicht ${t.first}.`
+        return t ? `Wer gleich lange lernt, bekommt nicht den kleineren Platz. Bei ${t.who.map(i => c.names[i]).join(' und ')} (${placesText(t.first, t.last)}) ist der Rang ${num(t.rank)}, nicht ${t.first}.`
           : 'Hier gibt es keinen Gleichstand. Teilen sich zwei Personen einen Wert, bekommen beide den Mittelwert ihrer Plätze, nicht den kleineren.';
       },
       check: {

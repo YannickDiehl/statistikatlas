@@ -12,7 +12,15 @@ export type PompStats = PompValues & { steps: number; range: number; share: numb
 
 /** POMP einer Antwort x auf einer Skala von 1 bis hi. */
 export const pompOf = (x: number, hi: number, lo = 1) => 100 * (x - lo) / (hi - lo);
-/** Wie weit der Weg reicht, in Worten. */
+/** Wo eine Antwort auf dem Weg liegt, als Ortsangabe nach „liegt“: „bei drei Vierteln des Wegs“, „auf halbem Weg“. */
+export function wayAt(p: number): string {
+  const near = (q: number) => Math.abs(p - q) < 0.5;
+  return near(0) ? 'am Anfang des Wegs' : near(100) ? 'am Ende des Wegs'
+    : near(25) ? 'bei einem Viertel des Wegs' : near(50) ? 'auf halbem Weg' : near(75) ? 'bei drei Vierteln des Wegs'
+    : p < 25 ? 'bei weniger als einem Viertel des Wegs' : p < 50 ? 'zwischen einem Viertel und der Hälfte des Wegs'
+    : p < 62.5 ? 'bei etwas mehr als der Hälfte des Wegs' : p < 75 ? 'bei fast drei Vierteln des Wegs' : p < 100 ? 'bei mehr als drei Vierteln des Wegs' : 'jenseits des Wegs';
+}
+/** Wie weit der Weg reicht, nach „Das ist“: „etwas mehr als die Hälfte des Wegs“. */
 export function wayText(p: number): string {
   const near = (q: number) => Math.abs(p - q) < 0.5;
   return near(0) ? 'ganz am Anfang des Wegs' : near(100) ? 'am Ende des ganzen Wegs'
@@ -87,7 +95,7 @@ export const pomps: SentenceTemplate<PompValues, PompStats> = {
     };
     const other = s.hi === 7 ? 5 : 7;
     return {
-      kurz: `Die Antwort ${num(s.x)} liegt ${wayText(s.pomp)} von der niedrigsten zur höchsten Stufe: POMP ${num(s.pomp)}. ${s.x <= other ? `Auf einer Skala bis ${other} ergäbe dieselbe ${num(s.x)} den Wert ${num(pompOf(s.x, other))}.` : `Auf einer Skala bis ${other} gäbe es diese Antwort nicht.`}`,
+      kurz: `Die Antwort ${num(s.x)} liegt ${wayAt(s.pomp)} von der niedrigsten zur höchsten Stufe: POMP ${num(s.pomp)}. ${s.x <= other ? `Auf einer Skala bis ${other} ergäbe dieselbe ${num(s.x)} den Wert ${num(pompOf(s.x, other))}.` : `Auf einer Skala bis ${other} gäbe es diese Antwort nicht.`}`,
       fachlich: `POMP = 100 · (x − min) / (max − min) = 100 · (${num(s.x)} − 1) / (${num(s.hi)} − 1) ${eq(s.pomp)} ${num(s.pomp)}. 0 steht für die niedrigste, 100 für die höchste Stufe.`,
     };
   },

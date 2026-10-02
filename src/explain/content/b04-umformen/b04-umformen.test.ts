@@ -89,7 +89,8 @@ import { METHODEN, itemRest, skalenwert, tabsItemScore } from './skalenwert';
  * Skalenwert pro Person:
  *   sum(score >= 5)                                                             # 41
  *   cor(M[, 3], rowMeans(M[, -3])); cor(8 - M[, 3], rowMeans(M[, -3]))          # 0.7289871; -0.7289871
- *   reliability(atlas, methoden1, methoden2, methoden3, methoden4, methoden5)   # Cronbach's Alpha = 0.898, McDonald's Omega = 0.899, N = 200
+ *   reliability(atlas, methoden1, methoden2, methoden3, methoden4, methoden5)   # Cronbach's Alpha = 0.898 (gezeigt: 0,90), McDonald's Omega = 0.899, N = 200
+ *   x5 <- c(8, 8, 8, 8, 9); sd(x5); (9 - mean(x5)) / sd(x5)                     # 0.4472136; 1.788854: Teilen durch s < 1 vergrößert die Abstände
  */
 
 const rows = createSurvey();
@@ -107,7 +108,11 @@ test('B4 Zentrieren und Standardisieren: fünf Beispielpersonen wie in R', () =>
   assert.equal(txt(z[3].rechnung, ctx(a)), 'Person A: −3 / 2 = −1,5.');
   assert.equal(txt(z[4].rechnung, ctx(a)), 'z für A = −1,5: A liegt 1,5 Standardabweichungen unter der Mitte. Alle fünf z-Werte zusammen: −1,5 − 0,5 + 0,5 + 0,5 + 1 = 0.');
   assert.equal(txt(z[3].acht, ctx(b)), 'Erst die Mitte abziehen, dann teilen. Wer die Lernzeit selbst teilt, bekommt für A 5 / 5,83 ≈ 0,86 statt −0,86.');
-  assert.equal(txt(z[2].acht, ctx(b)), 'Teile durch n − 1 = 4, nicht durch 5. Sonst kommt 5,22 statt 5,83 heraus, und alle z-Werte werden etwas zu groß.');
+  assert.equal(txt(z[2].acht, ctx(b)), 'Teile durch n − 1 = 4, nicht durch 5. Sonst kommt 5,22 statt 5,83 heraus, und alle z-Werte rücken etwas zu weit von der 0 weg.');
+  // Teilen durch s < 1 vergrößert die Abstände: deshalb „ändern sich“ (8 8 8 8 9: s ≈ 0,45, E: +0,8 / 0,45 ≈ +1,79).
+  assert.match(String(z[3].fach), /ändern sich im Verhältnis 1 \/ s/);
+  const small = zstats([8, 8, 8, 8, 9]);
+  assert.equal(txt(z[3].rechnung, ctx(small, 4)), 'Person E: +0,8 / 0,45 ≈ +1,79.');
   assert.equal(txt(zentrieren.steps[1].rechnung, ctx(a)), 'Person A: 5 − 8 = −3. A lernt 3 Stunden weniger als der Durchschnitt.');
   assert.equal(txt(zentrieren.steps[1].acht, ctx(b)), 'Alle bekommen denselben Abzug. Deshalb bleiben die Abstände untereinander gleich: Zwischen A und E liegen vorher und nachher 15 Stunden.');
   // Diagnosen: Varianz statt s, durch n geteilt, Lernzeit selbst geteilt, Mitte in Stunden statt 0.
@@ -181,6 +186,7 @@ test('B4 Skalieren: Lernzeit pro Tag wie in R', () => {
   assert.ok(close(s.xs, 1.185714, 1e-6) && close(s.meanS, 1.107357, 1e-6), 'Startwerte');
   assert.equal(skalieren.interpret(s).kurz, 'Bei a = 7 rechnest du Stunden in sieben Tagen in Stunden pro Tag um. Eine Person mit 8,3 Stunden lernt etwa 1,19 Stunden pro Tag.');
   assert.ok(close(LERNZEIT.mean / LERNZEIT.sd, 2.394274, 1e-6));
+  assert.equal(skalieren.interpret(skalieren.compute({ x: 7, a: 7 })).kurz, 'Bei a = 7 rechnest du Stunden in sieben Tagen in Stunden pro Tag um. Eine Person mit 7 Stunden lernt 1 Stunde pro Tag.');
   assert.match(skalieren.think.explain, /7,75 \/ 3,24 ≈ 2,39/);
   assert.match(skalieren.check.diagnose(3), /^Fast! Das ist das alte s/);
   const sample = tabsScaling.sample!;
@@ -208,6 +214,17 @@ test('B4 Ränge: fünf Beispielpersonen und die 200 Befragten wie in R', () => {
   assert.equal(bridgeRaenge.lines[1].person(c), 'P002 teilt 8,3 h mit 1 weiteren Person: Plätze 113 und 114, Rang 113,5.');
   assert.equal(bridgeRaenge.lines[0].person(c), 'Vor P002 stehen 112 Befragte mit weniger Lernzeit; 1 weitere Person hat genau 8,3 h.');
   assert.equal(bridgeRaenge.interpret(c, 'ranks').kurz, 'P002 steht auf Rang 113,5 von 200. 112 Befragte lernen weniger, 86 mehr.');
+  // Die Brücke rechnet wie die Werkstatt mit dem Mittelwert der Plätze: (113 + 114) / 2 und für P001 (54 + 57) / 2 (R: rank(x)).
+  const flat = (nodes: unknown[]): string => nodes.map(n => typeof n === 'string' ? n : n && typeof n === 'object' && 'part' in n ? flat((n as { part: unknown[] }).part) : '').join('');
+  assert.match(flat(bridgeRaenge.numeric(c, 2)), /R\(P002\) = \(113 \+ 114\) \/ 2 = 113,5$/);
+  assert.match(flat(bridgeRaenge.numeric(bridgeContext(raenge.compute, 'series', rows, 'lernzeit', '', 0), 2)), /R\(P001\) = \(54 \+ 57\) \/ 2 = 55,5$/);
+  assert.match(bridgeRaenge.interpret(c, 'ranks').fachlich, /R = \(113 \+ 114\) \/ 2 = 113,5, denn 112 Werte sind kleiner/);
+  // Diagnose in Schritt 1 bei einem Gleichstand: 7 7 7 4 15, Person C steht auf Platz 4, nur B lernt weniger.
+  const t = rankStats([7, 7, 7, 4, 15]);
+  assert.equal(raenge.steps[0].check.answer(ctx(t, 2)), 1);
+  assert.match(raenge.steps[0].check.diagnose(ctx(t, 2), 4)!, /^Fast! Das ist schon ihr Platz/);
+  assert.match(raenge.steps[0].check.diagnose(ctx(t, 2), 3)!, /^Fast! Du hast auch Personen mitgezählt/);
+  assert.match(raenge.steps[0].check.diagnose(ctx(t, 2), 2)!, /^Fast! Das ist der erste Platz nach diesen Personen/);
   for (const op of ['shift', 'double'] as const) assert.deepEqual(rankStats(applyOp(rows, 'lernzeit', op).map(r => r.values.lernzeit)).rank, s.rank, op);
 });
 
@@ -217,7 +234,7 @@ test('B4 POMP: Formel und Lernplanung der 200 Befragten wie in R', () => {
   assert.equal(pomps.compare(s), 'Dieselbe Antwort 4 ergibt auf einer Skala bis 5 den Wert 75, auf einer Skala bis 7 den Wert 50, auf einer Skala bis 10 den Wert 33,33.');
   assert.ok(close(pomps.check.answer, 66.66667, 1e-5), 'Kontrollfrage wie in R');
   assert.match(pomps.check.diagnose(500 / 6), /^Fast! Du hast 5 \/ 6 gerechnet/);
-  assert.equal(pomps.interpret(s).kurz, 'Die Antwort 4 liegt drei Viertel des Wegs von der niedrigsten zur höchsten Stufe: POMP 75. Auf einer Skala bis 7 ergäbe dieselbe 4 den Wert 50.');
+  assert.equal(pomps.interpret(s).kurz, 'Die Antwort 4 liegt bei drei Vierteln des Wegs von der niedrigsten zur höchsten Stufe: POMP 75. Auf einer Skala bis 7 ergäbe dieselbe 4 den Wert 50.');
   const c = { rows, columns: { x: ['lernplanung5'] } }, p = pompLernplanung(c);
   assert.ok(close(p.mean, 3.26, 1e-9) && close(p.pomp, 56.5, 1e-9), 'Lernplanung wie in R');
   assert.deepEqual([p.ones, p.fives], [17, 35]);
@@ -259,6 +276,7 @@ test('B4 Skalenwert pro Person: Zahlen der Begriffskarte und der 200 Befragten w
   assert.ok(close(m.mean, METHODEN.mean, 1e-9) && m.min === METHODEN.min && m.max === METHODEN.max, 'Skalenwerte wie in R');
   assert.equal(m.means.filter(v => v >= 5).length, METHODEN.atLeast5);
   assert.ok(close(itemRest(c, 'methoden3')!, METHODEN.itemRest3, 1e-6), 'Frage 3 und die übrigen vier wie in R');
+  assert.equal(METHODEN.alpha, 0.898, 'Cronbachs Alpha wie in R');
   assert.ok(close(itemRest({ ...c, rows: applyOp(rows, 'methoden3', 'reverse') }, 'methoden3')!, -METHODEN.itemRest3, 1e-6), 'umgepolt wie in R');
   assert.match(skalenwert.stellDirVor.text, /21 \/ 5 = 4,2\. Über alle 200 Befragten reichen die Skalenwerte von 1,2 bis 7, im Schnitt liegen sie bei 4,01\./);
   assert.match(skalenwert.ausprobieren[0].explain, /r ≈ 0,73 zusammen\. Umgepolt wären es −0,73/);
@@ -266,5 +284,7 @@ test('B4 Skalenwert pro Person: Zahlen der Begriffskarte und der 200 Befragten w
   const sample = tabsItemScore.sample!;
   if (sample.kind !== 'analysis') throw new Error('Auswertung erwartet');
   assert.equal(sample.result(c).kurz, 'Die Skalenwerte der 200 Befragten liegen im Schnitt bei 4,01, etwa auf der Skalenmitte 4 („Weder noch“). 41 Befragte kommen auf 5 oder mehr, stimmen also im Mittel eher zu.');
-  assert.match(tabsItemScore.next.next.why as string, /Cronbachs Alpha von 0,9\./);
+  assert.equal(tabsItemScore.next.next.why, 'Prüft, ob die fünf Fragen genug zusammenhängen. Für die Methoden-Zuversicht meldet R Cronbach\'s Alpha = 0.898.');
+  assert.equal(skalenwert.stellDirVor.figures!.at(-1)!.value, '0,90');
+  assert.match(zeilen.genau.paragraphs[3], /zeigt die Reliabilität; ob sie wirklich ein gemeinsames Merkmal messen, prüfen Dimensionalität und Faktorenanalyse\./);
 });

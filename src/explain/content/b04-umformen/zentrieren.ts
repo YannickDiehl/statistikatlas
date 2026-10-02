@@ -257,7 +257,7 @@ export const tabsCentering: ConceptTabs = {
       { id: 'deviation', why: 'Ein zentrierter Wert ist die Abweichung einer Person vom Mittelwert.' },
     ],
     after: [
-      { id: 'covariance', why: 'Multipliziert die zentrierten Werte zweier Spalten miteinander.' },
+      { id: 'covariance', why: 'Multipliziert die zentrierten Werte zweier Spalten Person für Person und teilt die Summe der Produkte durch n − 1.' },
       { id: 'interaction', why: 'Mit zentrierten Variablen bleibt der Achsenabschnitt eines Modells mit Wechselwirkung lesbar.' },
     ],
     more: [

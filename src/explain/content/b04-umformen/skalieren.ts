@@ -3,8 +3,8 @@
 // Zahlen in R nachgerechnet, siehe b04-umformen.test.ts.
 import type { ConceptTabs, SampleCtx, SentenceTemplate } from '../../types';
 import { num, close } from '../../format';
-import { eq } from './shared';
-import { columnStats } from './shared';
+import { biggestIndex, sampleSeries } from '../../sample';
+import { eq, hours } from './shared';
 
 /** Lernzeit der 200 Befragten (Stunden in den letzten sieben Tagen): Mittelwert, Standardabweichung, Varianz wie in R. */
 export const LERNZEIT = { mean: 7.7515, sd: 3.237515, variance: 10.481505 } as const;
@@ -51,7 +51,7 @@ export const skalieren: SentenceTemplate<ScaleValues, ScaleStats> = {
   worked: s => [
     { title: 'Den Maßstab wählen', text: aText(s.a) },
     { title: 'Den Wert teilen', text: `${num(s.x)} / ${num(s.a)} ${eq(s.xs)} ${num(s.xs)}.` },
-    { title: 'Mitte und Streuung mitteilen', text: `Mitte ${num(L.mean)} / ${num(s.a)} ≈ ${num(s.meanS)}, Streuung ${num(L.sd)} / ${num(s.a)} ≈ ${num(s.sdS)}. Die Reihenfolge der Befragten bleibt dieselbe.` },
+    { title: 'Mitte und Streuung ebenfalls teilen', text: `Mitte ${num(L.mean)} / ${num(s.a)} ≈ ${num(s.meanS)}, Streuung ${num(L.sd)} / ${num(s.a)} ≈ ${num(s.sdS)}. Die Reihenfolge der Befragten bleibt dieselbe.` },
   ],
   fehler: 'Skalieren verschiebt die Mitte nicht auf 0. Dafür musst du vorher die Mitte abziehen; erst beides zusammen ergibt z-Werte.',
   sliders: [
@@ -68,7 +68,7 @@ export const skalieren: SentenceTemplate<ScaleValues, ScaleStats> = {
     question: 'Du teilst alle Lernzeiten durch a = 2. Vorher war s = 3 Stunden. Wie groß ist s danach?',
     answer: 1.5, tolerance: 0.011,
     right: 'Genau, 1,5: 3 / 2 = 1,5. Die Streuung schrumpft im selben Verhältnis wie die Werte.',
-    diagnose: v => close(v, 3) ? 'Fast! Das ist das alte s. Teilen verschiebt nicht nur, es staucht: Auch s wird durch 2 geteilt.'
+    diagnose: v => close(v, 3) ? 'Fast! Das ist das alte s. Teilst du alle Werte durch 2, teilt sich auch ihre Streuung durch 2.'
       : close(v, 0.75) ? 'Fast! Du hast zweimal durch 2 geteilt. Das gilt für die Varianz s², nicht für s.'
       : close(v, 6) ? 'Fast! Du hast malgenommen. Geteilt wird durch 2.'
       : close(v, 1) ? 'Fast! Du hast 2 abgezogen. Abziehen ändert die Streuung gar nicht; erst das Teilen macht sie kleiner.'
@@ -76,7 +76,7 @@ export const skalieren: SentenceTemplate<ScaleValues, ScaleStats> = {
   },
   interpret: s => ({
     kurz: isDay(s.a)
-      ? `Bei a = 7 rechnest du Stunden in sieben Tagen in Stunden pro Tag um. Eine Person mit ${num(s.x)} Stunden lernt etwa ${num(s.xs)} Stunden pro Tag.`
+      ? `Bei a = 7 rechnest du Stunden in sieben Tagen in Stunden pro Tag um. Eine Person mit ${hours(s.x)} lernt ${eq(s.xs) === '≈' ? 'etwa ' : ''}${hours(s.xs)} pro Tag.`
       : `Teilst du durch ${num(s.a)}, wird aus ${num(s.x)} der Wert ${num(s.xs)}. Mitte und Streuung werden im selben Verhältnis ${s.a > 1 + 1e-9 ? 'kleiner' : s.a < 1 - 1e-9 ? 'größer' : 'gar nicht verändert'}, die Reihenfolge bleibt.`,
     fachlich: `x*ᵢ = xᵢ / a mit a = ${num(s.a)}: x̄ / a ≈ ${num(s.meanS)}, s / a ≈ ${num(s.sdS)}, s² / a² ≈ ${num(s.varS)}. Die Mitte liegt danach nicht bei 0.`,
   }),
@@ -91,7 +91,7 @@ export const skalieren: SentenceTemplate<ScaleValues, ScaleStats> = {
     kurz: 'Teilen durch a teilt Mittelwert und Standardabweichung durch a, die Varianz durch a². Die Form der Verteilung und die Reihenfolge bleiben.',
     paragraphs: [
       'Für die z-Standardisierung ist der Maßstab die Standardabweichung. Man zieht zuerst die Mitte ab und teilt dann durch s; skaliert werden also die zentrierten Werte.',
-      `Die Varianz trägt die quadrierte Einheit und schrumpft deshalb um a². Pro Tag statt in sieben Tagen: ${num(L.variance)} / 49 ≈ ${num(L.variance / 49)} h².`,
+      `Die Varianz trägt die quadrierte Einheit und wird deshalb durch a² geteilt. Pro Tag statt in sieben Tagen: ${num(L.variance)} / 49 ≈ ${num(L.variance / 49)} h².`,
       'Der Maßstab muss größer als 0 sein. Mit einer negativen Zahl drehte sich zusätzlich die Reihenfolge um, und durch 0 kann man nicht teilen.',
       'Schiefe, Ränge und Korrelationen mit anderen Spalten ändern sich beim Skalieren nicht. Nur die Einheit ändert sich.',
     ],
@@ -100,10 +100,8 @@ export const skalieren: SentenceTemplate<ScaleValues, ScaleStats> = {
 
 /** Lernzeit pro Tag (geteilt durch 7) für die aktuellen Daten: Mittelwert, Streuung, Varianz und die längste Lernzeit. */
 export function proTag(c: SampleCtx) {
-  const st = columnStats(c, c.columns.x?.[0] ?? 'lernzeit');
-  let top = 0;
-  st.xs.forEach((v, i) => { if (v > st.xs[top]) top = i; });
-  return { ...st, top, day: st.mean / 7, sdDay: st.sd / 7, varDay: st.variance / 49 };
+  const st = sampleSeries(c.rows, c.columns.x?.[0] ?? 'lernzeit');
+  return { ...st, n: st.values.length, xs: st.values, top: biggestIndex(st.values), day: st.mean / 7, sdDay: st.sd / 7, varDay: st.variance / 49 };
 }
 
 export const tabsScaling: ConceptTabs = {
