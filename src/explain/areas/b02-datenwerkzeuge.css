@@ -1,0 +1,4 @@
+/* Bereich B2 „Datenwerkzeuge“: Bild zum Sortieren (src/components/explain/pictures/b02-datenwerkzeuge.tsx). */
+.b02-vorher{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:3 3}
+.b02-nachher{fill:var(--green);stroke:var(--ink);stroke-width:1}
+.b02-weg{stroke:var(--xw-neg);stroke-width:2}

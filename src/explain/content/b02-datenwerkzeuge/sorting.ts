@@ -16,6 +16,12 @@ const REIHE: Record<string, { zeilen: readonly Zeile[]; lernzeit: (z: Zeile, i: 
   spalte: { zeilen: FUENF, lernzeit: (_, i) => nachLernzeit[i].lernzeit, os: i => i + 1 },
 };
 
+/** Die Paare (Lernzeit, Wissenstest) jeder Person vor und nach dem Sortieren, für das Bild. */
+export function paare(option: string) {
+  const r = REIHE[option];
+  return r.zeilen.map((z, i) => ({ person: z.person, vorher: { x: z.lernzeit, y: z.wissenstest }, nachher: { x: r.lernzeit(z, i), y: z.wissenstest } }));
+}
+
 /** Position von P002 nach dem Sortieren (1 bis 5). */
 export const positionP002 = (option: string) => REIHE[option].zeilen.findIndex(z => z.person === 'P002') + 1;
 
@@ -28,6 +34,7 @@ const SORT: Record<string, string[]> = {
 
 export const sorting: TableTool = {
   concept: 'sorting',
+  picture: 'b02-sortieren-paare',
   wofuer: 'Wer von den ersten fünf Befragten hat in den letzten sieben Tagen am wenigsten gelernt, wer am meisten, und welcher Wert liegt der Reihe nach in der Mitte? Sortierst du sie nach ihrer Lernzeit, kannst du es ablesen.',
   kurz: 'Sortieren stellt die Werte der Größe nach in eine Reihe. Den Wert an Position i schreibt man x₍ᵢ₎: x₍₁₎ ist der kleinste, x₍ₙ₎ der größte.',
   mut: 'Hier rechnest du nichts. Du stellst nur fünf Zahlen der Größe nach auf, wie Menschen in einer Schlange.',

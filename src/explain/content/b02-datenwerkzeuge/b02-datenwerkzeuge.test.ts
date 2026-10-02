@@ -12,7 +12,7 @@ import { LABELS_MITTEL, labels, labelsTabs } from './labels';
 import { CONVERSION_MITTEL, conversion, conversionTabs } from './conversion';
 import { EINKOMMEN, missingMittel, missingTools, missingToolsTabs, mitCode } from './missing-tools';
 import { FORMATE, dataExport } from './data-export';
-import { positionP002, reihe, sorting, sortingTabs } from './sorting';
+import { paare, positionP002, reihe, sorting, sortingTabs } from './sorting';
 import { codebook, codebookTabs, eintrag } from './codebook';
 import { dataImport } from './data-import';
 import { surveyColumns } from '../../../domain/survey';
@@ -204,6 +204,8 @@ test('Sortieren: Reihenfolge, Positionen und die 200 wie in R', () => {
   assert.deepEqual(zeilen('ab'), [['P004', '10,5', 13, 'x₍₅₎'], ['P002', '8,3', 9, 'x₍₄₎'], ['P005', '6,8', 11, 'x₍₃₎'], ['P003', '6,3', 14, 'x₍₂₎'], ['P001', '6', 12, 'x₍₁₎']]);
   assert.deepEqual(zeilen('spalte'), [['P001', '6', 12, 'x₍₁₎'], ['P002', '6,3', 9, 'x₍₂₎'], ['P003', '6,8', 14, 'x₍₃₎'], ['P004', '8,3', 13, 'x₍₄₎'], ['P005', '10,5', 11, 'x₍₅₎']]);
   assert.deepEqual(['auf', 'ab', 'spalte'].map(positionP002), [4, 2, 2]);
+  // Bild: Ganze Zeilen sortiert, bleiben alle Paare; nur die Spalte sortiert, wandern vier von fünf Punkten (P001 behält 6 h).
+  assert.deepEqual(['auf', 'ab', 'spalte'].map(o => paare(o).filter(q => q.vorher.x !== q.nachher.x).length), [0, 0, 4]);
   assert.match(sorting.steps[2].was as string, /x₍₃₎ = 6,8 h\./);
   const r = reihe(rows.map(x => x.values.lernzeit));
   assert.deepEqual([r.n, r.min, r.unten, r.oben, r.max, r.median, r.verschieden], [200, 0, 7.6, 7.6, 18.4, 7.6, 99]);
