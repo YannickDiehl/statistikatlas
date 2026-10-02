@@ -6,6 +6,7 @@ import { close } from '../../format';
 import type { SampleCtx, SampleTab } from '../../types';
 import { ABSCHLUSS, HAUSHALT, SCHLAF, WISSEN, meanSd } from './gemeinsam';
 import { probability, probabilityTabs } from './probability';
+import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -68,4 +69,26 @@ test('B6 probability: Abitur 40 von 200, Gegenereignis, Ausprobieren und Auswert
   assert.equal(r.kurz, '40 von 200 Befragten haben Abitur. Ziehst du eine Person zufällig, ist die Wahrscheinlichkeit dafür 0,2, also 20 %. Für kein Abitur bleiben 0,8.');
   assert.match(r.zusatz!, /81 von 200, das ist eine Wahrscheinlichkeit von 40,5 %/);
   assert.equal(tab.value!(ctxFor(tab)), 0.2);
+});
+
+/*
+ *   19 / 40; 19 / 82; 82 / 200; 19 / 200                         # 0.475, 0.2317073, 0.41, 0.095
+ *   12 / 200; 12 / 40; 12 / 82                                   # 0.06, 0.3, 0.1463415
+ *   0.475 * 0.2 / 0.41                                           # 0.2317073 (Satz von Bayes)
+ *   atlas %>% crosstab(row = schulabschluss, col = weiterbildung, percentages = "row")   # Abitur: 52.5% | 47.5%; Total 41.0%
+ */
+test('B6 conditional_probability: 19 von 40 und 19 von 82, Auswertung und Vorhersagen wie in R', () => {
+  const card = conditionalProbability;
+  assert.deepEqual(card.stellDirVor.figures!.map(f => f.value), ['41 %', '47,5 %', '23,2 %']);
+  assert.equal(card.bausteine[1].rechnung, 'P(Weiterbildung | Abitur) = 19 / 40 = 47,5 %. Über die Formel: 9,5 % / 20 % = 47,5 %.');
+  assert.equal(card.bausteine[2].rechnung, 'P(Abitur | Weiterbildung) = 19 / 82 ≈ 23,2 %, nicht 47,5 %.');
+  assert.deepEqual(card.ausprobieren[0].options, ['6 %', '30 %', '14,6 %']);
+  assert.match(card.genau.paragraphs[2], /47,5 % · 20 % \/ 41 % ≈ 23,2 %/);
+  assert.ok(close(0.475 * 0.2 / 0.41, 19 / 82, 1e-12), 'Bayes geht auf');
+  const tab = conditionalProbabilityTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, 'Von den 40 Befragten mit Abitur haben 19 eine Weiterbildung gemacht, also 47,5 %. Unter allen 200 sind es 41 %. Umgekehrt haben von den 82 mit Weiterbildung 19 Abitur: 23,2 %.');
+  assert.ok(close(tab.value!(ctxFor(tab))!, 0.475, 1e-12));
+  assert.ok(close(tab.think[1].expect.measure!(ctxFor(tab))!, 6.5, 1e-9), 'Abstand 6,5 Prozentpunkte');
 });

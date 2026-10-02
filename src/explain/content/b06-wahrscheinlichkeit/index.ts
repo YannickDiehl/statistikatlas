@@ -2,12 +2,15 @@
 // Je Begriff eine Datei in diesem Ordner (Erklärung und Reiter), hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
 import type { AreaIndex } from '../../types';
 import { probability, probabilityTabs } from './probability';
+import { conditionalProbability, conditionalProbabilityTabs } from './conditional_probability';
 
 export const b06Wahrscheinlichkeit: AreaIndex = {
   explanations: {
     probability: { kind: 'begriff', card: probability },
+    conditional_probability: { kind: 'begriff', card: conditionalProbability },
   },
   tabs: {
     probability: probabilityTabs,
+    conditional_probability: conditionalProbabilityTabs,
   },
 };
