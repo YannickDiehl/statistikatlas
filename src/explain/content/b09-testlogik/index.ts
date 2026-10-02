@@ -1,5 +1,14 @@
 // Bereich B9 „Testlogik“. Begriffe (Spezifikation Ausbau, Abschnitt 6): hypothesis, test_statistic, null_distribution, test_sides, alpha_level, critical_value, type_errors, power, general_df, exact_asymptotic, multiplicity, effect.
-// Je Begriff eine Datei in diesem Ordner, hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
+// Je Begriff eine Datei in diesem Ordner (Erklärung und Reiter), hier nur eintragen. Anleitung: src/explain/AUTHORING.md.
+// Gemeinsame Rechnungen in ./rechnen.ts; Referenzwerte aus R in ./b09-testlogik.test.ts.
 import type { AreaIndex } from '../../types';
+import { hypothese, hypotheseTabs } from './hypothese';
 
-export const b09Testlogik: AreaIndex = { explanations: {}, tabs: {} };
+export const b09Testlogik: AreaIndex = {
+  explanations: {
+    hypothesis: { kind: 'begriff', card: hypothese },
+  },
+  tabs: {
+    hypothesis: hypotheseTabs,
+  },
+};

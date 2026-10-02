@@ -1,0 +1,7 @@
+/* Bereich B9 „Testlogik“: Bilder in src/components/explain/pictures/b09-testlogik.tsx. Schrift nur über .xw-t. */
+.b09-dot{fill:var(--green);stroke:var(--paper);stroke-width:1.5}
+.b09-reject{stroke:var(--xw-neg);stroke-width:2}
+.b09-other{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4}
+.b09-alt{fill:none;stroke:var(--green);stroke-width:1.8}
+.b09-mark{fill:var(--xw-neg)}
+.b09-halo{paint-order:stroke;stroke:var(--paper);stroke-width:4px;stroke-linejoin:round}
