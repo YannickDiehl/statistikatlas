@@ -489,7 +489,7 @@ Ohne `columns` gelten die Spalten der Spaltenwahl (`c.columns.x`, `c.columns.y`)
 | „deutlich“, „spürbar“, „stark“ | eine Untergrenze `atLeast` |
 | „kaum“, „ein wenig“, „etwas“, „fast gleich“ | eine Obergrenze `atMost` |
 
-„kaum oder deutlich“ zusammen sagt nur die Richtung. Gilt die Behauptung nicht für jede Person und jeden Datenstand, formuliere die Antwort vorsichtiger (Vorbild Pearson: „er wird schwächer, je nach ihrem Wissenstest kaum oder deutlich“ statt „ja, deutlich“; die alte Fassung fällt im Test durch) und halte im Bereichstest fest, was R dazu sagt. Ein Ablenker wie „bleibt fast gleich“ ist willkommen, wenn er einen typischen Denkfehler zeigt (Vorbild: s beim Ausreißer).
+„kaum oder deutlich“ zusammen sagt nur die Richtung. Gilt die Behauptung nicht für jede Person und jeden Datenstand, formuliere die Antwort vorsichtiger (Vorbild Pearson: „er wird schwächer, je nach ihrem Wissenstest kaum oder deutlich“ statt „ja, deutlich“; die alte Fassung fällt im Test durch) und halte im Bereichstest fest, was R dazu sagt. Ein Ablenker wie „bleibt fast gleich“ ist willkommen, wenn er einen typischen Denkfehler zeigt (Vorbild: s beim Ausreißer). Er muss aber klar falsch sein: Nach einer anderen Vorhersage (etwa „alle doppelt so lange“) kann eine Person auf 40 Stunden kaum noch auffallen. Binde die Frage dann an die Ausgangsdaten („Was macht s in den Ausgangsdaten?“) oder schreib „bleibt gleich“.
 
 ### 8.3 In R (`RTab`)
 

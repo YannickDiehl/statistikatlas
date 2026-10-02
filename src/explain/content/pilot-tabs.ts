@@ -114,8 +114,9 @@ export const bridgeStreuung: Bridge<Series> = {
         return `√${num(c.s.variance)} ≈ ${c.u(c.s.sd)}. Probe: ${num(c.s.sd)} · ${num(c.s.sd)} ≈ ${num(probe)}${num(probe) === num(c.s.variance) ? '.' : `, bis auf Rundung die ${num(c.s.variance)}.`}`;
       },
       person: c => {
+        // Gezeigt wird der gerundete Abstand wie in Schritt 2 (N1); ob innen oder außen, entscheidet der genaue.
         const d = c.s.dev[c.who], inside = Math.abs(d) <= c.s.sd + 1e-9;
-        return `${P(c)} liegt ${toMiddle(c, d)}, also ${inside ? 'innerhalb' : 'außerhalb'} von x̄ ± s (${num(c.s.mean - c.s.sd)} bis ${c.u(c.s.mean + c.s.sd)}).`;
+        return `${P(c)} liegt ${toMiddle(c, shownDiff(c.values[c.who], c.s.mean))}, also ${inside ? 'innerhalb' : 'außerhalb'} von x̄ ± s (${num(c.s.mean - c.s.sd)} bis ${c.u(c.s.mean + c.s.sd)}).`;
       },
     },
   ],
@@ -349,7 +350,7 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           expect: { change: 'factor', factor: 4 },
         },
         {
-          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s²?', options: ['bleibt fast gleich', 'steigt', 'sinkt'], correct: 1, step: 4,
+          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s² in den Ausgangsdaten?', options: ['bleibt fast gleich', 'steigt', 'sinkt'], correct: 1, step: 4,
           explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Deshalb steigt die Quadratsumme (Schritt 4) und mit ihr s² (Schritt 5). In den Ausgangsdaten, wo 40 Stunden weit draußen liegen, wächst s² um fast die Hälfte; der Mittelwert steigt dort nur ein wenig.',
           kurz: 'Wer weit weg ist, zählt im Quadrat viel mehr.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
@@ -404,7 +405,7 @@ export const PILOT_TABS: Record<string, ConceptTabs> = {
           expect: { change: 'factor', factor: 2 },
         },
         {
-          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s?', options: ['bleibt fast gleich', 'steigt', 'sinkt'], correct: 1, step: 6,
+          question: 'Eine Person lernt plötzlich 40 Stunden. Was macht s in den Ausgangsdaten?', options: ['bleibt fast gleich', 'steigt', 'sinkt'], correct: 1, step: 6,
           explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig (Schritt 3). Deshalb steigt die Quadratsumme (Schritt 4) und mit ihr s (Schritt 6). Liegen 40 Stunden weit draußen wie in den Ausgangsdaten, steigt s viel stärker als der Mittelwert, der nur ein wenig steigt.',
           kurz: 'Wer weit weg ist, zählt im Quadrat viel mehr.',
           tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },

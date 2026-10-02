@@ -166,7 +166,7 @@ export const measurementErrorTabs: ConceptTabs = {
       },
       {
         question: 'Die gewählte Person vertippt sich und trägt 40 statt ihrer Lernzeit ein. Was passiert mit r?',
-        options: ['bleibt fast gleich', 'wird schwächer, je nach ihrem Wissenstest kaum oder deutlich', 'wird stärker'], correct: 1,
+        options: ['bleibt genau gleich', 'wird schwächer, je nach ihrem Wissenstest kaum oder deutlich', 'wird stärker'], correct: 1,
         explain: 'Der Tippfehler ist ein einzelner, großer Messfehler. Er zieht den Wert weit weg von dem, was zum Wissenstest passt, und r sinkt.',
         kurz: 'Ein grober Tippfehler kann einen Zusammenhang spürbar verwässern.',
         tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },

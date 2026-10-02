@@ -11,7 +11,7 @@ import { ref } from '../domain/learning';
 import { compatible, createSurvey, defaultSelection, surveyColumns, type SurveyRow } from '../domain/survey';
 import { EXPLANATIONS, TAB_IDS, bridgeFor, explainFor, rKurz, R_TAP, tabsFor, workshopFor } from './registry';
 import { CATALOG_OUTPUT } from './catalogOutput';
-import { applyOp, bridgeContext, fitsColumn } from './sample';
+import { applyOp, bridgeContext, fitsColumn, shownDiff } from './sample';
 import { liveCode, liveFits, liveOutput, locate, noteFor, tokenize } from './rRead';
 import { mergeRelations, nextLists, relationText } from './relations';
 import { styleProblems } from './style';
@@ -165,6 +165,18 @@ test('Mit 200 Befragten: the approved sd wording and its numbers from the data',
   // Die Probe rechnet mit der sichtbaren 3,24: 3,24² = 10,4976 ≈ 10,5; R: var(lernzeit) = 10.4815.
   assert.equal(b.lines[5].all(c), '√10,48 ≈ 3,24 h. Probe: 3,24 · 3,24 ≈ 10,5, bis auf Rundung die 10,48.');
   assert.equal(b.lines[1].person(c), 'P002: 8,3 − 7,75 = +0,55, also 0,55 h über der Mitte.');
+  // N1: Schritt 6 nennt denselben gerundeten Abstand wie Schritt 2, für jede Spalte der Spaltenwahl und jede Person.
+  let differ = 0;
+  for (const col of surveyColumns.filter(x => compatible('sd', x, true))) {
+    const cc = bridgeContext(w.compute, 'series', rows, col.id, '', 0);
+    for (const who of rows.keys()) {
+      const two = b.lines[1].person({ ...cc, who }).match(/, also (.+)\.$/)?.[1], six = b.lines[5].person({ ...cc, who }).match(/ liegt (.+), also (inner|außer)halb/)?.[1];
+      assert.ok(two && six, `${col.id} ${who}: Abstand nicht gefunden`);
+      assert.equal(six, two, `${col.id}, ${cc.names[who]}: Schritt 6 nennt einen anderen Abstand als Schritt 2`);
+      if (Math.abs(cc.s.dev[who]) !== Math.abs(shownDiff(cc.values[who], cc.s.mean))) differ++;
+    }
+  }
+  assert.ok(differ > 0, 'Gegenprobe: genaue und gezeigte Abstände unterscheiden sich');
   const flat = (nodes: unknown[]): string => nodes.map(n => typeof n === 'string' ? n : n && typeof n === 'object' && 'part' in n ? flat((n as { part: unknown[] }).part) : '').join('');
   assert.match(flat(b.numeric(c, 6)), /= √\( 2\.085,82 \/ 199 \) ≈ √10,48 ≈ 3,24 h$/);
   assert.equal(b.metrics(c, 'sd').at(-1)!.value, '3,24 h');
@@ -470,6 +482,12 @@ test('Mit 200 Befragten: every prediction keeps its marked answer, for every per
     }
   }
   assert.ok(checked > 2000, `nur ${checked} Fälle geprüft`);
+  // F3 X1: Nach „alle doppelt so lange“ fällt eine Person auf 40 Stunden kaum noch auf; der Ablenker „bleibt fast
+  // gleich“ wäre dann richtig. Ausreißerfragen mit diesem Ablenker beziehen sich deshalb auf die Ausgangsdaten, außer
+  // die markierte Antwort hat eine geprüfte Untergrenze (atLeast) für jeden Datenstand.
+  for (const [id, tabs] of ALL()) for (const t of tabs.sample?.think ?? [])
+    if (t.tryIt.op === 'outlier' && !(t.expect && 'atLeast' in t.expect && t.expect.atLeast) && t.options.some((o, i) => i !== t.correct && /fast gleich/.test(o)))
+      assert.match(t.question, /in den Ausgangsdaten/, `${id}: „${t.question}“ mit dem Ablenker „bleibt fast gleich“`);
   // Gegenprobe: die alte Vorhersage zum Ausreißer bei r („ja, deutlich“) fällt durch, egal wie expect lautet.
   const pearson = tabsFor('pearson')!, ps = pearson.sample!;
   const old = (expect: Expect): ThinkSample => ({ ...ps.think[2], question: 'Kann ein einziger Wert r bei 200 Befragten spürbar verändern?', options: ['nein, kaum', 'ja, deutlich'], correct: 1, expect });

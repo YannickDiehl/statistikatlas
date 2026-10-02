@@ -42,7 +42,7 @@ export const tabsSs: ConceptTabs = {
         expect: { change: 'factor', factor: 4 },
       },
       {
-        question: 'Eine Person lernt plötzlich 40 Stunden. Was macht die Quadratsumme?', options: ['bleibt fast gleich', 'steigt', 'sinkt'], correct: 1,
+        question: 'Eine Person lernt plötzlich 40 Stunden. Was macht die Quadratsumme in den Ausgangsdaten?', options: ['bleibt fast gleich', 'steigt', 'sinkt'], correct: 1,
         explain: 'Ihr Abstand zur Mitte wird groß, und das Quadrat macht ihn riesig. In den Ausgangsdaten wächst die Quadratsumme dadurch je nach Person um 924 bis 1.035 h², also um fast die Hälfte.',
         kurz: 'Wer weit weg ist, zählt im Quadrat viel mehr.',
         tryIt: { label: 'die gewählte Person auf 40 Stunden', op: 'outlier', column: 'x', value: 40 },
