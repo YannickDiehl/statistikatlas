@@ -28,6 +28,8 @@ import { factorialAnova, TERME, ZELLEN } from './factorial-anova';
 import { ancova, BEREINIGT } from './ancova';
 import { sdRatio, STREUUNGEN, varianceAssumption } from './variance-assumption';
 import { levene } from './levene';
+import { normality, sleepHistogram } from './normality';
+import { normalityFor } from './stats';
 import { leveneFor } from './stats';
 import { ancovaFor } from './stats';
 import { pairedFor } from './stats';
@@ -371,6 +373,37 @@ test('Levene & Brown–Forsythe: Abstände zum Median und F wie in R', () => {
     const r = sample.result(c);
     assert.match(r.kurz, /Im Mittel liegen die Befragten 1,9 Stunden \(Hauptschulabschluss\) bis 2,6 Stunden \(Abitur\) vom Median ihrer Gruppe entfernt\. .* in etwa 53 von 100 Stichproben zu erwarten \(p ≈ 0,53\)/);
     assert.match(r.fachlich, /F\(4, 195\) ≈ 0,8, p ≈ 0,53\. Mit dem Mittelwert als Zentrum: F ≈ 0,84, p ≈ 0,5\./);
+  }
+});
+
+/*
+ * Normalverteilung prüfen (Begriffskarte), Schlafdauer und Haushaltseinkommen:
+ *   atlas %>% normality_test(schlafdauer)   # KS = 0.051, p = 0.238; Shapiro-Wilk W = 0.994, p = 0.660 (n = 200)
+ *   atlas %>% normality_test(einkommen)     # KS = 0.109, p < 0.001; Shapiro-Wilk W = 0.957, p < 0.001
+ *   mariposa:::.lilliefors_test(schlafdauer)      # statistic 0.05073636, p 0.2381439 (auch mit + 1 und 16 - schlafdauer)
+ *   mariposa:::.lilliefors_test(einkommen)        # statistic 0.1091061, p 4.655626e-06
+ *   shapiro.test(einkommen)                       # W = 0.95718, p-value = 9.915772e-06
+ *   c(mean(schlafdauer), sd(schlafdauer))         # 7.0825 0.8197584
+ *   sum(abs(schlafdauer - mean(schlafdauer)) <= sd(schlafdauer)); sum(... <= 2 * sd(schlafdauer))   # 140, 191
+ *   (pnorm(1) - pnorm(-1)) * 200; (pnorm(2) - pnorm(-2)) * 200   # 136.5379, 190.8999
+ *   atlas %>% describe(einkommen, show = c("mean", "median", "skew"))   # 3154.620, 2772.000, Skewness 0.792 (rechtsschief)
+ *   table(cut(schlafdauer, seq(4.5, 10, by = 0.5), right = FALSE))   # 0 6 12 25 45 44 40 18 9 0 1
+ */
+test('Normalverteilung prüfen: Schlafdauer und Einkommen wie in R', () => {
+  const c = ctx({ x: 'schlafdauer' }), n = normalityFor(c);
+  near(n.test!.D, 0.05073636278, 1e-10, 'D Schlafdauer'); near(n.test!.p, 0.2381439273, 1e-9, 'p Schlafdauer');
+  near(n.mean, 7.0825, 1e-12, 'Mittelwert'); near(n.sd, 0.81975836, 1e-8, 's'); assert.deepEqual([n.within1, n.within2], [140, 191]);
+  const e = normalityFor(ctx({ x: 'einkommen' })).test!;
+  near(e.D, 0.1091061023, 1e-9, 'D Einkommen'); near(e.p, 4.655626212e-6, 1e-12, 'p Einkommen');
+  near(normalityFor(ctx({ x: 'schlafdauer' }, applyOp(rows, 'schlafdauer', 'shift', 1))).test!.D, 0.05073636278, 1e-9, 'plus 1');
+  near(normalityFor(ctx({ x: 'schlafdauer' }, applyOp(rows, 'schlafdauer', 'reverse'))).test!.D, 0.05073636278, 1e-9, 'gespiegelt');
+  assert.deepEqual(sleepHistogram(rows).bins, [0, 6, 12, 25, 45, 44, 40, 18, 9, 0, 1]);
+  assert.match(normality.stellDirVor.text, /7,08 Stunden pro Nacht, mit s ≈ 0,82 Stunden\. 140 von ihnen .* etwa 137\. R meldet .* W = 0\.994, p = 0\.660\./);
+  const sample = b10Mittelwerte.tabs.normality_test.sample!;
+  if (sample.kind === 'analysis') {
+    const r = sample.result(c);
+    assert.match(r.kurz, /D ≈ 0,05 .* in etwa 24 von 100 Stichproben zu erwarten \(p ≈ 0,24\)/);
+    assert.equal(r.zusatz, '140 von 200 Befragten liegen höchstens eine Standardabweichung von der Mitte entfernt, 191 höchstens zwei; bei einer Normalverteilung wären es etwa 137 und 191.');
   }
 });
 

@@ -9,7 +9,9 @@ import { GRUPPEN, type AnovaStats } from '../../../explain/content/b10-mittelwer
 import { ZELLEN } from '../../../explain/content/b10-mittelwerte/factorial-anova';
 import { BEREINIGT } from '../../../explain/content/b10-mittelwerte/ancova';
 import { STREUUNGEN } from '../../../explain/content/b10-mittelwerte/variance-assumption';
-import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
+import { baseSurvey } from '../../../explain/sample';
+import { sleepHistogram } from '../../../explain/content/b10-mittelwerte/normality';
+import { Axis, Bar, clamp, Curve, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Ganzzahlige Ticks von `from` bis `to` in Schritten von `by`. */
 /** „=“, wenn die angezeigte Zahl genau ist, sonst „≈“. */
@@ -234,7 +236,28 @@ function GroupSpreads() {
   );
 }
 
+/** Normalverteilung prüfen: Schlafdauer der 200 Befragten (Ausgangsdaten) als Säulen je halbe Stunde, dazu die Glockenkurve mit gleichem Mittelwert und gleicher Standardabweichung. */
+function SleepHistogram() {
+  const [box, W] = useWidth();
+  const { n, lo, hi, width, mean, sd, bins } = sleepHistogram(baseSurvey());
+  const left = 44, right = W - 16, top = 30, bottom = 200, X = linear([lo, hi], [left, right]), top2 = Math.max(...bins) * 1.15, Y = linear([0, top2], [bottom, top]);
+  const density = (v: number) => n * width * Math.exp(-((v - mean) ** 2) / (2 * sd * sd)) / (sd * Math.sqrt(2 * Math.PI));
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={262} viewBox={`0 0 ${W} 262`} role="img"
+        aria-label={`Schlafdauer der ${n} Befragten in halben Stunden von ${num(lo)} bis ${num(hi)} Stunden: ${bins.join(', ')} Personen; dazu die Glockenkurve mit Mittelwert ${num(mean)} und Standardabweichung ${num(sd)}.`}>
+        <text className="xw-t xw-strong" x={8} y={16}>Schlafdauer und Glockenkurve</text>
+        <Axis scale={Y} ticks={[0, 20, 40]} at={left} from={top} to={bottom} orient="left" labelGap={24} title="Befragte" />
+        {bins.map((b, k) => <rect key={k} className="xw-bar-plain" x={X(lo + k * width) + 1} y={Y(b)} width={Math.max(0, X(lo + width) - X(lo) - 2)} height={bottom - Y(b)} />)}
+        <Curve f={density} from={lo} to={hi} x={X} y={Y} />
+        <Axis scale={X} ticks={[5, 6, 7, 8, 9, 10]} at={bottom} from={left} to={right} labelGap={20} title="Stunden pro Nacht" />
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b10-normal': forCard(() => <SleepHistogram />),
   'b10-streuungen': forCard(() => <GroupSpreads />),
   'b10-bereinigt': forCard(() => <AdjustedMeans />),
   'b10-interaktion': forCard(() => <InteractionPlot />),
