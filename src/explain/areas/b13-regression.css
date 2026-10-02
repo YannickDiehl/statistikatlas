@@ -1,0 +1,12 @@
+/* Bereich B13 „Regression“: Bilder in src/components/explain/pictures/b13-regression.tsx. Farben aus den Atlas-Variablen. */
+.b13-line{stroke:var(--ink);stroke-width:2.2}
+.b13-line.b13-alt{stroke:var(--green);stroke-dasharray:7 5}
+.b13-triangle line{stroke:var(--green);stroke-width:1.8;stroke-dasharray:3 3}
+.b13-b0{fill:var(--paper);stroke:var(--ink);stroke-width:2}
+.b13-hat{fill:var(--paper);stroke:var(--muted);stroke-width:1.5}
+.b13-hat.sel{stroke:var(--green);stroke-width:2.5}
+.b13-dot{fill:#9aa592;opacity:.7}
+.b13-dot.b13-hi{fill:var(--xw-neg);opacity:1}
+.b13-mark{fill:var(--wash);stroke:var(--green);stroke-width:2.5}
+.b13-train{fill:none;stroke:var(--green);stroke-width:2.2}
+.b13-test{fill:none;stroke:var(--xw-neg);stroke-width:2.2;stroke-dasharray:6 4}
