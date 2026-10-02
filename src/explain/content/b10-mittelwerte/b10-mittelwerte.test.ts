@@ -25,6 +25,8 @@ import { pairedDesign, sdForR, tForR, WISSEN } from './paired-design';
 import { anovaStats, anovaWerkstatt } from './anova';
 import { anovaFor, factorialFor } from './stats';
 import { factorialAnova, TERME, ZELLEN } from './factorial-anova';
+import { ancova, BEREINIGT } from './ancova';
+import { ancovaFor } from './stats';
 import { pairedFor } from './stats';
 import { txt } from '../../types';
 
@@ -285,6 +287,39 @@ test('Mehrfaktorielle ANOVA: Zellmittel und Typ-III-Tests wie in R', () => {
     assert.match(r.kurz, /ohne Weiterbildung im Schnitt 10,73 Stunden gelernt, mit Weiterbildung 7,84 Stunden\. .* überraschend \(p ≈ 0,02\)/);
     assert.match(r.fachlich, /Schulabschluss F\(4, 190\) ≈ 8,56, p < 0,001; Weiterbildung F\(1, 190\) ≈ 0,28, p ≈ 0,6; Zusammenspiel F\(4, 190\) ≈ 3, p ≈ 0,02, η²p ≈ 0,06/);
     assert.equal(r.zusatz, 'Je Zelle aus Abschluss und Weiterbildung zwischen 12 und 28 Befragte.');
+  }
+});
+
+/*
+ * Kovarianzanalyse (Begriffskarte), Wissenstest nach Schulabschluss, Kovariaten Lernzeit und Alter:
+ *   atlas %>% ancova(dv = wissenstest, between = schulabschluss, covariate = c(lernzeit, alter), ss_type = 3) %>% summary()
+ *   # lernzeit F 64.869, alter F 0.131 (Sig .718), schulabschluss F 1.499 (Sig .204); lernzeit B 0.502
+ *   # Estimated Marginal Means: 9.568 10.667 10.268 9.637 10.535
+ *   full <- lm(wissenstest ~ factor(schulabschluss) + lernzeit + alter); red <- lm(wissenstest ~ lernzeit + alter)
+ *   anova(red, full)        # F 1.49949, Pr(>F) 0.2039 (0.2038966); coef(full)["lernzeit"] 0.5017198
+ *   predict(full, data.frame(schulabschluss = 0:4, lernzeit = mean(lernzeit), alter = mean(alter)))
+ *   # 9.568488 10.666826 10.268432 9.636550 10.535497
+ *   tapply(wissenstest, schulabschluss, mean)    # 8.619048 10.275000 10.351351 10.121951 11.350000
+ *   anova(lm(wissenstest ~ factor(schulabschluss)))   # F 4.34436, Pr(>F) 0.0021801
+ *   tapply(lernzeit, schulabschluss, mean)       # 5.883333 ... 9.355000
+ *   # lernzeit verdoppelt oder wissenstest + 1: F 1.499487 wie vorher
+ */
+test('Kovarianzanalyse: rohe und bereinigte Mittel wie in R', () => {
+  const c = ctx({ x: 'wissenstest', group: 'schulabschluss', y: 'lernzeit', z: 'alter' }), a = ancovaFor(c)!;
+  near(a.F, 1.499486838, 1e-8, 'F bereinigt'); near(a.p, 0.2038966, 1e-6, 'p bereinigt'); assert.deepEqual([a.df1, a.df2], [4, 193]);
+  near(a.plainF, 4.34436, 1e-5, 'F roh'); near(a.plainP, 0.0021801, 1e-7, 'p roh'); near(a.slope, 0.5017198, 1e-7, 'Steigung');
+  const adj = [9.568488393, 10.666826194, 10.268432190, 9.636550146, 10.535497318], raw = [8.619047619, 10.275, 10.351351351, 10.12195122, 11.35];
+  adj.forEach((v, k) => { near(a.adjusted[k], v, 1e-8, `bereinigt ${k}`); near(BEREINIGT[k].bereinigt, v, 5e-4, `Karte bereinigt ${k}`); });
+  raw.forEach((v, k) => { near(a.raw[k], v, 1e-8, `roh ${k}`); near(BEREINIGT[k].roh, v, 5e-4, `Karte roh ${k}`); });
+  near(ancovaFor(ctx({ x: 'wissenstest', group: 'schulabschluss', y: 'lernzeit', z: 'alter' }, applyOp(rows, 'lernzeit', 'double')))!.F, 1.499486838, 1e-8, 'Lernzeit doppelt');
+  near(ancovaFor(ctx({ x: 'wissenstest', group: 'schulabschluss', y: 'lernzeit', z: 'alter' }, applyOp(rows, 'wissenstest', 'shift', 1)))!.F, 1.499486838, 1e-8, 'Wissenstest + 1');
+  assert.match(ancova.stellDirVor.text, /8,62 von 20 Aufgaben, Befragte mit Abitur 11,35: ein Unterschied von 2,73 Aufgaben\. .* 9,36 statt 5,88 Stunden\. .* 9,57 und 10,54 Aufgaben voraus\. Der Unterschied schrumpft auf 0,97 Aufgaben\./);
+  assert.match(ancova.bausteine[2].was, /zwischen 9,57 und 10,67 Aufgaben/);
+  const sample = b10Mittelwerte.tabs.ancova.sample!;
+  if (sample.kind === 'analysis') {
+    const r = sample.result(c);
+    assert.match(r.kurz, /Roh lösen die Gruppen im Schnitt 8,62 \(ohne Schulabschluss\) bis 11,35 Aufgaben \(Abitur\)\. .* nur noch 9,57 bis 10,67 Aufgaben voraus\./);
+    assert.match(r.fachlich, /F\(4, 193\) ≈ 1,5, p ≈ 0,2; ohne Kovariaten F\(4, 195\) ≈ 4,34, p ≈ 0,0022\. Steigung der Lernzeit ≈ 0,5 Aufgaben je Stunde\./);
   }
 });
 

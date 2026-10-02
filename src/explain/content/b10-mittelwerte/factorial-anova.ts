@@ -148,7 +148,7 @@ export const factorialAnovaTabs: ConceptTabs = {
   r: {
     entry: 'factorial_anova', variant: 0,
     tokens: {
-      dv: { sym: 'dv =', term: 'Zielvariable', kurz: 'Die metrische Variable, deren Mittelwerte verglichen werden, hier die Lernzeit.', fehler: 'Ist die Variable nicht numerisch, meldet mariposa: Dependent variable … must be numeric.' },
+      dv: { sym: 'dv =', term: 'Zielvariable', kurz: 'Die metrische Variable, deren Mittelwerte verglichen werden, hier die Lernzeit.', fehler: 'Steht dort eine Textspalte, meldet mariposa: Dependent variable … must be numeric.' },
       between: { sym: 'between =', term: 'Faktoren', kurz: 'Die Gruppierungen, mit c() zusammengefasst: hier Schulabschluss und Weiterbildung.', fehler: 'Mit nur einem Faktor meldet mariposa: `factorial_anova()` requires at least 2 between-subjects factors.' },
       ss_type: { sym: 'ss_type =', term: 'Typ der Quadratsummen', kurz: '3 heißt Typ III: Jeder Term wird so geprüft, als käme er zuletzt ins Modell.', fehler: 'Mit ss_type = 2 warnt mariposa: Type II sums of squares are not implemented; computing Type III (the SPSS default).' },
     },

@@ -7,3 +7,4 @@
 .b10-line{fill:none;stroke:var(--ink);stroke-width:2}
 .b10-line-ja{stroke:var(--green);stroke-dasharray:6 4}
 .b10-square{fill:var(--green);stroke:var(--paper);stroke-width:1}
+.b10-shift{stroke:var(--muted);stroke-width:2.5}

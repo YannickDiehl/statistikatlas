@@ -7,6 +7,7 @@ import type { PairedStats } from '../../../explain/content/b10-mittelwerte/paire
 import { sdForR, tForR, WISSEN } from '../../../explain/content/b10-mittelwerte/paired-design';
 import { GRUPPEN, type AnovaStats } from '../../../explain/content/b10-mittelwerte/anova';
 import { ZELLEN } from '../../../explain/content/b10-mittelwerte/factorial-anova';
+import { BEREINIGT } from '../../../explain/content/b10-mittelwerte/ancova';
 import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Ganzzahlige Ticks von `from` bis `to` in Schritten von `by`. */
@@ -186,7 +187,32 @@ function InteractionPlot() {
   );
 }
 
+/** ANCOVA: je Schulabschluss das rohe Mittel (Kreis) und das bereinigte Mittel (Quadrat) im Wissenstest, mit Pfeil. */
+function AdjustedMeans() {
+  const [box, W] = useWidth();
+  const left = 70, right = W - 24, X = linear([8, 12], [left, right]), rowY = (i: number) => 52 + i * 34, AXIS = rowY(BEREINIGT.length - 1) + 26;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={AXIS + 82} viewBox={`0 0 ${W} ${AXIS + 82}`} role="img"
+        aria-label={`Wissenstest nach Schulabschluss, roh und bereinigt um Lernzeit und Alter: ${BEREINIGT.map(b => `${b.label} ${num(b.roh)} und ${num(b.bereinigt)}`).join(', ')} Aufgaben.`}>
+        <text className="xw-t xw-strong" x={8} y={18}>Wissenstest: roh und bereinigt</text>
+        {BEREINIGT.map((b, i) => <g key={b.label}>
+          <line className="xw-guide" x1={left} x2={right} y1={rowY(i)} y2={rowY(i)} />
+          <text className="xw-t" x={8} y={rowY(i) + 4}>{b.label}</text>
+          <line className="b10-shift" x1={X(b.roh)} x2={X(b.bereinigt)} y1={rowY(i)} y2={rowY(i)} />
+          <circle className="b10-dot" cx={X(b.roh)} cy={rowY(i)} r={6} />
+          <rect className="b10-square" x={X(b.bereinigt) - 6} y={rowY(i) - 6} width={12} height={12} />
+        </g>)}
+        <Axis scale={X} ticks={[8, 9, 10, 11, 12]} at={AXIS} from={left} to={right} labelGap={20} title="gelöste Aufgaben" />
+        <circle className="b10-dot" cx={14} cy={AXIS + 68} r={5} /><text className="xw-t" x={24} y={AXIS + 73}>roh</text>
+        <rect className="b10-square" x={74} y={AXIS + 63} width={10} height={10} /><text className="xw-t" x={90} y={AXIS + 73}>bereinigt</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b10-bereinigt': forCard(() => <AdjustedMeans />),
   'b10-interaktion': forCard(() => <InteractionPlot />),
   'b10-anova': forWorkshop(p => <GroupDots values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b10-verbunden': forCard(p => <PairedSpread r={p.value ?? WISSEN.r} />),
