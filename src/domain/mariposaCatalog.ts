@@ -2027,14 +2027,14 @@ export const mariposaEntries:AtlasEntry[]=[
   "id": "phi",
   "title": "Phi",
   "region": "categorical",
-  "intro": "Beschreibe die Zusammenhangsstärke zweier binärer Merkmale. mariposa liefert einen nichtnegativen Wert.",
-  "formula": "φ = √([[χ²|chi_square|Unkorrigierte Chi-Quadrat-Prüfgröße]] / [[n|validn|Anzahl Fälle]])",
+  "intro": "Beschreibe Stärke und Richtung des Zusammenhangs zweier binärer Merkmale. Bei einer 2×2-Tabelle liefert mariposa φ mit Vorzeichen.",
+  "formula": "|φ| = √([[χ²|chi_square|Unkorrigierte Chi-Quadrat-Prüfgröße]] / [[n|validn|Anzahl Fälle]])",
   "requires": [],
   "notes": [
-   "Bei 2×2 ist das der Betrag der Pearson-Korrelation zweier 0/1-Indikatoren. Er zeigt keine Richtung.",
-   "Das Paket erzwingt 2×2 nicht; bei größeren Tabellen kann Phi über 1 liegen. Der Atlas bietet dafür Cramér-V."
+   "Bei 2×2 ist φ die Pearson-Korrelation zweier 0/1-Indikatoren, mit dem Vorzeichen von ad − bc (Produkt der Diagonale minus Produkt der Gegendiagonale). Positiv heißt: Wer bei dem einen Merkmal eine 1 hat, hat eher auch bei dem anderen eine 1. Das Vorzeichen hängt also an der Kodierung.",
+   "Das Paket erzwingt 2×2 nicht; bei größeren Tabellen ist Phi √(χ²/n) ohne Vorzeichen und kann über 1 liegen. Der Atlas bietet dafür Cramér-V."
   ],
-  "output": "Einheitenfreie Stärke des binären Zusammenhangs.",
+  "output": "Einheitenfreie Stärke des binären Zusammenhangs, bei 2×2 mit Richtung zwischen −1 und +1.",
   "variants": [
    {
     "label": "Zwei binäre Merkmale",
