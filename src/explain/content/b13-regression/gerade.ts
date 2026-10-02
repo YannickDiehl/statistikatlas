@@ -2,8 +2,8 @@
 // Lernzeit und Wissenstest, dazu die Brücke zu den 200 Befragten. Ton nach der Streuung (src/explain/content/streuung.ts).
 // Alle Zahlen sind in R nachgerechnet, die Referenzwerte stehen in b13-regression.test.ts.
 import type { Bridge, BridgeCtx, Ctx, FNode, Workshop } from '../../types';
-import { num, signed, paren, close, unit } from '../../format';
-import { sumNodes, unitText } from '../../sample';
+import { num, signed, paren, close, unit, round } from '../../format';
+import { eqFrom, sumNodes, unitText } from '../../sample';
 import { fitLine, type Fit, type Pairs } from './fit';
 
 type C = Ctx<Fit>;
@@ -409,7 +409,7 @@ export const bridgeGerade: Bridge<Fit> = {
     {
       all: c => c.s.b1 === null ? `${t1(c)} streut nicht. Dann gibt es keine Steigung.`
         : `Summe der Produkte ${num(c.s.cp)}, Quadratsumme von x ${num(c.s.sxx)}: b₁ = ${num(c.s.cp)} / ${num(c.s.sxx)} ≈ ${coef(c.s.b1)}.`,
-      person: c => { const i = c.who, p = c.s.prod[i]; return `${PB(c)} steuert ${paren(c.s.x.dev[i])} · ${paren(c.s.y.dev[i])} ${eq(p)} ${signed(p)} zum Zähler und ${num(c.s.xsq[i])} zum Nenner bei.`; },
+      person: c => { const i = c.who, p = c.s.prod[i], dx = round(c.s.x.dev[i], 2), dy = round(c.s.y.dev[i], 2); return `${PB(c)} steuert ${paren(dx)} · ${paren(dy)} ${eqFrom(dx * dy, p)} ${signed(p)} zum Zähler und ${num(c.s.xsq[i])} zum Nenner bei.`; },
     },
     {
       all: c => {

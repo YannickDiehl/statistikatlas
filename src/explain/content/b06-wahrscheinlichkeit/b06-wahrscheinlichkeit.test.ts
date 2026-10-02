@@ -375,7 +375,10 @@ test('B6 Fix-Runde 1: geänderte Texte und ihre Zahlen wie in R', () => {
   }
   assert.deepEqual(shownOn('expectation').map(t => t.question), ['Alle Haushalte bekommen eine Person mehr. Was passiert mit μ?', 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?']);
   assert.deepEqual(shownOn('population_variance').map(t => t.question), ['Alle Haushalte bekommen eine Person mehr. Was passiert mit μ?', 'Alle Haushalte bekommen eine Person mehr. Was passiert mit σ²?', 'Warum teilst du hier durch 5 und nicht durch 4 wie bei der Stichprobenvarianz s²?']);
-  assert.match(String(shownOn('population_variance')[1].explain), /Deshalb bleibt auch σ² gleich\.$/);
+  assert.match(String(shownOn('population_variance')[1].explain), /^μ steigt auch um 1\. .* Deshalb bleibt auch σ² gleich, solange niemand schon bei der Obergrenze 8 liegt\.$/);
+  // 5 · 0,25 = 1,25: Mit vier im Nenner ergäben die Chancen zusammen mehr als 1 (I-b, Karte Erwartungswert).
+  assert.match(String(shownOn('expectation')[1].explain), /Zusammen ergeben die fünf Chancen 1; mit je 0,25 wären es 1,25\.$/);
+  assert.ok(close(5 * 0.25, 1.25, 1e-12) && close(5 * 0.2, 1, 1e-12), 'Summe der Chancen');
   assert.equal(shownOn('population_variance')[2].explain, 'Durch n − 1 teilt man, wenn man aus einer Stichprobe die Varianz einer größeren Gruppe schätzt. Hier kennst du die ganze Gruppe, aus der gezogen wird; es gibt nichts zu schätzen.');
   // Je Karte genau ein Ausprobieren, und es meldet die Zahl, nach der es fragt: μ bzw. σ² (letzte Kennzahl der Variante).
   for (const [v, sym, label] of [['expectation', 'μ', 'Erwartungswert μ'], ['population_variance', 'σ²', 'Populationsvarianz σ²']] as const) {

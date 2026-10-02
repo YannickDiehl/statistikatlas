@@ -377,8 +377,12 @@ test('tabs: one reset button in the sample tab, step cards keep h1 → h2 → h3
     const v = panelOf(inspector(id), id, 'verstehen');
     assert.match(v, /<details class="xw-more xw-practice"><summary>Weitere Übung<\/summary>/, `${id}: „Weitere Übung“ fehlt`);
     assert.ok(v.indexOf('Weitere Übung') > v.lastIndexOf('Genau genommen'), `${id}: „Weitere Übung“ steht nicht am Ende`);
-    assert.equal((v.match(/class="foundation-lab"/g) ?? []).length, (v.match(/xw-practice/g) ?? []).length > 0 ? (v.match(/class="foundation-lab"/g) ?? []).length : 0);
+    const start = v.indexOf('<details class="xw-more xw-practice">'), labs = [...v.matchAll(/class="foundation-lab/g)].map(m => m.index ?? -1);
+    assert.ok(labs.length > 0 && labs.every(i => i > start), `${id}: die Übung steht nicht im Kasten „Weitere Übung“`);
   }
+  // Schrittkarten ohne Reiter „Mit 200 Befragten“: In „Weitere Übung“ stehen Spaltenwahl, Rechnung mit Daten und Deutung (Korrekturrunde M1).
+  const add = panelOf(inspector('add'), 'add', 'verstehen'), practice = add.slice(add.indexOf('xw-practice'));
+  for (const part of ['Mit welchen Variablen?', 'Mit deinen Daten', 'class="interpretation"', 'Mit den Daten experimentieren']) assert.ok(practice.includes(part), `add: „${part}“ fehlt in „Weitere Übung“`);
 });
 
 test('tabs: rank routes (Spearman through Pearson with ranks) keep the old layout with rank-based numbers', () => {

@@ -66,12 +66,15 @@ export function ConceptInspector(p:Props){
   const sel=p.selection,ctx={rows,columns:{...(sel?{x:[sel[r.variable]],y:[sel.y]}:{}),...p.rSettings?.columns}};
   // Die bisherigen Teile „Mit deinen Daten“: im Reiter „Mit 200 Befragten“ unter der Deutung (ohne eigenen Rücksetzknopf,
   // IB15), bei Schrittkarten ohne diesen Reiter zugeklappt als „Weitere Übung“ am Ende von „Verstehen“ (IB19, wie IB3).
+  // Ohne Reiter „Mit 200 Befragten“ (Schrittkarten) gehören Spaltenwahl und Deutung dazu, wie in der Ansicht ohne Reiter.
   const dataPart=(inSample:boolean):ReactNode=><>
+   {!inSample&&(p.selection&&p.onColumns?<ColumnPicker reference={r} selection={p.selection} onChange={p.onColumns} notice={p.columnNotice}/>:variableControl)}
    <div className="calculation-heading"><span className="eyebrow">Mit deinen Daten</span></div>
    {casePicker}
    <Formula key={`${selection}-numeric`} reference={r} context={p.context} onSelect={p.onSelect} onHighlight={p.onHighlight} highlight={p.highlight} numeric/>
    {result!==null&&<p className="compact-result" aria-live="polite">{displayValue(r,p.context)} {unitFor(r,p.context)}</p>}
    <SurveyAnalysis reference={r} context={contextFor(r,p.context)} onCase={p.onCase} onSelect={p.onSelect}/>
+   {!inSample&&<p className="interpretation">{interpretation(r,p.context)}</p>}
    {conditionList}
    {experimentBox(`experiment-${selection}`,inSample)}
   </>;

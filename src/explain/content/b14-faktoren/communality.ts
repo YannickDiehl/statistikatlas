@@ -148,7 +148,7 @@ export const communalityTabs: ConceptTabs = {
     entry: 'efa', variant: 0, summary: true,
     tokens: PCA_TOKENS,
     outputMap: [
-      { match: 'Extraction', atlas: 'hⱼ² von Frage 1', explain: 'Unter Communalities, Spalte Extraction, steht die Kommunalität jeder Frage. Mit einer Komponente ist sie die quadrierte Ladung: Frage 1 lädt mit 0.852, zum Quadrat 0.726.' },
+      { match: 'Extraction', atlas: 'hⱼ² von Frage 1', explain: 'Unter Communalities, Spalte Extraction, steht die Kommunalität jeder Frage. Mit einer Komponente ist sie die quadrierte Ladung: R meldet für Frage 1 die Ladung 0.852 und hier 0.726.' },
       { match: 'Initial', atlas: 'Varianz einer standardisierten Frage', explain: 'Bei Hauptkomponenten startet jede Frage mit ihrer ganzen Varianz 1. Extraction zeigt, wie viel davon die Komponente erfasst.' },
       { match: '% Var.', atlas: 'Durchschnitt der Kommunalitäten', explain: 'Die fünf Kommunalitäten ergeben zusammen 3,56. Geteilt durch 5 sind das 71,2 %.' },
     ],

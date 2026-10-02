@@ -15,7 +15,8 @@ import { applyOp, bridgeContext, fitsColumn } from './sample';
 import { liveCode, liveFits, liveOutput, locate, noteFor, tokenize } from './rRead';
 import { mergeRelations, nextLists, relationText } from './relations';
 import { styleProblems } from './style';
-import type { BridgePicture, ConceptTabs, Expect, SampleCtx, SampleTab, ThinkSample } from './types';
+import { equationsThatFail } from './equations';
+import type { BridgeCtx, BridgePicture, ConceptTabs, Expect, SampleCtx, SampleTab, ThinkSample } from './types';
 import { stepTargets } from '../components/explain/ExplainTabs';
 
 /**
@@ -37,6 +38,8 @@ function clean(label: string, s: string | undefined, opts?: { maxWords?: number;
   assert.ok(!BROKEN.test(s), `${label}: ${s}`);
   const problems = styleProblems(s, opts);
   assert.deepEqual(problems, [], `${label}: ${problems.join(' ')}`);
+  // Rechnungen gehen mit den sichtbaren Zahlen auf (AUTHORING §2), etwa „12 − 10,13 = +1,87“, nicht „= +1,88“.
+  assert.deepEqual(equationsThatFail(s), [], `${label}: Rechnung geht nicht auf: ${s}`);
 }
 const SHORT = { maxWords: 25 }, KURZ = { maxWords: 25, maxSentences: 2 }, DEUTUNG = { maxWords: 25, maxSentences: 3 };
 const ALL = (): [string, ConceptTabs][] => TAB_IDS.map(id => [id, tabsFor(id)!]);
@@ -509,6 +512,48 @@ test('bridges read right for every column they can use: no middle dot from colum
     }
   }
   assert.ok(seen.size >= 5, 'alle Pilotbrücken geprüft');
+});
+
+/*
+ * R (Lehrdatensatz, read_spss): mean(wissenstest) = 10.125, mean(erwerbstaetig) = 0.685, mean(lernzuversicht7) = 3.995,
+ * mean(methoden3) = 4.035, mean(quelle_video) = 0.565, mean(arbeitsstunden) = 22.205: Mittelwerte genau auf der Hälfte.
+ * Dort zeigt der Text den Abstand aus den gezeigten Zahlen („12 − 10,13 = +1,87“, exakt 1,875).
+ */
+test('bridges: every printed calculation adds up with the shown numbers, for every person of the main columns', () => {
+  const seen = new Set<string>();
+  let checked = 0;
+  for (const [, tabs] of ALL()) {
+    const s = tabs.sample;
+    if (s?.kind !== 'bridge' || seen.has(`${s.workshop}:${s.variant}`)) continue;
+    seen.add(`${s.workshop}:${s.variant}`);
+    const w = workshopFor(s.workshop)!, b = bridgeFor(s.workshop)!, v = w.variants[s.variant], [ox, oy = 'wissenstest'] = s.variable.split(',');
+    const usable = surveyColumns.filter(c => compatible(s.variant, c, true)).map(c => c.id);
+    // Die eigene Spalte (bzw. das eigene Paar) mit allen 200, jede andere Spalte der Spaltenwahl mit jeder vierten Person.
+    const cases: [string, string][] = b.data === 'pairs'
+      ? [[ox, oy], ...usable.filter(x => x !== oy && x !== ox).map(x => [x, oy] as [string, string]), ...usable.filter(y => y !== ox && y !== oy).map(y => [ox, y] as [string, string])]
+      : [[ox, ''], ...usable.filter(x => x !== ox).map(x => [x, ''] as [string, string])];
+    for (const [x, y] of cases) {
+      // Die Zeilen „für alle“ hängen nicht von der Person ab: einmal je Spalte; die Personenzeilen für jede der 200.
+      const where: string = `${s.workshop}/${s.variant} mit ${x}${y ? ` und ${y}` : ''}`;
+      const base: BridgeCtx<unknown> = bridgeContext(w.compute, b.data, rows, x, y, 0);
+      for (let k = 0; k < v.lastStep; k++) { checked++; const t: string = b.lines[k].all(base); assert.deepEqual(equationsThatFail(t), [], `${where}, Schritt ${k + 1}: ${t}`); }
+      const own = x === ox && (b.data !== 'pairs' || y === oy);
+      for (const who of [...rows.keys()].filter(i => own || i % 4 === 0)) for (let k = 0; k < v.lastStep; k++) {
+        checked++;
+        const t: string = b.lines[k].person({ ...base, who });
+        assert.deepEqual(equationsThatFail(t), [], `${where}, ${base.names[who]}, Schritt ${k + 1}: ${t}`);
+      }
+    }
+  }
+  assert.ok(checked > 50000, `nur ${checked} Zeilen geprüft`);
+  // Gegenprobe: so stand es vor der Korrektur, und so fällt es auf.
+  assert.deepEqual(equationsThatFail('P001: 12 − 10,13 = +1,88 und 6 − 7,75 = −1,75.'), ['12 − 10,13 = +1,88']);
+  assert.deepEqual(equationsThatFail('P001: (−1,04) · (+1,87) = −1,95, aber 200 · 199 / 2 = 19.900 und 103 / 200 = 51,5 %.'), ['(−1,04) · (+1,87) = −1,95']);
+  assert.deepEqual(equationsThatFail('(+1,87)² ≈ 3,52 und (−4)² = 16'), []);
+  const pz = bridgeContext(workshopFor('zusammenhang')!.compute, 'pairs', rows, 'lernzeit', 'wissenstest', 0);
+  assert.equal(bridgeFor('zusammenhang')!.lines[1].person(pz), 'P001: 6 − 7,75 = −1,75 und 12 − 10,13 = +1,87.');
+  // R: x̄ = 7.7515, also 6 − 7.7515 = −1.7515 und (−1.7515) · 1.875 = −3.284; aus den gezeigten Teilen −3,27, darum „≈“.
+  assert.match(bridgeFor('zusammenhang')!.lines[2].person(pz), /^P001: \(−1,75\) · 1,87 ≈ −3,28,/);
 });
 
 test('steps: every step that In R or a prediction points to exists in the tab the jump opens', () => {

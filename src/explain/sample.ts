@@ -7,7 +7,7 @@
 import { columnById, createSurvey, type SurveyRow } from '../domain/survey';
 import type { BridgeCtx, FNode, SampleColumn, ThinkSample } from './types';
 import { relate, series } from './math';
-import { num } from './format';
+import { num, round } from './format';
 
 /** Die Werte einer Spalte für alle Befragten, in der Reihenfolge der Daten (P001 bis P200). */
 export function sampleColumn(rows: readonly SurveyRow[], column: string): number[] {
@@ -124,6 +124,23 @@ export function sampleColumnInfo(id: string): SampleColumn {
   return c ? { id, title: textTitle(c.title), unit: c.unit, question: c.question, scale: c.scale, likert: c.kind === 'likert' }
     : { id, title: id.toUpperCase(), unit: '', question: '', scale: 'metric', likert: false };
 }
+
+/**
+ * Abstand aus den Zahlen, die im Text stehen (Korrekturrunde IB9): „12 − 10,13 = +1,87“. Mit allen Stellen wäre es
+ * 12 − 10,125 = 1,875 und gerundet „+1,88“; dann ginge die Rechnung mit den sichtbaren Zahlen nicht auf. Die Werte
+ * haben höchstens zwei Nachkommastellen, so ist das Ergebnis genau.
+ */
+export const shownDiff = (a: number, b: number) => round(round(a, 2) - round(b, 2), 2);
+
+/**
+ * Zeichen vor einem Ergebnis, dessen Teile gerundet im Text stehen: „=“ nur, wenn die gezeigten Teile (`fromShown`,
+ * etwa das Produkt der gezeigten Abstände) genau das gezeigte Ergebnis ergeben und das Ergebnis selbst genau ist,
+ * sonst „≈“. „(−1,04) · (+1,87) ≈ −1,95“ statt „= −1,95“.
+ */
+export const eqFrom = (fromShown: number, result: number, digits = 2) => {
+  const r = round(result, digits);
+  return Math.abs(fromShown - r) < 1e-9 && Math.abs(result - r) < 1e-9 ? '=' : '≈';
+};
 
 /** Einzahl der ausgeschriebenen Einheiten im Lehrdatensatz („1 Jahr“, „1 Person“, „1 Aufgabe“); Abkürzungen wie h bleiben. */
 const SINGULAR: Record<string, string> = { Jahre: 'Jahr', Personen: 'Person', Aufgaben: 'Aufgabe', Punkte: 'Punkt', Stunden: 'Stunde' };

@@ -4,7 +4,7 @@
 // Zahlen in R nachgerechnet, siehe b06-wahrscheinlichkeit.test.ts. Bild: 'b06-erwartung' in src/components/explain/pictures/b06-wahrscheinlichkeit.tsx.
 import type { Bridge, BridgeCtx, ConceptTabs, Ctx, FNode, TokenNote, Workshop } from '../../types';
 import { num, signed, paren, close, unit, pct } from '../../format';
-import { sumNodes } from '../../sample';
+import { eqFrom, shownDiff, sumNodes } from '../../sample';
 import { eqSign as eq } from './gemeinsam';
 import { ref, titleFor } from '../../../domain/learning';
 
@@ -97,11 +97,11 @@ export const bridgeErwartung: Bridge<Erw> = {
     },
     {
       all: c => `Für jede Person: Wert minus μ. Mit den Chancen gewichtet ergeben alle ${N(c)} Abstände zusammen 0.`,
-      person: c => `${BP(c)}: ${num(c.values[c.who])} − ${num(c.s.mu)} = ${signed(c.s.dev[c.who])}, also ${toMu(c, c.s.dev[c.who])}.`,
+      person: c => { const d = shownDiff(c.values[c.who], c.s.mu); return `${BP(c)}: ${num(c.values[c.who])} − ${num(c.s.mu)} = ${signed(d)}, also ${toMu(c, d)}.`; },
     },
     {
       all: c => { const b = c.s.sq.indexOf(Math.max(...c.s.sq)); return `Jeder Abstand wird mit sich selbst malgenommen. Das größte Quadrat liefert ${c.names[b]}: ${c.u(c.s.sq[b], { squared: true, digits: 1 })}.`; },
-      person: c => `${BP(c)}: ${paren(c.s.dev[c.who])}² ${eq(c.s.sq[c.who])} ${c.u(c.s.sq[c.who], { squared: true })}.`,
+      person: c => { const d = shownDiff(c.values[c.who], c.s.mu), q = c.s.sq[c.who]; return `${BP(c)}: ${paren(d)}² ${eqFrom(d * d, q)} ${c.u(q, { squared: true })}.`; },
     },
     {
       all: c => `${num(c.s.ss)} · 1 / ${N(c)} ${eq(c.s.sigma2)} ${c.u(c.s.sigma2, { squared: true })}. Durch ${N(c)} − 1 geteilt wäre es s² ${eq(c.s.s2)} ${c.u(c.s.s2, { squared: true })}.`,
@@ -304,14 +304,14 @@ export const erwartung: Workshop<number[], Erw> = {
     {
       question: 'Alle Haushalte bekommen eine Person mehr. Was passiert mit σ²?', onlyFor: ['population_variance'],
       options: ['wird um 1 größer', 'ändert sich nicht', 'verdoppelt sich'], correct: 1, step: 3,
-      explain: 'μ steigt mit um 1. Im Abstand hebt sich die 1 auf: (xᵢ + 1) − (μ + 1) = xᵢ − μ. Deshalb bleibt auch σ² gleich.',
+      explain: 'μ steigt auch um 1. Im Abstand hebt sich die 1 auf: (xᵢ + 1) − (μ + 1) = xᵢ − μ. Deshalb bleibt auch σ² gleich, solange niemand schon bei der Obergrenze 8 liegt.',
       kurz: 'Verschieben ändert die Lage, nicht die Streuung.',
       tryIt: { label: 'alle eine Person mehr', apply: d => d.map(x => Math.min(8, x + 1)) },
     },
     {
       question: 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?', onlyFor: ['expectation'],
       options: ['weil die fünf die ganze Gruppe sind, aus der gezogen wird', 'weil das Ergebnis dann kleiner wird'], correct: 0, step: 1,
-      explain: 'Gezogen wird aus genau diesen fünf, jede mit der Chance 1 / 5. Zusammen ergeben die fünf Chancen 1.',
+      explain: 'Gezogen wird aus genau diesen fünf, jede mit der Chance 1 / 5. Zusammen ergeben die fünf Chancen 1; mit je 0,25 wären es 1,25.',
       kurz: 'Gezogen wird aus allen n: Jede Person zählt mit 1 / n.',
     },
     {

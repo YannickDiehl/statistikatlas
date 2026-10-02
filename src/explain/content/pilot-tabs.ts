@@ -5,7 +5,7 @@
 import type { Bridge, BridgeCtx, ConceptTabs, FNode, SampleCtx, TokenNote } from '../types';
 import type { PairStats, Series } from '../math';
 import { num, signed, paren, unit } from '../format';
-import { countWithin, sampleColumn, sampleColumnInfo, sumNodes, unitText } from '../sample';
+import { countWithin, eqFrom, sampleColumn, sampleColumnInfo, shownDiff, sumNodes, unitText } from '../sample';
 import { qt } from '../../tasks/kit/dist';
 import { ref, titleFor } from '../../domain/learning';
 
@@ -90,11 +90,12 @@ export const bridgeStreuung: Bridge<Series> = {
     },
     {
       all: c => `Für jede der ${N(c)} Personen: Wert minus ${num(c.s.mean)}. Zusammen ergeben alle ${N(c)} Abstände genau 0, wie bei den fünf Personen.`,
-      person: c => `${P(c)}: ${num(c.values[c.who])} − ${num(c.s.mean)} = ${signed(c.s.dev[c.who])}, also ${toMiddle(c, c.s.dev[c.who])}.`,
+      // Abstand aus den gezeigten Zahlen, damit „Wert − x̄ = Abstand“ aufgeht; Schritt 3 quadriert denselben Abstand.
+      person: c => { const d = shownDiff(c.values[c.who], c.s.mean); return `${P(c)}: ${num(c.values[c.who])} − ${num(c.s.mean)} = ${signed(d)}, also ${toMiddle(c, d)}.`; },
     },
     {
       all: c => `Jeder der ${N(c)} Abstände wird mit sich selbst malgenommen. Kein Quadrat ist negativ, und große Abstände zählen viel.`,
-      person: c => `${P(c)}: ${paren(c.s.dev[c.who])}² ${eq(c.s.sq[c.who])} ${c.u(c.s.sq[c.who], { squared: true })}.`,
+      person: c => { const d = shownDiff(c.values[c.who], c.s.mean), q = c.s.sq[c.who]; return `${P(c)}: ${paren(d)}² ${eqFrom(d * d, q)} ${c.u(q, { squared: true })}.`; },
     },
     {
       all: c => {
@@ -171,13 +172,14 @@ export const bridgeZusammenhang: Bridge<PairStats> = {
     },
     {
       all: c => `Für jede Person zwei Abstände: ihr x minus x̄ und ihr y minus ȳ. Beide Sorten ergeben zusammen 0.`,
-      person: c => `${P(c)}: ${num(c.values[c.who])} − ${num(c.s.x.mean)} = ${signed(c.s.x.dev[c.who])} und ${num(c.values2![c.who])} − ${num(c.s.y.mean)} = ${signed(c.s.y.dev[c.who])}.`,
+      person: c => `${P(c)}: ${num(c.values[c.who])} − ${num(c.s.x.mean)} = ${signed(shownDiff(c.values[c.who], c.s.x.mean))} und ${num(c.values2![c.who])} − ${num(c.s.y.mean)} = ${signed(shownDiff(c.values2![c.who], c.s.y.mean))}.`,
     },
     {
       all: c => `Je Person werden die beiden Abstände malgenommen. Gleiche Vorzeichen ergeben Plus, verschiedene ergeben Minus.`,
       person: c => {
-        const p = c.s.prod[c.who];
-        return `${P(c)}: ${paren(c.s.x.dev[c.who])} · ${paren(c.s.y.dev[c.who])} ${eq(p)} ${signed(p)}${Math.abs(p) < 0.005 ? ', also kein Beitrag' : p > 0 ? ', beide Abstände zeigen in dieselbe Richtung' : ', die Abstände zeigen in verschiedene Richtungen'}.`;
+        // Dieselben gezeigten Abstände wie in Schritt 2; das Produkt mit allen Stellen, „=“ nur, wenn die Teile genau aufgehen.
+        const p = c.s.prod[c.who], dx = shownDiff(c.values[c.who], c.s.x.mean), dy = shownDiff(c.values2![c.who], c.s.y.mean);
+        return `${P(c)}: ${paren(dx)} · ${paren(dy)} ${eqFrom(dx * dy, p)} ${signed(p)}${Math.abs(p) < 0.005 ? ', also kein Beitrag' : p > 0 ? ', beide Abstände zeigen in dieselbe Richtung' : ', die Abstände zeigen in verschiedene Richtungen'}.`;
       },
     },
     {

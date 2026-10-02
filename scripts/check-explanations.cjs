@@ -361,19 +361,29 @@ async function checkConcept(page, id, width, errors) {
           if (await picker.inputValue() !== current) await picker.selectOption(current);
         }
       }
-      // Ausprobieren mit der ersten Vorhersage. Passt die Änderung nicht zur gewählten Spalte (eine Auswertung ohne feste
-      // Spalten erbt die Spaltenwahl des vorigen Begriffs), lehnt der Reiter sie ab; dann bleiben die Daten, wie sie sind.
+      // Ausprobieren mit der ersten Vorhersage, deren Änderung zur gewählten Spalte passt. Eine Auswertung ohne feste
+      // Spalten erbt die Spaltenwahl des vorigen Begriffs; passt eine Änderung nicht, lehnt der Reiter sie ab, und die
+      // Daten bleiben, wie sie sind. Dann die nächste Vorhersage; passt keine, steht das als Hinweis im Ergebnis.
+      // Ergebnis: true (Daten geändert), false (alle Versuche abgelehnt) oder null (keine Vorhersage mit Ausprobieren, etwa in Kompakt).
       const tryOnce = async () => {
-        const q = panel.locator('.xw-question').first();
-        if (!await q.count()) return false;
-        await q.locator('.xw-options button').first().click();
-        const tryIt = q.getByRole('button', { name: /^Ausprobieren/ });
-        if (!await tryIt.count()) return false;
-        await tryIt.click();
-        await page.waitForTimeout(150);
-        return /^Vorher/.test((await q.locator('.xw-answer .xw-note').last().textContent().catch(() => '')).trim());
+        const questions = panel.locator('.xw-question');
+        let tried = false;
+        for (let i = 0; i < await questions.count(); i++) {
+          const q = questions.nth(i);
+          await q.locator('.xw-options button').first().click();
+          const tryIt = q.getByRole('button', { name: /^Ausprobieren/ });
+          if (!await tryIt.count()) continue;
+          tried = true;
+          await tryIt.click();
+          await page.waitForTimeout(150);
+          if (/^Vorher/.test((await q.locator('.xw-answer .xw-note').last().textContent().catch(() => '')).trim())) return true;
+        }
+        return tried ? false : null;
       };
-      if (await tryOnce()) {
+      const unchecked = (what, outcome) => { if (outcome === false) (result.hinweise ??= []).push(`${what} nicht geprüft: Keine Vorhersage ließ sich mit der gewählten Spalte ausprobieren.`); };
+      const first = await tryOnce();
+      if (first !== true) unchecked('Rücksetzknopf im Reiter und Fokus nach „Ausgangsdaten wiederherstellen“', first);
+      else {
         // Genau ein Rücksetzknopf im Reiter (IB15): der im Hinweis über dem Ergebnis (.xw-status).
         const all = await panel.getByRole('button', { name: 'Ausgangsdaten wiederherstellen' }).count();
         if (all > 1) problems.push(`${all} Knöpfe „Ausgangsdaten wiederherstellen“ im Reiter „Mit 200 Befragten“`);
@@ -385,7 +395,9 @@ async function checkConcept(page, id, width, errors) {
         }
       }
       // Dasselbe über „Zurücksetzen“ in der Kopfzeile: Der Knopf verschwindet danach, der Fokus darf nicht auf die Seite fallen.
-      if (await tryOnce()) {
+      const second = await tryOnce();
+      if (second !== true) unchecked('„Zurücksetzen“ in der Kopfzeile', second);
+      else {
         const toolbar = page.locator('.network-reset-button');
         if (await toolbar.isVisible().catch(() => false)) {
           await toolbar.click();

@@ -77,8 +77,9 @@ export const linearRegressionTabs: ConceptTabs = {
       N_MAP,
     ],
     check: {
-      question: 'Welche Zahl in der Ausgabe ist die Steigung der Lernzeit? Tippe sie an.', correct: '0.518',
+      question: 'Welche Zahl in der Ausgabe ist die Steigung der Lernzeit je Stunde? Tippe sie an.', correct: '0.518',
       wrong: {
+        Beta: 'Fast! 0.538 ist Beta, die Steigung in Standardabweichungen beider Variablen. Die Steigung je Stunde steht unter B in der Zeile lernzeit.',
         '5.822': 'Fast! Das ist der Achsenabschnitt b₀ in der Zeile (Intercept). Die Steigung steht in der Zeile lernzeit.',
         '0.006': 'Fast! Das ist die Steigung des Alters. Gefragt ist die Zeile lernzeit.',
         N: 'Fast! N ist die Zahl der Befragten. Die Steigung steht unter B in der Zeile lernzeit.',

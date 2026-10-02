@@ -137,7 +137,7 @@ export const loadingsTabs: ConceptTabs = {
     tokens: PCA_TOKENS,
     outputMap: [
       { match: 'PC1', atlas: 'Ladung von Frage 4', step: 1, explain: 'Die Komponentenmatrix ordnet die Fragen nach ihrer Ladung. Ganz oben steht Frage 4 mit 0,86, ganz unten Frage 3 mit 0,83.' },
-      { match: 'Extraction', atlas: 'Ladung von Frage 1 zum Quadrat', explain: 'Unter Communalities steht jede Ladung zum Quadrat: Frage 1 lädt mit 0.852, und 0.852 zum Quadrat ergibt 0.726.' },
+      { match: 'Extraction', atlas: 'Ladung von Frage 1 zum Quadrat', explain: 'Unter Communalities steht jede Ladung zum Quadrat. R meldet für Frage 1 die Ladung 0.852 und hier 0.726, ihr Quadrat.' },
       { match: '% Var.', atlas: 'Summe der quadrierten Ladungen geteilt durch 5', explain: 'Die fünf Ladungen quadriert und zusammengezählt ergeben 3,56. Geteilt durch 5 sind das 71,2 %.' },
     ],
     check: {

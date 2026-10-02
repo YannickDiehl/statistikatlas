@@ -150,7 +150,7 @@ export const eigenvaluesTabs: ConceptTabs = {
     entry: 'efa', variant: 0, summary: true,
     tokens: PCA_TOKENS,
     outputMap: [
-      { match: 'Total', atlas: 'd₁, der erste Eigenwert', step: 2, explain: 'Unter Initial Eigenvalues, Spalte Total, steht für die erste Komponente 3.560. So viel von der gesamten Streuung 5 bündelt sie.' },
+      { match: 'Total', atlas: 'd₁, der erste Eigenwert', step: 2, explain: 'Unter Initial Eigenvalues, Spalte Total, meldet R für die erste Komponente 3.560. So viel von der gesamten Streuung 5 bündelt sie.' },
       { match: '% Var.', atlas: 'd₁ geteilt durch 5', step: 2, explain: '3,56 / 5 ≈ 71,2 %. Diesen Anteil meldet die Kurzfassung von efa() als Variance explained.' },
       { match: '0.414', atlas: 'd₂, der zweite Eigenwert', step: 3, explain: 'Die zweite Komponente bündelt nur 0,41, weniger als eine einzelne Frage mit 1. Mit n_factors = 1 behält efa() nur die erste.' },
     ],

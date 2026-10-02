@@ -4,6 +4,7 @@ import { conceptById, concepts } from '../domain/concepts';
 import { thinkFor, txt, type AnySentence, type ConceptCard, type Ctx, type FNode, type TableTool, type Workshop } from './types';
 import { EXPLANATIONS, WORKSHOPS, explainFor, mergeAreas, stepCardFor, tabsFor, requestStep, takeStep } from './registry';
 import { styleProblems } from './style';
+import { equationsThatFail } from './equations';
 import { mittel } from './content/mittel';
 import { streuung } from './content/streuung';
 import { zusammenhang } from './content/zusammenhang';
@@ -32,6 +33,8 @@ function clean(label: string, s: string | undefined, opts?: { maxWords?: number;
   assert.ok(!BROKEN.test(s), `${label}: ${s}`);
   const problems = styleProblems(s, opts);
   assert.deepEqual(problems, [], `${label}: ${problems.join(' ')}`);
+  // Rechnungen gehen mit den sichtbaren Zahlen auf (AUTHORING §2).
+  assert.deepEqual(equationsThatFail(s), [], `${label}: Rechnung geht nicht auf: ${s}`);
 }
 const flat = (nodes: FNode[]): string => nodes.map(n => typeof n === 'string' ? n
   : 'part' in n ? flat(n.part) : 'frac' in n ? flat(n.frac) + '/' + flat(n.den) : 'root' in n ? flat(n.root)
