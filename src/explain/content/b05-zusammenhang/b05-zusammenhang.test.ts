@@ -8,6 +8,12 @@ import { tabsFor } from '../../registry';
 import { rangkorrelation, rankStats, type RankStats } from './spearman';
 import { paarvergleich, pairCount, type PairCount } from './paarvergleich';
 import { abschlussNachWeiterbildung, crossCounts, FUENF, kreuztabelle } from './crosstab';
+import { erwartet, erwartetJa } from './expected';
+import { phiData, phiSatz } from './phi';
+import { cramerSatz, vData } from './cramers-v';
+import { partialData, partielleKorrelation } from './partial-cor';
+import { CATALOG_OUTPUT } from '../../catalogOutput';
+import { locate } from '../../rRead';
 
 /*
  * Referenzwerte des Bereichs B5 „Zusammenhang“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -176,4 +182,91 @@ test('B5 Kreuztabelle: fünf Befragte, Prozentbasis und die 200 wie in R', () =>
     assert.equal(r.fachlich, 'Zeilenprozente für Weiterbildung = Ja: Ohne Schulabschluss 40,5 %, Haupt-/Volksschulabschluss 30 %, Mittlerer Abschluss 45,9 %, Fachhochschulreife 41,5 %, Abitur / fachgebundene Hochschulreife 47,5 %.');
     assert.ok(near(s.value!({ rows, columns: { x: ['schulabschluss'], y: ['weiterbildung'] } }), 47.5), 'Abitur 47,5 %');
   }
+});
+
+/*
+ * Erwartete Zellhäufigkeit, Formel als Satz und Reiter (x = schulabschluss, y = weiterbildung):
+ *   tb <- table(schulabschluss, weiterbildung); E <- outer(rowSums(tb), colSums(tb)) / sum(tb)
+ *   E[, 2]                                     # 17.22 16.40 15.17 16.81 16.40 (Ja), beobachtet 17 12 17 17 19
+ *   tb[5, 2] - E[5, 2]                         # 2.6 (Abitur und Ja)
+ *   y2 <- 1 - weiterbildung: tb2[5, 2] - E2[5, 2]   # -2.6
+ *   40 * 82 / 200; 50 * 80 / 200               # 16.4; 20 (Kontrollfrage)
+ */
+test('B5 erwartete Zellhäufigkeit: Abitur und Weiterbildung wie in R', () => {
+  const s = erwartet.compute(erwartet.initial);
+  assert.ok(near(s.E, 16.4) && s.prod === 3280 && near(s.colShare, 0.41), 'E = 40 · 82 / 200');
+  assert.equal(erwartet.check.answer, 20); assert.match(erwartet.check.diagnose(40), /durch 100 geteilt/); assert.match(erwartet.check.diagnose(4000), /^Fast!/);
+  assert.equal(erwartet.interpret(s).kurz, 'Gäbe es keinen Zusammenhang, stünden in dieser Zelle 16,4 Personen. Das sind 41 % der Zeile, so viel wie in der ganzen Spalte.');
+  const ctx = { rows, columns: { x: ['schulabschluss'], y: ['weiterbildung'] } }, e = erwartetJa(ctx);
+  assert.deepEqual(e.rows.map(g => Math.round(g.E * 100) / 100), [17.22, 16.4, 15.17, 16.81, 16.4]); assert.deepEqual(e.rows.map(g => g.ja), [17, 12, 17, 17, 19]);
+  const t = tabsFor('expected')!.sample!;
+  if (t.kind === 'analysis') {
+    assert.equal(t.result(ctx).kurz, 'Gäbe es keinen Zusammenhang, hätte jede Schulabschluss-Gruppe 41 % mit Weiterbildung. Mit Abitur wären das 16,4 von 40; beobachtet sind 19.');
+    assert.equal(t.result(ctx).zusatz, 'Am weitesten liegt „Haupt-/Volksschulabschluss“ von der Erwartung entfernt: 12 beobachtet, 16,4 erwartet.');
+    const gap = t.think[0].expect.measure!;
+    assert.ok(near(gap(ctx), 2.6) && near(gap({ ...ctx, rows: applyOp(rows, 'weiterbildung', 'reverse') }), -2.6), 'beobachtet minus erwartet');
+  }
+});
+
+/*
+ * Phi (x = weiterbildung, y = erwerbstaetig):
+ *   table(weiterbildung, erwerbstaetig)        # 0: 40 78; 1: 23 59 → a = 59, b = 23, c = 78, d = 40
+ *   atlas %>% phi(weiterbildung, erwerbstaetig)   # 0.06193526
+ *   cor(weiterbildung, erwerbstaetig)          # 0.06193526 (Pearson-r der 0/1-Spalten)
+ *   chisq.test(table(weiterbildung, erwerbstaetig), correct = FALSE)$statistic   # 0.7671952
+ *   59 / 137; 23 / 63                          # 0.4306569; 0.3650794
+ *   (30 * 30 - 10 * 10) / sqrt(40^4)           # 0.5 (Kontrollfrage)
+ */
+test('B5 Phi: Vierfeldertafel und die 200 wie in R', () => {
+  const s = phiSatz.compute(phiSatz.initial);
+  assert.deepEqual([s.ad, s.bc, s.diff, s.r1, s.r2, s.k1, s.k2, s.n], [2360, 1794, 566, 82, 118, 137, 63, 200]);
+  assert.ok(near(s.phi, 0.06193526) && near(s.chi2, 0.7671952) && near(s.shareA, 0.4306569) && near(s.shareB, 0.3650794), 'φ, χ², Anteile');
+  assert.equal(phiSatz.interpret(s).kurz, 'Unter den Erwerbstätigen haben 43,1 % eine Weiterbildung gemacht, unter den anderen 36,5 %. φ ≈ 0,06: Die beiden Merkmale hängen kaum zusammen.');
+  assert.match(phiSatz.check.diagnose(0.25), /zum Quadrat/); assert.match(phiSatz.check.diagnose(-0.5), /Vorzeichen/);
+  const ctx = { rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }, p = phiData(ctx);
+  assert.ok(near(p.phi, 0.06193526) && near(p.r, 0.06193526) && near(p.chi2, 0.7671952), 'φ und r aus den Daten');
+  assert.ok(near(phiData({ ...ctx, rows: applyOp(rows, 'weiterbildung', 'reverse') }).r, -0.06193526), 'umgepolt: r dreht sich');
+  assert.equal(locate(CATALOG_OUTPUT['phi:0'].output, '0.06193526')?.text, '0.06193526');
+});
+
+/*
+ * Cramér-V (x = schulabschluss, y = geschlecht):
+ *   tb <- table(schulabschluss, geschlecht); chisq.test(tb, correct = FALSE)$statistic   # 10.01834 (Warnung: kleine erwartete Zahlen)
+ *   atlas %>% cramers_v(schulabschluss, geschlecht)   # 0.1292178 = sqrt(10.01834 / (200 * 3))
+ *   sqrt(10.02 / 600); sqrt(40.08 / 2400)      # 0.1292285 (gerundetes χ²), bei n und χ² mal 4 gleich
+ *   sqrt(18 / 200); sqrt(18 / 100); sqrt(18 / 300)   # 0.3 (Kontrollfrage); 0.424 ohne k; 0.245 mit k = 3
+ */
+test('B5 Cramér-V: Formel als Satz und die 200 wie in R', () => {
+  const s = cramerSatz.compute(cramerSatz.initial);
+  assert.ok(close(s.V, 0.1292285, 1e-6) && s.denom === 600, 'V aus χ² = 10,02');
+  const four = cramerSatz.compute(cramerSatz.quick[0].apply(cramerSatz.initial));
+  assert.ok(close(four.V, s.V, 1e-9), 'n und χ² mal 4: V bleibt');
+  assert.match(cramerSatz.check.diagnose(0.09), /Wurzel/); assert.match(cramerSatz.check.diagnose(0.4243), /k vergessen/); assert.match(cramerSatz.check.diagnose(0.245), /nicht 3/);
+  const v = vData({ rows, columns: { x: ['schulabschluss'], y: ['geschlecht'] } });
+  assert.ok(near(v.V, 0.1292178) && near(v.chi2, 10.01834, 1e-5) && v.r === 5 && v.k === 4, 'V, χ², 5 × 4 wie in R');
+  assert.equal(locate(CATALOG_OUTPUT['cramers_v:0'].output, '0.1292178')?.text, '0.1292178');
+});
+
+/*
+ * Partielle Korrelation (x = lernplanung5, y = wissenstest, z = lernzeit):
+ *   cor(lernplanung5, wissenstest); cor(lernplanung5, lernzeit); cor(wissenstest, lernzeit)   # 0.1625443 0.3408015 0.5391689
+ *   atlas %>% partial_cor(lernplanung5, wissenstest, controls = c(lernzeit))   # partial r = -0.027, p = 0.707 (zero-order r = 0.163)
+ *   cor(resid(lm(lernplanung5 ~ lernzeit)), resid(lm(wissenstest ~ lernzeit)))   # -0.02678178
+ *   pc <- function(a, b, c) (a - b * c) / sqrt((1 - b^2) * (1 - c^2)); pc(0.16, 0.34, 0.54)   # -0.02981593 (gerundete r)
+ *   0.16 - 0.34 * 0.54; sqrt((1 - 0.34^2) * (1 - 0.54^2))      # -0.0236; 0.7915232
+ *   pc(0.5, 0.5, 0.5); 0.25 / 0.5625                           # 0.3333333; 0.4444444 (ohne Wurzel)
+ *   umgepolt (6 - lernplanung5 oder 20 - wissenstest)          # +0.02678178
+ * R-Ausgabe (Katalog): atlas %>% partial_cor(lernzeit, wissenstest, controls = c(alter, schlafdauer))   # partial r = 0.528, zero-order r = 0.539
+ */
+test('B5 partielle Korrelation: Lernplanung, Wissenstest und Lernzeit wie in R', () => {
+  const s = partielleKorrelation.compute(partielleKorrelation.initial);
+  assert.ok(near(s.partial, -0.02981593) && near(s.numer, -0.0236) && near(s.den, 0.7915232), 'gerundete r');
+  assert.equal(partielleKorrelation.interpret(s).kurz, 'Ohne Kontrolle hängen Lernplanung und Wissenstest mit r = 0,16 zusammen. Rechnet man die Lernzeit heraus, wird der Zusammenhang schwächer: r = −0,03.');
+  assert.equal(partielleKorrelation.worked(s)[0].text, '0,16 − 0,34 · 0,54 ≈ −0,024.');
+  assert.match(partielleKorrelation.check.diagnose(-1 / 3), /Andersherum/); assert.match(partielleKorrelation.check.diagnose(0.4444), /Wurzel vergessen/);
+  const ctx = { rows, columns: { x: ['lernplanung5'], y: ['wissenstest'], z: ['lernzeit'] } }, p = partialData(ctx);
+  assert.ok(near(p.rxy, 0.1625443) && near(p.rxz, 0.3408015) && near(p.ryz, 0.5391689) && near(p.partial, -0.02678178), 'r und partielles r aus den Daten');
+  assert.ok(near(partialData({ ...ctx, rows: applyOp(rows, 'lernplanung5', 'reverse') }).partial, 0.02678178) && near(partialData({ ...ctx, rows: applyOp(rows, 'wissenstest', 'reverse') }).partial, 0.02678178), 'umgepolt');
+  const out = CATALOG_OUTPUT['partial_cor:0'].output;
+  assert.deepEqual(['partial r', 'zero-order r', 'p', 'N'].map(m => locate(out, m)?.text), ['0.528', '0.539', '0.001', '200']);
 });

@@ -7,7 +7,8 @@ import { num, signed } from '../../../explain/format';
 import type { RankStats } from '../../../explain/content/b05-zusammenhang/spearman';
 import { pairKind, type PairCount, type PairKind } from '../../../explain/content/b05-zusammenhang/paarvergleich';
 import { crossCounts } from '../../../explain/content/b05-zusammenhang/crosstab';
-import { clamp, DragPoint, forTable, GridCell, forWorkshop, useDrag, useWidth, type Bounds, type Picture, type TablePictureProps } from './kit';
+import type { PhiStats } from '../../../explain/content/b05-zusammenhang/phi';
+import { clamp, DragPoint, forSentence, forTable, GridCell, forWorkshop, useDrag, useWidth, type Bounds, type Picture, type SentencePictureProps, type TablePictureProps } from './kit';
 
 type Drag = { data: Pairs; names: readonly string[]; who: number; bounds: Bounds; onChange: (d: Pairs) => void; onWho: (i: number) => void };
 
@@ -188,10 +189,34 @@ function CrossGrid({ p }: { p: TablePictureProps }) {
   );
 }
 
+// ---------- Phi (Formel als Satz) ----------
+
+/** Vierfeldertafel mit den Zellen a bis d und ihren Randsummen; die Diagonalen a · d und b · c sind farbig unterlegt. */
+function FourFold({ p }: { p: SentencePictureProps<PhiStats> }) {
+  const [box, W] = useWidth();
+  const s = p.s, first = 128, cw = Math.min(120, (W - first - 8) / 3), ch = 50, top = 52, H = top + 3 * ch + 30;
+  const grid = [[{ k: 'a', v: s.a }, { k: 'b', v: s.b }, { k: '', v: s.r1 }], [{ k: 'c', v: s.c }, { k: 'd', v: s.d }, { k: '', v: s.r2 }], [{ k: '', v: s.k1 }, { k: '', v: s.k2 }, { k: '', v: s.n }]];
+  const tone = (k: string) => k === 'a' || k === 'd' ? 'pos' : k === 'b' || k === 'c' ? 'neg' : 'plain';
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Vierfeldertafel: a ${s.a}, b ${s.b}, c ${s.c}, d ${s.d}. ${s.phi === null ? 'Phi ist nicht definiert.' : `Phi ${num(s.phi)}.`}`}>
+        <text className="xw-t xw-strong" x={first + cw} y={16} textAnchor="middle">Erwerbstätig</text>
+        {['ja', 'nein', 'zusammen'].map((c, j) => <text key={c} className="xw-t" x={first + (j + 0.5) * cw} y={top - 10} textAnchor="middle">{c}</text>)}
+        <text className="xw-t xw-strong" x={8} y={top - 10}>Weiterbildung</text>
+        {['ja', 'nein', 'zusammen'].map((r, i) => <text key={r} className="xw-t" x={8} y={top + i * ch + ch / 2 + 5}>{r}</text>)}
+        {grid.map((row, i) => row.map((c, j) => <GridCell key={`${i}${j}`} x={first + j * cw} y={top + i * ch} w={cw} h={ch} text={String(c.v)} sub={c.k || undefined} tone={tone(c.k)} selected={!!c.k && c.k === p.mark} />))}
+        <text className="xw-t" x={8} y={H - 8}>{`Diagonale a · d = ${num(s.ad)}, Gegendiagonale b · c = ${num(s.bc)}`}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b05-rangkorrelation': forWorkshop(p => <RankPicture s={p.s} step={p.step}
     d={{ data: p.data, names: p.workshop.names, who: p.who, bounds: p.workshop.bounds, onChange: p.setData, onWho: p.pickWho }} />),
   'b05-kreuztabelle': forTable(p => <CrossGrid p={p} />),
+  'b05-phi': forSentence(p => <FourFold p={p} />),
   'b05-paarvergleich': forWorkshop(p => <PairPicture s={p.s} step={p.step}
     d={{ data: p.data, names: p.workshop.names, who: p.who, bounds: p.workshop.bounds, onChange: p.setData, onWho: p.pickWho }} />),
 };
