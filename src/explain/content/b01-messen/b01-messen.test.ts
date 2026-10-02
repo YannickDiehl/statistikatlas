@@ -19,6 +19,7 @@ import { CATALOG_OUTPUT } from '../../catalogOutput';
 import { ALLBUS_HHINC, ALLBUS_INC, MITTEL, missing, missingTabs } from './missing';
 import { readFileSync } from 'node:fs';
 import { readSav, type SavFile } from '../../../sandbox/readSav';
+import { ALLBUS_SPLIT, missingMechanisms, missingMechanismsTabs, ohneJedeZehnte, ohneSpitze } from './missing-mechanisms';
 import { surveyColumns } from '../../../domain/survey';
 import { styleProblems } from '../../style';
 
@@ -98,6 +99,15 @@ import { styleProblems } from '../../style';
  * ALLBUS 2023 (ZA8831 v1-3-0, ungewichtet, nur Aggregate; haven::read_sav(user_na = TRUE)):
  *   table(a$hhincc)[c("-9", "-7")]                  # 696 keine Angabe, 28 verweigert: 724 / 5246 = 13.8 %
  *   table(a$incc)[c("-9", "-7", "-50")]             # 362 + 84 = 446 keine Angabe oder verweigert; 251 kein Einkommen
+ *   sum(a$pt03 == -11)                              # 1596 nicht gefragt (TNZ: Split; genau die Splitgruppe 2 von splt23_1)
+ *
+ * Warum fehlen Angaben? (missing_mechanisms), Gedankenexperiment auf dem Lehrdatensatz:
+ *   ein <- as.numeric(atlas$einkommen); mean(ein)   # 3154.62
+ *   for (k in c(1, 5, 10, 20, 30, 40)) print(mean(ein[-order(ein, decreasing = TRUE)[1:k]]))
+ *   #   3127.0754 3052.0000 2976.6316 2836.9167 2718.4118 2605.7125   (k = 20: Verzerrung -317.7033)
+ *   mean(ein[-seq(10, 200, by = 10)])               # 3138.45 (jede zehnte Person fehlt)
+ *   o <- order(ein, decreasing = TRUE)[1:20]
+ *   mean((ein + 100)[-o]) - mean(ein + 100); mean((2 * ein)[-o]) - mean(2 * ein)   # -317.7033; -635.4067
  */
 
 const rows = createSurvey();
@@ -267,4 +277,23 @@ test('B1 ALLBUS 2023: Aggregate wie in R (nur mit der eigenen GESIS-Datei)', { s
   assert.equal(loadAllbus().nCases, 5246);
   assert.deepEqual([codeCount('hhincc', -9), codeCount('hhincc', -7)], [696, 28]);
   assert.deepEqual([codeCount('incc', -9), codeCount('incc', -7), codeCount('incc', -50)], [362, 84, 251]);
+  assert.equal(codeCount('pt03', -11), 1596, 'Vertrauen in den Bundestag: durch den Split nicht gefragt');
+});
+
+test('B1 warum fehlen Angaben: Spitzenverdiener verschweigen ihr Einkommen, Werte wie in R', () => {
+  const ein = col('einkommen');
+  assert.ok(close(ein.reduce((a, b) => a + b, 0) / 200, 3154.62, 1e-9), 'Mittelwert aller 200');
+  for (const [k, m] of [[1, 3127.0754], [5, 3052], [10, 2976.6316], [20, 2836.9167], [30, 2718.4118], [40, 2605.7125]])
+    assert.ok(close(ohneSpitze(ein, k).m, m, 1e-4), `ohne die ${k} höchsten: ${ohneSpitze(ein, k).m}`);
+  assert.ok(close(ohneSpitze(ein, 20).bias, -317.7033, 1e-4) && close(ohneJedeZehnte(ein), 3138.45, 1e-9), 'Verzerrung und jede zehnte');
+  assert.match(missingMechanisms.bausteine[0].rechnung!, /bei 3\.138,45 € statt 3\.154,62 €\./);
+  assert.match(missingMechanisms.bausteine[2].rechnung!, /von 3\.154,62 € auf 2\.836,92 €\./);
+  assert.equal(missingMechanisms.regler!.describe(20), 'Fehlen die 20 Befragten mit dem höchsten Einkommen, liegt der Mittelwert der übrigen 180 bei 2.836,92 € statt 3.154,62 €: 317,7 € zu niedrig.');
+  assert.match(missingMechanisms.regler!.describe(1), /^Fehlt die Person mit dem höchsten Einkommen, .* 3\.127,08 €/);
+  assert.match(missingMechanisms.stellDirVor.text, /1\.596 von 5\.246 Befragten .* 446 Befragte/);
+  assert.equal(ALLBUS_SPLIT.nichtGefragt, 1596);
+  const tab = analysis(missingMechanismsTabs.sample), at = (data = rows) => tab.result(ctx(data, { x: ['einkommen'] }));
+  assert.match(at().fachlich, /n = 180; Verzerrung des Mittelwerts −317,7 €\./);
+  assert.match(at(applyOp(rows, 'einkommen', 'double')).fachlich, /−635,41 €\./);
+  assert.match(at().zusatz!, /bei 3\.138,45 €\./);
 });

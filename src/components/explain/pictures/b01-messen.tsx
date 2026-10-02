@@ -4,7 +4,10 @@
 import { num } from '../../../explain/format';
 import { paareFuer, R_FUENF } from '../../../explain/content/b01-messen/pairs';
 import { attenuation, MF } from '../../../explain/content/b01-messen/measurement-error';
-import { Axis, forCard, linear, useWidth, type Picture } from './kit';
+import { ohneSpitze } from '../../../explain/content/b01-messen/missing-mechanisms';
+import { mean } from '../../../explain/content/b01-messen/shared';
+import { baseSurvey } from '../../../explain/sample';
+import { Axis, forCard, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Fünf Wertepaare (Lernzeit, Wissenstest) als Streudiagramm, wie erhoben oder mit getrennt sortierten Spalten. */
 function Paare({ sorted }: { sorted: boolean }) {
@@ -56,7 +59,33 @@ function Messfehler({ sigma }: { sigma: number }) {
   );
 }
 
+/**
+ * Haushaltseinkommen der 200 Befragten als Punkte; die `k` höchsten verschweigen ihre Angabe (hohle Punkte).
+ * Gestrichelt der Mittelwert aller 200, durchgezogen der Mittelwert der übrigen.
+ */
+function Fehlmuster({ k }: { k: number }) {
+  const [box, W] = useWidth();
+  const values = baseSurvey().map(r => r.values.einkommen), all = mean(values), o = ohneSpitze(values, k);
+  const gone = new Set(values.map((v, i) => [v, i]).sort((a, b) => b[0] - a[0]).slice(0, k).map(([, i]) => i));
+  const left = 20, right = W - 20, x = linear([0, 9000], [left, right]), top = 48, base = 170;
+  const label = `Punktdiagramm der Haushaltseinkommen aller 200 Befragten. ${k > 0 ? `Die ${k} höchsten fehlen. Mittelwert aller 200: ${num(all)} €, der übrigen ${o.n}: ${num(o.m)} €.` : `Niemand fehlt, Mittelwert ${num(all)} €.`}`;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={236} viewBox={`0 0 ${W} 236`} role="img" aria-label={label}>
+        {values.map((v, i) => <circle key={i} className={gone.has(i) ? 'b01-gone' : 'xw-s-dot'} cx={x(v)} cy={top + 14 + ((i * 37) % 97)} r={gone.has(i) ? 4.5 : 3.5} />)}
+        <MarkLine x={x(all)} from={top} to={base} label={`alle: ${num(all, 0)} €`} />
+        {k > 0 && <line className="b01-rest" x1={x(o.m)} x2={x(o.m)} y1={top} y2={base} />}
+        {k > 0 && <text className="xw-t xw-strong" x={Math.max(left + 60, x(o.m))} y={base + 52} textAnchor="middle">übrige: {num(o.m, 0)} €</text>}
+        <Axis scale={x} ticks={[0, 2000, 4000, 6000, 8000]} at={base} from={left} to={right} labelGap={22} format={v => v.toLocaleString('de-DE')} />
+        <text className="xw-t" x={left} y={18}>Haushaltseinkommen in €</text>
+        <text className="xw-t" x={right} y={18} textAnchor="end">{k > 0 ? `○ fehlt (${k})` : 'niemand fehlt'}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b01-paare': forCard(p => <Paare sorted={(p.value ?? 0) >= 0.5} />),
   'b01-messfehler': forCard(p => <Messfehler sigma={p.value ?? 2} />),
+  'b01-fehlmuster': forCard(p => <Fehlmuster k={Math.round(p.value ?? 20)} />),
 };
