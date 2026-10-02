@@ -183,3 +183,28 @@ test('B7 F-Verteilung: ANOVA der Lernzeit nach Schulabschluss wie in R', async (
   assert.match(fVerteilung.fuerDich, /hier 0,15\./); assert.match(fVerteilung.genau.paragraphs[1], /≈ 1,01\./);
   if (fTabs.sample?.kind === 'analysis') assert.match(fTabs.sample.result(ctx).kurz, /zwischen den 5 Gruppen ist 8,64-mal .* F = 8,64 bei 4 und 195 .* unter 2,42\. .* in weniger als 1 von 1\.000 Stichproben vor\./);
 });
+
+/*
+ * Bernoulli-Verteilung: Weiterbildung (0/1)
+ *   wb <- as.numeric(atlas$weiterbildung); sum(wb); mean(wb)          # 82 0.41
+ *   mean(wb) * (1 - mean(wb)); var(wb); sqrt(0.41 * 0.59)             # 0.2419 0.2431156 0.4918333
+ *   0.2 * 0.8; 0.5 * 0.5                                               # 0.16 0.25
+ *   atlas %>% binomial_test(weiterbildung, p = .5)   # Group 1 (Ja): prop = 0.410 vs 0.500, p = 0.013 *, N = 200
+ *   atlas %>% binomial_test(weiterbildung, p = 50)   # Fehler: `p` must be between 0 and 1.
+ *   atlas %>% binomial_test(schulabschluss, p = .5)  # Fehler: `schulabschluss` has 5 observed categories; the binomial test needs exactly 2 categories.
+ */
+test('B7 Bernoulli-Verteilung: Anteil und Varianz der Weiterbildung wie in R', async () => {
+  const { bernoulli, bernoulliTabs, bernFit, WEITERBILDUNG } = await import('./bernoulli');
+  const f = bernFit({ rows, columns: { x: ['weiterbildung'] } });
+  assert.deepEqual([f.k, f.n], [82, 200]); ok(f.p, 0.41, 'p̂'); ok(f.v, 0.2419, 'p̂(1 − p̂)'); ok(f.s2, 0.2431156, 'var()');
+  assert.deepEqual([WEITERBILDUNG.k, WEITERBILDUNG.p, WEITERBILDUNG.var], [f.k, f.p, 0.2419]); ok(WEITERBILDUNG.s2, f.s2, 'WEITERBILDUNG.s2');
+  const s = bernoulli.compute(bernoulli.initial);
+  ok(s.v, 0.2419, 'Var(X)'); ok(s.sd, 0.4918333, 'Standardabweichung');
+  assert.equal(bernoulli.worked(s)[2].text, 'Var(X) = 0,41 · 0,59 ≈ 0,24. Die Standardabweichung ist die Wurzel daraus, etwa 0,49.');
+  assert.equal(bernoulli.compute({ p: 0.5 }).v, 0.25);
+  ok(bernoulli.check.answer, 0.2 * 0.8, 'Kontrollfrage 0,2 · 0,8');
+  assert.match(bernoulli.interpret(s).kurz, /^Bei p = 0,41 sind im Schnitt 41 von 100 Antworten eine 1\. Die Varianz 0,24 ist fast so groß wie möglich/);
+  const flipped = bernFit({ rows: applyOp(rows, 'weiterbildung', 'reverse'), columns: { x: ['weiterbildung'] } });
+  assert.equal(flipped.k, 118); ok(flipped.v, 0.2419, 'umgepolt gleich');
+  if (bernoulliTabs.sample?.kind === 'analysis') assert.match(bernoulliTabs.sample.result({ rows, columns: { x: ['weiterbildung'] } }).kurz, /^82 von 200 .* p̂ = 0,41\. Die Varianz p̂ · \(1 − p̂\) beträgt 0,24;/);
+});

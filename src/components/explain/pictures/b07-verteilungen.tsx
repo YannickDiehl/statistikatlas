@@ -3,12 +3,13 @@
 // Eigene Stile in src/explain/areas/b07-verteilungen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { num, pct } from '../../../explain/format';
 import { baseSurvey } from '../../../explain/sample';
-import { columnStats, dchisq, dF, dnorm, dt, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
+import { columnStats, dchisq, dF, dnorm, dt, prob, qchisq, within } from '../../../explain/content/b07-verteilungen/dist';
 import { inside } from '../../../explain/content/b07-verteilungen/normal';
 import { areaText, type ZStats } from '../../../explain/content/b07-verteilungen/standard-normal';
 import { SCHLAF_T, tCrit } from '../../../explain/content/b07-verteilungen/t';
 import { CHI } from '../../../explain/content/b07-verteilungen/chi-square';
 import { ANOVA, fTail, pText } from '../../../explain/content/b07-verteilungen/f';
+import type { BernStats } from '../../../explain/content/b07-verteilungen/bernoulli';
 import { AreaUnder, Axis, Bar, Curve, forCard, forSentence, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Histogramm der Schlafdauer (halbe Stunden) mit der Normalverteilung x̄, s; markiert ist x̄ ± k · s. */
@@ -131,6 +132,33 @@ function FTail({ value }: { value: number }) {
     </div>
   );
 }
+/** Bernoulli-Verteilung: links die zwei Wahrscheinlichkeiten als Balken, rechts die Varianz p · (1 − p) für alle p mit dem gewählten Punkt. */
+function BernoulliBars({ s }: { s: BernStats }) {
+  const [box, W] = useWidth();
+  const base = 186, top = 46, half = W / 2, bw = Math.min(56, half / 4);
+  const Y = linear([0, 1], [base, top]);
+  const VX = linear([0, 1], [half + 24, W - 16]), VY = linear([0, 0.25], [base, top + 20]);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={236} viewBox={`0 0 ${W} 236`} role="img"
+        aria-label={`Bernoulli-Verteilung mit p = ${num(s.p)}: Balken für 0 mit ${num(s.q)}, für 1 mit ${num(s.p)}. Rechts die Varianz p mal 1 minus p für alle p; beim gewählten p ist sie ${prob(s.v)}.`}>
+        <Bar x={half / 4 - bw / 2} y={Y(s.q)} width={bw} height={base - Y(s.q)} tone="plain" />
+        <Bar x={3 * half / 4 - bw / 2} y={Y(s.p)} width={bw} height={base - Y(s.p)} tone="pos" />
+        <text className="xw-t" x={half / 4} y={Y(s.q) - 6} textAnchor="middle">{num(s.q)}</text>
+        <text className="xw-t" x={3 * half / 4} y={Y(s.p) - 6} textAnchor="middle">{num(s.p)}</text>
+        <line className="xw-axis" x1={8} x2={half - 8} y1={base} y2={base} />
+        <text className="xw-t" x={half / 4} y={base + 20} textAnchor="middle">0</text>
+        <text className="xw-t" x={3 * half / 4} y={base + 20} textAnchor="middle">1</text>
+        <text className="xw-t" x={half / 2} y={base + 40} textAnchor="middle">Wert von X</text>
+        <Curve f={p => p * (1 - p)} from={0} to={1} x={VX} y={VY} />
+        <circle className="b07-dot" cx={VX(s.p)} cy={VY(s.v)} r={6} />
+        <Axis scale={VX} ticks={[0, 0.5, 1]} at={base} from={half + 24} to={W - 16} labelGap={20} format={v => num(v)} title="p" />
+        <text className="xw-t xw-strong" x={8} y={16}>P(X = 0) und P(X = 1)</text>
+        <text className="xw-t xw-strong" x={half + 24} y={36}>Var(X) = {prob(s.v)}</text>
+      </svg>
+    </div>
+  );
+}
 const fgText = (df: number) => `${num(df)} ${num(df) === '1' ? 'Freiheitsgrad' : 'Freiheitsgrade'}`;
 
 export const pictures: Record<string, Picture> = {
@@ -139,4 +167,5 @@ export const pictures: Record<string, Picture> = {
   'b07-t': forCard(p => <TCompare df={p.value ?? 4} />),
   'b07-chi': forCard(p => <ChiShape df={p.value ?? 4} />),
   'b07-f': forCard(p => <FTail value={p.value ?? ANOVA.f} />),
+  'b07-bernoulli': forSentence(p => <BernoulliBars s={p.s as BernStats} />),
 };
