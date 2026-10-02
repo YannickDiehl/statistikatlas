@@ -20,11 +20,16 @@ import { modeStore } from './mode';
 import { ConceptInspector } from '../components/ConceptInspector';
 import { forgetTabs, kurzOf, tabList } from '../components/explain/ExplainTabs';
 import { KurzGesagt } from '../components/explain/basics';
-import { asNumber, RTab } from '../components/explain/RTab';
+import { asNumber, catalogLead, RTab } from '../components/explain/RTab';
 import { TAB_IDS, tabsFor } from './registry';
 import { applyOp } from './sample';
-import { columnById, createSurvey, defaultSelection, projectPairs, type ColumnSelection, type SurveyRow } from '../domain/survey';
+import { columnById, createSurvey, defaultSelection, projectPairs, surveyColumns, type ColumnSelection, type SurveyRow } from '../domain/survey';
 import { lessonContext, ref } from '../domain/learning';
+import { entryById } from '../domain/mariposaCatalog';
+import { eligible } from '../domain/mariposaRoles';
+import { initialRSettings, rolesFor, startBlock, type RSettings } from '../domain/mariposa';
+import { CATALOG_OUTPUT } from './catalogOutput';
+import { styleProblems } from './style';
 
 const noop = () => {};
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/&quot;/g, '"').replace(/&#x27;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ');
@@ -229,11 +234,11 @@ test('picture kit: building blocks draw in screen pixels and keep the slider rol
 // ---------- Reiter (Aufgabe F3) ----------
 
 const surveyRows = createSurvey();
-const inspector = (id: string, opts: { rows?: SurveyRow[]; selection?: ColumnSelection } = {}) => {
+const inspector = (id: string, opts: { rows?: SurveyRow[]; selection?: ColumnSelection; rSettings?: RSettings } = {}) => {
   const selection = opts.selection ?? defaultSelection, rows = opts.rows ?? surveyRows;
   const context = lessonContext(projectPairs(rows, selection), 'P002', 'covariance', { x: columnById[selection.x], y: columnById[selection.y] }, selection.likertMetric);
   return renderToStaticMarkup(createElement(ConceptInspector, {
-    selected: ref(id), context, selection, rows, onColumns: noop, onData: noop, onRows: noop, highlight: null, onHighlight: noop, onSelect: noop, onHover: noop, onClose: noop,
+    selected: ref(id), context, selection, rows, rSettings: opts.rSettings, onColumns: noop, onData: noop, onRows: noop, highlight: null, onHighlight: noop, onSelect: noop, onHover: noop, onClose: noop,
     onFocusMap: noop, onCase: noop, onPairs: noop, onReset: noop, resetRevision: 0, onVariable: noop, onRoute: noop, trace: false, onTrace: noop,
     experimentOpen: false, experimentRequest: 0, onExperimentFocused: noop, onExperiment: noop,
   }));
@@ -358,6 +363,50 @@ test('In R: Anderer Aufruf lists the own calls of the concept beside a foreign l
   assert.ok(plain(panelOf(inspector('loadings'), 'loadings', 'r')).includes('summary(ergebnis)'), 'loadings: summary(ergebnis)');
   // IB29: Zahlen mit führendem Punkt und kleine Werte mit zwei gültigen Ziffern.
   assert.deepEqual(['3.238', '.021', '0.013', '<.001', '0.5'].map(asNumber), ['3,24', '0,021', '0,013', null, '0,5']);
+});
+
+/** R-Einstellungen des offenen Begriffs mit anderen Spalten: je Rolle mit genau einer Spalte die erste andere passende. */
+const changedSettings = (id: string): RSettings | undefined => {
+  const e = entryById[id], r = tabsFor(id)?.r;
+  if (!e?.variants.length) return undefined;
+  const s = initialRSettings(e, r?.entry === id ? r.variant : 0), used = new Set(Object.values(s.columns).flat());
+  for (const role of rolesFor(e, s.variant)) {
+    if (s.columns[role.key]?.length !== 1) continue;
+    const other = surveyColumns.find(c => !used.has(c.id) && eligible(role, c, true));
+    if (other) { s.columns[role.key] = [other.id]; used.add(other.id); }
+  }
+  return s;
+};
+/** Der Leitaufruf, wie ihn „Der Aufruf“ zeigt (jedes Zeichen ein eigener Knopf). */
+const leadCode = (html: string, id: string) => {
+  const m = panelOf(html, id, 'r').match(/<pre class="r-code xw-rcode"[^>]*><code>([\s\S]*?)<\/code><\/pre>/);
+  return m ? plain(m[1]) : null;
+};
+
+test('In R: every catalog lead call shows exactly the captured call, also after another column choice, with its catalog note; only live calls follow (I1, M2)', () => {
+  const leads = TAB_IDS.filter(id => { const r = tabsFor(id)?.r; return !!r?.entry && !r.live; });
+  assert.ok(leads.length > 80, `nur ${leads.length} Katalog-Leitaufrufe gefunden`);
+  const changed: ColumnSelection = { x: 'schlafdauer', y: 'alter', likertMetric: true };
+  for (const id of leads) {
+    const r = tabsFor(id)!.r!, key = `${r.entry}:${r.variant}${r.summary ? ':summary' : ''}`, captured = CATALOG_OUTPUT[key];
+    assert.ok(captured, `${id}: keine erfasste Ausgabe ${key}`);
+    assert.equal(leadCode(inspector(id), id), captured.code, `${id}: Leitaufruf (Standardspalten) ist nicht der erfasste Aufruf ${key}`);
+    assert.equal(leadCode(inspector(id, { selection: changed, rSettings: changedSettings(id) }), id), captured.code, `${id}: Leitaufruf folgt der Spaltenwahl`);
+    // „Aufruf kopieren“ gibt `code` aus; das R-Skript enthält denselben Aufruf.
+    const lead = catalogLead(r, 'Test')!;
+    assert.equal(lead.code, captured.code, `${id}: kopierter Aufruf`);
+    assert.ok(lead.script.includes(captured.code.slice(startBlock().length).trim()) && lead.script.includes(startBlock()), `${id}: R-Skript mit anderem Aufruf`);
+    // M2: Der Hinweis der Katalogvariante steht unter „Der Aufruf“ (Einheitsgewichte, Richtung des einseitigen Tests …).
+    if (lead.note) {
+      assert.deepEqual(styleProblems(lead.note), [], `${id}: Hinweis zum Aufruf`);
+      const panel = text(panelOf(inspector(id), id, 'r'));
+      assert.ok(panel.includes(text(lead.note)) && panel.indexOf(text(lead.note)) < panel.indexOf('So antwortet R'), `${id}: Hinweis zum Aufruf fehlt unter „Der Aufruf“`);
+    }
+  }
+  assert.ok(text(panelOf(inspector('weights'), 'weights', 'r')).includes('Gewichte von 1 ändern nichts.'), 'weights: Satz zu den Einheitsgewichten');
+  assert.ok(text(panelOf(inspector('test_sides'), 'test_sides', 'r')).includes('Die erste Gruppe ist der kleinere Code'), 'test_sides: Richtung des einseitigen Tests');
+  // Live-Aufrufe folgen weiter der Spaltenwahl (Gegenprobe).
+  assert.ok(leadCode(inspector('sd', { selection: { ...defaultSelection, x: 'schlafdauer' } }), 'sd')?.includes('describe(schlafdauer'), 'sd: Live-Aufruf folgt der Spaltenwahl');
 });
 
 test('tabs: one reset button in the sample tab, step cards keep h1 → h2 → h3, legacy labs collapsed under Weitere Übung (IB15, IB16, IB3)', () => {

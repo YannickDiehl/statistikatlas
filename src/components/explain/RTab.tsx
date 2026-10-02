@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import { Copy, Download } from 'lucide-react';
 import type { ColumnSelection, SurveyRow } from '../../domain/survey';
 import { entryById, type AtlasEntry } from '../../domain/mariposaCatalog';
-import { analysisCode, downloadText, initialRSettings, rolesFor, SAV_NAME, scriptFor, scriptText, startBlock, summaryCode, surveyCsv, type RSettings } from '../../domain/mariposa';
+import { analysisCode, downloadText, initialRSettings, SAV_NAME, scriptFor, scriptText, startBlock, summaryCode, surveyCsv, type RSettings } from '../../domain/mariposa';
 import { writeSav } from '../../domain/savWriter';
 import { RTOKENS, RTOKEN_CONCEPTS } from '../../domain/rTokens';
 import type { Ref } from '../../domain/learning';
@@ -66,6 +66,21 @@ function othersEntry(tab: RTabData, reference?: Ref): AtlasEntry | undefined {
   if (tab.others !== undefined) return tab.others ? entryById[tab.others] : undefined;
   const own = reference ? entryById[reference.id] : undefined;
   return own?.variants.length && own.id !== tab.entry ? own : tab.entry ? entryById[tab.entry] : undefined;
+}
+
+/**
+ * Leitaufruf aus dem Katalog (ohne `live`, I1): immer genau der in R erfasste Aufruf, also die Katalogvariante mit
+ * ihren Ausgangsspalten, unabhängig von Spaltenwahl und „Anderer Aufruf“. So gehören Code, „So antwortet R“,
+ * Zuordnungen und „Kurz prüfen“ zu einem Aufruf, und „Aufruf kopieren“ und das R-Skript geben ihn genauso heraus.
+ */
+export function catalogLead(tab: RTabData, title: string): { entry: AtlasEntry; code: string; script: string; fn: string; note?: string } | null {
+  const entry = tab.entry ? entryById[tab.entry] : undefined, v = entry?.variants[tab.variant];
+  if (!entry || !v || tab.live) return null;
+  const s = initialRSettings(entry, tab.variant), code = (tab.summary ? summaryCode : analysisCode)(entry, s);
+  const script = tab.summary
+    ? scriptText(title, `${v.label}: ${v.fn}() aus mariposa, ausführlich mit summary().`, code.slice(startBlock().length).trim(), v.note ? [v.note] : [])
+    : scriptFor(entry, s);
+  return { entry, code, script, fn: v.fn, note: v.note };
 }
 
 const LIVE_LABEL: Record<LiveCall['fn'], string> = {
@@ -190,29 +205,22 @@ export function RTab(p: RProps) {
   const entry = tab.entry ? entryById[tab.entry] : undefined, other = othersEntry(tab, p.reference);
   const [token, setToken] = useState<string | null>(null), [spot, setSpot] = useState<string | null>(null), [feedback, setFeedback] = useState('');
   const notes = useMemo(() => ({ ...RTOKENS, ...tab.tokens }), [tab.tokens]);
-  const ranked = p.reference?.basis === 'ranks';
 
-  // Leitaufruf: live aus den aktuellen Daten oder die Katalogvariante mit der in R erfassten Ausgabe.
-  const live = tab.live, cols = live ? liveColumns(live, p) : null;
+  // Leitaufruf: live aus den aktuellen Daten (folgt der Spaltenwahl) oder der in R erfasste Katalogaufruf (I1).
+  const live = tab.live, cols = live ? liveColumns(live, p) : null, lead = live ? null : catalogLead(tab, p.title);
   // Die R-Einstellungen des Inspectors gehören zum offenen Begriff; zeigt „Anderer Aufruf“ ein anderes Verfahren
-  // (p-Wert → t_test), wählt der Reiter dessen Varianten selbst.
+  // (p-Wert → t_test), wählt der Reiter dessen Varianten selbst. Der Leitaufruf bleibt davon unberührt.
   const own = !!other && p.reference?.id === other.id, [local, setLocal] = useState<RSettings | undefined>();
   const settings = own ? p.settings : local, onSettings = own ? p.onSettings : setLocal;
-  // Der Leitaufruf folgt den Spalten von „Anderer Aufruf“ nur, wenn beide zum selben Verfahren gehören.
-  const linked = other === entry ? settings : undefined;
-  const leadBase = entry ? initialRSettings(entry, tab.variant) : null;
-  const leadSettings: RSettings | null = entry && leadBase && !live ? panelSettings(entry, linked?.variant === tab.variant ? linked : { ...leadBase, columns: { ...leadBase.columns, ...Object.fromEntries(Object.entries(linked?.columns ?? {}).filter(([k]) => rolesFor(entry, tab.variant).some(r => r.key === k))) } }, p.selection, p.reference) : null;
-  const code = live && cols ? `${startBlock()}\n\n${liveCode(live, cols.x, cols.y)}` : entry && leadSettings ? (tab.summary ? summaryCode : analysisCode)(entry, leadSettings, ranked) : '';
-  const captured = !live && entry && catalog && catalog !== 'error' ? catalog[`${entry.id}:${tab.variant}${tab.summary ? ':summary' : ''}`] : undefined;
+  const code = live && cols ? `${startBlock()}\n\n${liveCode(live, cols.x, cols.y)}` : lead?.code ?? '';
+  const captured = lead && catalog && catalog !== 'error' ? catalog[`${lead.entry.id}:${tab.variant}${tab.summary ? ':summary' : ''}`] : undefined;
   const output = live && cols ? liveOutput(live, p.rows, cols.x, cols.y) : captured?.output ?? '';
   const mapped: Mapped[] = tab.outputMap.flatMap(m => { const s = output ? locate(output, m.match) : null; return s ? [{ ...m, spot: s }] : []; });
   const active = mapped.find(m => m.match === spot);
   useEffect(() => setFeedback(''), [code]);
 
-  const script = () => live && cols
-    ? scriptText(p.title, `Leitaufruf: ${LIVE_LABEL[live.fn]}`, liveCode(live, cols.x, cols.y))
-    : entry && leadSettings ? (tab.summary ? scriptText(p.title, `${entry.variants[leadSettings.variant]?.label ?? entry.title}: ${entry.variants[leadSettings.variant]?.fn ?? entry.id}() aus mariposa, ausführlich mit summary().`, code.slice(startBlock().length).trim()) : scriptFor(entry, leadSettings, ranked)) : '';
-  const fn = live ? (live.fn === 'rec_frequency' ? 'rec' : live.fn === 'cov' ? 'kovarianz' : live.fn) : entry && leadSettings ? entry.variants[leadSettings.variant]?.fn ?? entry.id : 'aufruf';
+  const script = () => live && cols ? scriptText(p.title, `Leitaufruf: ${LIVE_LABEL[live.fn]}`, liveCode(live, cols.x, cols.y)) : lead?.script ?? '';
+  const fn = live ? (live.fn === 'rec_frequency' ? 'rec' : live.fn === 'cov' ? 'kovarianz' : live.fn) : lead?.fn ?? 'aufruf';
   async function copy() { try { await navigator.clipboard.writeText(code); setFeedback('R-Aufruf kopiert.'); } catch { setFeedback('Kopieren ist hier nicht verfügbar. Du kannst das R-Skript herunterladen.'); } }
 
   const note = token ? noteFor(token, tab.tokens) : null;
@@ -232,6 +240,7 @@ export function RTab(p: RProps) {
       </Section>
       <Section title="Der Aufruf">
         <CodeView code={code} notes={notes} active={token} onPick={k => setToken(t => t === k ? null : k)} />
+        {lead?.note && <p className="xw-note">{tight(lead.note)}</p>}
         <div aria-live="polite">{note && <TokenCard note={note} concept={tokenConcept} onConcept={p.onConcept} />}</div>
         <div className="r-actions">
           <button type="button" onClick={copy}><Copy size={14} />Aufruf kopieren</button>
@@ -241,7 +250,6 @@ export function RTab(p: RProps) {
       </Section>
       <Section title="So antwortet R" note="R schreibt Punkt statt Komma und meist drei Nachkommastellen. Tippe eine markierte Zahl an.">
         {!live && <p className="xw-note">{catalog === 'error' ? 'Die in R erfasste Ausgabe lässt sich hier nicht laden.' : 'Ausgabe für die Ausgangsdaten, in R erfasst.'}
-          {captured && captured.code !== code && ' Sie gehört zum Aufruf mit den Ausgangsspalten.'}
           {p.modified && ' Deine Daten sind verändert; R würde andere Zahlen zeigen.'}</p>}
         {live && p.modified && <p className="xw-note">Die Ausgabe zeigt deine veränderten Daten, so wie R sie mit der heruntergeladenen Datei zeigen würde.</p>}
         {output ? <OutputView output={output} mapped={mapped} active={spot} onPick={m => setSpot(s => s === m ? null : m)} />
