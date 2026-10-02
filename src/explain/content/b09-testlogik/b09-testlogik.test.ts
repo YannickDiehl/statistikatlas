@@ -13,6 +13,7 @@ import { SEITEN, seiten } from './seiten';
 import { ANTEIL, alpha } from './alpha';
 import { kritisch } from './kritisch';
 import { betaFor, fehlerarten } from './fehlerarten';
+import { teststaerke } from './teststaerke';
 
 /*
  * Referenzwerte des Bereichs B9, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -47,6 +48,11 @@ import { betaFor, fehlerarten } from './fehlerarten';
  *   1 - pw(c(.001, .01, .05, .1))     # beta: 0.8733287, 0.6655171, 0.4253030, 0.3072655
  *   pnorm(1/0.47 - 1.96)              # 0.5665744 (mit den sichtbaren Zahlen, gerundet 0,57)
  *   w2 <- t.test(2 * lz ~ wb); 1 - pw(.05, w2$stderr)   # stderr 0.9309868, beta 0.8109404
+ *   # Teststärke als Formel: pz(d, n, a) <- pnorm(d * sqrt(n/2) - qnorm(1 - a/2)) + pnorm(-d * sqrt(n/2) - qnorm(1 - a/2))
+ *   # pz(.3, 100, .05) 0.5641160; pz(.3, 400, .05) 0.9887753; pz(.5, 100, .05) 0.9424375; pz(.3, 100, .01) 0.3247326;
+ *   # pz(.3, 175, .05) 0.8013024; pz(.05, 5, .001) 0.0010367; 2 * ((qnorm(.975) + qnorm(.8)) / .3)^2 = 174.42
+ *   power.t.test(n = 100, delta = .3)$power; power.t.test(power = .8, delta = .3)$n   # 0.5600359, 175.39
+ *   1 / sp (gepoolte Standardabweichung der Lernzeit nach Weiterbildung 3.2454809)   # 0.3081207
  *   t.test(lz ~ wb, alternative = "greater")$p.value; t.test(lz ~ wb, alternative = "less")$p.value   # 0.4379349, 0.5620651
  *   atlas %>% t_test(lernzeit, group = weiterbildung, alternative = "greater")  # t(175.8) = 0.156, p = 0.438
  *
@@ -62,7 +68,7 @@ const tabs = (id: string): ConceptTabs => b09Testlogik.tabs[id];
 const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.ok(s?.kind === 'analysis', `${id}: Auswertung`); const cols = Object.fromEntries(Object.entries(s.columns ?? {}).map(([k, v]) => [k, [v]])); return s.result({ rows: data, columns: cols }); };
 
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
-  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors'];
+  const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power'];
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -196,4 +202,19 @@ test('B9 Fehlerarten: Übersehen einer Stunde Unterschied wie in R', () => {
   const doubled = gruppenTest({ rows: applyOp(rows, 'lernzeit', 'double'), columns: { x: ['lernzeit'], group: ['weiterbildung'] } })!;
   assert.ok(close(doubled.se, 0.9309868, 1e-6) && close(betaFor(0.05, doubled.se), 0.8109404, 1e-6), 'verdoppelt wie R');
   assert.match(result('type_errors', applyOp(rows, 'lernzeit', 'double')).fachlich, /Φ\(1 \/ 0,93 − 1,96\) ≈ 0,19, also β ≈ 0,81/);
+});
+
+test('B9 Teststärke: Näherung mit der Normalverteilung wie in R', () => {
+  for (const [d, n, a, p] of [[0.3, 100, 0.05, 0.5641160], [0.3, 400, 0.05, 0.9887753], [0.5, 100, 0.05, 0.9424375], [0.3, 100, 0.01, 0.3247326], [0.3, 175, 0.05, 0.8013024], [0.05, 5, 0.001, 0.0010367]])
+    assert.ok(close(teststaerke.compute({ d, n, alpha: a }).power, p, 1e-6), `d ${d}, n ${n}, α ${a}`);
+  const s = teststaerke.compute(teststaerke.initial);
+  assert.deepEqual(teststaerke.worked(s).map(w => w.text.split('.')[0] + '.'), ['d · √(n/2) = 0,3 · √(100 / 2) ≈ 2,12.', '2,12 − 1,96 ≈ 0,16.', 'Φ(0,16) ≈ 0,56: Der Test findet den Unterschied in etwa 56 von 100 Studien.']);
+  assert.match(teststaerke.interpret(s).kurz, /mit 100 Personen je Gruppe in etwa 56 von 100 Studien\. In den übrigen 44 übersieht er ihn\./);
+  assert.match(teststaerke.interpret(teststaerke.compute({ d: 0.3, n: 1600, alpha: 0.05 })).kurz, /fast immer\.$/);
+  assert.match(teststaerke.genau.paragraphs[0], /liefert die Näherung 0,56\. power\.t\.test.* ebenfalls 0,56\. .*175 Personen je Gruppe, power\.t\.test kommt auf 176\./);
+  assert.ok(Math.round(0.5600359 * 100) === 56 && Math.ceil(175.39) === 176 && Math.ceil(174.42) === 175, 'power.t.test');
+  const g = gruppenTest(ctx({ x: 'lernzeit', group: 'weiterbildung' }))!;
+  assert.ok(close(g.sp, 3.2454809, 1e-6) && close(1 / g.sp, 0.3081207, 1e-6), 'gepoolte Standardabweichung');
+  assert.match(result('power').kurz, /Mit 82 und 118 Befragten und einem Standardfehler von 0,47 Stunden fände der Test eine Stunde Unterschied in etwa 57 von 100 Studien\. Eine Stunde sind hier d ≈ 0,31\./);
+  assert.match(result('power', applyOp(rows, 'lernzeit', 'double')).fachlich, /Φ\(1 \/ 0,93 − 1,96\) ≈ 0,19/);
 });

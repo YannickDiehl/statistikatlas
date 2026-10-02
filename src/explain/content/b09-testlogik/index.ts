@@ -9,6 +9,7 @@ import { seiten, seitenTabs } from './seiten';
 import { alpha, alphaTabs } from './alpha';
 import { kritisch, kritischTabs } from './kritisch';
 import { fehlerarten, fehlerartenTabs } from './fehlerarten';
+import { teststaerke, teststaerkeTabs } from './teststaerke';
 
 export const b09Testlogik: AreaIndex = {
   explanations: {
@@ -19,6 +20,7 @@ export const b09Testlogik: AreaIndex = {
     alpha_level: { kind: 'begriff', card: alpha },
     critical_value: { kind: 'satz', template: kritisch },
     type_errors: { kind: 'begriff', card: fehlerarten },
+    power: { kind: 'satz', template: teststaerke },
   },
   tabs: {
     hypothesis: hypotheseTabs,
@@ -28,5 +30,6 @@ export const b09Testlogik: AreaIndex = {
     alpha_level: alphaTabs,
     critical_value: kritischTabs,
     type_errors: fehlerartenTabs,
+    power: teststaerkeTabs,
   },
 };

@@ -8,6 +8,7 @@ import { SEITEN, sideOf } from '../../../explain/content/b09-testlogik/seiten';
 import { ANTEIL } from '../../../explain/content/b09-testlogik/alpha';
 import type { CStats } from '../../../explain/content/b09-testlogik/kritisch';
 import { betaFor, percent } from '../../../explain/content/b09-testlogik/fehlerarten';
+import type { PStats } from '../../../explain/content/b09-testlogik/teststaerke';
 import { MU0, SCHLAF, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
 import { baseSurvey } from '../../../explain/sample';
@@ -199,7 +200,36 @@ function Fehlerarten({ a }: { a: number }) {
   );
 }
 
+/**
+ * Teststärke: gestrichelt die Prüfgröße ohne Unterschied (H₀), durchgezogen mit dem Unterschied d (Mitte d · √(n/2)).
+ * Grün ist der Teil der zweiten Kurve jenseits der Grenze z, also die Teststärke.
+ */
+function Teststaerke({ s }: { s: PStats }) {
+  const [box, W] = useWidth();
+  const hi = Math.min(40, Math.max(4, s.delta + 3.5)), lo = -4, base = 160, z = Math.min(s.z, hi);
+  const x = linear([lo, hi], [24, W - 24]), y = linear([0, 0.42], [base, 50]);
+  const h0 = (v: number) => Math.exp(-v * v / 2) / Math.sqrt(2 * Math.PI), h1 = (v: number) => h0(v - s.delta);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={256} viewBox={`0 0 ${W} 256`} role="img"
+        aria-label={`Zwei Glockenkurven: gestrichelt die Prüfgröße ohne Unterschied um 0, durchgezogen mit dem Unterschied d = ${num(s.d)} um ${num(s.delta)}. Die Grenze liegt bei ${num(s.z)}. Der Anteil der zweiten Kurve jenseits der Grenze ist die Teststärke, etwa ${num(s.power)}.`}>
+        <text className="xw-t xw-strong" x={24} y={16}>Teststärke ≈ {num(s.power)}</text>
+        <AreaUnder f={h1} from={z} to={hi} x={x} y={y} tone="pos" samples={120} />
+        <AreaUnder f={h0} from={z} to={hi} x={x} y={y} tone="neg" />
+        <Curve f={h0} from={lo} to={hi} x={x} y={y} className="b09-other" samples={200} />
+        <Curve f={h1} from={lo} to={hi} x={x} y={y} className="b09-alt" samples={200} />
+        <MarkLine x={x(z)} from={44} to={base} className="xw-mean b09-reject" />
+        <text className="xw-t" x={x(z) + 4} y={38}>Grenze {num(s.z)}</text>
+        <Axis scale={x} ticks={ticksFor(Math.max(-lo, hi)).filter(v => v >= lo && v <= hi)} at={base} from={24} to={W - 24} labelGap={20} title="Prüfgröße in Standardfehlern" />
+        <text className="xw-t" x={24} y={230}>gestrichelt: ohne Unterschied (H₀)</text>
+        <text className="xw-t" x={24} y={250}>durchgezogen: mit Unterschied d</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b09-teststaerke': forSentence(p => <Teststaerke s={p.s as PStats} />),
   'b09-fehlerarten': forCard(p => <Fehlerarten a={p.value ?? 0.05} />),
   'b09-kritisch': forSentence(p => <Kritisch s={p.s as CStats} />),
   'b09-alpha': forCard(p => <Alpha a={p.value ?? 0.05} />),
