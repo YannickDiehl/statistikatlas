@@ -26,7 +26,7 @@ export const kommunalitaet: SentenceTemplate<LadungenZwei, KommunalitaetStats> =
   picture: 'b14-kommunalitaet',
   wofuer: `Wie viel von dem, was eine Frage misst, erfasst eine Faktorenanalyse? Beim Vertrauen in die katholische Kirche im ALLBUS 2023 sind es 87 %, bei zwei Komponenten nach der Varimax-Rotation (${count(V.n)} Befragte, ungewichtet). Die Kommunalität rechnet das aus den Ladungen aus.`,
   kurz: 'Die Kommunalität sagt dir, welcher Anteil der Streuung einer Frage durch die Faktoren oder Komponenten erfasst wird. Den Rest erfassen sie nicht.',
-  fachlich: 'Bei unkorrelierten Faktoren ist die Kommunalität hⱼ² die Summe der quadrierten Ladungen von Frage j. Was bis 1 fehlt, 1 − hⱼ², erfasst die Lösung nicht; im gemeinsamen Faktorenmodell heißt dieser Rest Einzigartigkeit.',
+  fachlich: 'Die Kommunalität ist der Anteil der Streuung einer Frage, den die Faktoren gemeinsam erfassen. Bei unkorrelierten Faktoren ist sie die Summe ihrer quadrierten Ladungen; im gemeinsamen Faktorenmodell heißt der Rest Einzigartigkeit.',
   initial: KIRCHE,
   compute: v => {
     const l1 = v['λ₁'], l2 = v['λ₂'], s1 = l1 * l1, s2 = l2 * l2, h2 = s1 + s2;

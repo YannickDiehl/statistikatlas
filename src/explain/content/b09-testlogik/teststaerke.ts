@@ -20,7 +20,7 @@ export const teststaerke: SentenceTemplate<PValues, PStats> = {
   picture: 'b09-teststaerke',
   wofuer: 'Du planst eine eigene Befragung: Lernen Menschen mit Weiterbildung mehr? Einen Unterschied von einer Stunde pro Woche fändest du wichtig. Wie viele Befragte brauchst du, damit der Test so einen Unterschied auch findet?',
   kurz: 'Die Teststärke sagt dir, wie oft ein Test einen echten Unterschied einer bestimmten Größe findet. Mehr Befragte und größere Unterschiede machen sie größer.',
-  fachlich: 'Die Wahrscheinlichkeit, H₀ zu verwerfen, wenn eine bestimmte Alternative gilt: 1 − β. Für zwei Gruppen mit je n Personen gilt grob 1 − β ≈ Φ(d · √(n/2) − z₁₋α/₂).',
+  fachlich: 'Die Teststärke ist die Wahrscheinlichkeit, die Nullhypothese zu verwerfen, wenn ein bestimmter Unterschied wirklich besteht. Sie wächst mit dem Effekt, mit der Zahl der Befragten und mit dem Signifikanzniveau.',
   initial: { d: 0.3, n: 100, alpha: 0.05 },
   compute: v => {
     const delta = v.d * Math.sqrt(v.n / 2), z = qnorm(1 - v.alpha / 2), power = pnorm(delta - z) + pnorm(-delta - z);

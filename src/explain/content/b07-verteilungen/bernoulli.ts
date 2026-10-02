@@ -21,7 +21,7 @@ export const bernoulli: SentenceTemplate<BernValues, BernStats> = {
   picture: 'b07-bernoulli',
   wofuer: 'Hast du in den letzten zwölf Monaten an einer Weiterbildung teilgenommen? Ja oder nein. Kodiert als 1 und 0 wird jede Antwort zu einem Bernoulli-Versuch. Im Lehrdatensatz sagen 82 von 200 Ja, ein Anteil von 0,41.',
   kurz: 'Die Bernoulli-Verteilung beschreibt eine einzelne Ja-Nein-Frage: 1 mit der Wahrscheinlichkeit p, sonst 0. Ihr Mittelwert ist p, ihre Streuung ist bei halb und halb am größten.',
-  fachlich: 'Eine diskrete Verteilung mit P(X = 1) = p und P(X = 0) = 1 − p. Erwartungswert E(X) = p, Varianz Var(X) = p · (1 − p).',
+  fachlich: 'Die Bernoulli-Verteilung beschreibt einen Versuch mit zwei Ausgängen, Erfolg (1) und Misserfolg (0). Ihr Erwartungswert ist die Erfolgswahrscheinlichkeit, ihre Varianz diese mal die Gegenwahrscheinlichkeit.',
   initial: { p: WEITERBILDUNG.p },
   compute: v => { const q = shown2(1 - v.p), variance = v.p * q; return { p: v.p, q, v: variance, sd: Math.sqrt(variance) }; },
   metrics: [

@@ -183,6 +183,22 @@ test('every registered explanation renders through Explanation in Ausführlich a
   }
 });
 
+test('the header line „In der Fachsprache“ is words only, like the approved sd, at most two sentences (M1)', () => {
+  // Rechenzeichen, Summen- und Wurzelzeichen, tief- und hochgestellte Zeichen, griechische Buchstaben: Die Formel
+  // steht in den Schritten und unter „Genau genommen“. Namen wie „R²“ bleiben erlaubt.
+  const FORMULA = /[=≈Σ√∑]|[ᵢⱼₖₓᵧ₀-₉₊⁰-⁹²³]|[α-ωΑ-Ω]/u;
+  let n = 0;
+  for (const id of Object.keys(EXPLANATIONS)) {
+    const fach = kurzOf(explainFor(id))?.fach;
+    if (!fach) continue;
+    n++;
+    assert.doesNotMatch(fach.replace(/R²/g, ''), FORMULA, `${id}: Formel in „In der Fachsprache“: ${fach}`);
+    assert.deepEqual(styleProblems(fach, { maxWords: 25, maxSentences: 2 }), [], `${id}: ${fach}`);
+  }
+  assert.ok(n > 40, `nur ${n} Fachsprache-Zeilen geprüft`);
+  assert.equal(kurzOf(explainFor('weights'))?.fach, 'Der gewichtete Mittelwert zählt jede Antwort mit dem Gewicht ihrer Person und teilt durch die Summe der Gewichte. Designgewichte gleichen ungleiche Auswahlwahrscheinlichkeiten aus.');
+});
+
 test('think questions and try-it buttons follow the variant filter of a shared workshop (IB30)', () => {
   const erwartung = WORKSHOPS.find(w => w.id === 'erwartung')!;
   const shown = (variant: string) => text(renderToStaticMarkup(createElement(Formelwerkstatt, { workshop: erwartung, variant, onConcept: noop })));

@@ -34,7 +34,7 @@ export const pomps: SentenceTemplate<PompValues, PompStats> = {
   picture: 'b04-pomps',
   wofuer: 'Der Lehrdatensatz fragt Zustimmung mal mit 5, mal mit 7, mal mit 10 Stufen ab. Ist eine 4 auf der einen Skala viel oder wenig im Vergleich zu einer 4 auf der anderen? POMP rechnet jede Antwort auf denselben Bereich von 0 bis 100 um.',
   kurz: 'POMP sagt dir, wie viel Prozent des Wegs von der niedrigsten zur höchsten Stufe eine Antwort zurückgelegt hat. Die niedrigste Stufe wird 0, die höchste 100.',
-  fachlich: 'POMP = 100 · (x − min) / (max − min) mit den theoretischen Endpunkten der Antwortskala (percent of maximum possible). Die Umrechnung ist linear; Reihenfolge und Korrelationen bleiben erhalten.',
+  fachlich: 'POMPS rechnet Antworten in Prozent des größtmöglichen Werts um, gemessen zwischen den theoretischen Endpunkten der Skala. Die Umrechnung ist linear; Reihenfolge und Korrelationen bleiben erhalten.',
   initial: { x: 4, hi: 5 },
   compute: v => {
     const range = v.hi - 1, steps = v.x - 1, share = steps / range;

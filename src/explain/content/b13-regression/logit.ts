@@ -19,7 +19,7 @@ export const logitSatz: SentenceTemplate<LogitValues, LogitStats> = {
   picture: 'b13-logit',
   wofuer: 'Von den 200 Befragten haben 82 in den letzten zwölf Monaten eine Weiterbildung gemacht, also 41 %. Wahrscheinlichkeiten liegen immer zwischen 0 und 1. Für die logistische Regression braucht man eine Zahl ohne diese Grenzen: den Logit.',
   kurz: 'Der Logit übersetzt eine Wahrscheinlichkeit in eine Zahl ohne Grenzen. Über 50 % wird er positiv, darunter negativ.',
-  fachlich: 'logit(p) = ln(p / (1 − p)), der natürliche Logarithmus der Odds. Umgekehrt gilt p = 1 / (1 + e^(−logit)).',
+  fachlich: 'Der Logit ist der natürliche Logarithmus der Odds, also der Chance für ein Ereignis gegen sein Ausbleiben. Die logistische Funktion rechnet ihn in eine Wahrscheinlichkeit zurück.',
   initial: { p: 0.41 },
   compute: v => { const q = 1 - v.p, odds = v.p / q; return { ...v, q, odds, logit: Math.log(odds) }; },
   metrics: [

@@ -223,7 +223,7 @@ export const derReiheNach: Workshop<number[], Reihe> = {
     median: {
       lastStep: 3,
       kurz: 'Der Median ist der mittlere Wert, wenn du alle Antworten der Reihe nach ordnest. Die eine Hälfte liegt darunter, die andere darüber.',
-      fachlich: 'Der Median x̃ ist der Wert in der Mitte der geordneten Reihe, auf Platz (n + 1) / 2; bei gerader Fallzahl das Mittel der beiden mittleren Werte.',
+      fachlich: 'Der Median ist der Wert in der Mitte der geordneten Reihe. Bei gerader Fallzahl ist er das Mittel der beiden mittleren Werte.',
       symbolic: [{ part: ['x̃'], m: 3 }, ' = ', { part: ['x'], m: 1 }, { part: [{ sub: '((n + 1) / 2)' }], m: 2 }],
       aria: 'x Schlange gleich der Wert auf Platz n plus eins durch zwei der geordneten Reihe',
       metrics: [{ label: 'Mittelwert x̄', value: c => num(c.s.mean) }, { label: 'Median x̃', value: c => num(c.s.median) }],
@@ -248,7 +248,7 @@ export const derReiheNach: Workshop<number[], Reihe> = {
     quantile: {
       lastStep: 6,
       kurz: 'Quartile teilen die geordnete Reihe in Viertel. Der Interquartilsabstand ist die Breite der mittleren Hälfte.',
-      fachlich: 'Das Quantil zum Anteil p liegt auf Platz h = (n + 1) · p der geordneten Reihe, zwischen zwei Nachbarn linear eingeteilt (Type 6). Der Interquartilsabstand ist IQR = Q₃ − Q₁.',
+      fachlich: 'Das Quantil zu einem Anteil ist der Wert, unter dem etwa dieser Anteil der geordneten Werte liegt; zwischen zwei Nachbarn wird linear eingeteilt. Der Interquartilsabstand reicht vom ersten bis zum dritten Quartil.',
       symbolic: [{ part: ['IQR'], m: 6 }, ' = ', { part: ['Q₃'], m: 5 }, ' − ', { part: ['Q₁'], m: 5 }, ',  Q', { sub: 'p' }, ' auf Platz ', { part: ['(n + 1) · p'], m: 4 }, ' der ', { part: ['geordneten Reihe'], m: 1 }],
       aria: 'I Q R gleich Q drei minus Q eins; das Quantil Q p steht auf Platz n plus eins mal p der geordneten Reihe',
       metrics: [{ label: 'Q₁', value: c => num(c.s.q1) }, { label: 'Q₃', value: c => num(c.s.q3) }, { label: 'Interquartilsabstand IQR', value: c => num(c.s.iqr) }],

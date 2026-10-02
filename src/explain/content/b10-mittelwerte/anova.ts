@@ -221,7 +221,7 @@ export const anovaWerkstatt: Workshop<number[], AnovaStats> = {
     group_variation: {
       lastStep: 3,
       kurz: 'Die Streuung zwischen den Gruppen sagt, wie weit die Gruppenmitten auseinanderliegen. Die Streuung innerhalb sagt, wie verschieden die Menschen in derselben Gruppe sind.',
-      fachlich: 'SS zwischen = Σ nⱼ (x̄ⱼ − x̄)² und SS innerhalb = ΣΣ (xᵢⱼ − x̄ⱼ)². In der einfaktoriellen ANOVA ergeben beide zusammen die Quadratsumme aller Werte um das Gesamtmittel.',
+      fachlich: 'Die Quadratsumme zwischen den Gruppen misst, wie weit die Gruppenmittel vom Gesamtmittel liegen. Die innerhalb misst, wie weit die Personen von ihrem Gruppenmittel liegen; zusammen ergeben beide die gesamte Quadratsumme.',
       symbolic: [...ss('B'), ' = ', { big: 'Σ', m: 2 }, 'nⱼ ', { part: ['('], m: 2 }, { part: ['x̄ⱼ'], m: 1 }, ' − ', { part: ['x̄'], m: 1 }, { part: [')²'], m: 2 }, ',   ',
         ...ss('W'), ' = ', { big: 'ΣΣ', m: 3 }, { part: ['(xᵢⱼ −'], m: 3 }, ' ', { part: ['x̄ⱼ'], m: 1 }, { part: [')²'], m: 3 }],
       aria: 'S S B gleich Summe über die Gruppen von n j mal x quer j minus x quer zum Quadrat; S S W gleich Summe über alle Personen von x i j minus x quer j zum Quadrat',
@@ -253,7 +253,7 @@ export const anovaWerkstatt: Workshop<number[], AnovaStats> = {
     oneway_anova: {
       lastStep: 5,
       kurz: 'Die einfaktorielle ANOVA vergleicht die Mittelwerte mehrerer Gruppen auf einmal. Sie fragt, ob die Gruppen weiter auseinanderliegen, als das Schwanken innerhalb der Gruppen erwarten lässt.',
-      fachlich: 'F = MS zwischen / MS innerhalb: die mittlere Quadratsumme zwischen den Gruppen geteilt durch die innerhalb, mit k − 1 und N − k Freiheitsgraden. Unter der Nullhypothese gleicher Mittelwerte folgt F einer F-Verteilung.',
+      fachlich: 'Die einfaktorielle ANOVA teilt die mittlere Quadratsumme zwischen den Gruppen durch die innerhalb der Gruppen; das Ergebnis heißt F. Gleichen sich die Gruppenmittel in der Grundgesamtheit, folgt F einer F-Verteilung.',
       symbolic: ['F = ', {
         frac: [{ big: 'Σ', m: 2 }, 'nⱼ', { part: ['('], m: 2 }, { part: ['x̄ⱼ'], m: 1 }, ' − ', { part: ['x̄'], m: 1 }, { part: [')²'], m: 2 }, ' ', { part: ['/ (k − 1)'], m: 4 }],
         den: [{ big: 'ΣΣ', m: 3 }, { part: ['(xᵢⱼ −'], m: 3 }, ' ', { part: ['x̄ⱼ'], m: 1 }, { part: [')²'], m: 3 }, ' ', { part: ['/ (N − k)'], m: 4 }],

@@ -277,7 +277,7 @@ export const wilcoxonWorkshop: Workshop<Pairs, WxStats> = {
     wilcoxon_test: {
       lastStep: 4,
       kurz: 'Der Wilcoxon-Test für verbundene Stichproben vergleicht zwei Messungen derselben Personen. Er ordnet die Veränderungen nach ihrer Größe und fragt, ob die Verbesserungen oder die Verschlechterungen überwiegen.',
-      fachlich: 'Vorzeichen-Rang-Test: Differenzen dᵢ = yᵢ − xᵢ ohne Nullen, Ränge der Beträge, W⁺ als Summe der positiven Ränge, geprüft über z mit der Normalverteilung und Bindungskorrektur.',
+      fachlich: 'Der Wilcoxon-Vorzeichen-Rang-Test rankt die Veränderungen derselben Personen nach ihrem Betrag und zählt die Ränge der Zunahmen zusammen. Geprüft wird über die Normalverteilung mit Bindungskorrektur.',
       symbolic: [{ part: ['dᵢ = yᵢ − xᵢ'], m: 1 }, { br: true }, 'W⁺ = ', { big: 'Σ', m: 3 }, { part: ['R(|dᵢ|)'], m: 2 }, { sub: 'dᵢ > 0' }, { br: true },
         { part: ['z'], m: 4 }, ' = ', { frac: [{ part: ['W'], m: 3 }, ' − n(n+1)/4'], den: ['σ(W)'], m: 4 }],
       aria: 'd i gleich y i minus x i. W plus gleich Summe der Ränge der Beträge aller positiven Differenzen. z gleich W minus n mal n plus eins geteilt durch vier, geteilt durch Sigma von W; W ist die kleinere der beiden Rangsummen',

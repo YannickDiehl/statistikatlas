@@ -17,7 +17,7 @@ export const marginaleEffekte: SentenceTemplate<MeValues, MeStats> = {
   concept: 'marginal_effects',
   wofuer: 'Ein Logitmodell sagt: Je Stunde Lernzeit steigt der Logit, mindestens 10 Aufgaben zu lösen, um 0,34. Aber um wie viele Prozentpunkte steigt die Wahrscheinlichkeit? Das hängt davon ab, wo jemand auf der S-Kurve steht. Bei 8 Stunden liegt die vorhergesagte Wahrscheinlichkeit bei 0,66.',
   kurz: 'Ein marginaler Effekt übersetzt eine Logit-Steigung in Prozentpunkte. Er ist in der Mitte der S-Kurve am größten und an den Rändern klein.',
-  fachlich: 'Die Ableitung der vorhergesagten Wahrscheinlichkeit nach x: ME = b · p · (1 − p). Der mittlere marginale Effekt (AME) mittelt sie über alle Personen.',
+  fachlich: 'Der marginale Effekt ist die Steigung der vorhergesagten Wahrscheinlichkeit an der Stelle einer Person, je Einheit des Prädiktors. Der mittlere marginale Effekt mittelt ihn über alle Personen.',
   initial: { b: 0.34, p: 0.66 },
   compute: v => { const q = 1 - v.p, pq = v.p * q; return { ...v, q, pq, me: v.b * pq }; },
   metrics: [

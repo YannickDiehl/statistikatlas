@@ -29,7 +29,7 @@ export const standardnormal: SentenceTemplate<ZValues, ZStats> = {
   picture: 'b07-standard',
   wofuer: 'Wie ungewöhnlich sind 5,5 Stunden Schlaf? Die 200 Befragten schlafen im Mittel 7,08 Stunden, mit einer Standardabweichung von 0,82 Stunden. Rechnest du den Abstand in Standardabweichungen um, kannst du die Antwort an einer einzigen Kurve ablesen: der Standardnormalverteilung.',
   kurz: 'Die Standardnormalverteilung ist die Normalverteilung mit der Mitte 0 und der Standardabweichung 1. Jede Normalverteilung lässt sich in sie umrechnen, und dann gilt für alle dieselbe Tabelle.',
-  fachlich: 'Die Normalverteilung N(0, 1). Ist X normalverteilt mit μ und σ, dann ist Z = (X − μ) / σ standardnormalverteilt, und P(X ≤ x) = Φ(z).',
+  fachlich: 'Die Standardnormalverteilung ist die Normalverteilung mit der Mitte 0 und der Standardabweichung 1. Jede Normalverteilung lässt sich über z-Werte auf sie zurückführen; ihre Verteilungsfunktion liefert die Flächen.',
   initial: Z_START,
   compute: v => {
     const diff = shown2(v.x - v.mu), z = diff / v.sigma, zr = shown2(z), xs = schlafdauer();

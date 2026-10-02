@@ -13,7 +13,7 @@ export const kritisch: SentenceTemplate<CValues, CStats> = {
   picture: 'b09-kritisch',
   wofuer: `Statt p kannst du auch t selbst mit einer Grenze vergleichen. Die mittlere Schlafdauer der 200 Befragten liegt ${num(SCHLAF.t)} Standardfehler über sieben Stunden. Reicht das, um die Nullhypothese zu verwerfen? Der kritische Wert sagt, ab wo t zu weit weg ist.`,
   kurz: 'Der kritische Wert ist die Grenze, ab der die Prüfgröße gegen die Nullhypothese spricht. Ohne echten Unterschied landen jenseits davon nur so wenige Ergebnisse, wie du vorher als Fehlalarme zulässt.',
-  fachlich: 'Bei einem zweiseitigen t-Test ist der kritische Wert das (1 − α/2)-Quantil der t-Verteilung mit df Freiheitsgraden. Der Ablehnungsbereich umfasst alle t mit |t| ≥ c.',
+  fachlich: 'Der kritische Wert ist die Grenze in der Nullverteilung, ab der ein Test die Nullhypothese verwirft; dahinter liegt der Ablehnungsbereich. Beim zweiseitigen t-Test umfassen beide Ränder zusammen genau das Signifikanzniveau.',
   initial: { alpha: 0.05, df: SCHLAF.df },
   compute: v => ({ ...v, half: v.alpha / 2, c: qt(1 - v.alpha / 2, v.df), cOne: qt(1 - v.alpha, v.df), cNormal: qnorm(1 - v.alpha / 2) }),
   metrics: [

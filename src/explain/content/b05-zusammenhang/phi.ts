@@ -26,7 +26,7 @@ export const phiSatz: SentenceTemplate<PhiValues, PhiStats> = {
   concept: 'phi',
   wofuer: 'Machen Erwerbstätige häufiger eine Weiterbildung? Im Lehrdatensatz haben von 137 Erwerbstätigen 59 in den letzten zwölf Monaten eine Weiterbildung gemacht, von 63 anderen 23. Beide Fragen haben nur zwei Antworten. Phi fasst den Zusammenhang einer solchen Tabelle in einer Zahl zwischen −1 und +1 zusammen.',
   kurz: 'Phi sagt dir, wie stark zwei Ja-Nein-Fragen zusammenhängen, von −1 bis +1. Das Vorzeichen hängt davon ab, welche Antwort den Code 1 trägt.',
-  fachlich: 'Die Pearson-Korrelation zweier 0/1-Variablen; in einer Vierfeldertafel (ad − bc) / √((a + b)(c + d)(a + c)(b + d)). Ihr Betrag ist √(χ² / n).',
+  fachlich: 'Phi ist die Pearson-Korrelation zweier 0/1-Variablen, berechnet aus den vier Feldern der Vierfeldertafel. Sein Betrag ist die Wurzel aus Chi-Quadrat geteilt durch die Fallzahl.',
   initial: { ...WB_ERW },
   compute: v => {
     const ad = v.a * v.d, bc = v.b * v.c, diff = ad - bc, r1 = v.a + v.b, r2 = v.c + v.d, k1 = v.a + v.c, k2 = v.b + v.d;

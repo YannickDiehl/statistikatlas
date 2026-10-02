@@ -242,7 +242,7 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
     mann_whitney: {
       lastStep: 5,
       kurz: 'Der Mann–Whitney-U-Test vergleicht zwei Gruppen über ihre Plätze in einer gemeinsamen Reihe. Er zählt, wie oft eine Person der einen Gruppe einen höheren Wert hat als eine Person der anderen.',
-      fachlich: 'Rangtest für zwei unabhängige Stichproben: U = min(U₁, U₂) mit U₁ = R₁ − n₁(n₁ + 1) / 2, geprüft über z mit der Normalverteilung und Bindungskorrektur.',
+      fachlich: 'Der Mann–Whitney-U-Test vergleicht zwei unabhängige Gruppen über Ränge und zählt, in wie vielen Paaren eine Gruppe vorn liegt. Geprüft wird über die Normalverteilung mit Bindungskorrektur.',
       symbolic: ['U₁ = ', { big: 'Σ', m: 2 }, { part: ['R(xᵢ)'], m: 1 }, ' ', { part: ['−'], m: 3 }, ' ', { frac: ['n₁(n₁ + 1)'], den: ['2'], m: 3 }, { br: true },
         { part: ['z'], m: 5 }, ' = ', { frac: [{ part: ['U'], m: 4 }, ' − n₁n₂ / 2'], den: ['σ(U)'], m: 5 }],
       aria: 'U eins gleich Summe der Ränge der ersten Gruppe minus n eins mal n eins plus eins, geteilt durch zwei. z gleich U minus n eins mal n zwei halbe, geteilt durch Sigma von U; U ist der kleinere der beiden U-Werte',

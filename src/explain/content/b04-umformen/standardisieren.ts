@@ -232,7 +232,7 @@ export const standardisieren: Workshop<number[], ZStats> = {
     z: {
       lastStep: 5,
       kurz: 'Ein z-Wert sagt dir, wie viele Standardabweichungen jemand über oder unter dem Durchschnitt liegt. So lassen sich Antworten auf ganz verschiedenen Skalen vergleichen.',
-      fachlich: 'z-Standardisierung: zᵢ = (xᵢ − x̄) / s. Die z-Werte haben den Mittelwert 0 und die Standardabweichung 1; die Form der Verteilung bleibt erhalten.',
+      fachlich: 'Die z-Standardisierung zieht von jedem Wert den Mittelwert ab und teilt durch die Standardabweichung. Die z-Werte haben den Mittelwert 0 und die Standardabweichung 1; die Form der Verteilung bleibt.',
       symbolic: [{ part: ['z', { sub: 'i' }], m: 5 }, ' = ', { frac: [{ part: ['x', { sub: 'i' }, ' −'], m: 2 }, ' ', { part: ['x̄'], m: 1 }], den: [{ part: ['s'], m: 3 }], m: 4 }],
       aria: 'z i gleich x i minus x quer, geteilt durch s',
       metrics: [

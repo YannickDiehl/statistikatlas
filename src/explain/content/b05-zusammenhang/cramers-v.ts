@@ -23,7 +23,7 @@ export const cramerSatz: SentenceTemplate<VValues, VStats> = {
   concept: 'cramers_v',
   wofuer: 'Hängt der Schulabschluss mit dem Geschlechtseintrag zusammen? Die Tabelle hat 5 Zeilen und 4 Spalten, viel mehr als zwei mal zwei. Der Chi-Quadrat-Test liefert dazu χ² ≈ 10,02 bei 200 Befragten. Cramér-V macht daraus eine Zahl zwischen 0 und 1, die nicht mit der Zahl der Befragten wächst.',
   kurz: 'Cramér-V sagt dir, wie stark zwei Merkmale mit Kategorien zusammenhängen, von 0 (gar nicht) bis 1 (vollständig). Eine Richtung hat es nicht.',
-  fachlich: 'Die Chi-Quadrat-Prüfgröße, normiert auf Fallzahl und Tabellengröße: V = √(χ² / (n · min(r − 1, c − 1))).',
+  fachlich: 'Cramér-V ist die Chi-Quadrat-Prüfgröße, bereinigt um Fallzahl und Tabellengröße. Es liegt zwischen 0 und 1.',
   initial: { 'χ²': SCHUL_GESCHLECHT.chi2, n: SCHUL_GESCHLECHT.n, k: SCHUL_GESCHLECHT.k },
   compute: v => {
     const chi2 = v['χ²'], n = v.n, k = v.k, denom = n * k, ratio = denom > 0 ? chi2 / denom : 0;

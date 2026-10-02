@@ -19,7 +19,7 @@ export const erklaerteVarianz: SentenceTemplate<R2Values, R2Stats> = {
   picture: 'b13-r2',
   wofuer: 'Die Gerade aus der Lernzeit sagt den Wissenstest nicht perfekt voraus. Aber wie viel besser als ganz ohne Lernzeit? Ohne Gerade bleibt nur der Mittelwert: Um ihn streuen die 200 Befragten mit einer Quadratsumme von 1.931,88. Mit der Geraden bleiben 1.370,27 übrig.',
   kurz: 'R² sagt dir, welchen Anteil der Streuung die Gerade erfasst. 0 heißt gar nichts, 1 heißt: Alle Punkte liegen auf der Geraden.',
-  fachlich: 'Das Bestimmtheitsmaß R² = 1 − SSE / SST: eins minus dem Anteil der Quadratsumme, der nach der Regression in den Residuen übrig bleibt.',
+  fachlich: 'Das Bestimmtheitsmaß R² ist eins minus dem Anteil der Quadratsumme, der nach der Regression in den Residuen übrig bleibt.',
   initial: { sse: QS.sse, sst: QS.sst },
   compute: v => { const share = v.sse / v.sst; return { ...v, share, r2: 1 - share }; },
   metrics: [

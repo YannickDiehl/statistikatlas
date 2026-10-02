@@ -169,7 +169,7 @@ export const mehrfachantworten: Workshop<number[][], Mehrfach> = {
     multiple_response: {
       lastStep: 5,
       kurz: 'Bei Mehrfachantworten darf jede Person mehrere Kreuze setzen. Deshalb gibt es zwei Prozente: den Anteil an allen Kreuzen und den Anteil an allen Personen.',
-      fachlich: 'Je Option zählt man die Nennungen nⱼ. Prozente der Antworten sind 100 · nⱼ / Σnⱼ, Prozente der Fälle 100 · nⱼ / n gültige Fälle; die Fallprozente können zusammen über 100 % liegen.',
+      fachlich: 'Je Option zählt man die Nennungen. Prozente der Antworten teilen durch alle Nennungen, Prozente der Fälle durch die gültigen Fälle; diese können zusammen über 100 % liegen.',
       symbolic: ['% Fälle = 100 · ', { frac: [{ part: ['n', { sub: 'j' }], m: 1 }], den: [{ part: ['n'], m: 4 }], m: 4 }, ',  % Antworten = 100 · ', { frac: [{ part: ['n', { sub: 'j' }], m: 1 }], den: [{ part: ['Σn', { sub: 'j' }], m: 2 }], m: 3 }],
       aria: 'Prozent der Fälle gleich 100 mal n j geteilt durch n; Prozent der Antworten gleich 100 mal n j geteilt durch die Summe aller n j',
       metrics: [

@@ -218,7 +218,7 @@ export const kruskalWallisWorkshop: Workshop<number[], KwStats> = {
     kruskal_wallis: {
       lastStep: 5,
       kurz: 'Kruskal–Wallis stellt alle in eine gemeinsame Reihe und schaut, ob manche Gruppen eher vorn, andere eher hinten stehen. Je weiter die Gruppen im Schnitt auseinanderstehen, desto größer wird die Prüfgröße H.',
-      fachlich: 'Rangtest für k unabhängige Stichproben: H = 12 / (N(N + 1)) · Σ nⱼ(R̄ⱼ − R̄)², bei Gleichständen korrigiert, geprüft mit der χ²-Verteilung mit k − 1 Freiheitsgraden.',
+      fachlich: 'Der Kruskal–Wallis-Test vergleicht mehrere unabhängige Gruppen über ihre mittleren Ränge. Je weiter diese auseinanderliegen, desto größer wird H; geprüft wird mit der Chi-Quadrat-Verteilung.',
       symbolic: ['H = ', { frac: [{ part: ['12 ·'], m: 5 }, ' ', { big: 'Σ', m: 4 }, 'n', { sub: 'j' }, { part: ['('], m: 4 }, { part: ['R̄', { sub: 'j' }], m: 2 }, ' ', { part: ['− R̄'], m: 3 }, { part: [')²'], m: 4 }], den: ['N(N + 1)'], m: 5 }],
       aria: 'H gleich 12 geteilt durch N mal N plus eins, mal die Summe über alle Gruppen j von n j mal R quer j minus R quer, zum Quadrat',
       metrics: [

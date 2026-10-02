@@ -28,7 +28,7 @@ export const partielleKorrelation: SentenceTemplate<PcValues, PcStats> = {
   concept: 'partial_cor',
   wofuer: 'Wer feste Lernzeiten plant, löst im Wissenstest etwas mehr Aufgaben: Im Lehrdatensatz hängen Lernplanung und Wissenstest mit r ≈ 0,16 zusammen. Aber wer plant, lernt auch mehr, und wer mehr lernt, löst mehr. Bleibt ein Zusammenhang, wenn man die Lernzeit herausrechnet?',
   kurz: 'Die partielle Korrelation sagt dir, wie stark zwei Merkmale zusammenhängen, wenn man ein drittes herausrechnet. So siehst du, ob ein Zusammenhang nur über das dritte Merkmal läuft.',
-  fachlich: 'Die Korrelation der Residuen von x und y nach linearer Kontrolle von z; mit einer Kontrollvariable rXY|Z = (rXY − rXZ · rYZ) / √((1 − rXZ²)(1 − rYZ²)).',
+  fachlich: 'Die partielle Korrelation ist die Korrelation von x und y, nachdem eine dritte Variable aus beiden linear herausgerechnet ist. Sie ist die Korrelation der Residuen beider Variablen.',
   initial: { ...PLAN_TEST_ZEIT },
   compute: v => {
     const prod = v.rXZ * v.rYZ, numer = v.rXY - prod, den = Math.sqrt((1 - v.rXZ ** 2) * (1 - v.rYZ ** 2));

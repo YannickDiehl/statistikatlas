@@ -284,7 +284,7 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
     concordance: variantFor({
       lastStep: 3,
       kurz: 'Ein Personenpaar ist gleich gerichtet, wenn dieselbe Person bei beiden Merkmalen höher liegt, und entgegengesetzt, wenn sich die Reihenfolgen widersprechen. Unterm Strich zählt, welche Sorte überwiegt.',
-      fachlich: 'Konkordante Paare C stimmen in der Rangfolge beider Variablen überein, diskordante Paare D widersprechen sich; gebundene Paare zählen zu keiner der beiden.',
+      fachlich: 'Zwei Personen bilden ein konkordantes Paar, wenn beide Variablen sie gleich ordnen, ein diskordantes, wenn die Reihenfolgen sich widersprechen. Gebundene Paare zählen zu keiner der beiden Gruppen.',
       symbolic: [...CD],
       aria: 'C minus D: Zahl der konkordanten minus Zahl der diskordanten Personenpaare',
       metrics: [{ label: 'Personenpaare N₀', value: c => String(c.s.n0) }, { label: 'C − D', value: c => int(c.s.cd) }],
@@ -302,7 +302,7 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
     goodman_gamma: variantFor({
       lastStep: 4,
       kurz: 'Gamma sagt dir, wie stark gleich gerichtete Paare gegenüber entgegengesetzten überwiegen, von −1 bis +1. Paare mit Gleichstand lässt es weg.',
-      fachlich: 'Der Überschuss konkordanter über diskordante Paare, bezogen auf alle nicht gebundenen Paare: (C − D) / (C + D).',
+      fachlich: 'Goodman–Kruskal-Gamma ist der Überschuss konkordanter über diskordante Paare, geteilt durch alle Paare ohne Gleichstand. Es liegt zwischen −1 und +1.',
       symbolic: ['γ = ', { frac: [...CD], den: [{ part: ['C + D'], m: 4 }], m: 4 }],
       aria: 'Gamma gleich C minus D, geteilt durch C plus D',
       metrics: [{ label: 'C − D', value: c => int(c.s.cd) }, { label: 'Gamma γ', value: c => c.s.gamma === null ? 'nicht definiert' : num(c.s.gamma) }],
@@ -328,7 +328,7 @@ export const paarvergleich: Workshop<Pairs, PairCount> = {
     kendall_tau: variantFor({
       lastStep: 6,
       kurz: 'Tau-b sagt dir, wie gut zwei Reihenfolgen zusammenpassen, von −1 bis +1, und zählt dabei Gleichstände mit. Ohne Gleichstände ist es so groß wie Gamma.',
-      fachlich: '(C − D) / √((N₀ − Tₓ)(N₀ − Tᵧ)) mit N₀ = n(n − 1) / 2 und den in x und in y gebundenen Paaren Tₓ und Tᵧ.',
+      fachlich: 'Kendall Tau-b vergleicht konkordante und diskordante Paare wie Gamma, berücksichtigt im Nenner aber auch die Gleichstände in x und in y. Ohne Gleichstände ist es so groß wie Gamma.',
       symbolic: ['τb = ', { frac: [...CD], den: [{ big: '√', m: 6 }, { root: [{ part: ['(N₀ − Tₓ)(N₀ − Tᵧ)'], m: 5 }], m: 6 }], m: 6 }],
       aria: 'tau b gleich C minus D, geteilt durch die Wurzel aus N null minus T x, mal N null minus T y',
       metrics: [{ label: 'Gamma γ', value: c => c.s.gamma === null ? 'nicht definiert' : num(c.s.gamma) }, { label: 'Tau-b τb', value: c => c.s.tau === null ? 'nicht definiert' : num(c.s.tau) }],

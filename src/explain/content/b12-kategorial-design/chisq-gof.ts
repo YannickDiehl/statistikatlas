@@ -236,7 +236,7 @@ export const anpassung: Workshop<GofData, GofStats> = {
     chisq_gof: {
       lastStep: 6,
       kurz: 'Der Anpassungstest prüft, ob beobachtete Häufigkeiten zu einer vorher festgelegten Verteilung passen. Je größer χ², desto schlechter passen sie.',
-      fachlich: 'χ² = Σ (Oⱼ − Eⱼ)² / Eⱼ mit Eⱼ = n · p₀ⱼ, verglichen mit einer χ²-Verteilung mit k − 1 Freiheitsgraden.',
+      fachlich: 'Der Chi-Quadrat-Anpassungstest vergleicht je Kategorie die beobachtete mit der erwarteten Häufigkeit, quadriert die Abweichung und teilt durch die Erwartung. Die Summe wird mit einer Chi-Quadrat-Verteilung verglichen.',
       symbolic: ['χ² = ', { big: 'Σ', m: 5 }, { frac: [{ part: ['('], m: 3 }, { part: ['O', { sub: 'j' }, ' −'], m: 2 }, ' ', { part: ['E', { sub: 'j' }], m: 1 }, { part: [')²'], m: 3 }], den: [{ part: ['E', { sub: 'j' }], m: 4 }], m: 4 },
         ',  ', { part: ['df = k − 1'], m: 6 }],
       aria: 'Chi-Quadrat gleich Summe über alle Kategorien j von O j minus E j, zum Quadrat, geteilt durch E j; Freiheitsgrade k minus 1',

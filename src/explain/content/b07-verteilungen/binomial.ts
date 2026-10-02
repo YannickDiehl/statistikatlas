@@ -31,7 +31,7 @@ export const binomial: SentenceTemplate<BinValues, BinStats> = {
   picture: 'b07-binomial',
   wofuer: 'Du befragst fünf zufällig ausgewählte Erwachsene. Wenn 41 % eine Weiterbildung gemacht haben, wie im Lehrdatensatz: Wie wahrscheinlich ist es, dass genau zwei der fünf eine gemacht haben? Die Binomialverteilung beantwortet solche Fragen.',
   kurz: 'Die Binomialverteilung zählt Erfolge in n unabhängigen Ja-Nein-Versuchen mit derselben Erfolgswahrscheinlichkeit p. Sie sagt, wie wahrscheinlich jede mögliche Zahl von Erfolgen ist.',
-  fachlich: 'Die Verteilung der Summe von n unabhängigen Bernoulli-Variablen mit gleichem p: P(X = k) = C(n, k) · pᵏ · (1 − p)ⁿ⁻ᵏ für k = 0, 1, …, n.',
+  fachlich: 'Die Binomialverteilung gibt an, wie wahrscheinlich eine bestimmte Zahl von Erfolgen in einer festen Zahl unabhängiger Versuche ist. Sie ist die Verteilung einer Summe von Bernoulli-Variablen mit gleicher Erfolgswahrscheinlichkeit.',
   initial: BIN_START,
   compute: v => {
     const q = Math.round((1 - v.p) * 100) / 100, valid = v.k <= v.n;

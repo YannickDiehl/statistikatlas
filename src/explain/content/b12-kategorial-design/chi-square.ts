@@ -230,7 +230,7 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
     chi_square: {
       lastStep: 6,
       kurz: 'Der Chi-Quadrat-Test prüft, ob zwei kategoriale Merkmale zusammenhängen. Er vergleicht die Kreuztabelle mit der Tabelle, die du ohne Zusammenhang erwarten würdest.',
-      fachlich: 'χ² = Σ (Oⱼₖ − Eⱼₖ)² / Eⱼₖ mit Eⱼₖ = Zeilensumme mal Spaltensumme / n, verglichen mit einer χ²-Verteilung mit (r − 1)(c − 1) Freiheitsgraden.',
+      fachlich: 'Der Chi-Quadrat-Test vergleicht in jeder Zelle die beobachtete Zahl mit der, die ohne Zusammenhang zu erwarten wäre. Die quadrierten Abweichungen, geteilt durch die Erwartung, ergeben zusammen die Prüfgröße.',
       symbolic: ['χ² = ', { big: 'Σ', m: 5 }, { frac: [{ part: ['('], m: 3 }, { part: ['O', { sub: 'jk' }, ' −'], m: 2 }, ' ', { part: ['E', { sub: 'jk' }], m: 1 }, { part: [')²'], m: 3 }], den: [{ part: ['E', { sub: 'jk' }], m: 4 }], m: 4 },
         ',  ', { part: ['df = (r − 1)(c − 1)'], m: 6 }],
       aria: 'Chi-Quadrat gleich Summe über alle Zellen von O j k minus E j k, zum Quadrat, geteilt durch E j k; Freiheitsgrade r minus 1 mal c minus 1',

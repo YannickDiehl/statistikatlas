@@ -262,7 +262,7 @@ export const gerade: Workshop<Pairs, Fit> = {
     linear_regression: {
       lastStep: 3,
       kurz: 'Die lineare Regression legt eine Gerade durch die Punkte. Ihre Steigung sagt dir, wie viele Aufgaben mehr Personen im Schnitt lösen, die eine Stunde länger gelernt haben.',
-      fachlich: 'Die Gerade ŷ = b₀ + b₁ · x nach der Methode der kleinsten Quadrate: b₁ = Σ(xᵢ − x̄)(yᵢ − ȳ) / Σ(xᵢ − x̄)² und b₀ = ȳ − b₁ · x̄.',
+      fachlich: 'Die lineare Regression legt die Gerade so, dass die quadrierten senkrechten Abstände aller Punkte zusammen am kleinsten sind. Sie geht immer durch den Punkt der beiden Mittelwerte.',
       symbolic: [{ part: ['b₁'], m: 2 }, ' = ', { frac: [{ big: 'Σ', m: 2 }, '(x', { sub: 'i' }, ' − ', { part: ['x̄'], m: 1 }, ')(y', { sub: 'i' }, ' − ', { part: ['ȳ'], m: 1 }, ')'], den: [{ big: 'Σ', m: 2 }, '(x', { sub: 'i' }, ' − ', { part: ['x̄'], m: 1 }, ')²'], m: 2 },
         ',   ', { part: ['b₀ = '], m: 3 }, { part: ['ȳ'], m: 1 }, { part: [' − b₁ · '], m: 3 }, { part: ['x̄'], m: 1 }],
       aria: 'b eins gleich Summe von x i minus x quer mal y i minus y quer, geteilt durch die Summe von x i minus x quer zum Quadrat; b null gleich y quer minus b eins mal x quer',
@@ -296,7 +296,7 @@ export const gerade: Workshop<Pairs, Fit> = {
     prediction: {
       lastStep: 4,
       kurz: 'Der lineare Prädiktor setzt Startwert und Steigung zu einer Vorhersage zusammen: Startwert plus Steigung mal Lernzeit. So bekommt jede Person die Zahl, die die Gerade für sie erwartet.',
-      fachlich: 'Die gewichtete Summe ηᵢ = b₀ + Σ bⱼ · xᵢⱼ der Prädiktorwerte einer Person. In der linearen Regression ist der vorhergesagte Wert ŷᵢ = ηᵢ.',
+      fachlich: 'Der lineare Prädiktor setzt für jede Person den Achsenabschnitt und ihre Werte mal den Steigungen zusammen. In der linearen Regression ist er der vorhergesagte Wert.',
       symbolic: [{ part: ['ŷᵢ'], m: 4 }, ' = ', { part: ['b₀'], m: 3 }, ' + ', { part: ['b₁'], m: 2 }, { part: [' · xᵢ'], m: 4 }],
       aria: 'y Dach i gleich b null plus b eins mal x i',
       metrics: [
@@ -317,6 +317,7 @@ export const gerade: Workshop<Pairs, Fit> = {
         paragraphs: () => [
           'Mit Lernzeit und Alter schätzt R für die 200 Befragten ŷ = 5,82 + 0,52 · Lernzeit + 0,006 · Alter. Jeder Koeffizient (jede Steigung) beschreibt den Zusammenhang, wenn die anderen Prädiktoren gleich bleiben.',
           'Kategorien ohne Rangfolge gehen als Dummyvariablen ein: Jede Gruppe bekommt ihren eigenen Koeffizienten im Vergleich zur Vergleichsgruppe.',
+          'Allgemein ist der lineare Prädiktor die gewichtete Summe ηᵢ = b₀ + Σ bⱼ · xᵢⱼ der Prädiktorwerte einer Person; in der linearen Regression ist ŷᵢ = ηᵢ.',
           'In der logistischen Regression ist ηᵢ ein Logit. Erst die logistische Funktion 1 / (1 + e^(−η)) macht daraus eine Wahrscheinlichkeit zwischen 0 und 1.',
           'Vorhersagen weit außerhalb der beobachteten Werte sind unsicher: Die Gerade weiß nicht, ob der Zusammenhang dort noch gerade verläuft.',
         ],
@@ -325,7 +326,7 @@ export const gerade: Workshop<Pairs, Fit> = {
     residuals: {
       lastStep: 6,
       kurz: 'Ein Residuum sagt dir, wie weit eine Person über oder unter der Geraden liegt. Die Regression wählt die Gerade, bei der die Summe der quadrierten Residuen am kleinsten ist.',
-      fachlich: 'eᵢ = yᵢ − ŷᵢ. Die Methode der kleinsten Quadrate wählt b₀ und b₁ so, dass Σeᵢ² minimal wird.',
+      fachlich: 'Das Residuum ist der beobachtete minus den vorhergesagten Wert einer Person. Die Methode der kleinsten Quadrate macht die Summe der quadrierten Residuen so klein wie möglich.',
       symbolic: [{ part: ['Σ'], m: 6 }, { part: ['e'], m: 5 }, { sub: 'i' }, { part: ['²'], m: 6 }, ' = ', { big: 'Σ', m: 6 }, { part: ['(y'], m: 5 }, { sub: 'i' }, { part: [' − '], m: 5 }, { part: ['ŷ'], m: 4 }, { sub: 'i' }, { part: [')²'], m: 6 }],
       aria: 'Summe der e i Quadrat gleich Summe von y i minus y Dach i, zum Quadrat',
       metrics: [

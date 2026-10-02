@@ -26,7 +26,7 @@ export const mcnemarTest: SentenceTemplate<McValues, McStats> = {
   concept: 'mcnemar_test',
   wofuer: 'Dieselben 200 Befragten wurden vor und nach einem Kurs gefragt: „Trauen Sie sich zu, eine kleine Datenauswertung selbstständig durchzuführen?“ Vorher sagten 83 Ja, nachher 120. Ist das mehr als Zufall? McNemar schaut nur auf die Personen, die ihre Antwort gewechselt haben.',
   kurz: 'McNemar prüft, ob sich eine Ja-nein-Antwort bei denselben Personen verändert hat. Er vergleicht nur die Wechsel: von Nein zu Ja und von Ja zu Nein.',
-  fachlich: 'Test für zwei verbundene dichotome Messungen: Unter der Nullhypothese sind beide Wechselrichtungen gleich wahrscheinlich; χ² = (|b − c| − 1)² / (b + c) mit einem Freiheitsgrad.',
+  fachlich: 'Der McNemar-Test prüft zwei verbundene Ja-Nein-Messungen derselben Personen. Unter der Nullhypothese sind Wechsel in beide Richtungen gleich wahrscheinlich; verglichen wird mit einer Chi-Quadrat-Verteilung.',
   initial: { b: KURS.b, c: KURS.c },
   compute: mcStats,
   metrics: [

@@ -15,7 +15,7 @@ export const erwartet: SentenceTemplate<ExpValues, ExpStats> = {
   concept: 'expected',
   wofuer: 'Im Lehrdatensatz haben 40 Befragte Abitur, und 82 der 200 haben in den letzten zwölf Monaten eine Weiterbildung gemacht. Wie viele mit Abitur und Weiterbildung wären zu erwarten, wenn Schulabschluss und Weiterbildung nichts miteinander zu tun hätten? Beobachtet sind 19.',
   kurz: 'Die erwartete Zellhäufigkeit sagt dir, wie viele Personen in einer Zelle stünden, wenn die beiden Merkmale nichts miteinander zu tun hätten. Jede Zeile hätte dann dieselben Anteile wie alle zusammen.',
-  fachlich: 'Unter der Annahme der Unabhängigkeit das Produkt der Randhäufigkeiten geteilt durch die Fallzahl: Eⱼₖ = nⱼ₊ · n₊ₖ / n.',
+  fachlich: 'Die erwartete Zellhäufigkeit ist Zeilensumme mal Spaltensumme, geteilt durch die Fallzahl. So viele Personen stünden in der Zelle, wenn beide Merkmale unabhängig wären.',
   initial: { 'nⱼ₊': ABITUR_JA.row, 'n₊ₖ': ABITUR_JA.col, n: ABITUR_JA.n },
   compute: v => {
     const row = v['nⱼ₊'], col = v['n₊ₖ'], n = v.n, valid = row <= n && col <= n && n > 0;

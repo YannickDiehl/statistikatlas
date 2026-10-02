@@ -179,7 +179,7 @@ export const zentrieren: Workshop<number[], ZStats> = {
     centering: {
       lastStep: 2,
       kurz: 'Zentrieren heißt: von jedem Wert die Mitte abziehen. Danach liegt die Mitte bei 0, und jede Zahl zeigt, wie weit jemand über oder unter dem Durchschnitt liegt.',
-      fachlich: 'Zentrierung am Mittelwert: xᶜᵢ = xᵢ − x̄. Die zentrierte Reihe hat den Mittelwert 0; die Abstände zwischen den Fällen und die Standardabweichung bleiben unverändert.',
+      fachlich: 'Die Zentrierung am Mittelwert zieht von jedem Wert den Mittelwert ab. Die zentrierte Reihe hat den Mittelwert 0; die Abstände zwischen den Personen und die Standardabweichung bleiben.',
       symbolic: [{ part: ['xᶜ', { sub: 'i' }], m: 2 }, ' = ', { part: ['x', { sub: 'i' }, ' −'], m: 2 }, ' ', { part: ['x̄'], m: 1 }],
       aria: 'x i zentriert gleich x i minus x quer',
       metrics: [

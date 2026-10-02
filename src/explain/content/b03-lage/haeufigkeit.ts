@@ -202,7 +202,7 @@ export const haeufigkeiten: Workshop<number[], Haeufigkeit> = {
     mode: {
       lastStep: 2,
       kurz: 'Der Modus ist die Antwort, die am häufigsten vorkommt. Du findest ihn, indem du zählst, nicht rechnest.',
-      fachlich: 'Der Modus ist die Ausprägung mit der größten absoluten Häufigkeit nⱼ; er braucht weder eine Reihenfolge noch Abstände.',
+      fachlich: 'Der Modus ist die Ausprägung mit der größten absoluten Häufigkeit. Er braucht weder eine Reihenfolge noch Abstände.',
       symbolic: [{ part: ['Modus'], m: 2 }, ' = Antwort mit dem ', { part: ['größten'], m: 2 }, ' ', { part: ['n', { sub: 'j' }], m: 1 }],
       aria: 'Modus gleich die Antwort mit dem größten n j',
       metrics: [{ label: 'Häufigste Antwort, Personen', value: c => String(c.s.max) }, { label: 'Modus', value: c => `Code ${c.s.mode}` }],
@@ -225,7 +225,7 @@ export const haeufigkeiten: Workshop<number[], Haeufigkeit> = {
     frequency: {
       lastStep: 5,
       kurz: 'Häufigkeiten zählen, wie oft jede Antwort vorkommt. Geteilt durch alle ergibt das Anteile, die sich vergleichen lassen.',
-      fachlich: 'Die absolute Häufigkeit nⱼ zählt die Fälle je Ausprägung, die relative hⱼ = nⱼ / n teilt durch die Zahl der gültigen Fälle; die kumulierte Fⱼ summiert die relativen bis j.',
+      fachlich: 'Die absolute Häufigkeit zählt die Personen je Ausprägung, die relative teilt sie durch die Zahl der gültigen Fälle. Die kumulierte zählt die relativen Häufigkeiten bis zu einer Ausprägung zusammen.',
       symbolic: [{ part: ['h', { sub: 'j' }], m: 4 }, ' = ', { frac: [{ part: ['n', { sub: 'j' }], m: 1 }], den: [{ part: ['n'], m: 3 }], m: 4 }, ',  ', { part: ['F', { sub: 'j' }, ' = h₀ + … + h', { sub: 'j' }], m: 5 }],
       aria: 'h j gleich n j geteilt durch n; F j gleich h null plus und so weiter bis h j',
       metrics: [{ label: 'Personen n', value: c => String(c.s.n) }, { label: 'Anteil der häufigsten Antwort', value: c => pct(c.s.maxShare / 100) }],

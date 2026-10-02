@@ -205,7 +205,7 @@ export const paarWerkstatt: Workshop<Pairs, PairedStats> = {
     paired_difference: {
       lastStep: 5,
       kurz: 'Gepaarte Differenzen vergleichen jede Person mit sich selbst: zweiter Wert minus erster. Der gepaarte t-Test prüft, ob diese Veränderungen im Mittel von 0 abweichen.',
-      fachlich: 'dᵢ = yᵢ − xᵢ je Person. Der gepaarte t-Test ist ein t-Test für eine Stichprobe mit den Differenzen: t = d̄ / (s / √n) mit n − 1 Freiheitsgraden.',
+      fachlich: 'Die gepaarte Differenz ist je Person der spätere minus der frühere Wert. Der gepaarte t-Test ist ein t-Test für eine Stichprobe mit diesen Differenzen.',
       symbolic: ['t = ', { frac: [{ part: ['d̄'], m: 2 }], den: [{ part: ['s'], m: 3 }, ' / ', { big: '√', m: 4 }, { root: ['n'], m: 4 }], m: 5 }, ',   ', { part: ['dᵢ = yᵢ − xᵢ'], m: 1 }],
       aria: 't gleich d quer geteilt durch s durch Wurzel aus n, dabei ist d i gleich y i minus x i',
       metrics: [

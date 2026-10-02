@@ -232,7 +232,7 @@ export const friedmanWorkshop: Workshop<number[][], FrStats> = {
     friedman_test: {
       lastStep: 6,
       kurz: 'Der Friedman-Test vergleicht drei oder mehr Messungen derselben Personen. Jede Person ordnet ihre eigenen Ergebnisse, und der Test fragt, ob ein Zeitpunkt dabei auffällig oft oben oder unten landet.',
-      fachlich: 'Rangtest für k verbundene Stichproben: Ränge je Person, Q = 12 / (N · k · (k + 1)) · Σ(Rⱼ − N(k + 1) / 2)², geprüft mit der χ²-Verteilung mit k − 1 Freiheitsgraden; dazu Kendalls W = Q / (N(k − 1)).',
+      fachlich: 'Der Friedman-Test bildet Ränge innerhalb jeder Person und vergleicht die Rangsummen der Messzeitpunkte. Geprüft wird mit der Chi-Quadrat-Verteilung; Kendalls W zeigt, wie einig sich die Personen sind.',
       symbolic: [{ part: ['Q'], m: 5 }, ' = ', { frac: [{ part: ['12 ·'], m: 5 }, ' ', { big: 'Σ', m: 4 }, { part: ['('], m: 4 }, { part: ['R', { sub: 'j' }], m: 2 }, ' ', { part: ['− E'], m: 3 }, { part: [')²'], m: 4 }], den: ['N · k · (k + 1)'], m: 5 }, { br: true },
         { part: ['W = Q / (N(k − 1))'], m: 6 }],
       aria: 'Q gleich 12 geteilt durch N mal k mal k plus eins, mal die Summe über alle Zeitpunkte j von R j minus E, zum Quadrat; E ist die erwartete Rangsumme N mal k plus eins halbe. W gleich Q geteilt durch N mal k minus eins',

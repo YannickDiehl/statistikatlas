@@ -25,7 +25,7 @@ export const pruefgroesse: SentenceTemplate<TValues, TStats> = {
   picture: 'b09-pruefgroesse',
   wofuer: `Die 200 Befragten schlafen im Schnitt ${num(SCHLAF.mean)} Stunden pro Nacht, knapp fünf Minuten mehr als die sieben Stunden der Nullhypothese. Ist das viel oder wenig? Das hängt davon ab, wie stark ein Mittelwert von Stichprobe zu Stichprobe schwankt. Die Prüfgröße t misst den Abstand genau daran.`,
   kurz: 'Die Prüfgröße t sagt dir, wie weit dein Ergebnis von der Nullhypothese entfernt ist, gemessen am üblichen Schwanken von Stichprobe zu Stichprobe. Je weiter t von 0 weg ist, desto schlechter passen die Daten zur Nullhypothese.',
-  fachlich: 'Für den t-Test einer Stichprobe ist t = (x̄ − μ₀) / (s / √n). Unter H₀ und den Annahmen des Tests folgt t einer t-Verteilung mit n − 1 Freiheitsgraden, der Referenzverteilung.',
+  fachlich: 'Die Prüfgröße fasst die Daten in einer Zahl zusammen, beim t-Test den Abstand zum Wert der Nullhypothese in Standardfehlern. Unter der Nullhypothese folgt sie einer bekannten Referenzverteilung, hier der t-Verteilung.',
   initial: T_START,
   compute: v => {
     const root = Math.sqrt(v.n), se = v.s / root, t = v.d / se, df = v.n - 1;

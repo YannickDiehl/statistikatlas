@@ -25,7 +25,7 @@ export const skalieren: SentenceTemplate<ScaleValues, ScaleStats> = {
   picture: 'b04-skalieren',
   wofuer: 'Im Lehrdatensatz steht, wie viele Stunden jemand in den letzten sieben Tagen gelernt hat. Wie viel ist das pro Tag? Du teilst jede Lernzeit durch 7. Was passiert dabei mit der Mitte, mit der Streuung und mit der Reihenfolge der Befragten?',
   kurz: 'Skalieren heißt: alle Werte durch dieselbe Zahl teilen. Mitte und Streuung ändern sich im selben Verhältnis, die Reihenfolge bleibt.',
-  fachlich: 'Skalierung durch Division: x*ᵢ = xᵢ / a mit einem festen a > 0. Mittelwert und Standardabweichung werden ebenfalls durch a geteilt, die Varianz durch a²; die Rangfolge bleibt erhalten.',
+  fachlich: 'Die Skalierung durch Division teilt jeden Wert durch denselben festen, positiven Maßstab. Mittelwert und Standardabweichung werden ebenfalls durch ihn geteilt, die Varianz durch sein Quadrat; die Rangfolge bleibt.',
   initial: { x: 8.3, a: 7 },
   compute: v => ({ ...v, xs: v.x / v.a, meanS: L.mean / v.a, sdS: L.sd / v.a, varS: L.variance / (v.a * v.a) }),
   metrics: [

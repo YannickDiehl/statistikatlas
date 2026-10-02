@@ -206,7 +206,7 @@ export const gewichte: Workshop<Gewichtet, GewichtetS> = {
     weights: {
       lastStep: 5,
       kurz: 'Gewichte legen fest, wie stark jede Person in eine Rechnung eingeht. Gruppen, die zu oft befragt wurden, zählen weniger, und Gruppen, die zu selten befragt wurden, mehr.',
-      fachlich: 'Der gewichtete Mittelwert ist x̄w = Σ wᵢxᵢ / Σ wᵢ. Designgewichte gleichen ungleiche Auswahlwahrscheinlichkeiten aus.',
+      fachlich: 'Der gewichtete Mittelwert zählt jede Antwort mit dem Gewicht ihrer Person und teilt durch die Summe der Gewichte. Designgewichte gleichen ungleiche Auswahlwahrscheinlichkeiten aus.',
       symbolic: ['x̄w = ', { frac: [{ big: 'Σ', m: 3 }, { part: ['w', { sub: 'i' }], m: 1 }, { part: ['x', { sub: 'i' }], m: 2 }], den: [{ big: 'Σ', m: 4 }, { part: ['w', { sub: 'i' }], m: 4 }], m: 5 }],
       aria: 'x quer w gleich Summe über alle Personen i von w i mal x i, geteilt durch die Summe aller w i',
       metrics: [{ label: 'ohne Gewichte x̄', value: c => num(c.s.mean) }, { label: 'gewichtet x̄w', value: c => num(c.s.meanW) }],
