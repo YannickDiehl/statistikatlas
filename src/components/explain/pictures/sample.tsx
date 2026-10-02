@@ -77,6 +77,17 @@ function Scatter({ values, values2, names, who, pic, col, col2, onWho }: { value
   const points = values.map((v, i) => ({ x: X(v) + jitter(i), y: Y(values2[i]) + jitter(i + 2) }));
   const sign = (i: number) => center ? (values[i] - center[0]) * (values2[i] - center[1]) : 0;
   const me = points[who], prod = sign(who);
+  // Name der gewählten Person über ihrem Punkt; träfe er dort eine Eckenbeschriftung der Plus- und Minusflächen
+  // (bei 0/1-Spalten liegen die Punkte in den Ecken), steht er darunter oder weiter weg. Breiten grob 8 px je Zeichen.
+  const corners = pic.quadrants && center ? [
+    { x0: right - 6 - 8.2 * 16, x1: right - 6, y0: top, y1: top + 19 },
+    { x0: left + 6, x1: left + 6 + 8.2 * 17, y0: bottom - 21, y1: bottom - 2 },
+    { x0: left + 2, x1: left + 20, y0: top + 2, y1: top + 21 },
+    { x0: right - 20, x1: right - 2, y0: bottom - 21, y1: bottom - 2 },
+  ] : [];
+  const labelX = Math.min(right - 20, Math.max(left + 20, me.x)), labelHalf = names[who].length * 4.2 + 2;
+  const hits = (y: number) => corners.some(c => labelX + labelHalf > c.x0 && labelX - labelHalf < c.x1 && y + 3 > c.y0 && y - 14 < c.y1);
+  const labelY = [me.y - 10, me.y + 21, me.y - 30, me.y + 41].find(y => y - 14 >= 0 && y + 3 <= bottom && !hits(y)) ?? me.y - 10;
   return (
     <div ref={box}>
       <svg className="xw-svg xw-sample-plot" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
@@ -98,7 +109,7 @@ function Scatter({ values, values2, names, who, pic, col, col2, onWho }: { value
           <text className="xw-t xw-neg-t" x={right - 6} y={bottom - 6} textAnchor="end">−</text>
         </g>}
         <circle className="xw-s-dot sel" cx={me.x} cy={me.y} r={5.5} />
-        <text className="xw-t xw-strong xw-halo" x={Math.min(right - 20, Math.max(left + 20, me.x))} y={me.y - 10} textAnchor="middle">{names[who]}</text>
+        <text className="xw-t xw-strong xw-halo" x={labelX} y={labelY} textAnchor="middle">{names[who]}</text>
         <Axis scale={X} ticks={niceTicks(x0, x1)} at={bottom} from={left} to={right} format={v => num(v)} labelGap={16} />
         <Axis scale={Y} ticks={yTicks} at={left} from={top} to={bottom} orient="left" format={v => num(v)} />
         <text className="xw-t" x={(left + right) / 2} y={bottom + 38} textAnchor="middle">{unitTitle(col)} (x)</text>
