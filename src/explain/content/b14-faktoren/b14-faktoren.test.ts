@@ -13,6 +13,7 @@ import { efa, efaTabs, METHODEN_PCA } from './efa';
 import { beideModelle, factorModel, factorModelTabs, METHODEN_ML } from './factor-model';
 import { dimensionality, dimensionalityTabs } from './dimensionality';
 import { eigenvalues, eigenvaluesTabs, equalCorrelation } from './eigenvalues';
+import { loadings, loadingsTabs } from './loadings';
 import { VERTRAUEN } from './allbus';
 import { corMatrix } from './rechnen';
 
@@ -215,6 +216,19 @@ test('B14 Eigenwerte: Karte, Regler und Reiter mit den Zahlen aus R', () => {
   assert.match(r.kurz, /^Der erste Eigenwert ist 3,56: Die erste Komponente bündelt 71,2 % .* zwischen 0,31 und 0,41\./);
   const out = applyOp(rows, 'methoden1', 'outlier', 1, 1), p = methodenPca(out)!;
   assert.ok(close(p.values.reduce((a, b) => a + b, 0), 5, 1e-9), 'Summe 5');
+});
+
+test('B14 Ladungen: ALLBUS-Muster und Reiter mit den Zahlen aus R', () => {
+  assert.match(loadings.stellDirVor.text, /3\.333 Befragte.*Bundesregierung \(0,92\), Bundestag \(0,90\) und Parteien \(0,85\).*Katholische \(0,92\) und evangelische Kirche \(0,90\).*nur bei 0,13 bis 0,21\./);
+  assert.match(loadings.bausteine[0].rechnung!, /Politik: 0,92, mit der Komponente Kirchen: 0,13\./);
+  const s = loadingsTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = s.result(ctx());
+  assert.match(r.kurz, /^Frage 1 lädt mit 0,85 auf der Komponente\. Alle fünf Fragen laden stark auf ihr, zwischen 0,83 und 0,86\./);
+  assert.match(r.zusatz!, /mit allen Nachkommastellen 0,73\./);
+  assert.ok(close(s.value!(ctx(applyOp(rows, 'methoden1', 'reverse')))!, -0.8521855, 1e-6), 'umgepolt: −0.852 wie R');
+  // In R (summary): Ladungen 0.829 bis 0.857.
+  assert.deepEqual([Math.min(...METHODEN_PCA.loadings), Math.max(...METHODEN_PCA.loadings)].map(v => Math.round(v * 1000) / 1000), [0.829, 0.857]);
 });
 
 const allbusFile = process.env.ALLBUS_SAV;

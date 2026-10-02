@@ -141,7 +141,37 @@ export function Scree({ values, title }: { values: readonly number[]; title: str
   );
 }
 
+/**
+ * Ladungsmuster als Tabelle mit Balken: je Frage eine Zeile, je Komponente eine Spalte; die Balkenlänge ist der Betrag
+ * der Ladung, die Zahl steht daneben (mit Vorzeichen).
+ */
+export function LoadingGrid({ rows, names, heads, title }: { rows: readonly (readonly number[])[]; names: readonly string[]; heads: readonly string[]; title: string }) {
+  const [box, W] = useWidth();
+  const label = 104, colW = (W - label - 8) / heads.length, barMax = colW - 50, top = 52, rowH = 30;
+  const H = top + rows.length * rowH + 12;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`${title}: ${rows.map((r, i) => `${names[i]} ${r.map((v, k) => `${heads[k]} ${fixed(v)}`).join(', ')}`).join('; ')}`}>
+        <text className="xw-t xw-strong" x={8} y={18}>{title}</text>
+        {heads.map((h, k) => <text key={h} className="xw-t xw-strong" x={label + k * colW} y={top - 12}>{h}</text>)}
+        {rows.map((r, i) => <g key={names[i]}>
+          <text className="xw-t" x={8} y={top + i * rowH + 19}>{names[i]}</text>
+          {r.map((v, k) => {
+            const x = label + k * colW, w = Math.abs(v) * barMax, big = Math.abs(v) >= 0.5;
+            return <g key={k}>
+              <Bar x={x} y={top + i * rowH + 5} width={w} height={20} tone={v < 0 ? 'neg' : big ? 'pos' : 'plain'} />
+              <text className={`xw-t${big ? ' xw-strong' : ''}`} x={x + Math.max(2, w) + 6} y={top + i * rowH + 20}>{fixed(v)}</text>
+            </g>;
+          })}
+        </g>)}
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b14-ladungen': forCard(() => <LoadingGrid rows={VERTRAUEN.rotated} names={VERTRAUEN.short} heads={['Politik', 'Kirchen']} title="Ladungen nach Varimax, ALLBUS 2023" />),
   'b14-scree': forCard(p => isMethoden(p.value ?? 0)
     ? <Scree values={METHODEN_PCA.eigen} title="Methoden-Zuversicht, Lehrdatensatz" />
     : <Scree values={VERTRAUEN.eigen} title="Vertrauen, ALLBUS 2023" />),

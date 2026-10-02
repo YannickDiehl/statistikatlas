@@ -6,6 +6,7 @@ import { efa, efaTabs } from './efa';
 import { factorModel, factorModelTabs } from './factor-model';
 import { dimensionality, dimensionalityTabs } from './dimensionality';
 import { eigenvalues, eigenvaluesTabs } from './eigenvalues';
+import { loadings, loadingsTabs } from './loadings';
 
 export const b14Faktoren: AreaIndex = {
   explanations: {
@@ -14,6 +15,7 @@ export const b14Faktoren: AreaIndex = {
     factor_model: { kind: 'begriff', card: factorModel },
     dimensionality: { kind: 'begriff', card: dimensionality },
     eigenvalues: { kind: 'begriff', card: eigenvalues },
+    loadings: { kind: 'begriff', card: loadings },
   },
   tabs: {
     reliability: reliabilityTabs,
@@ -21,5 +23,6 @@ export const b14Faktoren: AreaIndex = {
     factor_model: factorModelTabs,
     dimensionality: dimensionalityTabs,
     eigenvalues: eigenvaluesTabs,
+    loadings: loadingsTabs,
   },
 };
