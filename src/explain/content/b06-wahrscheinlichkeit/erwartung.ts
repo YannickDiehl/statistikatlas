@@ -93,7 +93,7 @@ export const bridgeErwartung: Bridge<Erw> = {
     },
     {
       all: c => `Jeder Wert mal 1 / ${N(c)}, alles zusammen: μ ${eq(c.s.mu)} ${c.u(c.s.mu)}. Das ist genau der Mittelwert der ${N(c)}.`,
-      person: c => `${BP(c)} steuert ${num(c.values[c.who])} · 1 / ${N(c)} ≈ ${c.u(c.s.w[c.who])} bei.`,
+      person: c => `${BP(c)} steuert ${num(c.values[c.who])} · 1 / ${N(c)} ${eq(c.s.w[c.who])} ${c.u(c.s.w[c.who])} bei.`,
     },
     {
       all: c => `Für jede Person: Wert minus μ. Mit den Chancen gewichtet ergeben alle ${N(c)} Abstände zusammen 0.`,
