@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react';
 import type { TableTool } from '../../explain/types';
 import { cell, close } from '../../explain/format';
 import { Genau, MutBox, Section, TopKurz, useExplainMode, useStepJump } from './basics';
-import { CheckQuestion, NameBox, ThinkQuestions } from './pieces';
+import { CheckQuestion, NameBox, ThinkQuestions, TokenCard } from './pieces';
+import { RTOKENS } from '../../domain/rTokens';
 import { pictureFor } from './pictures/register';
 
 type Columns = TableTool['columns'];
@@ -28,6 +29,11 @@ function DataTable({ columns, rows, fresh = new Set<string>(), caption }: { colu
 }
 
 const GENERAL = 'Noch nicht ganz. Schau dir die Tabelle „Nachher“ noch einmal an.';
+/**
+ * Zeichen, die im Code nur zum Üben stehen (M7): replace() setzt einzelnen Personen eine Lücke oder einen Code ein.
+ * Dieselbe Karte wie im Reiter „In R“ steht dann unter dem Code.
+ */
+const PRACTICE = ['replace'];
 
 /**
  * Tabellen-Werkzeug (Vorlage 3, allgemein): fünf Personen vorher, die Operation in Schritten, nachher, der
@@ -41,7 +47,7 @@ export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onCo
   const after = useMemo(() => t.apply(t.rows, option), [t, option]);
   const fresh = useMemo(() => new Set(after.columns.map(c => c.key).filter(k => !t.columns.some(c => c.key === k))), [after, t.columns]);
   const chosen = t.options.find(o => o.id === option)?.label ?? option;
-  const draw = pictureFor(t.picture, 'tabelle');
+  const draw = pictureFor(t.picture, 'tabelle'), code = t.rCode(option);
   const summary = `Deine Wahl: ${chosen}. ${fresh.size ? `Neue Spalten: ${after.columns.filter(c => fresh.has(c.key)).map(c => c.label).join(', ')}.` : 'Keine neuen Spalten.'}`;
   return (
     <div className={`xw xw-tabelle${compact ? ' xw-compact' : ''}`}>
@@ -73,7 +79,10 @@ export function TabellenWerkzeug({ tool: t, onConcept }: { tool: TableTool; onCo
         <DataTable columns={after.columns} rows={after.rows} fresh={fresh} caption={`Die Daten nachher, Wahl: ${chosen}`} />
       </Section>
       {draw && <Section title="Das Bild dazu">{draw({ tool: t, option, before: { columns: t.columns, rows: t.rows }, after })}</Section>}
-      <Section title="So sieht es in R aus"><pre className="xw-code-block"><code>{t.rCode(option)}</code></pre></Section>
+      <Section title="So sieht es in R aus">
+        <pre className="xw-code-block"><code>{code}</code></pre>
+        {PRACTICE.filter(k => code.includes(`${k}(`)).map(k => <TokenCard key={k} note={RTOKENS[k]} onConcept={onConcept} />)}
+      </Section>
       {!compact && <CheckQuestion key={option} question={t.check.question}
         evaluate={value => {
           const answer = t.check.answer(option);

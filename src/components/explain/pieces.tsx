@@ -2,12 +2,25 @@ import { useState, type ReactNode, type Ref } from 'react';
 import { ArrowUpRight } from 'lucide-react';
 import { conceptById } from '../../domain/concepts';
 import { ref, titleFor } from '../../domain/learning';
-import { txt, type Ctx, type Step, type Workshop } from '../../explain/types';
+import { txt, type Ctx, type Step, type TokenNote, type Workshop } from '../../explain/types';
 import { parseAnswer } from '../../explain/format';
 import { KurzGesagt, Progress, StepArrows, tight } from './basics';
 
 /** Fachbegriff eines Begriffs: sein Titel in concepts.ts (Regel 2), sonst der Anzeigetitel. */
 export const termFor = (id: string) => conceptById[id]?.title ?? titleFor(ref(id));
+
+/** Lernkarte zu einem Zeichen im R-Code: Zeichen, Fachbegriff mit Aussprache, Kurz gesagt, typischer Fehler. */
+export function TokenCard({ note, concept, onConcept }: { note: TokenNote; concept?: string; onConcept: (id: string) => void }) {
+  return (
+    <div className="xw-card xw-token">
+      <p className="xw-name-term"><code>{note.sym}</code><strong>{note.term}</strong>{note.say && <small>sprich „{note.say}“</small>}</p>
+      <KurzGesagt text={note.kurz} />
+      <h3 className="xw-warn-head">Aufgepasst</h3>
+      <p>{tight(note.fehler)}</p>
+      {concept && <p><ConceptLink id={concept} onConcept={onConcept}>Begriff öffnen</ConceptLink></p>}
+    </div>
+  );
+}
 
 /** Rückmeldung mit fett gesetztem Anfang („Genau,“, „Fast!“, „Noch nicht ganz.“). */
 export function Feedback({ ok, message, children }: { ok: boolean; message: string; children?: ReactNode }) {

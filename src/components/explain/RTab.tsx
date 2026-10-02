@@ -14,7 +14,7 @@ import { rKurz } from '../../explain/registry';
 import { liveCode, liveFits, liveHelp, liveOutput, locate, noteFor, tokenize, type Spot } from '../../explain/rRead';
 import type { LiveCall, RTab as RTabData, TokenNote } from '../../explain/types';
 import { KurzGesagt, Section, tight, useExplainMode } from './basics';
-import { ConceptLink, Feedback } from './pieces';
+import { Feedback, TokenCard } from './pieces';
 import { MariposaPanel, panelSettings, type RPanelProps } from '../MariposaPanel';
 
 type Catalog = Record<string, { code: string; output: string }>;
@@ -117,19 +117,6 @@ function CodeView({ code, notes, active, onPick }: { code: string; notes: Record
     <pre className="r-code xw-rcode" role="group" aria-label="Der Aufruf: Zeichen mit Pfeiltasten wählen, mit Enter erklären" onKeyDown={roving.onKeyDown}><code>{parts.map((part, i) => part.key
       ? <button type="button" key={i} {...roving.props(k++)} className={`xw-tok${active === part.key ? ' on' : ''}`} aria-pressed={active === part.key} aria-label={`${part.text}: erklären`} onClick={() => onPick(part.key!)}>{part.text}</button>
       : <span key={i}>{part.text}</span>)}</code></pre>
-  );
-}
-
-/** Lernkarte zu einem Zeichen: Zeichen, Fachbegriff mit Aussprache, Kurz gesagt, typischer Fehler. */
-function TokenCard({ note, concept, onConcept }: { note: TokenNote; concept?: string; onConcept: (id: string) => void }) {
-  return (
-    <div className="xw-card xw-token">
-      <p className="xw-name-term"><code>{note.sym}</code><strong>{note.term}</strong>{note.say && <small>sprich „{note.say}“</small>}</p>
-      <KurzGesagt text={note.kurz} />
-      <h3 className="xw-warn-head">Aufgepasst</h3>
-      <p>{tight(note.fehler)}</p>
-      {concept && <p><ConceptLink id={concept} onConcept={onConcept}>Begriff öffnen</ConceptLink></p>}
-    </div>
   );
 }
 

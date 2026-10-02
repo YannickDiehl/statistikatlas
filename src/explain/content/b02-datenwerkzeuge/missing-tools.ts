@@ -165,8 +165,6 @@ export const missingToolsTabs: ConceptTabs = {
     entry: 'missing_tools', variant: 0,
     tokens: {
       set_na: { sym: 'set_na()', term: 'Missing-Codes aufbereiten', kurz: 'Erklärt Codes wie −9 zu fehlenden Werten. R lässt sie beim Rechnen weg und merkt sich, welcher Code es war.', fehler: 'Steht der Code in Anführungszeichen, meldet mariposa: Missing values for `einkommen` must be numeric. Schreib die Zahl ohne Anführungszeichen.' },
-      replace: { sym: 'replace()', term: 'Wert ersetzen', kurz: 'Setzt hier nur zum Üben bei P001 den Code −9 ein. Der Datensatz atlas selbst bleibt unverändert.', fehler: 'Mit = statt == meldet R: unbenutztes Argument (id = "P001"). Für den Vergleich braucht es zwei Gleichheitszeichen.' },
-      id: { sym: 'id', term: 'Kennung der Befragten', kurz: 'Die Spalte mit den Kennungen P001 bis P200. Mit ihr findest du jede Person eindeutig.', fehler: 'Ohne Anführungszeichen um P001 sucht R ein Objekt dieses Namens und meldet: Objekt \'P001\' nicht gefunden.' },
     },
     outputMap: [
       { match: 'Missing', atlas: 'fehlende Werte', step: 2, explain: 'Der Code −9 bei P001 zählt jetzt als fehlend. describe() weist ihn hier aus, statt mit ihm zu rechnen.' },

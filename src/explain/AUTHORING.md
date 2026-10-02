@@ -353,7 +353,7 @@ atlas <- atlas %>%
   mutate(abitur = rec(schulabschluss, rules = "4=1; 0,1,2,3=0"))
 ```
 
-Pipe `%>%`, Spalten mit `mutate()`, Umkodieren mit `rec()` in `mutate()`. Nicht: `d$`, `d <- `, `factor(`, `ifelse(`, `read.csv2`. Codes in Regeln ausdrücklich nennen statt `else=0` (sonst werden fehlende Angaben still zu 0). Die Inhaltstests prüfen den R-Code jedes Tabellen-Werkzeugs auf diese Punkte.
+Pipe `%>%`, Spalten mit `mutate()`, Umkodieren mit `rec()` in `mutate()`. Nicht: `d$`, `d <- `, `factor(`, `ifelse(`, `read.csv2`. Codes in Regeln ausdrücklich nennen statt `else=0` (sonst werden fehlende Angaben still zu 0). Die Inhaltstests prüfen den R-Code jedes Tabellen-Werkzeugs auf diese Punkte. Einzige Ausnahme ist `replace()` aus Basis-R, um einzelnen Personen zum Üben eine Lücke oder einen Code einzusetzen (`missing`, `missing_tools`, `data_export`; mariposa hat dafür keine Funktion). Dazu gehört ein Kommentar „zum Üben“ im Code; die Karte „Wert ersetzen“ aus der allgemeinen Codelegende (`RTOKENS.replace`) steht dann im Reiter „In R“ hinter dem Zeichen und im Tabellen-Werkzeug unter dem Code.
 
 ---
 

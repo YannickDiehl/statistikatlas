@@ -412,6 +412,16 @@ test('In R: every catalog lead call shows exactly the captured call, also after 
   assert.ok(leadCode(inspector('sd', { selection: { ...defaultSelection, x: 'schlafdauer' } }), 'sd')?.includes('describe(schlafdauer'), 'sd: Live-Aufruf folgt der Spaltenwahl');
 });
 
+test('the practice replace() is explained by the same „nur zum Üben“ card in missing, missing_tools and data_export (M7)', () => {
+  const card = 'Setzt hier nur zum Üben bei einzelnen Personen eine Lücke oder einen Code wie −9 ein.';
+  for (const id of ['missing', 'missing_tools', 'data_export']) {
+    const v = text(panelOf(inspector(id), id, 'verstehen'));
+    assert.ok(v.includes('replace(') && v.split(card).length === 2, `${id}: Werkzeug ohne die Karte zu replace()`);
+  }
+  for (const id of ['missing', 'missing_tools']) assert.match(panelOf(inspector(id), id, 'r'), /aria-label="replace: erklären"/, `${id}: replace() im Leitaufruf nicht antippbar`);
+  assert.ok(!text(panelOf(inspector('dummy'), 'dummy', 'verstehen')).includes(card), 'ohne replace() keine Karte');
+});
+
 test('tabs: one reset button in the sample tab, step cards keep h1 → h2 → h3, legacy labs collapsed under Weitere Übung (IB15, IB16, IB3)', () => {
   const changed = applyOp(surveyRows, 'lernzeit', 'outlier', 40, 1);
   for (const id of ['linear', 'ss', 'crosstab', 'validn', 'series']) {

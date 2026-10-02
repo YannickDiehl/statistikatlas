@@ -209,6 +209,16 @@ export const RTOKENS: Record<string, TokenNote> = {
     kurz: 'Behält nur die Zeilen, auf die die Bedingung zutrifft, etwa filter(erwerbstaetig == 1).',
     fehler: 'In der Bedingung steht ==. Mit filter(erwerbstaetig = 1) meldet dplyr: you\'ve used `=` instead of `==`.',
   },
+  replace: {
+    sym: 'replace()', term: 'Wert ersetzen',
+    kurz: 'Setzt hier nur zum Üben bei einzelnen Personen eine Lücke oder einen Code wie −9 ein. Der Datensatz atlas selbst bleibt unverändert.',
+    fehler: 'Mit = statt == meldet R: unbenutztes Argument (id = "P001"). Für den Vergleich braucht es zwei Gleichheitszeichen.',
+  },
+  id: {
+    sym: 'id', term: 'Kennung der Befragten',
+    kurz: 'Die Spalte mit den Kennungen P001 bis P200. Mit ihr findest du jede Person eindeutig.',
+    fehler: 'Ohne Anführungszeichen um P001 sucht R ein Objekt dieses Namens und meldet: Objekt \'P001\' nicht gefunden.',
+  },
   '==': {
     sym: '==', term: 'Vergleich auf Gleichheit', say: 'ist gleich',
     kurz: 'Prüft, ob zwei Werte gleich sind, und liefert TRUE oder FALSE. Ein einzelnes = setzt dagegen ein Argument.',
