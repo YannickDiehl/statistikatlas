@@ -27,7 +27,7 @@ export const factorialAnova: ConceptCard = {
   wofuer: 'Hängt die Lernzeit mit dem Schulabschluss zusammen, mit einer Weiterbildung oder mit beidem? Die mehrfaktorielle ANOVA prüft beide Gruppierungen in einem Modell. Und sie fragt, ob der Unterschied zwischen mit und ohne Weiterbildung in allen Abschlussgruppen gleich groß ist.',
   kurz: 'Die mehrfaktorielle ANOVA vergleicht Mittelwerte nach zwei oder drei Gruppierungen zugleich. Sie trennt, was jede Gruppierung für sich zeigt, von ihrem Zusammenspiel.',
   stellDirVor: {
-    text: 'Im Lehrdatensatz haben Befragte mit Abitur und ohne Weiterbildung in den letzten sieben Tagen im Schnitt 10,73 Stunden gelernt, die mit Abitur und Weiterbildung 7,84 Stunden. In den anderen Abschlussgruppen liegen mit und ohne Weiterbildung höchstens 1,56 Stunden auseinander, teils in der anderen Richtung. Der Unterschied nach Weiterbildung ist also nicht in allen Abschlussgruppen gleich. R meldet für dieses Zusammenspiel p = 0.020.',
+    text: 'Im Lehrdatensatz haben Befragte mit Abitur, die in den letzten zwölf Monaten keine Weiterbildung gemacht haben, in den letzten sieben Tagen im Schnitt 10,73 Stunden gelernt. Mit Abitur und Weiterbildung sind es 7,84 Stunden. In den anderen Abschlussgruppen liegen mit und ohne Weiterbildung höchstens 1,56 Stunden auseinander, teils in der anderen Richtung. Der Unterschied nach Weiterbildung ist also nicht in allen Abschlussgruppen gleich. R meldet für dieses Zusammenspiel p = 0.020.',
     figures: [
       { label: 'Abitur, ohne Weiterbildung', value: '10,73 h' },
       { label: 'Abitur, mit Weiterbildung', value: '7,84 h' },
@@ -153,7 +153,7 @@ export const factorialAnovaTabs: ConceptTabs = {
       ss_type: { sym: 'ss_type =', term: 'Typ der Quadratsummen', kurz: '3 heißt Typ III: Jeder Term wird so geprüft, als käme er zuletzt ins Modell.', fehler: 'Mit ss_type = 2 warnt mariposa: Type II sums of squares are not implemented; computing Type III (the SPSS default).' },
     },
     outputMap: [
-      { match: 'F', atlas: 'Haupteffekt Schulabschluss', step: 1, explain: 'F für den Schulabschluss: Die Abschlussgruppen unterscheiden sich deutlich, p < 0,001.' },
+      { match: 'F', atlas: 'Haupteffekt Schulabschluss', step: 1, explain: 'F für den Schulabschluss: Die Abschlussgruppen unterscheiden sich, p < 0,001, mit η²p = 0,15.' },
       { match: '0.284', atlas: 'Haupteffekt Weiterbildung', step: 1, explain: 'F für die Weiterbildung allein: im Durchschnitt über alle Abschlüsse kaum ein Unterschied.' },
       { match: '2.999', atlas: 'Interaktion A × B', step: 2, explain: 'F für das Zusammenspiel: Der Unterschied nach Weiterbildung ist je nach Abschluss verschieden groß.' },
       { match: '0.020', atlas: 'p der Interaktion', step: 2, explain: 'Gäbe es kein Zusammenspiel, wären so verschiedene Unterschiede in etwa 2 von 100 Stichproben zu erwarten.' },

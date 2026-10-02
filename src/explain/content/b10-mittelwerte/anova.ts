@@ -59,7 +59,7 @@ const betweenTerms = (c: C) => c.s.gm.map(m => `3 · (${num(m)} − ${num(c.s.gr
 export const anovaWerkstatt: Workshop<number[], AnovaStats> = {
   id: 'b10-anova',
   wofuer: 'Neun Personen mit drei verschiedenen Schulabschlüssen (H = Hauptschulabschluss, M = Mittlerer Abschluss, A = Abitur) sagen, wie viele Stunden sie in den letzten sieben Tagen gelernt haben. Lernen die drei Gruppen im Mittel verschieden lange? Oder liegen ihre Mitten nur so weit auseinander, wie es das Schwanken zwischen einzelnen Menschen ohnehin erwarten lässt?',
-  mut: 'Die Formel sieht nach viel aus. Sie besteht aber aus fünf kleinen Schritten, die du alle schon kannst: Mitten finden, Abstände quadrieren, zusammenzählen, teilen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
+  mut: 'Die Formeln sehen nach viel aus. Sie bestehen aber aus kleinen Schritten, die du alle schon kannst: Mitten finden, Abstände quadrieren, zusammenzählen, teilen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'b10-anova',
   names: NAMES,
   bounds: { min: 0, max: 14 },
@@ -312,7 +312,7 @@ export const onewayAnovaTabs: ConceptTabs = {
         zusatz: `Je Abschluss zwischen ${Math.min(...a.groups.map(g => g.n))} und ${Math.max(...a.groups.map(g => g.n))} Befragte. Die Daten zeigen einen Zusammenhang, keine Wirkung des Abschlusses.`,
       };
     },
-    voraussetzung: 'Unabhängige Befragte und ähnliche Streuung in allen Gruppen. Mit 37 bis 42 Personen je Gruppe sind die Gruppenmittel annähernd normalverteilt.',
+    voraussetzung: 'Unabhängige Befragte und ähnliche Streuung in allen Gruppen. Mit 37 bis 42 Personen je Gruppe sind die Gruppenmittel nach der Faustregel ab 30 annähernd normalverteilt.',
     think: [
       {
         question: 'Alle lernen doppelt so lange. Was passiert mit F?', options: ['verdoppelt sich', 'vervierfacht sich', 'bleibt gleich'], correct: 2,

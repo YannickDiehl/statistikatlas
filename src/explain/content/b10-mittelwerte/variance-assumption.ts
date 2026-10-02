@@ -25,7 +25,7 @@ export const varianceAssumption: ConceptCard = {
   wofuer: 'Die klassische ANOVA und der Student-t-Test nehmen an, dass die Menschen in allen Gruppen ähnlich stark um ihre Gruppenmitte streuen. In der Regression heißt dieselbe Annahme: Die Vorhersagefehler streuen überall gleich stark. Was passiert, wenn das nicht stimmt?',
   kurz: 'Gleiche Fehlervarianz heißt: Die Abweichungen vom Modell streuen überall ungefähr gleich stark. Der Fachbegriff dafür ist Homoskedastizität.',
   stellDirVor: {
-    text: 'Im Lehrdatensatz streut die Lernzeit in den fünf Abschlussgruppen ähnlich stark: Die Standardabweichungen liegen zwischen 2,53 Stunden (Hauptschulabschluss) und 3,36 Stunden (Abitur). Die größte ist damit 1,33-mal so groß wie die kleinste. Die klassische ANOVA meldet F = 8,64, die Welch-ANOVA ohne diese Annahme F = 8,25. Beide kommen zum selben Schluss.',
+    text: 'Im Lehrdatensatz streut die Lernzeit der letzten sieben Tage in den fünf Abschlussgruppen ähnlich stark: Die Standardabweichungen liegen zwischen 2,53 Stunden (Hauptschulabschluss) und 3,36 Stunden (Abitur). Die größte ist damit 1,33-mal so groß wie die kleinste. Die klassische ANOVA meldet F = 8,64, die Welch-ANOVA ohne diese Annahme F = 8,25. Beide kommen zum selben Schluss.',
     figures: [
       { label: 'kleinste s', value: '2,53 h' },
       { label: 'größte s', value: '3,36 h' },
@@ -66,7 +66,7 @@ export const varianceAssumption: ConceptCard = {
     {
       question: 'In einer Gruppe streuen die Antworten doppelt so stark wie in der anderen, beide Gruppen sind gleich groß. Ist der klassische t-Test dann unbrauchbar?',
       options: ['nein, bei gleich großen Gruppen ist er recht unempfindlich', 'ja, immer', 'das hängt vom Mittelwert ab'], correct: 0, step: 2,
-      explain: 'Bei gleich großen Gruppen gleichen sich die Fehler weitgehend aus. Heikel wird es erst, wenn zusätzlich die Gruppengrößen stark verschieden sind.',
+      explain: 'Bei gleich großen Gruppen stimmen seine p-Werte trotzdem recht gut. Heikel wird es erst, wenn zusätzlich die Gruppengrößen stark verschieden sind.',
       kurz: 'Ungleiche Streuung schadet vor allem bei ungleich großen Gruppen.',
     },
     {

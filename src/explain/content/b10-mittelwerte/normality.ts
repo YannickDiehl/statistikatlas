@@ -21,7 +21,7 @@ export const normality: ConceptCard = {
   wofuer: 'Viele Verfahren nehmen an, dass Werte annähernd normalverteilt sind, also glockenförmig um ihre Mitte liegen. Passt das zur Schlafdauer der 200 Befragten? Zum Einkommen ihrer Haushalte? Normalitätstests vergleichen die Daten mit der Form einer Normalverteilung.',
   kurz: 'Ein Normalitätstest prüft, wie weit die Form deiner Daten von einer Glockenkurve abweicht. Ein großes p heißt nur: Die Abweichung fällt nicht auf.',
   stellDirVor: {
-    text: 'Im Lehrdatensatz schlafen die 200 Befragten im Mittel 7,08 Stunden pro Nacht, mit s ≈ 0,82 Stunden. 140 von ihnen liegen höchstens eine Standardabweichung von der Mitte entfernt; bei einer Normalverteilung wären es etwa 137. R meldet für die Schlafdauer Shapiro–Wilk W = 0.994, p = 0.660. Beim Haushaltseinkommen ist p < 0.001: Wenige Haushalte haben sehr hohe Einkommen, die Verteilung ist rechtsschief.',
+    text: 'Im Lehrdatensatz haben die 200 Befragten in den letzten sieben Tagen im Mittel 7,08 Stunden pro Nacht geschlafen, mit s ≈ 0,82 Stunden. 140 von ihnen liegen höchstens eine Standardabweichung von der Mitte entfernt; bei einer Normalverteilung wären es etwa 137. R meldet für die Schlafdauer Shapiro–Wilk W = 0.994, p = 0.660. Beim Haushaltseinkommen ist p < 0.001: Wenige Haushalte haben sehr hohe Einkommen, die Verteilung ist rechtsschief.',
     figures: [
       { label: 'Schlafdauer, Shapiro–Wilk', value: 'p = 0.660' },
       { label: 'Einkommen, Shapiro–Wilk', value: 'p < 0.001' },
@@ -113,7 +113,7 @@ export const normalityTabs: ConceptTabs = {
       const n = normalityFor(c);
       if (!n.test) return { kurz: 'Die Schlafdauer streut nicht. Dann gibt es keine Form, die man mit einer Glockenkurve vergleichen könnte.', fachlich: 'Die Standardabweichung ist 0; der Test ist nicht definiert.' };
       return {
-        kurz: `Die Schlafdauer weicht um D ≈ ${num(n.test.D)} von der passenden Normalverteilung ab. Stammten die Daten aus einer Normalverteilung, wäre so ein Abstand ${often(n.test.p)} Stichproben zu erwarten (${pText(n.test.p)}).`,
+        kurz: `Die Schlafdauer weicht um D ≈ ${num(n.test.D)} von der passenden Normalverteilung ab. Stammten die Daten aus einer Normalverteilung, wäre ein mindestens so großer Abstand ${often(n.test.p)} Stichproben zu erwarten (${pText(n.test.p)}).`,
         fachlich: `Kolmogorov–Smirnov-Test mit Lilliefors-Korrektur: D ≈ ${num(n.test.D, 3)}, ${pText(n.test.p)}; Mittelwert ${num(n.mean)} h, s ≈ ${num(n.sd)} h. Shapiro–Wilk zeigt der Reiter „In R“.`,
         zusatz: `${n.within1} von ${n.n} Befragten liegen höchstens eine Standardabweichung von der Mitte entfernt, ${n.within2} höchstens zwei; bei einer Normalverteilung wären es etwa 137 und 191.`,
       };
@@ -140,9 +140,9 @@ export const normalityTabs: ConceptTabs = {
     entry: 'normality_test', variant: 0,
     outputMap: [
       { match: 'KS', atlas: 'Abstand D', step: 2, explain: 'Der größte Abstand zwischen der Verteilung der Schlafdauer und der passenden Normalverteilung.' },
-      { match: 'p', atlas: 'p des KS-Tests', step: 3, explain: 'Mit Lilliefors-Korrektur: Stammten die Daten aus einer Normalverteilung, wäre so ein Abstand in etwa 24 von 100 Stichproben zu erwarten.' },
+      { match: 'p', atlas: 'p des KS-Tests', step: 3, explain: 'Mit Lilliefors-Korrektur: Stammten die Daten aus einer Normalverteilung, wäre ein mindestens so großer Abstand in etwa 24 von 100 Stichproben zu erwarten.' },
       { match: 'W', atlas: 'W', step: 2, explain: 'Shapiro–Wilk: W nahe 1 heißt, die sortierten Werte passen gut zur Normalverteilung.' },
-      { match: '0.660', atlas: 'p von Shapiro–Wilk', step: 3, explain: 'Stammten die Daten aus einer Normalverteilung, wäre so ein W in etwa 66 von 100 Stichproben zu erwarten.' },
+      { match: '0.660', atlas: 'p von Shapiro–Wilk', step: 3, explain: 'Stammten die Daten aus einer Normalverteilung, wäre ein mindestens so kleines W in etwa 66 von 100 Stichproben zu erwarten.' },
       { match: 'n', atlas: 'n', explain: 'Gerechnet wurde mit allen 200 gültigen Werten.' },
     ],
     check: {

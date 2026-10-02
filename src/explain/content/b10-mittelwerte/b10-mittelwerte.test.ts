@@ -169,7 +169,7 @@ test('Gepaarte Differenzen: die 200 Befragten wie in R', () => {
   const sample = b10Mittelwerte.tabs.paired_difference.sample!;
   if (sample.kind === 'analysis') {
     const r = sample.result(c);
-    assert.match(r.kurz, /im Schnitt \+0,75 Aufgaben im Vergleich zum ersten\. Die Veränderungen streuen mit s ≈ 1,89 Aufgaben, der Standardfehler ist 0,134\. .*in weniger als 1 von 1\.000 Stichproben zu erwarten \(p < 0,001\)/);
+    assert.match(r.kurz, /im Schnitt 0,75 Aufgaben mehr als beim ersten\. Die Veränderungen streuen mit s ≈ 1,89 Aufgaben, der Standardfehler ist 0,134\. .*in weniger als 1 von 1\.000 Stichproben zu erwarten \(p < 0,001\)/);
     assert.equal(r.zusatz, '115 Befragte lösen beim zweiten Test mehr Aufgaben, 53 weniger, 32 gleich viele.');
     assert.match(r.fachlich, /t\(199\) ≈ 5,6, p < 0,001/);
   }
@@ -284,7 +284,7 @@ test('Mehrfaktorielle ANOVA: Zellmittel und Typ-III-Tests wie in R', () => {
   near(TERME.zusammen.eta2p, f.ab.eta2p, 5e-4, 'η²p Zusammen'); near(TERME.schule.eta2p, f.a.eta2p, 5e-4, 'η²p Schule');
   near(factorialFor(ctx({ x: 'lernzeit' }, applyOp(rows, 'lernzeit', 'double')))!.ab.F, 2.99857, 1e-5, 'doppelt');
   near(factorialFor(ctx({ x: 'lernzeit' }, applyOp(rows, 'lernzeit', 'reverse')))!.ab.F, 2.99857, 1e-5, 'umgepolt');
-  assert.match(factorialAnova.stellDirVor.text, /10,73 Stunden gelernt, die mit Abitur und Weiterbildung 7,84 Stunden\. .* höchstens 1,56 Stunden/);
+  assert.match(factorialAnova.stellDirVor.text, /10,73 Stunden gelernt\. Mit Abitur und Weiterbildung sind es 7,84 Stunden\. .* höchstens 1,56 Stunden/);
   assert.match(factorialAnova.bausteine[1].rechnung!, /10,73 − 7,84 = 2,89 Stunden\. Mittlerer Abschluss: 7,23 − 8,79 = −1,56 Stunden/);
   const sample = b10Mittelwerte.tabs.factorial_anova.sample!;
   if (sample.kind === 'analysis') {
@@ -398,7 +398,7 @@ test('Normalverteilung prüfen: Schlafdauer und Einkommen wie in R', () => {
   near(normalityFor(ctx({ x: 'schlafdauer' }, applyOp(rows, 'schlafdauer', 'shift', 1))).test!.D, 0.05073636278, 1e-9, 'plus 1');
   near(normalityFor(ctx({ x: 'schlafdauer' }, applyOp(rows, 'schlafdauer', 'reverse'))).test!.D, 0.05073636278, 1e-9, 'gespiegelt');
   assert.deepEqual(sleepHistogram(rows).bins, [0, 6, 12, 25, 45, 44, 40, 18, 9, 0, 1]);
-  assert.match(normality.stellDirVor.text, /7,08 Stunden pro Nacht, mit s ≈ 0,82 Stunden\. 140 von ihnen .* etwa 137\. R meldet .* W = 0\.994, p = 0\.660\./);
+  assert.match(normality.stellDirVor.text, /7,08 Stunden pro Nacht geschlafen, mit s ≈ 0,82 Stunden\. 140 von ihnen .* etwa 137\. R meldet .* W = 0\.994, p = 0\.660\./);
   const sample = b10Mittelwerte.tabs.normality_test.sample!;
   if (sample.kind === 'analysis') {
     const r = sample.result(c);

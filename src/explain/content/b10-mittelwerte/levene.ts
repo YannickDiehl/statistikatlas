@@ -6,8 +6,8 @@ import { leveneFor, often, pText } from './stats';
 
 export const levene: ConceptCard = {
   concept: 'levene_test',
-  wofuer: 'Streut die Lernzeit in allen fünf Abschlussgruppen ähnlich stark? Der Levene-Test prüft das mit einem Trick: Er macht aus jeder Lernzeit einen Abstand zur Gruppenmitte. Dann vergleicht er die mittleren Abstände wie in einer ANOVA.',
-  kurz: 'Der Levene-Test prüft, ob Gruppen unterschiedlich stark streuen. Er vergleicht, wie weit die Menschen im Mittel von ihrer Gruppenmitte entfernt sind.',
+  wofuer: 'Streut die Lernzeit der letzten sieben Tage in allen fünf Abschlussgruppen ähnlich stark? Der Levene-Test prüft das mit einem Trick: Er macht aus jeder Lernzeit einen Abstand zum Zentrum ihrer Gruppe. Dann vergleicht er die mittleren Abstände wie in einer ANOVA.',
+  kurz: 'Der Levene-Test prüft, ob Gruppen unterschiedlich stark streuen. Er vergleicht, wie weit die Menschen im Mittel vom Zentrum ihrer Gruppe entfernt sind.',
   stellDirVor: {
     text: 'Im Lehrdatensatz liegen Befragte mit Abitur im Mittel etwa 2,6 Stunden vom Median ihrer Gruppe entfernt, Befragte mit Hauptschulabschluss etwa 1,9 Stunden. Die anderen drei Gruppen liegen dazwischen. Ist dieser Unterschied größer, als der Zufall erwarten lässt? R meldet F(4, 195) = 0.799, p = 0.527.',
     figures: [
@@ -23,14 +23,14 @@ export const levene: ConceptCard = {
   bausteine: [
     {
       title: 'Das Zentrum jeder Gruppe finden',
-      was: 'Für jede Gruppe bestimmen wir die Mitte: beim Brown–Forsythe-Test den Median, beim klassischen Levene-Test den Mittelwert.',
+      was: 'Für jede Gruppe bestimmen wir ein Zentrum: beim Brown–Forsythe-Test den Median, den mittleren Wert der Reihe nach, beim klassischen Levene-Test den Mittelwert.',
       rechnung: 'Median der Lernzeit: 5,7 Stunden ohne Abschluss, dann 7,3; 8; 8,6 und 8,9 Stunden mit Abitur.',
-      warum: 'Von dieser Mitte aus messen wir gleich, wie weit jede Person entfernt ist.',
+      warum: 'Von diesem Zentrum aus messen wir gleich, wie weit jede Person entfernt ist.',
       acht: 'Der Median ist unempfindlicher gegen Ausreißer. Deshalb nimmt man ihn gern, wenn die Werte schief verteilt sind.',
       concept: 'median',
     },
     {
-      title: 'Die Abstände zur Mitte messen',
+      title: 'Die Abstände zum Zentrum messen',
       was: 'Für jede Person nehmen wir den Abstand ihrer Lernzeit zum Zentrum ihrer Gruppe, ohne Vorzeichen. Wer mit Abitur 12,4 Stunden lernt, liegt 3,5 Stunden über dem Median.',
       rechnung: 'z = |12,4 − 8,9| = 3,5 Stunden',
       warum: 'Streut eine Gruppe stark, sind ihre Abstände groß. Der mittlere Abstand misst also, wie stark die Gruppe streut.',
@@ -68,11 +68,11 @@ export const levene: ConceptCard = {
   ],
   check: {
     question: 'Was vergleicht der Levene-Test zwischen den Gruppen?',
-    options: ['die Mittelwerte der Lernzeit', 'die mittleren Abstände zur Gruppenmitte', 'die Mediane der Gruppen', 'die Größe der Gruppen'],
+    options: ['die Mittelwerte der Lernzeit', 'die mittleren Abstände zum Zentrum der Gruppe', 'die Mediane der Gruppen', 'die Größe der Gruppen'],
     correct: 1,
     right: 'Genau. Je größer der mittlere Abstand, desto stärker streut die Gruppe.',
     diagnose: {
-      0: 'Fast! Das macht die ANOVA mit den Lernzeiten selbst. Levene vergleicht die Abstände zur Gruppenmitte.',
+      0: 'Fast! Das macht die ANOVA mit den Lernzeiten selbst. Levene vergleicht die Abstände zum Zentrum der Gruppe.',
       2: 'Fast! Der Median ist nur der Bezugspunkt, von dem aus gemessen wird.',
       3: 'Noch nicht ganz. Die Gruppengrößen gehen in die Freiheitsgrade ein, verglichen werden sie nicht.',
     },

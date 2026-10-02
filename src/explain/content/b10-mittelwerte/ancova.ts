@@ -152,7 +152,7 @@ export const ancovaTabs: ConceptTabs = {
       ss_type: SS_TYPE,
     },
     outputMap: [
-      { match: 'F', atlas: 'Kovariate Lernzeit', step: 2, explain: 'F für die Lernzeit: Sie hängt deutlich mit dem Wissenstest zusammen, p < 0,001.' },
+      { match: 'F', atlas: 'Kovariate Lernzeit', step: 2, explain: 'F für die Lernzeit: Sie hängt mit dem Wissenstest zusammen, p < 0,001, mit η²p = 0,25.' },
       { match: '0.718', atlas: 'p der Kovariate Alter', step: 2, explain: 'Das Alter hängt bei gleicher Lernzeit kaum mit dem Wissenstest zusammen.' },
       { match: '1.499', atlas: 'F Schulabschluss, bereinigt', step: 3, explain: 'F für den Schulabschluss bei gleicher Lernzeit und gleichem Alter. Ohne Kovariaten wäre es 4,34.' },
       { match: '0.204', atlas: 'p Schulabschluss, bereinigt', step: 3, explain: 'Gäbe es bei gleicher Lernzeit und gleichem Alter keine Unterschiede, wären solche Gruppenunterschiede in etwa 20 von 100 Stichproben zu erwarten.' },

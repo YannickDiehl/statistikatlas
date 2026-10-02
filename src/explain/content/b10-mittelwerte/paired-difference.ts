@@ -199,7 +199,7 @@ export const paarWerkstatt: Workshop<Pairs, PairedStats> = {
     },
     {
       question: 'Was passiert mit t, wenn du die beiden Tests wie zwei fremde Gruppen vergleichst?', options: ['t wird kleiner', 't bleibt gleich', 't wird größer'], correct: 0, step: 3,
-      explain: c => `Dann zählt das Schwanken zwischen den Personen mit: Die ersten Testwerte streuen mit s ≈ ${num(c.s.sdX)}, die Veränderungen nur mit ${num(c.s.sd)}. Der Unterschied wirkt dann viel unsicherer.`,
+      explain: c => `Dann zählt das Schwanken zwischen den Personen mit: Die ersten Testwerte streuen mit s ≈ ${num(c.s.sdX)}, die Veränderungen nur mit ${num(c.s.sd)}. Der Unterschied erscheint dann viel unsicherer.`,
       kurz: 'Wer die Paare zerreißt, verschenkt Genauigkeit.',
     },
   ],
@@ -250,12 +250,12 @@ export const pairedDifferenceTabs: ConceptTabs = {
       const p = pairedFor(c);
       if (!(p.sdD > 0)) return { kurz: `Alle 200 haben sich um genau ${num(p.dMean)} Aufgaben verändert. Ohne Streuung ist t nicht definiert.`, fachlich: 's = 0, also SE = 0; t lässt sich nicht berechnen.' };
       return {
-        kurz: `Beim zweiten Test lösen die 200 im Schnitt ${signed(p.dMean)} Aufgaben im Vergleich zum ersten. Die Veränderungen streuen mit s ≈ ${num(p.sdD)} Aufgaben, der Standardfehler ist ${sig3(p.se)}. Gäbe es im Mittel keine Veränderung, wäre ein so großes t ${often(p.p)} Stichproben zu erwarten (${pText(p.p)}).`,
+        kurz: `Beim zweiten Test lösen die 200 im Schnitt ${p.dMean > 0.005 ? `${tasks(p.dMean)} mehr` : p.dMean < -0.005 ? `${tasks(-p.dMean)} weniger` : 'genauso viele Aufgaben'} als beim ersten. Die Veränderungen streuen mit s ≈ ${num(p.sdD)} Aufgaben, der Standardfehler ist ${sig3(p.se)}. Gäbe es im Mittel keine Veränderung, wäre ein so großes t ${often(p.p)} Stichproben zu erwarten (${pText(p.p)}).`,
         fachlich: `Gepaarter t-Test, zweiseitig: d̄ = ${num(p.dMean)}, s ≈ ${num(p.sdD)}, SE ≈ ${sig3(p.se)}, t(${p.df}) ≈ ${num(p.t)}, ${pText(p.p)}.`,
         zusatz: `${p.up} Befragte lösen beim zweiten Test mehr Aufgaben, ${p.down} weniger, ${p.same} gleich viele.`,
       };
     },
-    voraussetzung: 'Die 200 Befragten sind unabhängig voneinander, und beide Tests messen dasselbe auf derselben Skala. Bei 200 Personen ist d̄ annähernd normalverteilt.',
+    voraussetzung: 'Die 200 Befragten sind unabhängig voneinander, und beide Tests messen dasselbe auf derselben Skala. Nach der Faustregel ab 30 Personen ist d̄ dann annähernd normalverteilt.',
     think: [
       {
         question: 'Alle lösen beim zweiten Test eine Aufgabe weniger. Was passiert mit der mittleren Veränderung d̄?', options: ['bleibt gleich', 'sinkt um 1', 'sinkt um 200'], correct: 1,
