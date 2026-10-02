@@ -10,6 +10,7 @@ import { pBestanden } from '../../../explain/content/b13-regression/logistisch-k
 import { P175, withScore } from '../../../explain/content/b13-regression/outliers';
 import { fitLine } from '../../../explain/content/b13-regression/fit';
 import { vifOf } from '../../../explain/content/b13-regression/multicollinearity';
+import { baseTable, MAX_K } from '../../../explain/content/b13-regression/overfitting';
 import { baseSurvey, sampleColumn } from '../../../explain/sample';
 import { Axis, clamp, Curve, DragPoint, forCard, forSentence, forWorkshop, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
@@ -275,7 +276,35 @@ function VifCurve({ r }: { r: number }) {
   );
 }
 
+/** R² im Training und im Test für 1 bis 20 Prädiktoren, markiert bei der Zahl des Reglers. */
+function TrainTest({ k }: { k: number }) {
+  const [box, W] = useWidth();
+  const L = 50, R = W - 16, T = 20, B = T + 180, H = B + 96;
+  const X = linear([1, MAX_K], [L, R]), Y = linear([0, 0.5], [B, T]), t = baseTable(), kk = Math.max(1, Math.min(MAX_K, Math.round(k)));
+  const path = (key: 'train' | 'test') => t.map((r, i) => `${i ? 'L' : 'M'}${X(i + 1).toFixed(1)},${Y(r[key]).toFixed(1)}`).join(' ');
+  const now = t[kk - 1];
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`R² im Training und im Test nach Zahl der Prädiktoren; bei ${kk} Prädiktoren Training ${num(now.train)}, Test ${num(now.test)}`}>
+        <MarkLine x={X(kk)} from={T} to={B} />
+        <path className="b13-train" d={path('train')} />
+        <path className="b13-test" d={path('test')} />
+        <circle className="b13-mark" cx={X(kk)} cy={Y(now.train)} r={5} />
+        <circle className="b13-mark" cx={X(kk)} cy={Y(now.test)} r={5} />
+        <Axis scale={X} ticks={[1, 5, 10, 15, 20]} at={B} from={L} to={R} labelGap={20} title="Zahl der Prädiktoren" />
+        <Axis scale={Y} ticks={[0, 0.1, 0.2, 0.3, 0.4, 0.5]} at={L} from={B} to={T} orient="left" format={pTicks} title="R²" />
+        <line className="b13-train" x1={L - 30} x2={L - 6} y1={B + 62} y2={B + 62} />
+        <text className="xw-t" x={L} y={B + 67}>Training, P001 bis P100: {num(now.train)}</text>
+        <line className="b13-test" x1={L - 30} x2={L - 6} y1={B + 84} y2={B + 84} />
+        <text className="xw-t" x={L} y={B + 89}>Test, P101 bis P200: {num(now.test)}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b13-ueberanpassung': forCard(p => <TrainTest k={p.value ?? 1} />),
   'b13-vif': forCard(p => <VifCurve r={p.value ?? 0.03} />),
   'b13-einfluss': forCard(p => <Influence score={p.value ?? 17} />),
   'b13-logistisch': forCard(p => <SCurve hours={p.value ?? 8} />),

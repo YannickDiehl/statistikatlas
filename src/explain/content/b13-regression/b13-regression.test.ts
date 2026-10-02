@@ -16,6 +16,7 @@ import { logistischeRegression, logistischeRegressionTabs } from './logistic-reg
 import { marginaleEffekte, marginaleEffekteTabs } from './marginal-effects';
 import { ausreisser, ausreisserTabs, influence, P175, P008, withScore } from './outliers';
 import { multikollinearitaet, multikollinearitaetTabs, vifFor, vifOf } from './multicollinearity';
+import { baseTable, trainTest, ueberanpassung, ueberanpassungTabs } from './overfitting';
 
 /*
  * Referenzwerte des Bereichs B13 „Regression“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -105,6 +106,14 @@ import { multikollinearitaet, multikollinearitaetTabs, vifFor, vifOf } from './m
  *   vif(cbind(x, w, x * w))                          # 1.674551 6.774332 7.404867 (R² des Produkts 0.8649537)
  *   xc <- x - mean(x); vif(cbind(xc, w, xc * w))     # 1.674551 1.000141 1.674523
  *   1 / (1 - .81); sqrt(1 / (1 - .81))               # 5.263158 2.294157
+ *
+ * Überanpassung (Training P001 bis P100, Test P101 bis P200, R² im Test mit dem Mittelwert der Testpersonen):
+ *   d <- as.data.frame(lapply(atlas[, -1], as.numeric)); tr <- 1:100; te <- 101:200
+ *   ov <- c("lernzeit", "alter", "schlafdauer", "einkommen", "haushaltsgroesse", "arbeitsstunden", "lernplanung5", "lernzuversicht7",
+ *           "statistikinteresse10", "finanzlage", "methoden1", "methoden2", "methoden3", "methoden4", "methoden5", "schulabschluss",
+ *           "erwerbstaetig", "weiterbildung", "kurs_vor", "kurs_nach")
+ *   for (k in 1:20) { m <- lm(reformulate(ov[1:k], "wissenstest"), d[tr, ]); pr <- predict(m, d[te, ]); yt <- d$wissenstest[te]
+ *     c(summary(m)$r.squared, 1 - sum((yt - pr)^2) / sum((yt - mean(yt))^2)) }   # Werte in OVERFIT unten
  */
 
 const rows = createSurvey();
@@ -319,4 +328,20 @@ test('B13 Multikollinearität: VIF wie in R', () => {
   assert.match(multikollinearitaet.regler!.describe(0.9), /VIF 5,26\. Der Standardfehler jedes der beiden Koeffizienten ist dann 2,29-mal so groß/);
   const t = multikollinearitaetTabs.sample!;
   if (t.kind === 'analysis') assert.match(t.result({ rows, columns: { x: ['lernzeit'], y: ['alter'] } }).kurz, /r = 0,03\. Beide bekommen den VIF 1,001: Ihre Beiträge lassen sich sauber trennen/);
+});
+
+const OVERFIT = [[0.291157, 0.288101], [0.305721, 0.256309], [0.326673, 0.253099], [0.344673, 0.255398], [0.364397, 0.267944], [0.380788, 0.255907], [0.381114, 0.253752],
+  [0.386346, 0.277955], [0.428101, 0.218964], [0.428260, 0.217087], [0.432388, 0.193012], [0.436748, 0.179242], [0.441077, 0.157880], [0.443681, 0.150344],
+  [0.451236, 0.107570], [0.455557, 0.098851], [0.456187, 0.098153], [0.457717, 0.090215], [0.459595, 0.082830], [0.459789, 0.080803]];
+
+test('B13 Überanpassung: Training und Test für 1 bis 20 Prädiktoren wie in R', () => {
+  const t = baseTable();
+  OVERFIT.forEach(([tr, te], k) => assert.ok(close(t[k].train, tr, 1e-6) && close(t[k].test, te, 1e-6), `${k + 1} Prädiktoren: ${t[k].train} / ${t[k].test}`));
+  assert.match(ueberanpassung.stellDirVor.text, /bei den ersten 100 29 % der Streuung, bei den neuen 100 29 %\. Mit 20 Prädiktoren sind es bei den ersten 100 46 %, bei den neuen nur noch 8 %/);
+  assert.match(ueberanpassung.bausteine[1].rechnung!, /0,29 mit 1 Prädiktor, 0,38 mit 6, 0,46 mit 20/);
+  assert.match(ueberanpassung.bausteine[2].rechnung!, /0,29 mit 1 Prädiktor, 0,26 mit 6, 0,08 mit 20/);
+  assert.match(ueberanpassung.regler!.describe(20), /46 % der Streuung, bei den 100 Testpersonen 8 %\. Die Lücke .* „Kurszuversicht, nachher“/);
+  assert.equal(trainTest(rows, 1)!.train, t[0].train);
+  const s = ueberanpassungTabs.sample!;
+  if (s.kind === 'analysis') assert.match(s.result({ rows, columns: { x: ['lernzeit'], y: ['wissenstest'] } }).kurz, /R² 0,29 im Training und 0,29 im Test\. Mit 20 Prädiktoren: 0,46 im Training, aber nur 0,08 im Test/);
 });
