@@ -6,6 +6,7 @@ import { close } from '../../format';
 import { txt, type Ctx, type SampleCtx } from '../../types';
 import { mannWhitney, midRanks } from './rank';
 import { mannWhitneyTabs, mannWhitneyWorkshop as mwW, mwSample, MW_START, MW_TIES } from './mann-whitney';
+import { kruskalWallisTabs, kruskalWallisWorkshop as kwW, kwMeanRank, kwSample, KW_EVEN, KW_START, KW_TIES } from './kruskal-wallis';
 
 /*
  * Referenzwerte des Bereichs B11, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -102,4 +103,76 @@ test('B11 Mann–Whitney-U: 200 Befragte und In R wie in R', () => {
   assert.match(map.r, /0,36 \/ √200/);
   assert.ok(close(Math.abs(t.z) / Math.sqrt(200), 0.026, 0.001));
   assert.ok(Number.isNaN(mannWhitney([1, 1], [1, 1]).z), 'alle gleich: z nicht definiert');
+});
+
+/*
+ * Kruskal–Wallis, Werkstatt (neun Lernzeiten; je drei mit Hauptschulabschluss, Mittlerem Abschluss, Abitur):
+ *   kw <- tibble(lernzeit = c(2, 5, 7, 4, 8, 10, 9, 12, 25), abschluss = rep(1:3, each = 3))
+ *   rank(kw$lernzeit); tapply(rank(kw$lernzeit), kw$abschluss, mean)          # 1 3 4 2 5 7 6 8 9; 2.666667 4.666667 7.666667
+ *   kw %>% kruskal_wallis(lernzeit, group = abschluss)                       # H = 5.066667, df = 2, p = 0.079394, epsilon² = 0.633333
+ *   tapply(kw$lernzeit, kw$abschluss, mean)                                  # 4.666667 7.333333 15.333333 (Stunden)
+ *   kw %>% mutate(lernzeit = replace(lernzeit, 9, 13)) %>% kruskal_wallis(lernzeit, group = abschluss)   # H = 5.066667
+ *   kw2 <- tibble(lernzeit = c(3, 5, 5, 5, 8, 10, 8, 12, 20), abschluss = rep(1:3, each = 3))
+ *   rank(kw2$lernzeit); tapply(rank(kw2$lernzeit), kw2$abschluss, mean)      # 1 3 3 3 5.5 7 5.5 8 9; 2.333333 5.166667 7.5
+ *   kw2 %>% kruskal_wallis(lernzeit, group = abschluss)                      # H = 5.588406, p = 0.061164, epsilon² = 0.698551
+ *   12 / 90 * sum(3 * (m - 5)^2); 1 - (3^3 - 3 + 2^3 - 2) / (9^3 - 9)         # 5.355556 (ohne Korrektur), C = 0.958333
+ *   tibble(lernzeit = c(1, 5, 9, 2, 6, 7, 3, 4, 8), abschluss = rep(1:3, each = 3)) %>% kruskal_wallis(lernzeit, group = abschluss)   # H = 0
+ * Kruskal–Wallis, Lehrdatensatz:
+ *   atlas %>% kruskal_wallis(finanzlage, group = schulabschluss) %>% summary()
+ *     # Mean Rank 85.43 107.85 84.38 119.23 104.69; H = 11.585454, df = 4, p = 0.020715, epsilon² = 0.058218
+ *   fl <- as.numeric(atlas$finanzlage); sa <- as.numeric(atlas$schulabschluss)
+ *   tapply(rank(6 - fl), sa, mean)                                           # 115.571429 93.15 116.621622 81.768293 96.3125
+ *   atlas %>% mutate(finanzlage = 6 - finanzlage) %>% kruskal_wallis(finanzlage, group = schulabschluss)        # H = 11.585454
+ *   atlas %>% mutate(schulabschluss = 4 - schulabschluss) %>% kruskal_wallis(finanzlage, group = schulabschluss) # H = 11.585454
+ *   tapply(rank(6 - fl), 4 - sa, mean)                                       # Code 3 (vorher Code 1): 93.15
+ *   atlas %>% kruskal_wallis(finanzlage, group = weiterbildung)              # H = 0.132636, p = 0.715714 (= Z² und p von mann_whitney)
+ *   atlas %>% kruskal_wallis(finanzlage)                                     # Fehler: `group` is required for Kruskal-Wallis test.
+ */
+test('B11 Kruskal–Wallis: Werkstatt wie in R', () => {
+  const s = kwW.compute(KW_START);
+  assert.deepEqual(s.rank, [1, 3, 4, 2, 5, 7, 6, 8, 9]);
+  assert.ok(s.mean.every((m, j) => near(m, [2.666667, 4.666667, 7.666667][j])), `${s.mean}`);
+  assert.ok(near(s.ss, 38) && near(s.H, 5.066667) && near(s.p, 0.079394) && near(s.eps2, 0.633333) && s.C === 1, `H ${s.H}`);
+  assert.ok(s.meanValue.every((m, j) => near(m, [4.666667, 7.333333, 15.333333][j])));
+  const t = kwW.compute(KW_TIES);
+  assert.deepEqual(t.rank, [1, 3, 3, 3, 5.5, 7, 5.5, 8, 9]);
+  assert.ok(near(t.Hraw, 5.355556) && near(t.C, 0.958333) && near(t.H, 5.588406) && near(t.p, 0.061164), `H ${t.H}`);
+  assert.ok(near(kwW.compute(KW_EVEN).H, 0), 'gleichmäßig verteilt: H = 0');
+  assert.ok(near(kwW.compute(kwW.think[0].tryIt!.apply(KW_START)).H, 5.066667), 'I auf 13: H bleibt');
+  const c = at(kwW, KW_START, 8), v = kwW.variants.kruskal_wallis;
+  assert.equal(txt(kwW.steps[1].rechnung, c), 'Hauptschulabschluss: (1 + 3 + 4) / 3 ≈ 2,67. Mittlerer Abschluss: (2 + 5 + 7) / 3 ≈ 4,67. Abitur: (6 + 8 + 9) / 3 ≈ 7,67.');
+  assert.equal(txt(kwW.steps[2].rechnung, c), 'Die Mitte aller Ränge ist (9 + 1) / 2 = 5. Hauptschulabschluss: 2,67 − 5 = −2,33; Mittlerer Abschluss: 4,67 − 5 = −0,33; Abitur: 7,67 − 5 = +2,67.');
+  assert.equal(txt(kwW.steps[3].rechnung, c), '3 · (−2,33)² + 3 · (−0,33)² + 3 · 2,67² ≈ 16,33 + 0,33 + 21,33 = 38, mit allen Nachkommastellen gerechnet.');
+  assert.equal(txt(kwW.steps[4].rechnung, c), 'H = 12 / 90 · 38 = 456 / 90 ≈ 5,07.');
+  assert.match(txt(kwW.steps[4].rechnung, at(kwW, KW_TIES)), /≈ 5,36\. Wegen der Gleichstände teilt R noch durch 0,958 und meldet H ≈ 5,59\./);
+  assert.equal(v.interpret(c).kurz, 'Die Gruppe Abitur steht in der Reihe im Schnitt auf Rang 7,67, die Gruppe Hauptschulabschluss auf Rang 2,67. Gäbe es keinen Unterschied, stünde jede Gruppe im Schnitt bei Rang 5.');
+  assert.match(v.interpret(c).fachlich, /^H ≈ 5,07 bei 2 Freiheitsgraden, p ≈ 0,08 .*in etwa 8 von 100 Stichproben.*nicht signifikant; ε² = H \/ \(N − 1\) ≈ 0,63 ist nach der Faustregel groß\.$/);
+  assert.match(v.genau.paragraphs(at(kwW, KW_TIES))[1], /C ≈ 0,958, und H steigt von 5,36 auf 5,59/);
+  assert.match(v.genau.paragraphs(c)[3], /H ≈ 0,13 und p ≈ 0,72/);
+  assert.match(kwW.steps[1].check.diagnose(c, 23)!, /Rangsumme/);
+  assert.match(kwW.steps[1].check.diagnose(c, 15.33)!, /mittlere Lernzeit/);
+  assert.match(kwW.steps[2].check.diagnose(c, 3.17)!, /4,5 abgezogen/);
+  assert.match(kwW.steps[3].check.diagnose(c, 12.67)!, /Gruppengröße/);
+  assert.match(kwW.steps[4].check.diagnose(c, 38)!, /Summe aus Schritt 4/);
+});
+
+test('B11 Kruskal–Wallis: 200 Befragte und In R wie in R', () => {
+  const columns = { x: ['finanzlage'], y: ['schulabschluss'], group: ['schulabschluss'] };
+  const k = kwSample(ctx(rows, columns)), t = k.test;
+  assert.ok(near(t.H, 11.585454) && near(t.p, 0.020715) && near(t.eps2, 0.058218) && t.df === 4, `H ${t.H}`);
+  assert.ok(t.mean.every((m, j) => near(m, [85.428571, 107.85, 84.378378, 119.231707, 104.6875][j])), `${t.mean}`);
+  const rev = kwSample(ctx(applyOp(rows, 'finanzlage', 'reverse'), columns)).test;
+  assert.ok(near(rev.H, 11.585454) && rev.mean.every((m, j) => near(m, [115.571429, 93.15, 116.621622, 81.768293, 96.3125][j])), 'umgepolt wie in R');
+  assert.ok(near(kwSample(ctx(applyOp(rows, 'schulabschluss', 'reverse'), columns)).test.H, 11.585454), 'Abschlüsse andersherum wie in R');
+  assert.ok(near(kwMeanRank(ctx(applyOp(applyOp(rows, 'schulabschluss', 'reverse'), 'finanzlage', 'reverse'), columns), 3)!, 93.15), 'Code 3 nach beiden Änderungen');
+  assert.ok(near(kwSample(ctx(rows, { x: ['finanzlage'], group: ['weiterbildung'] })).test.H, 0.132636), 'zwei Gruppen: H = Z²');
+  const s = kruskalWallisTabs.sample!;
+  if (s.kind !== 'analysis') return assert.fail('Auswertung erwartet');
+  const r = s.result(ctx(rows, columns));
+  assert.match(r.kurz, /^Im Schnitt der Ränge liegt die Gruppe Fachhochschulreife am höchsten \(119,23\), die Gruppe Mittlerer Abschluss am niedrigsten \(84,38\)\..*in etwa 2 von 100 Stichproben vor \(p ≈ 0,02\)\.$/);
+  assert.equal(r.fachlich, 'Kruskal–Wallis: H ≈ 11,59 bei 4 Freiheitsgraden, p ≈ 0,02, ε² ≈ 0,058. Bei α = 0,05 ist das signifikant; der Effekt ist nach der Faustregel klein.');
+  assert.match(s.think[0].explain, /von 119,23 auf 81,77/);
+  const map = Object.fromEntries(kruskalWallisTabs.r!.outputMap.map(o => [o.match, o.explain]));
+  assert.match(map['.021'], /in etwa 2 von 100/);
+  assert.match(map['Epsilon-squared'], /0,058/);
 });

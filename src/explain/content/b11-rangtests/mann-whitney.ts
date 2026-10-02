@@ -3,6 +3,7 @@
 import type { ConceptTabs, Ctx, FNode, SampleCtx, Workshop } from '../../types';
 import { close, count, num, signed } from '../../format';
 import { byGroup, mannWhitney, midRanks, type MannWhitney } from './rank';
+import { pOften, pText, rWord, signif } from './words';
 
 /** Vier Personen ohne (A bis D), vier mit Weiterbildung (E bis H). */
 export const MW_NAMES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'] as const;
@@ -54,13 +55,6 @@ const hours = (v: number) => `${num(v)} h`;
 /** „1 + 2 + 3 + 6“: die Ränge einer Gruppe. */
 const ranksOf = (c: C, g: 0 | 1) => c.s.rank.filter((_, i) => MW_GROUP[i] === g).map(r => num(r)).join(' + ');
 const zText = (c: C) => Number.isFinite(c.s.z) ? num(c.s.z) : 'nicht definiert';
-/** p mit zwei gültigen Ziffern, sehr kleine Werte als „p < 0,001“. */
-export const pText = (p: number) => p < 0.001 ? 'p < 0,001' : p < 0.01 ? `p ≈ ${num(p, 3)}` : `p ≈ ${num(p)}`;
-/** „in etwa 8 von 100“ mit der Bedingung des p-Werts. */
-export const pOften = (p: number) => p < 0.001 ? 'in weniger als 1 von 1.000' : p < 0.01 ? 'in weniger als 1 von 100' : `in etwa ${Math.round(p * 100)} von 100`;
-/** Faustregel für r (wie mariposa): unter 0,1 vernachlässigbar, unter 0,3 klein, unter 0,5 mittel, sonst groß. */
-export const rWord = (r: number) => r < 0.1 ? 'vernachlässigbar' : r < 0.3 ? 'klein' : r < 0.5 ? 'mittel' : 'groß';
-
 /** Wer in wie vielen Paaren vorn liegt, als Satz über Menschen. */
 function pairsSentence(s: MwStats): string {
   if (Math.abs(s.U1 - s.U2) < 1e-9) return 'Beide Gruppen liegen in gleich vielen Paaren vorn, in je 8 von 16.';
@@ -261,7 +255,7 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
       interpret: c => ({
         kurz: `${pairsSentence(c.s)} Gäbe es keinen Unterschied, wären es im Schnitt 8 von 16.`,
         fachlich: Number.isFinite(c.s.z)
-          ? `U = ${num(c.s.U)}, z ≈ ${num(c.s.z)}, ${pText(c.s.p)} (zweiseitig, Normalverteilung mit Bindungskorrektur wie in R). Gäbe es keinen Unterschied, käme ein so kleines U ${pOften(c.s.p)} Stichproben vor. Bei α = 0,05 ist das ${c.s.p < 0.05 ? '' : 'nicht '}signifikant; der Effekt r = |z| / √8 ≈ ${num(c.s.r)} ist nach der Faustregel ${rWord(c.s.r)}.`
+          ? `U = ${num(c.s.U)}, z ≈ ${num(c.s.z)}, ${pText(c.s.p)} (zweiseitig, Normalverteilung mit Bindungskorrektur wie in R). Gäbe es keinen Unterschied, käme ein so kleines U ${pOften(c.s.p)} Stichproben vor. ${signif(c.s.p)}; der Effekt r = |z| / √8 ≈ ${num(c.s.r)} ist nach der Faustregel ${rWord(c.s.r)}.`
           : 'Alle acht lernen gleich lange. Dann gibt es keine Reihenfolge, und R rechnet keinen Test.',
       }),
       genau: {
@@ -303,7 +297,7 @@ export const mannWhitneyTabs: ConceptTabs = {
       const lead = t.U1 >= t.U2 ? 'ohne' : 'mit';
       return {
         kurz: `Ordnest du alle 200 nach ihrer finanziellen Lage, liegen die Befragten ohne Weiterbildung im Schnitt auf Rang ${num(t.mean1)}, die mit auf Rang ${num(t.mean2)}. Ein höherer Rang heißt: Der Haushalt kommt leichter mit dem Einkommen aus. Gäbe es keinen Unterschied, wäre so ein Abstand ${t.p >= 0.05 ? 'nicht überraschend' : 'überraschend'} (${pText(t.p)}).`,
-        fachlich: `Mann–Whitney-U, zweiseitig: U = ${count(t.U)}, z ≈ ${num(t.z)}, ${pText(t.p)}, r ≈ ${num(t.r)}. Bei α = 0,05 ist das ${t.p < 0.05 ? '' : 'nicht '}signifikant; der Effekt ist nach der Faustregel ${rWord(t.r)}.`,
+        fachlich: `Mann–Whitney-U, zweiseitig: U = ${count(t.U)}, z ≈ ${num(t.z)}, ${pText(t.p)}, r ≈ ${num(t.r)}. ${signif(t.p)}; der Effekt ist nach der Faustregel ${rWord(t.r)}.`,
         zusatz: `In ${num(lead === 'ohne' ? t.U1 : t.U2)} von ${count(t.n1 * t.n2)} Paaren aus je einer Person ohne und einer mit Weiterbildung kommt die Person ${lead} Weiterbildung leichter aus. Gleichstände zählen halb.`,
       };
     },

@@ -4,6 +4,7 @@
 import type { KeyboardEvent, PointerEvent } from 'react';
 import { num } from '../../../explain/format';
 import { MW_GROUP, type MwStats } from '../../../explain/content/b11-rangtests/mann-whitney';
+import { KW_GROUP, KW_LABELS, type KwStats } from '../../../explain/content/b11-rangtests/kruskal-wallis';
 import { Axis, clamp, DragPoint, forWorkshop, GridCell, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Ein Punkt einer Zeile: Wert, Beschriftung im Kreis, vorgelesener Name, Index in den Daten. */
@@ -120,6 +121,48 @@ function MannWhitneyPicture({ data, s, step, who, setData, pickWho, names }: { d
   </>;
 }
 
+// Kruskal–Wallis -----------------------------------------------------------------------
+
+/** Rangachse von 1 bis N mit dem mittleren Rang jeder Gruppe, ab Schritt 3 mit der Mitte und den Abständen dazu. */
+function MeanRanks({ s, step, labels }: { s: KwStats; step: number; labels: readonly string[] }) {
+  const [box, W] = useWidth();
+  const right = step >= 4 ? W - 96 : W - 24, X = linear([1, s.N], [24, right]), Y = (j: number) => 44 + j * 44, AXIS = 44 + s.k * 44, H = AXIS + 56;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Mittlere Ränge: ${labels.map((l, j) => `${l} ${num(s.mean[j])}`).join(', ')}; die Mitte aller Ränge ist ${num(s.grand)}.`}>
+        {step >= 3 && <MarkLine x={X(s.grand)} from={20} to={AXIS} label={`Mitte ${num(s.grand)}`} />}
+        {s.mean.map((m, j) => <g key={j}>
+          <line className="xw-guide" x1={24} x2={right} y1={Y(j)} y2={Y(j)} />
+          {step >= 3 && Math.abs(s.dev[j]) > 1e-9 && <g>
+            <line className={s.dev[j] > 0 ? 'xw-pos' : 'xw-neg'} strokeWidth={3} x1={X(s.grand)} x2={X(m)} y1={Y(j)} y2={Y(j)} />
+          </g>}
+          <circle className="b11-mark" cx={X(m)} cy={Y(j)} r={6} />
+          <text className="xw-t" x={24} y={Y(j) - 10}>{labels[j]}: {num(m)}</text>
+          {step >= 4 && <text className="xw-t" x={right + 12} y={Y(j) + 5}>· 3 = {num(s.weighted[j])}</text>}
+        </g>)}
+        <Axis scale={X} ticks={Array.from({ length: s.N }, (_, k) => k + 1)} at={AXIS} from={24} to={right} labelGap={20} title="Rang in der gemeinsamen Reihe" />
+        {step >= 5 && <text className="xw-t xw-strong" x={W - 24} y={14} textAnchor="end">H ≈ {num(s.Hraw)}</text>}
+      </svg>
+    </div>
+  );
+}
+
+function KruskalWallisPicture({ data, s, step, who, setData, pickWho, names }: { data: number[]; s: KwStats; step: number; who: number; setData: (d: number[]) => void; pickWho: (i: number) => void; names: readonly string[] }) {
+  const rows: Row[] = data.map((v, i) => ({
+    name: names[i],
+    head: i === 0 || KW_GROUP[i] !== KW_GROUP[i - 1] ? `${KW_LABELS[KW_GROUP[i]]}${step >= 2 ? `: R̄ = ${num(s.mean[KW_GROUP[i]])}` : ''}` : undefined,
+    points: [{ value: v, label: String(num(v)), name: `Person ${names[i]}, ${KW_LABELS[KW_GROUP[i]]}, Lernzeit in Stunden`, at: i }],
+    note: `Rang ${num(s.rank[i])}`,
+  }));
+  return <>
+    <DotRows rows={rows} bounds={{ min: 0, max: 30 }} tickStep={5} axisTitle="Lernzeit in den letzten sieben Tagen (h)" who={who} onPick={pickWho}
+      onChange={(at, v) => setData(data.map((x, k) => k === at ? v : x))} label="Lernzeiten der neun Beispielpersonen, je Zeile eine Person" />
+    {step >= 2 && <MeanRanks s={s} step={step} labels={['Haupt', 'Mittel', 'Abitur']} />}
+  </>;
+}
+
 export const pictures: Record<string, Picture> = {
+  'b11-kw': forWorkshop(p => <KruskalWallisPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
   'b11-mw': forWorkshop(p => <MannWhitneyPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
 };

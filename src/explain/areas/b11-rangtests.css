@@ -1,0 +1,4 @@
+/* Bereich B11 „Rangtests und Paarvergleiche“: Markierungen in den Bildern (src/components/explain/pictures/b11-rangtests.tsx). */
+.b11-mark{fill:var(--green);stroke:var(--paper);stroke-width:1.5}
+.b11-hurdle{stroke:var(--ink);stroke-width:2}
+.b11-hurdle-alt{stroke:var(--muted);stroke-width:2;stroke-dasharray:3 3}
