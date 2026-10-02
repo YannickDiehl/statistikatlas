@@ -40,7 +40,7 @@ export const seiten: ConceptCard = {
       was: `Zweiseitig zählt jedes t, das mindestens ${num(L.t)} von 0 entfernt ist, egal in welche Richtung. Die Flächen beider Ränder ergeben p.`,
       rechnung: `p ≈ ${num(SEITEN.right)} + ${num(SEITEN.right)} ≈ ${num(SEITEN.two)}`,
       warum: 'Beide Richtungen wären interessant gewesen. Deshalb zählen beide Ränder.',
-      acht: 'Der zweiseitige p-Wert ist hier das Doppelte des einseitigen. Das gilt bei symmetrischen Verteilungen wie t, nicht allgemein.',
+      acht: 'Der zweiseitige p-Wert ist hier das Doppelte des kleineren einseitigen. Das gilt bei symmetrischen Verteilungen wie t, nicht allgemein.',
       concept: 'null_distribution',
     },
     {

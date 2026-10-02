@@ -40,7 +40,7 @@ export const mehrfach: ConceptCard = {
       title: 'Die Fehlalarme zusammenrechnen',
       was: `Gäbe es nirgends einen Unterschied, hätte jeder Test 5 % Risiko für einen Fehlalarm. Über zehn unabhängige Tests steigt die Chance auf mindestens einen auf etwa ${Math.round(familyError(10) * 100)} %.`,
       rechnung: `1 − 0,95¹⁰ ≈ ${num(familyError(10))}`,
-      warum: 'Jeder weitere Test ist eine weitere Gelegenheit für den Zufall. Die Gelegenheiten summieren sich.',
+      warum: 'Jeder weitere Test ist eine weitere Gelegenheit für den Zufall. Die Gelegenheiten häufen sich.',
       acht: 'Die 40 % gelten für unabhängige Tests. Paarvergleiche hängen zusammen, das Prinzip bleibt aber gleich.',
       concept: 'type_errors',
     },
@@ -58,7 +58,7 @@ export const mehrfach: ConceptCard = {
       question: 'Du rechnest 20 Tests, und nirgends gibt es einen echten Unterschied. Wie viele Fehlalarme erwartest du bei α = 0,05 im Mittel?',
       options: ['etwa 1', 'keinen', 'etwa 5'], correct: 0, step: 2,
       explain: `5 % von 20 sind 1. Im Mittel ist also ein Test bei α = 0,05 zufällig signifikant, und die Chance auf mindestens einen liegt bei etwa ${Math.round(familyError(20) * 100)} %.`,
-      kurz: 'Viele Tests, fast sicher ein Zufallstreffer.',
+      kurz: 'Viele Tests, gute Chance auf einen Zufallstreffer.',
     },
     {
       question: 'Nach Bonferroni: Unter welcher Schwelle muss p bei 10 Vergleichen liegen?',
@@ -87,7 +87,7 @@ export const mehrfach: ConceptCard = {
     question: 'Du vergleichst zehn Gruppenpaare ohne Korrektur, mit der Schwelle α = 0,05. Ein Paar hat p = 0,03. Was ist die vorsichtige Deutung?',
     options: [
       'Das Paar unterscheidet sich sicher.',
-      'Bei zehn Tests kann so ein p leicht ein Zufallstreffer sein; mit Korrektur ist es nicht signifikant.',
+      'Bei zehn Tests kann so ein p leicht ein Zufallstreffer sein; nach Bonferroni ist es nicht signifikant.',
       'p = 0,03 ist immer signifikant, egal wie viele Tests.',
       'Man berichtet nur den Test mit dem kleinsten p.',
     ],
@@ -106,7 +106,7 @@ export const mehrfach: ConceptCard = {
       'Holm sortiert die p-Werte aufsteigend und nimmt den kleinsten mit m mal, den nächsten mit m − 1 und so weiter; ein korrigierter Wert ist nie kleiner als der davor. Holm hält dieselbe Fehlerquote ein wie Bonferroni und verwirft nie weniger.',
       'dunn_test() und pairwise_wilcoxon() korrigieren in mariposa ohne Angabe nach Bonferroni; der Atlas wählt sichtbar Holm. Mit p_adjust = "BH" begrenzt du stattdessen den Anteil falscher Entdeckungen.',
       `Der Gesamttest nach Kruskal-Wallis ist hier signifikant (p ≈ ${small(DUNN.kwP)} bei α = 0,05), trotzdem bleibt nach Holm kein Paarvergleich unter 0,05. Das ist kein Widerspruch: Der Gesamttest fragt nur, ob irgendwo ein Unterschied steckt.`,
-      'Die Formel 1 − 0,95 hoch m gilt für unabhängige Tests. Bei abhängigen Tests ist die Chance kleiner, Bonferroni und Holm schützen trotzdem.',
+      'Die Formel 1 − 0,95 hoch m gilt für unabhängige Tests. Bei abhängigen Tests wie diesen Paarvergleichen ist die Chance meist kleiner. Bonferroni und Holm schützen in jedem Fall.',
     ],
   },
 };

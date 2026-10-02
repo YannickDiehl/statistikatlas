@@ -18,7 +18,7 @@ export const exakt: ConceptCard = {
   concept: 'exact_asymptotic',
   picture: 'b09-exakt',
   wofuer: `Bei ${ANTEIL.k} von ${ANTEIL.n} Befragten mit Weiterbildung meldet der Binomialtest p = 0.013. Eine Näherung mit der Normalverteilung kommt auf ${small(B200.approx)}. Welche Zahl stimmt, und wann ist die Näherung gut genug?`,
-  kurz: 'Ein exakter Test rechnet mit der Nullverteilung, die für genau deine Fallzahl gilt. Ein asymptotischer Test nimmt eine Näherung, die erst bei vielen Fällen gut passt.',
+  kurz: 'Ein exakter Test rechnet für genau deine Fallzahl aus, welche Ergebnisse ohne echten Unterschied vorkämen. Ein asymptotischer Test nimmt eine Näherung, die erst bei vielen Fällen gut passt.',
   stellDirVor: {
     text: `${ANTEIL.k} von ${ANTEIL.n} Befragten haben eine Weiterbildung gemacht. Unter der Nullhypothese wären es im Mittel 100. Der Binomialtest zählt exakt, wie wahrscheinlich 82 oder weniger und 118 oder mehr wären: R meldet p = 0.013. Die Normalverteilung als Näherung liefert p ≈ ${small(B200.approx)}. Bei 200 Befragten liegen beide nah beieinander.`,
     figures: [
@@ -34,7 +34,7 @@ export const exakt: ConceptCard = {
   bausteine: [
     {
       title: 'Exakt zählen',
-      was: 'Unter H₀ sagt jede Person mit 50 % Wahrscheinlichkeit Ja. Die Binomialverteilung sagt genau, wie oft 82 oder weniger Ja herauskämen.',
+      was: 'Unter H₀ sagt jede Person mit 50 % Wahrscheinlichkeit Ja. Die Binomialverteilung sagt genau, wie oft 82 oder weniger Ja oder 118 oder mehr herauskämen.',
       rechnung: `p = P(X ≤ 82) + P(X ≥ 118) ≈ ${small(B200.exact)}`,
       warum: 'Für 200 Personen lässt sich jede mögliche Anzahl von 0 bis 200 genau durchrechnen.',
       acht: 'Exakt heißt nicht annahmefrei. Auch der exakte Test setzt unabhängige Befragte voraus.',
@@ -103,7 +103,7 @@ export const exakt: ConceptCard = {
   },
   fuerDich: 'Bei kleinen Gruppen oder dünn besetzten Kreuztabellen greif zu einem exakten Test wie binomial_test() oder fisher_test(). Bei vielen Befragten liefern exakter und genäherter Test fast dasselbe.',
   genau: {
-    kurz: 'Exakt bedeutet nicht annahmefrei und nicht frei von Rundung. Bei diskreten exakten Tests liegt die tatsächliche Fehlerquote oft unter α.',
+    kurz: 'Exakt bedeutet nicht annahmefrei, und es sagt nichts über Nachkommastellen. Bei diskreten exakten Tests liegt die tatsächliche Fehlerquote oft unter α.',
     paragraphs: [
       `Mit Stetigkeitskorrektur rückt die Näherung näher heran: (|82 − 100| − 0,5) / 7,07 ≈ 2,47 ergibt p ≈ ${small(binomApprox(82.5, 200).p)}, fast wie exakt.`,
       'Fishers exakter Test zählt alle Kreuztabellen mit denselben Rändern durch. Der χ²-Test nähert dieselbe Frage mit der χ²-Verteilung an.',

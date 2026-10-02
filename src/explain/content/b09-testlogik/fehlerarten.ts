@@ -2,14 +2,14 @@
 // angenommen wird ein wahrer Unterschied von einer Stunde, grob gerechnet mit der Normalverteilung und dem
 // Standardfehler der Daten. Zahlen in R nachgerechnet, siehe b09-testlogik.test.ts.
 import type { ConceptCard, ConceptTabs } from '../../types';
-import { num } from '../../format';
+import { num, pct } from '../../format';
 import { LERNZEIT_NACH_WEITERBILDUNG as L } from '../muster/p-wert';
 import { DELTA_H, gruppenTest, powerZ } from './rechnen';
 
 /** Wahrscheinlichkeit, eine Stunde Unterschied zu übersehen, beim Standardfehler der Lernzeit nach Weiterbildung. */
 export const betaFor = (alpha: number, se: number = L.se) => 1 - powerZ(DELTA_H / se, alpha);
 /** Prozent ohne Nachkommastelle („43 %“) bzw. mit einer bei kleinen Werten („0,1 %“). */
-export const percent = (v: number) => `${num(v * 100, v < 0.1 ? 1 : 0)} %`;
+export const percent = (v: number) => pct(v, v < 0.1 ? 1 : 0);
 
 export const fehlerarten: ConceptCard = {
   concept: 'type_errors',

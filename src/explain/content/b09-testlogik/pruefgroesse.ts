@@ -10,14 +10,17 @@ export type TStats = TValues & { root: number; se: number; t: number; df: number
 
 /** Startwerte: Abstand der Schlafdauer zu sieben Stunden (genau 0,0825 h), s auf zwei Stellen, 200 Befragte. */
 export const T_START: TValues = { d: 0.0825, s: 0.82, n: SCHLAF.n };
-/** Abstand in Stunden: unter 0,1 mit bis zu vier Nachkommastellen, damit die Rechnung mit den sichtbaren Zahlen aufgeht. */
-const dText = (v: number) => Math.abs(v) < 0.1 ? num(v, 4) : num(v);
+/** Abstand in Stunden: höchstens zwei Nachkommastellen, unter 0,1 zwei gültige Ziffern (0,083). */
+const dText = (v: number) => small(v);
+/** t aus den sichtbaren, gerundeten Zahlen; weicht es vom genauen t ab, nennt die Rechnung beide. */
+const shownT = (s: TStats) => Number(dText(s.d).replace(',', '.').replace('−', '-')) / Number(small(s.se).replace(',', '.'));
+const exactNote = (s: TStats) => num(shownT(s)) === num(s.t) ? '' : `, mit allen Nachkommastellen ≈ ${num(s.t)}`;
 
 export const pruefgroesse: SentenceTemplate<TValues, TStats> = {
   concept: 'test_statistic',
   picture: 'b09-pruefgroesse',
   wofuer: `Die 200 Befragten schlafen im Schnitt ${num(SCHLAF.mean)} Stunden pro Nacht, knapp fünf Minuten mehr als die sieben Stunden der Nullhypothese. Ist das viel oder wenig? Das hängt davon ab, wie stark ein Mittelwert von Stichprobe zu Stichprobe schwankt. Die Prüfgröße t misst den Abstand genau daran.`,
-  kurz: 'Die Prüfgröße t sagt dir, wie viele Standardfehler dein Ergebnis von der Nullhypothese entfernt ist. Je weiter weg von 0, desto schlechter passt es zu H₀.',
+  kurz: 'Die Prüfgröße t sagt dir, wie weit dein Ergebnis von der Nullhypothese entfernt ist, gemessen am üblichen Schwanken von Stichprobe zu Stichprobe. Je weiter t von 0 weg ist, desto schlechter passen die Daten zur Nullhypothese.',
   fachlich: 'Für den t-Test einer Stichprobe ist t = (x̄ − μ₀) / (s / √n). Unter H₀ und den Annahmen des Tests folgt t einer t-Verteilung mit n − 1 Freiheitsgraden, der Referenzverteilung.',
   initial: T_START,
   compute: v => {
@@ -38,20 +41,18 @@ export const pruefgroesse: SentenceTemplate<TValues, TStats> = {
   symbolic: [{ part: ['t'], m: 't' }, ' = ', { frac: [{ part: ['x̄ − μ₀'], m: 'd' }], den: [{ part: ['s'], m: 's' }, ' / ', { big: '√', m: 'n' }, { root: [{ part: ['n'], m: 'n' }], m: 'n' }], m: 'se' }],
   aria: 't gleich x quer minus mü null, geteilt durch s durch Wurzel aus n',
   numeric: s => [{ part: ['t'], m: 't' }, ' = ', { part: [dText(s.d)], m: 'd' }, ' / (', { part: [num(s.s)], m: 's' }, ' / ', { part: [`√${count(s.n)}`], m: 'n' }, ') ≈ ',
-    dText(s.d), ' / ', { part: [small(s.se)], m: 'se' }, ' ≈ ', { part: [num(s.t)], m: 't' }],
+    dText(s.d), ' / ', { part: [small(s.se)], m: 'se' }, ' ≈ ', ...(exactNote(s) ? [num(shownT(s)), exactNote(s)] : [{ part: [num(s.t)], m: 't' }])],
   sentence: ['Die ', { m: 't', t: 'Prüfgröße t' }, ' ist ', { m: 'd', t: 'der Abstand des Mittelwerts zum Wert der Nullhypothese' }, ', geteilt durch ', { m: 'se', t: 'den Standardfehler' }, ', also durch ', { m: 's', t: 'die Standardabweichung' }, ' geteilt durch die Wurzel aus ', { m: 'n', t: 'der Fallzahl' }, '.'],
   worked: s => {
-    const shown = Number(dText(s.d).replace(',', '.').replace('−', '-')) / Number(small(s.se).replace(',', '.'));
-    const exact = num(shown) === num(s.t) ? '' : `, mit allen Nachkommastellen ≈ ${num(s.t)}`;
     return [
       { title: 'Die Wurzel aus der Fallzahl ziehen', text: `√${count(s.n)} ≈ ${num(s.root)}.` },
       { title: 'Den Standardfehler ausrechnen', text: `SE = ${num(s.s)} / ${num(s.root)} ≈ ${small(s.se)} Stunden.` },
-      { title: 'Den Abstand durch den Standardfehler teilen', text: `t = ${dText(s.d)} / ${small(s.se)} ≈ ${num(shown)}${exact}.` },
+      { title: 'Den Abstand durch den Standardfehler teilen', text: `t = ${dText(s.d)} / ${small(s.se)} ≈ ${num(shownT(s))}${exactNote(s)}.` },
     ];
   },
   fehler: `Der Abstand allein sagt noch nichts. ${num(SCHLAF.mean - 7)} Stunden sind bei 200 Befragten etwa 1,4 Standardfehler, bei 20.000 Befragten wären es über 14. Erst das Teilen durch SE macht Abstände vergleichbar.`,
   sliders: [
-    { key: 'd', label: 'Abstand zum Vergleichswert', min: -0.3, max: 0.3, step: 0.0025, format: v => `${v > 0 ? '+' : ''}${dText(v)} h` },
+    { key: 'd', label: 'Abstand zum Vergleichswert', min: -0.3, max: 0.3, step: 0.01, format: v => `${v > 0 ? '+' : ''}${dText(v)} h` },
     { key: 's', label: 'Standardabweichung', min: 0.2, max: 3, step: 0.01, format: v => `${num(v)} h` },
     { key: 'n', label: 'Fallzahl', min: 10, max: 40000, step: 1, log: true, format: v => count(v) },
   ],
@@ -73,7 +74,7 @@ export const pruefgroesse: SentenceTemplate<TValues, TStats> = {
   },
   interpret: s => ({
     kurz: Math.abs(s.t) < 0.005 ? 'Der Mittelwert liegt genau auf dem Vergleichswert, t ist 0. Besser kann ein Ergebnis nicht zu H₀ passen.'
-      : `Der Mittelwert liegt ${num(Math.abs(s.t))} Standardfehler ${s.t > 0 ? 'über' : 'unter'} dem Vergleichswert. Ohne echten Unterschied käme so ein Abstand ${outOf100(s.p)} Stichproben vor.`,
+      : `Der Mittelwert liegt ${num(Math.abs(s.t))} Standardfehler ${s.t > 0 ? 'über' : 'unter'} dem Vergleichswert. Ohne echten Unterschied käme ein mindestens so großer Abstand ${outOf100(s.p)} Stichproben vor.`,
     fachlich: `t ≈ ${num(s.t)} bei ${count(s.df)} Freiheitsgraden, zweiseitig p ${pShown(s.p)}. Die Grenze für α = 0,05 liegt bei ±${num(s.c)}; unter H₀ folgt t einer t-Verteilung mit n − 1 Freiheitsgraden.`,
   }),
   think: {
@@ -87,7 +88,7 @@ export const pruefgroesse: SentenceTemplate<TValues, TStats> = {
     kurz: 't hängt vom Abstand, von der Streuung und von der Fallzahl ab. Welche Referenzverteilung passt, bestimmen Test und Modell.',
     paragraphs: [
       'R meldet für die Schlafdauer t(199) = 1.423, gerechnet mit allen Nachkommastellen von s. In Klammern stehen die Freiheitsgrade der Referenzverteilung, hier n − 1 = 199.',
-      'Andere Tests haben andere Prüfgrößen: F in der Varianzanalyse, χ² in der Kreuztabelle, z bei großen Stichproben. Bei F und χ² zählt nur der rechte Rand, weil sie nie negativ werden.',
+      'Andere Tests haben andere Prüfgrößen: F in der Varianzanalyse, χ² in der Kreuztabelle, z bei großen Stichproben. Bei F und χ² zählt meist nur der rechte Rand: Sie entstehen aus quadrierten Abweichungen, deshalb macht jede Abweichung von H₀ sie größer.',
       'n − 1 ist kein allgemeiner Freiheitsgrad: Ein Pearson-Test hat n − 2, eine Kreuztabelle mit r Zeilen und c Spalten (r − 1)(c − 1). Mehr dazu bei den Freiheitsgraden im Modell.',
       'Unter H₀ folgt t nur dann einer t-Verteilung, wenn die Annahmen stimmen: unabhängige Befragte und ein annähernd normalverteilter Mittelwert.',
     ],
@@ -106,7 +107,7 @@ export const pruefgroesseTabs: ConceptTabs = {
       const d = r.mean - 7;
       return {
         kurz: `Die 200 schlafen im Schnitt ${num(r.mean)} Stunden pro Nacht. Gemessen am Standardfehler von ${small(r.se)} Stunden liegt das ${num(Math.abs(r.t))} Standardfehler ${d >= 0 ? 'über' : 'unter'} sieben Stunden: t ≈ ${num(r.t)}.`,
-        fachlich: `t = (x̄ − 7) / (s / √n) = (${num(r.mean, 4)} − 7) / (${num(r.sd)} / √${r.n}) ≈ ${num(r.t)} bei ${r.df} Freiheitsgraden. Die Grenze für α = 0,05, zweiseitig, liegt bei ±${num(r.c)}.`,
+        fachlich: `t = (x̄ − 7) / (s / √n) mit x̄ ≈ ${num(r.mean)} und s ≈ ${num(r.sd)} Stunden; mit allen Nachkommastellen ergibt das t ≈ ${num(r.t)} bei ${r.df} Freiheitsgraden. Die Grenze für α = 0,05, zweiseitig, liegt bei ±${num(r.c)}.`,
         zusatz: `Ein Standardfehler entspricht hier ${num(r.se * 60)} Minuten Schlaf pro Nacht.`,
       };
     },
@@ -114,7 +115,7 @@ export const pruefgroesseTabs: ConceptTabs = {
     think: [
       {
         question: 'Alle schlafen 0,1 Stunden länger. Was passiert mit t?', options: ['t steigt deutlich', 't bleibt gleich', 't sinkt'], correct: 0,
-        explain: 'Der Abstand zu sieben Stunden wächst um 0,1 Stunden, der Standardfehler bleibt. 0,1 Stunden sind fast zwei Standardfehler, also steigt t um gut 1,7.',
+        explain: 'Der Abstand zu sieben Stunden wächst um 0,1 Stunden, der Standardfehler bleibt. 0,1 Stunden sind gut 1,7 Standardfehler, also steigt t um gut 1,7.',
         kurz: 'Größerer Abstand, größeres t.',
         tryIt: { label: 'alle 0,1 Stunden länger', op: 'shift', column: 'x', value: 0.1 },
         expect: { change: 'up', atLeast: 1 },

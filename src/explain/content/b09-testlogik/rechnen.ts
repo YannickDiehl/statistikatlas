@@ -3,10 +3,12 @@
 // binom.test und Normalnäherung), Dunn-Vergleiche mit Holm, grobe Teststärke mit der Normalverteilung und das
 // Mischen der Weiterbildungsangaben (Nullverteilung). Rein, ohne React; Referenzwerte aus R in b09-testlogik.test.ts.
 import type { SampleCtx } from '../../types';
-import type { SurveyRow } from '../../../domain/survey';
 import { num } from '../../format';
-import { sampleColumn } from '../../sample';
+import { describe } from '../../math';
+import { baseSurvey, sampleColumn } from '../../sample';
+import { averageRanks } from '../../../domain/descriptive';
 import { oneSampleT, tTest } from '../../../tasks/kit/means';
+import { random } from '../../../tasks/kit/stats';
 import { lgamma, pnorm, pt, qnorm, qt } from '../../../tasks/kit/dist';
 
 /** Zahl mit höchstens zwei Nachkommastellen, kleine Werte (unter 0,1) mit zwei gültigen Ziffern: 0,16 · 0,013 · 0,0019. */
@@ -50,17 +52,15 @@ export const schlafP = (mu0: number) => 2 * pt(-Math.abs((SCHLAF.mean - mu0) / S
 export function gruppenTest(c: SampleCtx) {
   const x = c.columns.x?.[0] ?? 'lernzeit', g = c.columns.group?.[0] ?? 'weiterbildung';
   const ys = sampleColumn(c.rows, x), gs = sampleColumn(c.rows, g);
-  const part = (k: number) => ys.filter((_, i) => gs[i] === k);
-  const ohne = part(0), mit = part(1), mean = (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length;
-  const ss = (v: number[]) => { const m = mean(v); return v.reduce((a, b) => a + (b - m) ** 2, 0); };
-  const test = tTest(ys, gs);
-  if (!test || ohne.length < 2 || mit.length < 2) return null;
-  const d = mean(ohne) - mean(mit), se = test.welch.se, df = test.welch.df, t = d / se;
+  const part = (k: number) => describe(ys.filter((_, i) => gs[i] === k));
+  const ohne = part(0), mit = part(1), test = tTest(ys, gs);
+  if (!test || ohne.n < 2 || mit.n < 2) return null;
+  const d = ohne.mean - mit.mean, se = test.welch.se, df = test.welch.df, t = d / se;
   const right = pt(t, df, false), left = pt(t, df, true), two = 2 * Math.min(left, right);
-  const all = ss(ys) / (ys.length - 1), sp = Math.sqrt((ss(ohne) + ss(mit)) / (ys.length - 2));
+  const all = describe(ys).ss / (ys.length - 1), sp = Math.sqrt((ohne.ss + mit.ss) / (ys.length - 2));
   return {
-    nOhne: ohne.length, nMit: mit.length, ohne: mean(ohne), mit: mean(mit), d, se, df, t, two, right, left,
-    perm: Math.sqrt(all) * Math.sqrt(1 / ohne.length + 1 / mit.length), sAll: Math.sqrt(all), sp, cohen: d / sp, hedges: d / sp * (1 - 3 / (4 * ys.length - 9)),
+    nOhne: ohne.n, nMit: mit.n, ohne: ohne.mean, mit: mit.mean, d, se, df, t, two, right, left,
+    perm: Math.sqrt(all) * Math.sqrt(1 / ohne.n + 1 / mit.n), sAll: Math.sqrt(all), sp, cohen: d / sp, hedges: d / sp * (1 - 3 / (4 * ys.length - 9)),
     studentDf: ys.length - 2,
   };
 }
@@ -101,17 +101,6 @@ export const jaBei = (n: number) => Math.floor(n * 41 / 100);
 
 // Mehrere Vergleiche -----------------------------------------------------------------------------------------
 
-/** Ränge mit Durchschnittsrängen bei Bindungen (rank(ties.method = "average")). */
-function ranks(v: number[]): number[] {
-  const order = v.map((x, i) => [x, i] as const).sort((a, b) => a[0] - b[0]), r = new Array<number>(v.length);
-  for (let i = 0; i < order.length;) {
-    let j = i;
-    while (j + 1 < order.length && order[j + 1][0] === order[i][0]) j++;
-    for (let k = i; k <= j; k++) r[order[k][1]] = (i + j) / 2 + 1;
-    i = j + 1;
-  }
-  return r;
-}
 /** Holm-Korrektur wie p.adjust(method = "holm"). */
 export function holm(ps: number[]): number[] {
   const m = ps.length, order = ps.map((p, i) => [p, i] as const).sort((a, b) => a[0] - b[0]), out = new Array<number>(m);
@@ -122,7 +111,7 @@ export function holm(ps: number[]): number[] {
 /** Dunn-Vergleiche aller Gruppenpaare wie mariposa::dunn_test (Rangmittel, Bindungskorrektur), unkorrigiert und nach Holm. */
 export function dunn(c: SampleCtx) {
   const ys = sampleColumn(c.rows, c.columns.x?.[0] ?? 'finanzlage'), gs = sampleColumn(c.rows, c.columns.group?.[0] ?? 'schulabschluss');
-  const N = ys.length, r = ranks(ys), levels = [...new Set(gs)].sort((a, b) => a - b);
+  const N = ys.length, r = averageRanks(ys), levels = [...new Set(gs)].sort((a, b) => a - b);
   const counts = new Map<number, number>();
   ys.forEach(v => counts.set(v, (counts.get(v) ?? 0) + 1));
   const ties = [...counts.values()].reduce((a, t) => a + t ** 3 - t, 0) / (12 * (N - 1));
@@ -140,33 +129,27 @@ export const familyError = (m: number, alpha = 0.05) => 1 - (1 - alpha) ** m;
 
 // Nullverteilung durch Mischen ------------------------------------------------------------------------------
 
-/** Kleiner, fester Zufallsgenerator (mulberry32): dieselbe Folge in jedem Browser und im Test. */
-function mulberry32(seed: number) {
-  let a = seed >>> 0;
-  return () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
-}
-const MIX = new Map<string, number[]>();
+/** Unterschiede „ohne minus mit Weiterbildung“ beim Mischen, einmal für die Ausgangsdaten berechnet. */
+let MIX: number[] | null = null;
 /** Höchstzahl der Mischungen (Regler der Begriffskarte „Nullverteilung“). */
 export const MIX_MAX = 2000;
 /**
- * Unterschiede „ohne minus mit Weiterbildung“ nach `count`-maligem zufälligem Neuverteilen der Weiterbildungsangaben
- * auf die Befragten (Gruppengrößen bleiben). Feste Folge (Startwert 2026), damit Bild, Text und Test übereinstimmen;
- * die ersten k Mischungen sind bei jedem `count` dieselben.
+ * Unterschiede „ohne minus mit Weiterbildung“ in der Lernzeit nach `count`-maligem zufälligem Neuverteilen der
+ * Weiterbildungsangaben auf die 200 Befragten der Ausgangsdaten (Gruppengrößen bleiben). Feste Folge (mulberry32 aus
+ * tasks/kit/stats.ts, Startwert 2026), damit Bild, Text und Test übereinstimmen; die ersten k Mischungen sind bei jedem
+ * `count` dieselben. Nur für die Ausgangsdaten: Die Begriffskarte zeigt immer sie, deshalb gibt es keinen Datenparameter.
  */
-export function mischen(rows: readonly SurveyRow[], count: number): number[] {
-  const key = `${rows.length}:${rows[0]?.id}:${rows[0]?.values.lernzeit}`;
-  let all = MIX.get(key);
-  if (!all) {
-    const ys = sampleColumn(rows, 'lernzeit'), gs = sampleColumn(rows, 'weiterbildung');
-    const n = ys.length, nMit = gs.filter(g => g === 1).length, total = ys.reduce((a, b) => a + b, 0), rnd = mulberry32(2026);
-    const idx = ys.map((_, i) => i);
-    all = [];
+export function mischen(count: number): number[] {
+  if (!MIX) {
+    const rows = baseSurvey(), ys = sampleColumn(rows, 'lernzeit'), gs = sampleColumn(rows, 'weiterbildung');
+    const n = ys.length, nMit = gs.filter(g => g === 1).length, total = ys.reduce((a, b) => a + b, 0), rnd = random(2026);
+    const idx = ys.map((_, i) => i), all: number[] = [];
     for (let k = 0; k < MIX_MAX; k++) {
       let sumMit = 0;
       for (let i = 0; i < nMit; i++) { const j = i + Math.floor(rnd() * (n - i)); [idx[i], idx[j]] = [idx[j], idx[i]]; sumMit += ys[idx[i]]; }
       all.push((total - sumMit) / (n - nMit) - sumMit / nMit);
     }
-    MIX.set(key, all);
+    MIX = all;
   }
-  return all.slice(0, Math.max(0, Math.min(MIX_MAX, Math.round(count))));
+  return MIX.slice(0, Math.max(0, Math.min(MIX_MAX, Math.round(count))));
 }

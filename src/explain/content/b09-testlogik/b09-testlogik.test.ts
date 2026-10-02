@@ -44,8 +44,8 @@ import { ABITUR, abiturD, effekt } from './effekt';
  *   lz <- as.numeric(atlas$lernzeit); wb <- as.numeric(atlas$weiterbildung)
  *   S <- sd(lz); S * sqrt(1/82 + 1/118); 1.96 * S * sqrt(1/82 + 1/118)  # 3.2375153, 0.4654563, 0.9122943
  *   w <- t.test(lz ~ wb); w$stderr; w$parameter; w$statistic; w$p.value  # 0.4654934, 175.84117, 0.1564348, 0.8758698
- *   set.seed(1); perm <- replicate(100000, { g <- sample(wb); mean(lz[g == 0]) - mean(lz[g == 1]) })
- *   sd(perm); quantile(perm, c(.025, .975)); mean(abs(perm) >= 0.0728193)  # 0.4654806; -0.9172592, 0.9161430; 0.87694
+ *   set.seed(1); perm <- replicate(1e6, { s1 <- sum(lz[sample.int(200, 82)]); (sum(lz) - s1) / 118 - s1 / 82 })
+ *   sd(perm); quantile(perm, c(.025, .975)); mean(abs(perm) >= 0.0728193)  # 0.4661965; -0.9110583, 0.9140761; 0.876817
  *   # Der Atlas mischt mit einer festen Folge (mulberry32, Startwert 2026): 183 von 200, 1.743 von 2.000 (0,87).
  *   # Fehlerarten: grob mit der Normalverteilung, wahrer Unterschied 1 h, Standardfehler der Daten (Welch):
  *   pw <- function(a, se = w$stderr) pnorm(1/se - qnorm(1 - a/2)) + pnorm(-1/se - qnorm(1 - a/2))
@@ -103,6 +103,10 @@ const result = (id: string, data = rows) => { const s = tabs(id).sample; assert.
 test('B9: alle zwölf Begriffe sind erklärt und haben Reiter mit Weiter', () => {
   const ids = ['hypothesis', 'test_statistic', 'null_distribution', 'test_sides', 'alpha_level', 'critical_value', 'type_errors', 'power', 'general_df', 'exact_asymptotic', 'multiplicity', 'effect'];
   assert.deepEqual(Object.keys(b09Testlogik.explanations).sort(), [...ids].sort(), 'genau die zwölf Begriffe des Bereichs');
+  // Kurz gesagt ohne Fachwörter, die dort nicht erklärt sind (Begutachtung I2).
+  const kurz = (id: string) => { const e = b09Testlogik.explanations[id]; return e.kind === 'begriff' ? e.card.kurz : e.kind === 'satz' ? e.template.kurz : ''; };
+  for (const id of ['test_statistic', 'critical_value', 'general_df', 'exact_asymptotic'])
+    for (const word of ['Nullverteilung', 'Referenzverteilung', 'Standardfehler', 'H₀', 'α']) assert.ok(!kurz(id).includes(word), `${id}: „${word}“ in Kurz gesagt`);
   for (const id of ids) {
     assert.ok(b09Testlogik.explanations[id], `${id}: Erklärung fehlt`);
     assert.ok(b09Testlogik.tabs[id]?.next, `${id}: Weiter fehlt`);
@@ -120,14 +124,14 @@ test('B9 Hypothese: Schlafdauer gegen sieben Stunden wie in R', () => {
     assert.ok(close(schlafP(mu0), p, Math.max(1e-6 * p, 1e-15)), `μ₀ = ${mu0}: ${schlafP(mu0)} ≠ R ${p}`);
   assert.match(hypothese.stellDirVor.text, /im Schnitt 7,08 Stunden .* R meldet dazu p = 0\.156\./);
   assert.match(hypothese.ausprobieren[1].explain, /von etwa 6,97 bis 7,20 Stunden/);
-  assert.match(hypothese.ausprobieren[2].explain, /p fällt auf etwa 0,002\./);
+  assert.match(hypothese.ausprobieren[2].explain, /ein mindestens so großer Abstand selten: p fällt auf etwa 0,0019\./);
   assert.match(hypothese.regler!.describe(7), /mindestens 0,08 Stunden in etwa 16 von 100 Stichproben vor, p ≈ 0,16\. .* nicht\./);
   assert.match(hypothese.regler!.describe(7.1), /in etwa 76 von 100 .*p ≈ 0,76/);
   assert.match(hypothese.regler!.describe(6.9), /in weniger als 1 von 100 .*p ≈ 0,0019\. .*signifikant/);
   assert.match(hypothese.regler!.describe(7.2), /in etwa 4 von 100 .*p ≈ 0,044\. .*signifikant/);
   assert.match(hypothese.genau.paragraphs[0], /t\(199\) ≈ 1,42, p ≈ 0,16\. .*von 6,97 bis 7,20 Stunden/);
   // Reiter: Auswertung mit allen 200 und nach den beiden Verschiebungen (R: p 0.0018942 bzw. 0.7630414).
-  assert.match(result('hypothesis').kurz, /im Schnitt 7,08 Stunden pro Nacht, 0,08 Stunden mehr als sieben\. .*in etwa 16 von 100 .*\(p ≈ 0,16\)\. .*nicht\./);
+  assert.match(result('hypothesis').kurz, /im Schnitt 7,08 Stunden pro Nacht, 0,08 Stunden mehr als sieben\. .*käme ein mindestens so großer Abstand in etwa 16 von 100 .*\(p ≈ 0,16\)\. .*nicht\./);
   assert.match(result('hypothesis').fachlich, /t\(199\) ≈ 1,42, p ≈ 0,16; 95-%-Konfidenzintervall von 6,97 bis 7,20 Stunden/);
   assert.equal(result('hypothesis').zusatz, '101 Befragte schlafen mehr als sieben Stunden, 88 weniger.');
   assert.match(result('hypothesis', applyOp(rows, 'schlafdauer', 'shift', 0.1)).kurz, /7,18 Stunden .*p ≈ 0,0019\)\. .*signifikant/);
@@ -139,14 +143,18 @@ test('B9 Prüfgröße: t für die Schlafdauer wie in R, mit den sichtbaren Zahle
   assert.ok(close(s.t, 1.4228368, 1e-6) && close(s.se, 0.0579828, 1e-6), `t ${s.t}, SE ${s.se}`);
   assert.ok(close(T_START.d, SCHLAF.mean - 7, 1e-9), 'Abstand wie in den Daten');
   assert.ok(close(pruefgroesse.compute({ ...T_START, s: SCHLAF.sd, n: 20000 }).t, 14.2326, 1e-4), 'bei 20.000 Befragten');
-  assert.deepEqual(pruefgroesse.worked(s).map(w => w.text), ['√200 ≈ 14,14.', 'SE = 0,82 / 14,14 ≈ 0,058 Stunden.', 't = 0,0825 / 0,058 ≈ 1,42.']);
+  assert.deepEqual(pruefgroesse.worked(s).map(w => w.text), ['√200 ≈ 14,14.', 'SE = 0,82 / 14,14 ≈ 0,058 Stunden.', 't = 0,083 / 0,058 ≈ 1,43, mit allen Nachkommastellen ≈ 1,42.']);
+  const flat = (ns: unknown[]): string => ns.map(n => typeof n === 'string' ? n : n && typeof n === 'object' && 'part' in n ? flat((n as { part: unknown[] }).part) : '').join('');
+  assert.equal(flat(pruefgroesse.numeric(s)), 't = 0,083 / (0,82 / √200) ≈ 0,083 / 0,058 ≈ 1,43, mit allen Nachkommastellen ≈ 1,42');
+  assert.equal(flat(pruefgroesse.numeric(pruefgroesse.compute({ d: 0.2, s: 1, n: 100 }))), 't = 0,2 / (1 / √100) ≈ 0,2 / 0,1 ≈ 2');
+  assert.match(pruefgroesse.kurz, /gemessen am üblichen Schwanken von Stichprobe zu Stichprobe/);
   assert.match(pruefgroesse.fehler, /0,08 Stunden sind bei 200 Befragten etwa 1,4 Standardfehler, bei 20\.000 Befragten wären es über 14\./);
-  assert.match(pruefgroesse.interpret(s).kurz, /1,42 Standardfehler über dem Vergleichswert\. .*in etwa 16 von 100 Stichproben/);
+  assert.match(pruefgroesse.interpret(s).kurz, /1,42 Standardfehler über dem Vergleichswert\. .*ein mindestens so großer Abstand in etwa 16 von 100 Stichproben/);
   assert.match(pruefgroesse.interpret(s).fachlich, /bei 199 Freiheitsgraden, zweiseitig p ≈ 0,16\. Die Grenze für α = 0,05 liegt bei ±1,97/);
   assert.equal(pruefgroesse.check.diagnose(0.5).startsWith('Fast!'), true);
   // Reiter: R t = 1.4232562, verschoben 3.1484153 und −0.3019028; ein Standardfehler 0.05796567 h = 3.48 Minuten.
   assert.match(result('test_statistic').kurz, /Standardfehler von 0,058 Stunden liegt das 1,42 Standardfehler über sieben Stunden: t ≈ 1,42\./);
-  assert.match(result('test_statistic').fachlich, /\(7,0825 − 7\) \/ \(0,82 \/ √200\) ≈ 1,42 bei 199 Freiheitsgraden\. .*±1,97/);
+  assert.match(result('test_statistic').fachlich, /mit x̄ ≈ 7,08 und s ≈ 0,82 Stunden; mit allen Nachkommastellen ergibt das t ≈ 1,42 bei 199 Freiheitsgraden\. .*±1,97/);
   assert.equal(result('test_statistic').zusatz, 'Ein Standardfehler entspricht hier 3,48 Minuten Schlaf pro Nacht.');
   assert.match(result('test_statistic', applyOp(rows, 'schlafdauer', 'shift', 0.1)).kurz, /t ≈ 3,15\./);
   assert.match(result('test_statistic', applyOp(rows, 'schlafdauer', 'shift', -0.1)).kurz, /0,3 Standardfehler unter sieben Stunden: t ≈ −0,3\./);
@@ -157,9 +165,9 @@ test('B9 Nullverteilung: Mischen der Weiterbildung wie in R, die feste Mischfolg
   assert.ok(close(g.sAll, MISCHEN.s, 1e-6) && close(g.perm, MISCHEN.sd, 1e-6) && close(1.96 * g.perm, MISCHEN.rand, 1e-6), `s ${g.sAll}, Breite ${g.perm}`);
   assert.ok(close(Math.sqrt(1 / 82 + 1 / 118), MISCHEN.root, 1e-6));
   assert.ok(close(g.se, 0.4654934, 1e-6) && close(g.df, 175.84117, 1e-4) && close(g.t, 0.1564348, 1e-6) && close(g.two, 0.8758698, 1e-6), 'Welch wie R');
-  // Die feste Mischfolge: Standardabweichung und Anteil nahe an R (100.000 Mischungen: 0.4654806 und 0.87694).
-  const all = mischen(rows, 2000), sd = Math.sqrt(all.reduce((a, v) => a + v * v, 0) / all.length);
-  assert.ok(Math.abs(sd - 0.4654806) < 0.02, `Mischfolge sd ${sd}`);
+  // Die feste Mischfolge: Standardabweichung und Anteil nahe an R (eine Million Mischungen: 0.4661965 und 0.876817).
+  const all = mischen(2000), sd = Math.sqrt(all.reduce((a, v) => a + v * v, 0) / all.length);
+  assert.ok(Math.abs(sd - 0.4661965) < 0.02, `Mischfolge sd ${sd}`);
   assert.equal(asFarAs(200), 183); assert.equal(asFarAs(2000), 1743);
   assert.ok(Math.abs(asFarAs(2000) / 2000 - MISCHEN.pPerm) < 0.03, 'Anteil nahe am Permutations-p aus R');
   assert.match(nullverteilung.regler!.describe(200), /Nach 200 Mischungen liegen die Gruppen in 183 davon mindestens 0,07 Stunden auseinander.*Anteil von 0,92; bei so wenigen/);
@@ -169,7 +177,8 @@ test('B9 Nullverteilung: Mischen der Weiterbildung wie in R, die feste Mischfolg
   assert.match(nullverteilung.ausprobieren[0].explain, /zwischen −0,91 und \+0,91 Stunden/);
   assert.match(nullverteilung.ausprobieren[1].explain, /von 0,47 auf 0,93 Stunden/);
   assert.match(nullverteilung.ausprobieren[2].explain, /rund 0,15 Stunden/);
-  assert.match(nullverteilung.genau.paragraphs[1], /Anteil von 0,88, .*zwischen etwa −0,92 und \+0,92 Stunden\. .*±0,91 Stunden/);
+  assert.match(nullverteilung.genau.paragraphs[1], /eine Million Mischungen einen Anteil von 0,88, .*zwischen etwa −0,91 und \+0,91 Stunden, fast genau wie bei der Glockenkurve mit ±0,91\./);
+  assert.ok(close(MISCHEN.qLo, -0.9110583, 1e-7) && close(MISCHEN.qHi, 0.9140761, 1e-7) && close(MISCHEN.pPerm, 0.876817, 1e-6), 'eine Million Mischungen in R');
   // Reiter: R 1.96 · 0.4654563 = 0.9122943; verdoppelt 1.8245886.
   assert.match(result('null_distribution').kurz, /zwischen −0,91 und \+0,91 Stunden\. Beobachtet sind 0,07 Stunden\. Das liegt innerhalb/);
   assert.match(result('null_distribution').fachlich, /≈ 0,47 h\. R nähert sie mit der t-Verteilung mit 175,8 Freiheitsgraden\./);
@@ -198,8 +207,10 @@ test('B9 Signifikanzniveau: Weiterbildung gegen 50 % wie in R, Entscheidung je n
   assert.ok(close(size, 0.040037192, 1e-8) && close(ANTEIL.size05, 0.040037192, 1e-8), `tatsächliche Fehlerquote ${size}`);
   assert.match(alpha.stellDirVor.text, /82 von 200 .*41 %\. .*R meldet p = 0\.013\. Bei α = 0,05 heißt das signifikant, bei α = 0,01 nicht\./);
   assert.equal(alpha.bausteine[1].rechnung, 'p ≈ 0,013 < α = 0,05: H₀ verwerfen. Bei α = 0,01 wäre p ≈ 0,013 > 0,01: H₀ nicht verwerfen.');
-  assert.match(alpha.regler!.describe(0.05), /Mit α = 0,05 liegt p ≈ 0,013 darunter: .*signifikant\. .*in etwa 5 % der Studien/);
-  assert.match(alpha.regler!.describe(0.01), /p ≈ 0,013 darüber: Du verwirfst H₀ nicht\. .*in etwa 1 % der Studien/);
+  assert.match(alpha.regler!.describe(0.05), /Mit α = 0,05 liegt p ≈ 0,013 darunter: .*signifikant\. .*in höchstens 5 % der Studien/);
+  assert.match(alpha.bausteine[2].acht, /Quote über viele Studien, in denen es in Wahrheit keinen Unterschied gibt\./);
+  assert.match(alpha.check.diagnose[0]!, /ohne echten Unterschied: In etwa 5 von 100 davon meldet der Test trotzdem einen\./);
+  assert.match(alpha.regler!.describe(0.01), /p ≈ 0,013 darüber: Du verwirfst H₀ nicht\. .*in höchstens 1 % der Studien/);
   assert.match(alpha.regler!.describe(0.013), /p ≈ 0,0131 knapp darüber/);
   assert.match(alpha.regler!.describe(0.014), /p ≈ 0,0131 knapp darunter/);
   assert.match(alpha.genau.paragraphs[1], /für α = 0,05 bei 0,04\./);

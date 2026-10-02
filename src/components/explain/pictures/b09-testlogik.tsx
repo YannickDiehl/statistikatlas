@@ -15,7 +15,6 @@ import { mOf } from '../../../explain/content/b09-testlogik/mehrfach';
 import type { DStats } from '../../../explain/content/b09-testlogik/effekt';
 import { MU0, SCHLAF, dbinom, familyError, mischen, schlafP, small } from '../../../explain/content/b09-testlogik/rechnen';
 import { LERNZEIT_NACH_WEITERBILDUNG as LW } from '../../../explain/content/muster/p-wert';
-import { baseSurvey } from '../../../explain/sample';
 import { count, num } from '../../../explain/format';
 import { AreaUnder, Axis, Curve, forCard, forSentence, GridCell, linear, MarkLine, useWidth, type Picture } from './kit';
 
@@ -86,7 +85,7 @@ function Pruefgroesse({ s }: { s: TStats }) {
  */
 function Nullverteilung({ value }: { value: number }) {
   const [box, W] = useWidth();
-  const k = mixCount(value), diffs = mischen(baseSurvey(), k), lim = 1.6, width = 0.1, bins = Math.round(2 * lim / width);
+  const k = mixCount(value), diffs = mischen(k), lim = 1.6, width = 0.1, bins = Math.round(2 * lim / width);
   const counts = new Array<number>(bins).fill(0);
   for (const d of diffs) { const b = Math.floor((d + lim) / width); if (b >= 0 && b < bins) counts[b]++; }
   const normalPeak = k * width / (MISCHEN.sd * Math.sqrt(2 * Math.PI)), top = Math.max(...counts, normalPeak);

@@ -1,14 +1,11 @@
 // Begriffskarte „Signifikanzniveau α“. Beispiel: 82 von 200 Befragten mit Weiterbildung gegen die Hälfte
 // (exakter Binomialtest wie mariposa::binomial_test(weiterbildung, p = .5)). Zahlen in R, siehe b09-testlogik.test.ts.
 import type { ConceptCard, ConceptTabs } from '../../types';
-import { num } from '../../format';
+import { num, pct } from '../../format';
 import { anteilTest, outOf100, pShown, small } from './rechnen';
 
 /** Weiterbildung gegen 50 %: exakter p-Wert und tatsächliche Fehlerquote des Tests bei 200 Befragten (R, siehe Test). */
 export const ANTEIL = { k: 82, n: 200, p: 0.013130356, size05: 0.040037192 } as const;
-
-/** α als Prozent für Texte: 5 %, 1,3 %, 0,1 %. */
-const percent = (a: number) => `${num(a * 100, 1)} %`;
 
 export const alpha: ConceptCard = {
   concept: 'alpha_level',
@@ -48,7 +45,7 @@ export const alpha: ConceptCard = {
       title: 'Den Preis kennen',
       was: 'α ist die Quote der Fehlalarme, die du in Kauf nimmst. Gäbe es keinen Unterschied, würdest du bei α = 0,05 in etwa 5 von 100 Studien trotzdem einen melden.',
       warum: 'Ein kleineres α schützt besser vor Fehlalarmen. Dafür übersiehst du echte Unterschiede leichter.',
-      acht: 'α = 0,05 heißt nicht, dass diese eine Entscheidung mit 5 % Wahrscheinlichkeit falsch ist. Es ist eine Quote über viele Studien hinweg.',
+      acht: 'α = 0,05 heißt nicht, dass diese eine Entscheidung mit 5 % Wahrscheinlichkeit falsch ist. Es ist eine Quote über viele Studien, in denen es in Wahrheit keinen Unterschied gibt.',
       concept: 'type_errors',
     },
   ],
@@ -78,7 +75,7 @@ export const alpha: ConceptCard = {
     format: v => `α = ${num(v, 3)}`,
     describe: v => {
       const reject = ANTEIL.p <= v, near = Math.abs(v - ANTEIL.p) < 0.0015, p = near ? num(ANTEIL.p, 4) : small(ANTEIL.p);
-      return `Mit α = ${num(v, 3)} liegt p ≈ ${p} ${near ? 'knapp ' : ''}${reject ? 'darunter: Du verwirfst H₀ und nennst das Ergebnis signifikant' : 'darüber: Du verwirfst H₀ nicht'}. Gäbe es keinen Unterschied, würdest du mit dieser Regel in etwa ${percent(v)} der Studien trotzdem einen melden.`;
+      return `Mit α = ${num(v, 3)} liegt p ≈ ${p} ${near ? 'knapp ' : ''}${reject ? 'darunter: Du verwirfst H₀ und nennst das Ergebnis signifikant' : 'darüber: Du verwirfst H₀ nicht'}. Gäbe es keinen Unterschied, würdest du mit dieser Regel in höchstens ${pct(v)} der Studien trotzdem einen melden.`;
     },
   },
   check: {
@@ -92,7 +89,7 @@ export const alpha: ConceptCard = {
     correct: 1,
     right: 'Genau. α ist die Quote der Fehlalarme, die du in Kauf nimmst, wenn es in Wahrheit keinen Unterschied gibt.',
     diagnose: {
-      0: 'Fast! α ist eine Quote über viele Studien, keine Wahrscheinlichkeit für diese eine Entscheidung.',
+      0: 'Fast! α ist eine Quote über viele Studien ohne echten Unterschied: In etwa 5 von 100 davon meldet der Test trotzdem einen. Ob dieses eine Ergebnis falsch ist, sagt α nicht.',
       2: 'Fast! α sagt nichts über die Größe eines Unterschieds. Dafür gibt es Effektgrößen.',
       3: 'Fast! Das klingt verlockend, stimmt aber nicht. α begrenzt nur die Fehlalarme, wenn H₀ stimmt.',
     },
@@ -103,7 +100,7 @@ export const alpha: ConceptCard = {
     paragraphs: [
       '0,05 ist eine Konvention, kein Naturgesetz. Wo ein Fehlalarm teuer ist, wählt man kleinere Werte wie 0,01 oder 0,001. Wer viele Tests rechnet, muss α für die ganze Familie anpassen (Begriff „Mehrere Vergleiche“).',
       `Beim Binomialtest gibt es nur ganze Zahlen von Personen. Deshalb trifft die tatsächliche Fehlerquote α selten genau: Bei 200 Befragten und 50 % liegt sie für α = 0,05 bei ${num(ANTEIL.size05, 3)}.`,
-      'R markiert p < 0,05 mit einem Stern, p < 0,01 mit zwei und p < 0,001 mit drei. Die Sterne ersetzen keine vorab gewählte Schwelle.',
+      'mariposa markiert p < 0,05 mit einem Stern, p < 0,01 mit zwei und p < 0,001 mit drei. Die Sterne ersetzen keine vorab gewählte Schwelle.',
       'Ob gerade diese eine Entscheidung ein Irrtum war, weiß man bei einer einzelnen Studie nicht. α beschreibt nur, wie oft die Regel über viele Studien hinweg irrt, wenn H₀ stimmt.',
     ],
   },
@@ -118,7 +115,7 @@ export const alphaTabs: ConceptTabs = {
     result: c => {
       const r = anteilTest(c), sig = r.exact <= 0.05;
       return {
-        kurz: `${r.k} von ${r.n} Befragten haben eine Weiterbildung gemacht, ${num(r.k / r.n * 100, 1)} %. Gäbe es in der Grundgesamtheit genau 50 %, käme so ein Abstand ${outOf100(r.exact)} Stichproben vor (p ${pShown(r.exact)}). Bei α = 0,05 ${sig ? 'verwirfst du H₀: signifikant' : 'verwirfst du H₀ nicht'}.`,
+        kurz: `${r.k} von ${r.n} Befragten haben eine Weiterbildung gemacht, ${num(r.k / r.n * 100, 1)} %. Gäbe es in der Grundgesamtheit genau 50 %, käme ein mindestens so großer Abstand ${outOf100(r.exact)} Stichproben vor (p ${pShown(r.exact)}). Bei α = 0,05 ${sig ? 'verwirfst du H₀: signifikant' : 'verwirfst du H₀ nicht'}.`,
         fachlich: `Exakter Binomialtest, zweiseitig, H₀: π = 0,5; p ${pShown(r.exact)}. Bei α = 0,01 wäre das ${r.exact <= 0.01 ? 'ebenfalls signifikant' : 'nicht signifikant'}.`,
       };
     },

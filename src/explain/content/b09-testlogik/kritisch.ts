@@ -1,21 +1,18 @@
 // Formel als Satz „Kritischer Wert & Ablehnungsbereich“: c = t₁₋α/₂(df), zweiseitig. Beispiel: Schlafdauer gegen sieben
 // Stunden mit t ≈ 1,42 bei 199 Freiheitsgraden. Zahlen in R nachgerechnet, siehe b09-testlogik.test.ts.
 import type { ConceptTabs, SentenceTemplate } from '../../types';
-import { close, count, num } from '../../format';
+import { close, count, num, pct } from '../../format';
 import { qnorm, qt } from '../../../tasks/kit/dist';
 import { SCHLAF, schlafTest } from './rechnen';
 
 export type CValues = { alpha: number; df: number };
 export type CStats = CValues & { half: number; c: number; cOne: number; cNormal: number };
 
-/** α als Prozent für Texte: 5 %, 1 %, 0,1 %. */
-const percent = (a: number) => `${num(a * 100, 1)} %`;
-
 export const kritisch: SentenceTemplate<CValues, CStats> = {
   concept: 'critical_value',
   picture: 'b09-kritisch',
   wofuer: `Statt p kannst du auch t selbst mit einer Grenze vergleichen. Die mittlere Schlafdauer der 200 Befragten liegt ${num(SCHLAF.t)} Standardfehler über sieben Stunden. Reicht das, um die Nullhypothese zu verwerfen? Der kritische Wert sagt, ab wo t zu weit weg ist.`,
-  kurz: 'Der kritische Wert ist die Grenze, ab der die Prüfgröße gegen die Nullhypothese spricht. Er schneidet von der Nullverteilung so viel ab, wie α erlaubt.',
+  kurz: 'Der kritische Wert ist die Grenze, ab der die Prüfgröße gegen die Nullhypothese spricht. Ohne echten Unterschied landen jenseits davon nur so wenige Ergebnisse, wie du vorher als Fehlalarme zulässt.',
   fachlich: 'Bei einem zweiseitigen t-Test ist der kritische Wert das (1 − α/2)-Quantil der t-Verteilung mit df Freiheitsgraden. Der Ablehnungsbereich umfasst alle t mit |t| ≥ c.',
   initial: { alpha: 0.05, df: SCHLAF.df },
   compute: v => ({ ...v, half: v.alpha / 2, c: qt(1 - v.alpha / 2, v.df), cOne: qt(1 - v.alpha, v.df), cNormal: qnorm(1 - v.alpha / 2) }),
@@ -60,7 +57,7 @@ export const kritisch: SentenceTemplate<CValues, CStats> = {
       : 'Noch nicht ganz. Gesucht ist die Stelle, rechts von der 2,5 % der Fläche liegen.',
   },
   interpret: s => ({
-    kurz: `Bei α = ${num(s.alpha, 3)} und ${count(s.df)} Freiheitsgraden spricht t gegen H₀, wenn es mindestens ${num(s.c)} von 0 entfernt ist. Ohne echten Unterschied passiert das in ${percent(s.alpha)} der Studien.`,
+    kurz: `Bei α = ${num(s.alpha, 3)} und ${count(s.df)} Freiheitsgraden spricht t gegen H₀, wenn es mindestens ${num(s.c)} von 0 entfernt ist. Ohne echten Unterschied passiert das in ${pct(s.alpha)} der Studien.`,
     fachlich: `Ablehnungsbereich: t ≤ −${num(s.c)} oder t ≥ ${num(s.c)}. Einseitig läge die Grenze bei ${num(s.cOne)}, mit der Normalverteilung zweiseitig bei ${num(s.cNormal)}.`,
   }),
   think: {
@@ -74,7 +71,7 @@ export const kritisch: SentenceTemplate<CValues, CStats> = {
     kurz: 'Kritischer Wert und p-Wert führen zur selben Entscheidung. |t| ≥ c heißt genau dann p ≤ α.',
     paragraphs: [
       `Für die Schlafdauer ist t ≈ ${num(SCHLAF.t)} bei 199 Freiheitsgraden. Die Grenze liegt bei ${num(qt(0.975, 199))}, also wird H₀ bei α = 0,05 nicht verworfen. Das passt zu p ≈ ${num(SCHLAF.p)}.`,
-      'Der kritische Wert ist ein Quantil der Nullverteilung, kein Quartil der Daten. Er hängt nur von α, der Richtung und den Freiheitsgraden ab, nicht von den Antworten der Befragten.',
+      'Der kritische Wert ist ein Quantil der Nullverteilung, kein Quantil der Daten. Er hängt nur von α, der Richtung und den Freiheitsgraden ab, nicht von den Antworten der Befragten.',
       'Bei diskreten Prüfgrößen wie im Binomialtest gibt es nur bestimmte erreichbare Grenzen. Die Fehlerquote trifft α dann meist nicht genau.',
       `Dieselbe Zahl steckt im Konfidenzintervall: Mittelwert ± c · SE. Bei 200 Befragten und 95 % ist c ≈ ${num(qt(0.975, 199))} statt der Faustregel 2.`,
     ],

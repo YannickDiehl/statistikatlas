@@ -2,20 +2,20 @@
 // entsteht durch Mischen der Weiterbildungsangaben (Permutation). Zahlen in R nachgerechnet, siehe b09-testlogik.test.ts.
 import type { ConceptCard, ConceptTabs } from '../../types';
 import { count, num } from '../../format';
-import { baseSurvey } from '../../sample';
 import { LERNZEIT_NACH_WEITERBILDUNG as L } from '../muster/p-wert';
 import { MIX_MAX, gruppenTest, mischen } from './rechnen';
 
 /**
- * Lernzeit aller 200 (s über alle), Breite der Nullverteilung beim Mischen s · √(1/82 + 1/118), grober 95-%-Bereich
- * 1,96 · sd, dazu aus 100.000 Mischungen in R das 97,5-%-Quantil und der Anteil mindestens so großer Unterschiede.
+ * Lernzeit aller 200 (s über alle), Standardabweichung der Nullverteilung beim Mischen s · √(1/82 + 1/118), grober
+ * 95-%-Bereich 1,96 · sd, dazu aus einer Million Mischungen in R die Quantile 2,5 % und 97,5 % und der Anteil
+ * mindestens so großer Unterschiede.
  */
-export const MISCHEN = { s: 3.2375153, root: 0.1437702, sd: 0.4654563, rand: 0.9122943, q: 0.9161430, pPerm: 0.87694 } as const;
+export const MISCHEN = { s: 3.2375153, root: 0.1437702, sd: 0.4654563, rand: 0.9122943, qLo: -0.9110583, qHi: 0.9140761, pPerm: 0.876817 } as const;
 /** Zahl der Mischungen am Regler, auf Zehner gerundet. */
 export const mixCount = (v: number) => Math.max(10, Math.min(MIX_MAX, Math.round(v / 10) * 10));
 /** Wie viele der ersten k Mischungen einen Unterschied von mindestens dem beobachteten ergeben (beide Richtungen). */
 export function asFarAs(k: number): number {
-  return mischen(baseSurvey(), k).filter(d => Math.abs(d) >= L.diff - 1e-9).length;
+  return mischen(k).filter(d => Math.abs(d) >= L.diff - 1e-9).length;
 }
 
 export const nullverteilung: ConceptCard = {
@@ -27,8 +27,8 @@ export const nullverteilung: ConceptCard = {
     text: `Stell dir vor, du verteilst die ${L.nMit} Weiterbildungen zufällig neu auf die 200 Befragten, wie beim Mischen von Karten. Jetzt hat die Weiterbildung sicher nichts mehr mit der Lernzeit zu tun. Trotzdem liegen die beiden Gruppen fast nie genau gleichauf. Wiederholst du das Mischen sehr oft, entsteht die Nullverteilung des Unterschieds.`,
     figures: [
       { label: 'beobachteter Unterschied', value: `${num(L.diff)} h` },
-      { label: 'typische Schwankung beim Mischen', value: `${num(MISCHEN.sd)} h` },
-      { label: '95 von 100 Mischungen', value: `−${num(MISCHEN.rand)} bis +${num(MISCHEN.rand)} h` },
+      { label: 'Standardabweichung beim Mischen', value: `${num(MISCHEN.sd)} h` },
+      { label: 'grob 95 von 100 Mischungen', value: `−${num(MISCHEN.rand)} bis +${num(MISCHEN.rand)} h` },
     ],
   },
   heisst: {
@@ -45,7 +45,7 @@ export const nullverteilung: ConceptCard = {
     {
       title: 'Den Unterschied immer wieder ausrechnen',
       was: 'Nach jedem Mischen rechnen wir den Unterschied der Gruppen neu aus. Viele Mischungen ergeben viele Unterschiede, und ihre Verteilung ist die Nullverteilung.',
-      rechnung: `typische Schwankung: ${num(MISCHEN.s)} · √(1/${L.nMit} + 1/${L.nOhne}) ≈ ${num(MISCHEN.s)} · ${num(MISCHEN.root, 3)} ≈ ${num(MISCHEN.sd)} h`,
+      rechnung: `Standardabweichung beim Mischen: ${num(MISCHEN.s)} · √(1/${L.nMit} + 1/${L.nOhne}) ≈ ${num(MISCHEN.s)} · ${num(MISCHEN.root, 3)} ≈ ${num(MISCHEN.sd)} h`,
       warum: 'So siehst du, wie weit zwei Gruppen auch ohne jeden Zusammenhang auseinanderliegen. Grob gesagt schwankt der Unterschied um knapp eine halbe Stunde.',
       acht: 'Die Nullverteilung zeigt Unterschiede zwischen Gruppen, keine einzelnen Lernzeiten. Sie ist deshalb viel schmaler als die Verteilung der Befragten.',
       concept: 'sampling_distribution',
@@ -76,13 +76,13 @@ export const nullverteilung: ConceptCard = {
     {
       question: 'Was passiert mit der Nullverteilung, wenn alle Befragten doppelt so lange lernen?',
       options: ['wird doppelt so breit', 'bleibt gleich', 'wird halb so breit'], correct: 0, step: 2,
-      explain: `Alle Unterschiede beim Mischen verdoppeln sich. Die typische Schwankung wächst von ${num(MISCHEN.sd)} auf ${num(2 * MISCHEN.sd)} Stunden.`,
+      explain: `Alle Unterschiede beim Mischen verdoppeln sich. Ihre Standardabweichung wächst von ${num(MISCHEN.sd)} auf ${num(2 * MISCHEN.sd)} Stunden.`,
       kurz: 'Die Nullverteilung hat die Einheit der Prüfgröße.',
     },
     {
       question: 'Mit 2.000 statt 200 Befragten: Wird die Nullverteilung breiter oder schmaler?',
       options: ['breiter', 'schmaler', 'gleich breit'], correct: 1, step: 2,
-      explain: `Größere Gruppen haben stabilere Mittelwerte. Die typische Schwankung schrumpft auf etwa ein Drittel, rund ${num(MISCHEN.sd / Math.sqrt(10))} Stunden.`,
+      explain: `Größere Gruppen haben stabilere Mittelwerte. Ihre Standardabweichung schrumpft auf etwa ein Drittel, rund ${num(MISCHEN.sd / Math.sqrt(10))} Stunden.`,
       kurz: 'Mehr Befragte, schmalere Nullverteilung.',
     },
   ],
@@ -115,9 +115,9 @@ export const nullverteilung: ConceptCard = {
   genau: {
     kurz: 'Die Nullverteilung hängt von Prüfgröße, Nullhypothese und Modell ab. Das Mischen ist ein Permutationstest, die t-Verteilung eine Näherung dafür.',
     paragraphs: [
-      `Beim Mischen bleibt jede Lernzeit erhalten. Die Standardabweichung der Unterschiede ist dann genau s · √(1/n₁ + 1/n₂) ≈ ${num(MISCHEN.sd)} Stunden, mit s über alle 200 Befragten. Der Welch-t-Test schätzt den Standardfehler etwas anders und kommt ebenfalls auf ${num(L.se)} Stunden.`,
-      `Die Zahlen am Regler stammen aus einer festen Folge von Zufallsmischungen. In R ergeben 100.000 Mischungen einen Anteil von ${num(MISCHEN.pPerm)}, und 95 von 100 Unterschieden liegen zwischen etwa −${num(MISCHEN.q)} und +${num(MISCHEN.q)} Stunden. Die Glockenkurve mit 1,96 Standardabweichungen kommt auf ±${num(MISCHEN.rand)} Stunden.`,
-      'Je nach Prüfgröße kommen t-, F-, χ²- oder Binomialverteilungen infrage. Lautet H₀ nicht „genau gleich“, sondern etwa „höchstens sieben Stunden“, muss der Test für jeden erlaubten Wert richtig rechnen.',
+      `Beim Mischen bleibt jede Lernzeit erhalten. Die Standardabweichung der Unterschiede ist dann genau s · √(1/n₁ + 1/n₂) ≈ ${num(MISCHEN.sd)} Stunden, mit s über alle 200 Befragten. Wie jede Standardabweichung ist sie kein durchschnittlicher Abstand, sondern die Wurzel aus dem mittleren Quadrat. Der Welch-t-Test schätzt den Standardfehler etwas anders und kommt ebenfalls auf ${num(L.se)} Stunden.`,
+      `Die Zahlen am Regler stammen aus einer festen Folge von Zufallsmischungen. In R ergibt eine Million Mischungen einen Anteil von ${num(MISCHEN.pPerm)}, und 95 von 100 Unterschieden liegen zwischen etwa ${num(MISCHEN.qLo)} und +${num(MISCHEN.qHi)} Stunden, fast genau wie bei der Glockenkurve mit ±${num(MISCHEN.rand)}.`,
+      'Je nach Prüfgröße kommen t-, F-, χ²- oder Binomialverteilungen infrage. Lautet H₀ „höchstens sieben Stunden“, rechnet der Test mit dem Grenzwert sieben Stunden: Dort sind Fehlalarme am häufigsten.',
       'Die Nullverteilung ist keine Verteilung der beobachteten Lernzeiten und keine Wahrscheinlichkeitsaussage über H₀.',
     ],
   },
@@ -143,7 +143,7 @@ export const nullverteilungTabs: ConceptTabs = {
     think: [
       {
         question: 'Alle lernen doppelt so lange. Was passiert mit der Breite der Nullverteilung?', options: ['verdoppelt sich', 'bleibt gleich', 'halbiert sich'], correct: 0,
-        explain: 'Jeder Unterschied beim Mischen verdoppelt sich, also auch ihre typische Schwankung.',
+        explain: 'Jeder Unterschied beim Mischen verdoppelt sich, also auch ihre Standardabweichung.',
         kurz: 'Die Nullverteilung wächst mit der Einheit.',
         tryIt: { label: 'alle doppelt so lange', op: 'double', column: 'x', value: 2 },
         expect: { change: 'factor', factor: 2 },

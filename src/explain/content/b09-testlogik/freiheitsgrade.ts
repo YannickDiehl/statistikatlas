@@ -16,7 +16,7 @@ export const freiheitsgrade: ConceptCard = {
   concept: 'general_df',
   picture: 'b09-freiheitsgrade',
   wofuer: 'R schreibt hinter jede Prüfgröße eine Zahl in Klammern: t(199), t(198), t(175.8) oder chi2(4). Das sind die Freiheitsgrade. Woher kommen sie, und warum sind sie bei jedem Test anders?',
-  kurz: 'Freiheitsgrade zählen, wie viele Werte nach den Schätzungen noch frei schwanken können. Sie legen fest, welche Form die Referenzverteilung hat.',
+  kurz: 'Freiheitsgrade zählen, wie viele Werte nach den Schätzungen noch frei schwanken können. Sie legen fest, mit welcher Kurve R deine Prüfgröße vergleicht.',
   stellDirVor: {
     text: `Die 200 Befragten liefern 200 Schlafdauern. Für den t-Test gegen sieben Stunden schätzt R einen Mittelwert, es bleiben 200 − 1 = ${DF.eins} Freiheitsgrade. Beim Vergleich der Lernzeit nach Weiterbildung schätzt R zwei Mittelwerte: 200 − 2 = ${DF.student}. Welch kommt auf ${num(DF.welch, 1)}, eine Näherung, die Streuung und Größe beider Gruppen einrechnet.`,
     figures: [
@@ -44,7 +44,7 @@ export const freiheitsgrade: ConceptCard = {
       was: 'Jede Größe, die das Modell aus den Daten schätzt, kostet einen Freiheitsgrad. Zwei Gruppenmittelwerte kosten zwei.',
       rechnung: `zwei Gruppen: 200 − 2 = ${DF.student}; fünf Gruppen in der Varianzanalyse: 5 − 1 = ${DF.anovaZ} und 200 − 5 = ${DF.anovaN}`,
       warum: 'Je mehr das Modell anpasst, desto weniger Information bleibt übrig, um die Streuung zu schätzen.',
-      acht: 'Die Varianzanalyse hat zwei Freiheitsgrade: einen für die Gruppen und einen für den Rest. R schreibt beide hin.',
+      acht: 'Die Varianzanalyse meldet zwei Zahlen für die Freiheitsgrade: eine für die Gruppen (5 − 1 = 4) und eine für den Rest (200 − 5 = 195). R schreibt beide hin.',
       concept: 'oneway_anova',
     },
     {

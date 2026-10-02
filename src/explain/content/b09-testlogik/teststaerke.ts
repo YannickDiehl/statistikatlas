@@ -42,7 +42,7 @@ export const teststaerke: SentenceTemplate<PValues, PStats> = {
   aria: 'eins minus beta ungefähr gleich Phi von d mal Wurzel aus n halbe minus z eins minus alpha halbe',
   numeric: s => [{ part: ['1 − β'], m: 'power' }, ' ≈ ', { part: ['Φ'], m: 'phi' }, '(', { part: [num(s.d)], m: 'd' }, ' · ', { part: [`√(${count(s.n)} / 2)`], m: 'n' }, ' − ', { part: [num(s.z)], m: 'z' }, ')',
     ' ≈ Φ(', num(s.delta), ' − ', num(s.z), ') ≈ Φ(', num(s.gap), ') ≈ ', { part: [num(s.power)], m: 'power' }],
-  sentence: ['Die ', { m: 'power', t: 'Teststärke' }, ' ist ', { m: 'phi', t: 'der Anteil der Studien' }, ', in denen die Prüfgröße zu ', { m: 'd', t: 'einem echten Unterschied d' }, ' mit ', { m: 'n', t: 'n Personen je Gruppe' }, ' über ', { m: 'z', t: 'die Grenze' }, ' für ', { m: 'alpha', t: 'das Signifikanzniveau α' }, ' springt.'],
+  sentence: ['Die ', { m: 'power', t: 'Teststärke' }, ' ist ', { m: 'phi', t: 'der Anteil der Studien' }, ', in denen die Prüfgröße über ', { m: 'z', t: 'die Grenze' }, ' für ', { m: 'alpha', t: 'α' }, ' springt, wenn es ', { m: 'd', t: 'den Unterschied d' }, ' gibt und je Gruppe ', { m: 'n', t: 'n Personen' }, ' antworten.'],
   worked: s => [
     { title: 'Den Unterschied in Standardfehlern ausdrücken', text: `d · √(n/2) = ${num(s.d)} · √(${count(s.n)} / 2) ≈ ${num(s.delta)}. So weit liegt die Prüfgröße im Mittel von 0 entfernt, wenn der Unterschied echt ist.` },
     { title: 'Die Grenze abziehen', text: `${num(s.delta)} − ${num(s.z)} ≈ ${num(s.gap)}. ${s.gap >= 0 ? 'Im Mittel liegt die Prüfgröße also jenseits der Grenze.' : 'Im Mittel bleibt die Prüfgröße also diesseits der Grenze.'}` },
@@ -71,7 +71,7 @@ export const teststaerke: SentenceTemplate<PValues, PStats> = {
   },
   interpret: s => ({
     kurz: `Gibt es den Unterschied d = ${num(s.d)} wirklich, findet der Test ihn mit ${count(s.n)} Personen je Gruppe ${found(s.power)}.${Math.round(s.power * 100) < 100 && Math.round(s.power * 100) >= 1 ? ` In den übrigen ${100 - Math.round(s.power * 100)} übersieht er ihn.` : ''}`,
-    fachlich: `Teststärke 1 − β ≈ ${num(s.power)} bei d = ${num(s.d)}, n = ${count(s.n)} je Gruppe und α = ${num(s.alpha, 3)}, zweiseitig, grob mit der Normalverteilung gerechnet. Üblich ist eine Planung auf mindestens 0,8.`,
+    fachlich: `Teststärke 1 − β ≈ ${num(s.power)} bei d = ${num(s.d)}, n = ${count(s.n)} je Gruppe und α = ${num(s.alpha, 3)}, zweiseitig, grob mit der Normalverteilung gerechnet. Als Faustregel plant man auf mindestens 0,8.`,
   }),
   think: {
     question: 'Du willst die Teststärke von etwa 0,56 auf 0,8 bringen. Was hilft?',
@@ -84,7 +84,7 @@ export const teststaerke: SentenceTemplate<PValues, PStats> = {
     kurz: 'Die Formel ist eine Näherung mit der Normalverteilung. R rechnet mit power.t.test() die genauere Fassung mit der t-Verteilung.',
     paragraphs: [
       'Für d = 0,3, n = 100 je Gruppe und α = 0,05 liefert die Näherung 0,56. power.t.test(n = 100, delta = 0.3) meldet ebenfalls 0,56. Für 0,8 braucht die Näherung 175 Personen je Gruppe, power.t.test kommt auf 176.',
-      'Eine Stunde Lernzeit pro Woche entspricht im Lehrdatensatz etwa d = 0,3, denn die Standardabweichung innerhalb der Gruppen beträgt gut 3 Stunden. Daher kommt der Startwert.',
+      'Eine Stunde Lernzeit in den letzten sieben Tagen entspricht im Lehrdatensatz etwa d = 0,3, denn die Standardabweichung innerhalb der Gruppen beträgt gut 3 Stunden. Daher kommt der Startwert.',
       'Die Teststärke ist keine Wahrscheinlichkeit dafür, dass H₁ stimmt. Sie gilt unter der Annahme, dass der Unterschied d tatsächlich besteht.',
       'Plane n vor der Erhebung mit einem Unterschied, der inhaltlich wichtig wäre. Effekt, Streuung, Design, Test und α gehören zusammen in die Planung; bei verbundenen Messungen oder ungleichen Gruppen gelten andere Formeln.',
     ],

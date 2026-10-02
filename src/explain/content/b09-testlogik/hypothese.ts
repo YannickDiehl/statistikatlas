@@ -2,7 +2,7 @@
 // (t-Test einer Stichprobe wie mariposa::t_test(schlafdauer, mu = 7)). Zahlen in R nachgerechnet, siehe b09-testlogik.test.ts.
 import type { ConceptCard, ConceptTabs } from '../../types';
 import { fixed, num } from '../../format';
-import { MU0, SCHLAF as S, outOf100, pShown, schlafP, schlafTest } from './rechnen';
+import { MU0, SCHLAF as S, outOf100, pShown, schlafP, schlafTest, small } from './rechnen';
 
 
 export const hypothese: ConceptCard = {
@@ -65,7 +65,7 @@ export const hypothese: ConceptCard = {
     {
       question: 'Du prüfst gegen 6,9 statt gegen 7 Stunden. Was passiert mit p?',
       options: ['p wird kleiner', 'p bleibt gleich', 'p wird größer'], correct: 0, step: 3,
-      explain: `Der Abstand von ${num(S.mean)} zu 6,9 ist größer als der zu 7. Läge der wahre Mittelwert bei 6,9 Stunden, wäre so ein Abstand selten: p fällt auf etwa ${num(schlafP(6.9), 3)}.`,
+      explain: `Der Abstand von ${num(S.mean)} zu 6,9 ist größer als der zu 7. Läge der wahre Mittelwert bei 6,9 Stunden, wäre ein mindestens so großer Abstand selten: p fällt auf etwa ${small(schlafP(6.9))}.`,
       kurz: 'Ein anderer Vergleichswert ist eine andere Frage.',
     },
   ],
@@ -118,7 +118,7 @@ export const hypotheseTabs: ConceptTabs = {
       if (!r) return { kurz: 'Alle Befragten schlafen gleich lange. Ohne Streuung lässt sich kein t-Test rechnen.', fachlich: 'Der t-Test braucht mindestens zwei verschiedene Werte.' };
       const d = r.mean - MU0, side = d >= 0 ? 'mehr' : 'weniger';
       return {
-        kurz: `Die 200 Befragten schlafen im Schnitt ${num(r.mean)} Stunden pro Nacht, ${num(Math.abs(d))} Stunden ${side} als sieben. Läge der wahre Mittelwert bei sieben Stunden, käme ein so großer Abstand ${outOf100(r.p)} Stichproben vor (p ${pShown(r.p)}). Bei α = 0,05 verwirfst du H₀ ${r.p > 0.05 ? 'nicht' : 'und nennst den Unterschied signifikant'}.`,
+        kurz: `Die 200 Befragten schlafen im Schnitt ${num(r.mean)} Stunden pro Nacht, ${num(Math.abs(d))} Stunden ${side} als sieben. Läge der wahre Mittelwert bei sieben Stunden, käme ein mindestens so großer Abstand ${outOf100(r.p)} Stichproben vor (p ${pShown(r.p)}). Bei α = 0,05 verwirfst du H₀ ${r.p > 0.05 ? 'nicht' : 'und nennst den Unterschied signifikant'}.`,
         fachlich: `t-Test für eine Stichprobe, H₀: μ = 7, H₁: μ ≠ 7. t(${r.df}) ≈ ${num(r.t)}, p ${pShown(r.p)}; 95-%-Konfidenzintervall von ${fixed(r.ci[0])} bis ${fixed(r.ci[1])} Stunden.`,
         zusatz: `${r.mehr} Befragte schlafen mehr als sieben Stunden, ${r.weniger} weniger.`,
       };
@@ -152,8 +152,8 @@ export const hypotheseTabs: ConceptTabs = {
       { match: 'N', atlas: 'n', explain: 'N zählt die Befragten mit gültiger Schlafdauer.' },
     ],
     check: {
-      question: 'An welcher Zahl entscheidest du, ob du H₀: μ = 7 verwirfst? Tippe sie an.', correct: 'p',
-      wrong: { t: 'Fast! t ist der Abstand in Standardfehlern. Entscheiden kannst du mit p oder mit einem kritischen Wert.', N: 'Fast! N ist die Zahl der Befragten. Die Entscheidung triffst du mit p.' },
+      question: 'Welche Zahl vergleichst du direkt mit α? Tippe sie an.', correct: 'p',
+      wrong: { t: 'Fast! t ist der Abstand in Standardfehlern. t vergleichst du mit einem kritischen Wert, mit α vergleichst du p.', N: 'Fast! N ist die Zahl der Befragten. Mit α vergleichst du p.' },
     },
   },
   next: {
