@@ -13,6 +13,7 @@ import { empiricalDistribution, empiricalDistributionTabs } from './empirical_di
 import { theoreticalDistribution, theoreticalDistributionTabs } from './theoretical_distribution';
 import { discreteContinuous, discreteContinuousTabs } from './discrete_continuous';
 import { probabilityMass, probabilityMassTabs, massUpTo } from './probability_mass';
+import { densityFunction, densityFunctionTabs, areaAround7 } from './density_function';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -215,4 +216,29 @@ test('B6 probability_mass: Haushaltsgröße p(1) bis p(5) wie in R', () => {
   const r = tab.result(ctxFor(tab));
   assert.equal(r.kurz, 'Am wahrscheinlichsten zieht man jemanden aus einem Haushalt mit einer Person: 23,5 %. Alle 5 Balken zusammen ergeben 100 %.');
   assert.ok(close(tab.value!(ctxFor(tab))!, 0.235, 1e-12));
+});
+
+/*
+ *   pnorm(8, m, s) - pnorm(7, m, s); sum(sl >= 7 & sl <= 8)        # 0.4085611; 90 von 200
+ *   dnorm(7, m, s); dnorm(7, m, s) * 24                              # 0.4842001; 11.6208 (in Tagen gemessen)
+ *   pnorm(7.05, m, s) - pnorm(6.95, m, s)                            # 0.04839031 (Höhe mal Breite: 0.48 * 0.1 = 0.048)
+ *   pnorm(7.5, m, s) - pnorm(6.5, m, s); pnorm(7, m, s)              # 0.456054; 0.4599184
+ *   pnorm(8, m + 2, s) - pnorm(7, m + 2, s)                          # 0.08779566
+ *   integrate(function(x) dnorm(x, m, s), -Inf, Inf)$value           # 1
+ */
+test('B6 density_function: Fläche und Höhe der Dichte der Schlafdauer wie in R', () => {
+  const card = densityFunction;
+  assert.match(card.stellDirVor.text, /zwischen 7 und 8 Stunden beträgt 0,41: In diesem Modell schlafen 40,9 % so lange\. In den Daten sind es 90 von 200, also 45 %\./);
+  assert.match(card.bausteine[0].acht, /Kurve 0,48 hoch/);
+  assert.match(card.bausteine[1].acht, /0,48 · 0,1 ≈ 0,05\./);
+  assert.match(card.bausteine[2].warum, /11,6 pro Tag/);
+  assert.ok(close(areaAround7(0.05), 0.04839031, 1e-6) && close(areaAround7(0.5), 0.456054, 1e-6), 'Flächen wie pnorm in R');
+  assert.equal(card.regler!.describe(0.5), 'Zwischen 6,5 und 7,5 Stunden ist die Fläche ≈ 0,46, also 45,6 %. Höhe mal Breite ergibt 0,48 · 1 ≈ 0,48. Bei breiten Bereichen ist das zu viel, weil die Kurve zu den Rändern abfällt.');
+  assert.match(card.check.diagnose[2]!, /bei 46 %/);
+  const tab = densityFunctionTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, 'Im Normalmodell mit μ = 7,08 h und σ = 0,82 h hat der Bereich von 7 bis 8 Stunden die Fläche 0,41, also 40,9 %. In den Daten schlafen 90 von 200 so lange.');
+  assert.ok(close(tab.value!(ctxFor(tab))!, 0.4085611, 1e-6));
+  assert.ok(close(tab.think[1].expect.measure!(ctxFor(tab))!, 1, 1e-9), 'Gesamtfläche 1 wie integrate in R');
 });

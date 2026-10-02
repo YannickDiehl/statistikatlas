@@ -6,7 +6,8 @@ import { num, pct } from '../../../explain/format';
 import { baseSurvey, sampleColumn } from '../../../explain/sample';
 import { HAUSHALT, SCHLAF, dnorm, sleepMu } from '../../../explain/content/b06-wahrscheinlichkeit/gemeinsam';
 import { massOf, massUpTo } from '../../../explain/content/b06-wahrscheinlichkeit/probability_mass';
-import { Axis, Bar, Curve, forCard, linear, useWidth, type Picture } from './kit';
+import { areaAround7 } from '../../../explain/content/b06-wahrscheinlichkeit/density_function';
+import { AreaUnder, Axis, Bar, Curve, forCard, linear, MarkLine, useWidth, type Picture } from './kit';
 
 /** Schlafdauer der 200 Befragten in Klassen von einer halben Stunde, als Dichte (Anteil je Stunde). */
 function useSleepBins() {
@@ -61,7 +62,31 @@ function Masse({ k }: { k: number }) {
   );
 }
 
+const sleepDensity = (v: number) => dnorm(v, SCHLAF.mean, SCHLAF.sd);
+
+/** Dichte der Schlafdauer im Normalmodell, Fläche über dem Bereich 7 ± h markiert, Höhe bei 7 Stunden als Strich. */
+function Dichte({ h }: { h: number }) {
+  const [box, W] = useWidth();
+  const base = 196, top = 48, left = 40, right = W - 16, lo = 4.5, hi = 9.7;
+  const x = linear([lo, hi], [left, right]), y = linear([0, 0.56], [base, top]);
+  const area = areaAround7(h);
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={254} viewBox={`0 0 ${W} 254`} role="img"
+        aria-label={`Dichte des Normalmodells der Schlafdauer. Markiert ist die Fläche zwischen ${num(7 - h)} und ${num(7 + h)} Stunden, ${pct(area)}. Die Kurve ist bei 7 Stunden ${num(sleepDensity(7))} hoch.`}>
+        <AreaUnder f={sleepDensity} from={Math.max(lo, 7 - h)} to={Math.min(hi, 7 + h)} x={x} y={y} tone="pos" />
+        <Curve f={sleepDensity} from={lo} to={hi} x={x} y={y} />
+        <MarkLine x={x(7)} from={y(sleepDensity(7))} to={base} />
+        <Axis scale={x} ticks={[5, 6, 7, 8, 9]} at={base} from={left} to={right} labelGap={22} title="Schlafdauer pro Nacht in Stunden" />
+        <text className="xw-t xw-strong" x={left} y={16}>Fläche {num(7 - h)} bis {num(7 + h)} h: {pct(area)}</text>
+        <text className="xw-t" x={left} y={34}>Höhe bei 7 h: {num(sleepDensity(7))} pro Stunde</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b06-dichte': forCard(p => <Dichte h={p.value ?? 0.5} />),
   'b06-masse': forCard(p => <Masse k={p.value ?? 2} />),
   'b06-modell': forCard(p => <Modell mu={sleepMu(p.value ?? SCHLAF.mean)} />),
 };
