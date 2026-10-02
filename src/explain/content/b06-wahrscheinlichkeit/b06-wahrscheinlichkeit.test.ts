@@ -369,12 +369,16 @@ test('B6 Fix-Runde 1: geänderte Texte und ihre Zahlen wie in R', () => {
   assert.equal(erwartung.think[1].tryIt, undefined, 'kein Ausprobieren, das auf der Karte Erwartungswert μ statt der Abstände zeigt');
   assert.equal(erwartung.think[2].questionFor?.expectation, 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?');
   assert.doesNotMatch(String(erwartung.think[2].explain), /n − 1|s²/);
+  // 5 · 0,25 = 1,25: Mit vier im Nenner ergäben die Chancen zusammen mehr als 1.
+  assert.match(String(erwartung.think[2].explain), /Zusammen ergeben die fünf Chancen 1; mit je 0,25 wären es 1,25\.$/);
+  assert.ok(close(5 * 0.25, 1.25, 1e-12) && close(5 * 0.2, 1, 1e-12), 'Summe der Chancen');
+  assert.match(String(erwartung.think[1].explain), /^μ steigt auch um 1\./);
   // Korrekturrunde 2: Was die gemeinsame Werkstatt auf der Karte Erwartungswert zeigt (Frage, Antworten, Erklärung, Kurz gesagt),
   // nennt weder die Streuungszeichen noch n − 1; „Kurz gesagt“ jeder Denkfrage steht auf beiden Karten und ist neutral.
   for (const t of erwartung.think) {
     const shown = [t.questionFor?.expectation ?? t.question, ...t.options, txt(t.explain, a), t.kurz];
     for (const x of shown) assert.doesNotMatch(x, /σ|s²|n − 1/, `Karte Erwartungswert zeigt Streuungsstoff: ${x}`);
-    for (const v of ['expectation', 'population_variance']) assert.ok(t.kurz.trim() && !/n − 1|0,25/.test(t.kurz), `${v}: Kurz gesagt nicht neutral: ${t.kurz}`);
+    assert.ok(t.kurz.trim() && !/n − 1|0,25/.test(t.kurz), `Kurz gesagt (auf beiden Karten dasselbe) nicht neutral: ${t.kurz}`);
   }
   assert.equal(erwartung.think.filter(t => t.tryIt).length, 1, 'ein Ausprobieren, zu „Was passiert mit μ?“');
   for (const v of ['expectation', 'population_variance']) assert.equal(erwartung.variants[v].metrics.at(-1)!.label, 'Erwartungswert μ', `${v}: Ausprobieren meldet μ`);
