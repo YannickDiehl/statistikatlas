@@ -5,6 +5,7 @@ import type { GofData, GofStats } from '../../../explain/content/b12-kategorial-
 import type { FourStats } from '../../../explain/content/b12-kategorial-design/chi-square';
 import { partText } from '../../../explain/content/b12-kategorial-design/chi-gemeinsam';
 import { pBinom } from '../../../explain/content/b12-kategorial-design/binomial-test';
+import { dFisher, FISHER, pFisher } from '../../../explain/content/b12-kategorial-design/fisher-test';
 import { dbinom, pText } from '../../../explain/content/b12-kategorial-design/rechnen';
 import { num, signed } from '../../../explain/format';
 import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, GridCell, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
@@ -111,5 +112,10 @@ export const pictures: Record<string, Picture> = {
     const v = p.value ?? 82, lo = Math.min(v, 200 - v), hi = Math.max(v, 200 - v);
     return <Tails from={60} to={140} prob={k => dbinom(k, 200, 0.5)} marked={k => k <= lo || k >= hi} obs={v} expected={100} p={pBinom(v)}
       ticks={[60, 80, 100, 120, 140]} title="Zahl der Ja-Antworten unter 200, wenn es in Wahrheit 50 % wären" axis="Ja-Antworten von 200, erwartet 100" what="Ja-Antworten" />;
+  }),
+  'b12-fisher': forCard(p => {
+    const v = p.value ?? FISHER.k, d0 = dFisher(v) * (1 + 1e-7);
+    return <Tails from={40} to={72} prob={dFisher} marked={k => dFisher(k) <= d0} obs={v} expected={FISHER.expected} p={pFisher(v)}
+      ticks={[40, 48, 56, 64, 72]} title="Erwerbstätige unter den 82 Befragten mit Weiterbildung, wenn es keinen Zusammenhang gäbe" axis="Erwerbstätige mit Weiterbildung" what="Erwerbstätige" />;
   }),
 };

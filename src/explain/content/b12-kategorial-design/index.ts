@@ -4,16 +4,22 @@ import type { AreaIndex } from '../../types';
 import { anpassung, gofTabs } from './chisq-gof';
 import { unabhaengigkeit, chiSquareTabs } from './chi-square';
 import { binomialTest, binomialTabs } from './binomial-test';
+import { fisherTest, fisherTabs } from './fisher-test';
+import { mcnemarTest, mcnemarTabs } from './mcnemar-test';
 
 export const b12KategorialDesign: AreaIndex = {
   explanations: {
     chisq_gof: { kind: 'werkstatt', workshop: anpassung, variant: 'chisq_gof' },
     chi_square: { kind: 'werkstatt', workshop: unabhaengigkeit, variant: 'chi_square' },
     binomial_test: { kind: 'begriff', card: binomialTest },
+    fisher_test: { kind: 'begriff', card: fisherTest },
+    mcnemar_test: { kind: 'satz', template: mcnemarTest },
   },
   tabs: {
     chisq_gof: gofTabs,
     chi_square: chiSquareTabs,
     binomial_test: binomialTabs,
+    fisher_test: fisherTabs,
+    mcnemar_test: mcnemarTabs,
   },
 };

@@ -3,10 +3,13 @@ import assert from 'node:assert/strict';
 import { createSurvey } from '../../../domain/survey';
 import { close } from '../../format';
 import { txt, type SampleCtx } from '../../types';
-import { binomTestHalf, counts, dbinom, fourfold, pbinom, pText } from './rechnen';
+import { binomTestHalf, counts, dbinom, fisher2x2, fourfold, mcnemar, oddsRatio, pbinom, pText } from './rechnen';
 import { anpassung, gofSample, gofStats, gofTabs, LEHR, SCHULE } from './chisq-gof';
 import { ALTER_EW, chiSquareTabs, crossChi, fourStats, unabhaengigkeit, WB_EW } from './chi-square';
 import { binomialTabs, binomialTest, pBinom, WEITERBILDUNG } from './binomial-test';
+import { dFisher, FISHER, fisherSample, fisherTabs, fisherTest, pFisher } from './fisher-test';
+import { KURS, mcnemarTabs, mcnemarTest, mcSample, mcStats } from './mcnemar-test';
+import { applyOp } from '../../sample';
 
 /*
  * Referenzwerte des Bereichs B12, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -136,5 +139,75 @@ test('B12 Binomialtest: Anteil mit Weiterbildung, p-Werte des Reglers und Beispi
   if (s.kind === 'analysis') {
     const res = s.result({ rows, columns: { x: ['weiterbildung'] } });
     assert.match(res.kurz, /^82 von 200 Befragten .* das sind 41 %\. .*in etwa 13 von 1\.000 Stichproben mindestens so weit von 100 entfernt \(p ≈ 0,013\)/);
+  }
+});
+
+/*
+ * Fisher (fisher_test), Vierfeldertafel Weiterbildung (Zeilen) und Erwerbstätigkeit (Spalten), Ränder 118/82 und 63/137:
+ *   t <- matrix(c(40, 23, 78, 59), 2); fisher.test(t)      # p = 0.4400503626, odds ratio (bedingte Schätzung) 1.313701046
+ *   (40 * 59) / (78 * 23)                                  # 1.315496098 (mariposa: OR = 1.315 [0.712, 2.432])
+ *   82 * 137 / 200; dhyper(59, 137, 63, 82)                # 56.17; 0.08471393266
+ *   k <- 40:72; sapply(k, function(x) fisher.test(matrix(c(x - 19, 82 - x, 137 - x, x), 2))$p.value)
+ *     # k = 40: 1.045216758e-06; 56: 1; 59: 0.4400503626; 62: 0.08869647287; 64: 0.01997903469; 72: 5.471139346e-07
+ *   chisq.test(t, correct = FALSE)$p.value                 # 0.381086138
+ *   atlas %>% fisher_test(row = weiterbildung, col = erwerbstaetig)   # p = 0.440, OR = 1.315 [0.712, 2.432], N = 200
+ *   atlas %>% fisher_test(row = erwerbstaetig, col = weiterbildung)   # dasselbe: p = 0.440, OR = 1.315
+ *   atlas %>% fisher_test(row = weiterbildung)             # Error: Argument `col` is missing, with no default.
+ *   atlas %>% fisher_test(row = lernzeit, col = erwerbstaetig)   # Error: `row` variable `lernzeit` appears to be continuous. ...
+ */
+test('B12 Fisher: exakte p-Werte, Odds Ratio und die Rechnung mit allen 200 wie in R', () => {
+  assert.deepEqual(fourfold(rows, 'weiterbildung', 'erwerbstaetig'), [[40, 78], [23, 59]]);
+  assert.ok(near(fisher2x2([[40, 78], [23, 59]]), 0.4400503626) && near(FISHER.p, 0.4400503626) && near(FISHER.pChi, 0.381086138));
+  assert.ok(near(oddsRatio([[40, 78], [23, 59]])!, 1.315496098) && near(FISHER.or, 1.315496098) && near(FISHER.expected, 56.17) && near(dFisher(59), 0.08471393266));
+  for (const [k, p] of [[40, 1.045216758e-06], [56, 1], [59, 0.4400503626], [62, 0.08869647287], [64, 0.01997903469], [72, 5.471139346e-07]] as const)
+    assert.ok(near(pFisher(k), p, Math.max(1e-13, p * 1e-6)), `k = ${k}: ${pFisher(k)} ≠ R ${p}`);
+  assert.match(fisherTest.stellDirVor.text, /etwa 56,17 Erwerbstätige\. Fisher meldet in R p = 0\.440, der Chi-Quadrat-Test p = 0\.381\./);
+  assert.match(fisherTest.bausteine[1].rechnung!, /in etwa 85 von 1\.000/);
+  assert.match(fisherTest.ausprobieren[0].explain, /p fällt auf etwa 0,02/);
+  assert.match(fisherTest.ausprobieren[2].explain, /aus 1,32 wird 0,76/);
+  assert.match(fisherTest.regler!.describe(64), /78 % erwerbstätig, von denen ohne 61,9 %\. .*in etwa 20 von 1\.000 .*\(p ≈ 0,020\)/);
+  assert.match(fisherTest.regler!.describe(56), /\(p = 1\)/);
+  assert.match(fisherTest.genau.paragraphs[1], /≈ 1,32, mit einem 95-%-Intervall von 0,71 bis 2,43\. .*1,31/);
+  const ctx = { rows, columns: { x: ['weiterbildung'], y: ['erwerbstaetig'] } }, f = fisherSample(ctx)!;
+  assert.ok(near(f.p, 0.4400503626) && near(f.or!, 1.315496098) && near(f.pChi, 0.381086138));
+  const flipped = fisherSample({ ...ctx, rows: applyOp(rows, 'erwerbstaetig', 'reverse') })!;
+  assert.ok(near(flipped.p, 0.4400503626) && near(flipped.or!, 1 / 1.315496098), 'umgepolt: gleiches p, Kehrwert des Odds Ratio');
+  const s = fisherTabs.sample!;
+  if (s.kind === 'analysis') assert.match(s.result(ctx).kurz, /Von den 82 Befragten mit Weiterbildung sind 72 % erwerbstätig, von den 118 ohne 66,1 %\. .*in etwa 44 von 100/);
+});
+
+/*
+ * McNemar (mcnemar_test), Kurszuversicht vorher (kv) und nachher (kn):
+ *   table(kv, kn)                                          # 71 46 / 9 74: b = 46 (Nein → Ja), c = 9 (Ja → Nein)
+ *   sum(kv); sum(kn)                                       # 83; 120
+ *   mcnemar.test(table(kv, kn))                            # McNemar's chi-squared = 23.564, p = 1.208499116e-06
+ *   mcnemar.test(table(kv, kn), correct = FALSE)           # 24.89090909
+ *   binom.test(46, 55)$p.value                             # 4.336383137e-07 (mariposa: p < 0.001 (exact))
+ *   (abs(10 - 4) - 1)^2 / 14; (10 - 4)^2 / 14              # 1.785714286; 2.571428571 (Kontrollfrage)
+ *   (abs(10 - 10) - 1)^2 / 20                              # 0.05 (b = c, nicht bei 0 abgeschnitten)
+ *   mc <- function(b, c) (abs(b - c) - 1)^2 / (b + c)
+ *   mc(sum(kv == 0), 0); mc(sum(kn == 1), 0); mc(200, 0)   # 115.008547 (nachher alle Ja); 118.0083333 (vorher alle Nein); 198.005 (beides)
+ *   atlas %>% mcnemar_test(kurs_vor, kurs_nach, correct = TRUE)   # chi2(1) = 23.564 (cc), p < 0.001 (asymptotic), p < 0.001 *** (exact), N = 200
+ *   atlas %>% mcnemar_test(kurs_vor, schulabschluss)       # Error: `var2` must be dichotomous (exactly 2 levels).
+ */
+test('B12 McNemar: Wechsel, χ² mit und ohne Korrektur, exakter p-Wert und die Vorhersagen wie in R', () => {
+  assert.deepEqual(fourfold(rows, 'kurs_vor', 'kurs_nach'), [[71, 46], [9, 74]]);
+  const s = mcStats({ b: KURS.b, c: KURS.c });
+  assert.ok(near(s.chi2, 23.56363636) && near(s.raw, 24.89090909) && near(s.p, 1.208499116e-06, 1e-12) && near(s.exact, 4.336383137e-07, 1e-12), `${s.chi2} ${s.p} ${s.exact}`);
+  assert.ok(near(mcnemar(10, 4)!.chi2, 1.785714286) && near(mcnemar(10, 4, false)!.chi2, 2.571428571) && near(mcnemar(10, 10)!.chi2, 0.05));
+  assert.ok(near(mcnemarTest.check.answer, 1.785714286), 'Kontrollfrage');
+  assert.match(mcnemarTest.check.diagnose(36 / 14), /^Fast! Das ist χ² ohne Korrektur/);
+  const flat = (n: unknown[]): string => n.map(x => typeof x === 'string' ? x : x && typeof x === 'object' && 'part' in x ? flat((x as { part: unknown[] }).part) : '').join('');
+  assert.equal(flat(mcnemarTest.numeric(s)), 'χ² = (|46 − 9| − 1)² / (46 + 9) = 36² / 55 = 1.296 / 55 ≈ 23,56');
+  assert.match(mcnemarTest.genau.paragraphs[0], /37² \/ 55 ≈ 24,89/);
+  assert.match(mcnemarTest.compare(s), /Ohne Korrektur wäre χ² = 24,89, mit Korrektur 23,56/);
+  const ctx = { rows, columns: { x: ['kurs_vor'], y: ['kurs_nach'] } }, m = mcSample(ctx);
+  assert.deepEqual([m.b, m.c, m.vorher, m.nachher], [46, 9, KURS.vorher, KURS.nachher]);
+  const v = mcnemarTabs.sample!;
+  if (v.kind === 'analysis') {
+    assert.ok(near(v.value!({ ...ctx, rows: applyOp(rows, 'kurs_nach', 'constant', 1) })!, 115.008547), 'nachher alle Ja');
+    assert.ok(near(v.value!({ ...ctx, rows: applyOp(rows, 'kurs_vor', 'constant', 0) })!, 118.0083333), 'vorher alle Nein');
+    assert.ok(near(v.value!({ ...ctx, rows: applyOp(applyOp(rows, 'kurs_vor', 'constant', 0), 'kurs_nach', 'constant', 1) })!, 198.005), 'beides');
+    assert.match(v.result(ctx).kurz, /^46 Befragte trauen sich .*; 9 andersherum\. .*weniger als 1 von 1\.000 Stichproben vor \(p < 0,001\)/);
   }
 });
