@@ -72,7 +72,7 @@ export const tabsSs: ConceptTabs = {
     },
   },
   next: {
-    next: { id: 'variance', why: 'Geteilt durch n − 1 wird aus der Summe ein Durchschnitt, der nicht mehr mit der Zahl der Befragten wächst.' },
+    next: { id: 'variance', why: 'Geteilt durch n − 1 wird aus der Summe ein Maß, das nicht mehr mit der Zahl der Befragten wächst.' },
     before: [
       { id: 'squared_deviation', why: 'Die einzelnen Quadrate, die hier zusammengezählt werden.' },
       { id: 'mean', why: 'Die Mitte, von der aus jeder Abstand gemessen wird.' },

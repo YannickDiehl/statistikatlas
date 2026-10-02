@@ -312,7 +312,7 @@ export const tabsZ: ConceptTabs = {
     },
   },
   next: {
-    next: { id: 'pearson', why: 'r ist der Durchschnitt der Produkte zweier z-Werte: Σ zₓ · zᵧ / (n − 1).' },
+    next: { id: 'pearson', why: 'r ist die Summe der Produkte zweier z-Werte, geteilt durch n − 1: Σ zₓ · zᵧ / (n − 1).' },
     before: [
       { id: 'centering', why: 'Der erste Teil: die Mitte abziehen.' },
       { id: 'scaling', why: 'Der zweite Teil: durch s teilen.' },

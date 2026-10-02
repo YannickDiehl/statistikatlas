@@ -21,12 +21,12 @@ function ticksBetween(lo: number, hi: number, step: number): number[] {
 }
 
 /** Ein Lineal: Linie, Striche an den Pixelstellen `at`, Beschriftung darunter und ein Titel links darüber. */
-function Ruler({ y, from, to, marks, title }: { y: number; from: number; to: number; marks: { x: number; label: string }[]; title: string }) {
+function Ruler({ y, from, to, marks, title, titleBelow = false }: { y: number; from: number; to: number; marks: { x: number; label: string }[]; title: string; titleBelow?: boolean }) {
   return (
     <g aria-hidden="true">
       <line className="xw-axis" x1={from} x2={to} y1={y} y2={y} />
       {marks.map(m => <g key={`${m.x}-${m.label}`}><line className="xw-axis" x1={m.x} x2={m.x} y1={y - 4} y2={y + 4} /><text className="xw-t" x={m.x} y={y + 19} textAnchor="middle">{m.label}</text></g>)}
-      <text className="xw-t b04-ruler-title" x={from} y={y - 22}>{title}</text>
+      <text className="xw-t b04-ruler-title" x={from} y={titleBelow ? y + 38 : y - 24}>{title}</text>
     </g>
   );
 }
@@ -42,7 +42,7 @@ function Lineale({ values, s, step, who, names, bounds, mode, onChange, onWho }:
   const [box, W] = useWidth();
   const left = 44, right = W - 26, X = linear([bounds.min, bounds.max], [left, right]);
   const rowY = (i: number) => 34 + i * 26, rowsEnd = rowY(values.length - 1) + 16;
-  const r1 = rowsEnd + 36, r2 = r1 + 54, r3 = r2 + 54;
+  const r1 = rowsEnd + 40, r2 = r1 + 64, r3 = r2 + 64;
   const showCentered = step >= 2, showZ = mode === 'z' && step >= 4 && s.sd > 1e-9;
   const band = mode === 'z' && step >= 3 && s.sd > 1e-9;
   const last = showZ ? r3 : showCentered ? r2 : r1, H = last + 34;
@@ -128,14 +128,14 @@ function Raenge({ values, s, step, who, names, bounds, onChange, onWho }: {
 }) {
   const [box, W] = useWidth();
   const left = 44, right = W - 26, X = linear([bounds.min, bounds.max], [left, right]), n = values.length;
-  const rowY = (i: number) => 34 + i * 26, r1 = rowY(n - 1) + 52, r2 = r1 + 100, H = r2 + 46;
+  const rowY = (i: number) => 34 + i * 26, r1 = rowY(n - 1) + 56, r2 = r1 + 100, H = r2 + 48;
   const R = linear([1, Math.max(2, n)], [left, right]);
   const set = (i: number, v: number) => { if (v !== values[i]) onChange(values.map((x, k) => k === i ? v : x)); };
   const { svg, start, handlers } = useDrag((i, p) => set(i, clamp(X.invert(p.x), bounds)));
   const pos = step >= 2 ? s.rank : s.place;
   // Gleiche Positionen übereinander stapeln, ohne in die Beschriftung des Stunden-Lineals zu reichen.
   const level = pos.map((v, i) => pos.slice(0, i).filter(w => Math.abs(w - v) < 1e-9).length);
-  const gap = Math.min(24, (r2 - r1 - 44) / Math.max(1, Math.max(...level)));
+  const gap = Math.min(24, (r2 - r1 - 64) / Math.max(1, Math.max(...level)));
   const markY = (i: number) => r2 - 14 - level[i] * gap;
   const hourMarks = ticksBetween(bounds.min, bounds.max, niceStep(bounds.max - bounds.min, 4)).map(v => ({ x: X(v), label: num(v) }));
   const rankMarks = Array.from({ length: n }, (_, k) => ({ x: R(k + 1), label: String(k + 1) }));
@@ -144,9 +144,9 @@ function Raenge({ values, s, step, who, names, bounds, onChange, onWho }: {
       <svg ref={svg} className="xw-svg xw-drag" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group"
         aria-label={`Lernzeiten der fünf Personen in Stunden und darunter ihre ${step >= 2 ? 'Ränge' : 'Plätze'}: ${values.map((_, i) => `${names[i]} ${num(pos[i])}`).join(', ')}`} {...handlers}>
         {values.map((_, i) => <g key={`row${i}`}><line className="xw-guide" x1={left - 10} x2={right + 10} y1={rowY(i)} y2={rowY(i)} /><text className="xw-t" x={10} y={rowY(i) + 4}>{names[i]}</text></g>)}
-        {values.map((v, i) => <line key={`link${i}`} className={`b04-link${i === who ? ' sel' : ''}`} x1={X(v)} x2={R(pos[i])} y1={r1} y2={markY(i) + 11} />)}
+        {values.map((v, i) => <line key={`link${i}`} className={`b04-link${i === who ? ' sel' : ''}`} x1={X(v)} x2={R(pos[i])} y1={r1 + 26} y2={markY(i) + 11} />)}
         <Ruler y={r1} from={left} to={right} marks={hourMarks} title="Stunden" />
-        <Ruler y={r2} from={left} to={right} marks={rankMarks} title={step >= 2 ? 'Ränge' : 'Plätze der Reihe nach'} />
+        <Ruler y={r2} from={left} to={right} marks={rankMarks} title={step >= 2 ? 'Ränge' : 'Plätze der Reihe nach'} titleBelow />
         {values.map((_, i) => <g key={`mark${i}`}>
           <circle className={`xw-s-dot${i === who ? ' sel' : ''}`} cx={R(pos[i])} cy={markY(i)} r={11} />
           <text className="xw-t xw-strong" x={R(pos[i])} y={markY(i) + 5} textAnchor="middle">{names[i]}</text>

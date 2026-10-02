@@ -45,6 +45,7 @@ import { METHODEN, itemRest, skalenwert, tabsItemScore } from './skalenwert';
  *   #   lernzeit 7.752 3.238; lernzeit_z 0.000 1.000
  *   atlas %>% std(lernzeit, method = "z", suffix = "_z")   # Fehler: 'arg' sollte eines von '“sd”, “2sd”, “mad”, “gmd”' sein
  *   atlas %>% center(geschlecht2)                          # Can't select columns that don't exist.
+ *   pnorm(1)                                                # 0.8413447: unter z = 1 liegen bei Normalverteilung rund 84 %
  * Quadratsumme der Lernzeit:
  *   q <- (x - mean(x))^2; sum(q); max(q); max(q) / sum(q)                    # 2085.82; 113.3906 (P175, 18.4 h); 0.05436
  *   sum(sort(q, decreasing = TRUE)[1:20]) / sum(q)                           # 0.4571332
@@ -118,6 +119,7 @@ test('B4 Zentrieren und Standardisieren: fünf Beispielpersonen wie in R', () =>
   const flat = zstats([8, 8, 8, 8, 8]);
   assert.equal(flat.z, null); assert.equal(z[3].check.answer(ctx(flat)), 'NA');
   assert.equal(standardisieren.variants.z.interpret(ctx(flat)).kurz, 'Alle lernen gleich lange. Die Streuung ist 0, und z-Werte gibt es nicht.');
+  assert.match(standardisieren.variants.z.genau.paragraphs(ctx(a))[2], /Unter z = 1 liegen dann rund 84 %/);
 });
 
 test('B4 Zentrieren und Standardisieren: die 200 Befragten wie in R', () => {
@@ -141,7 +143,7 @@ test('B4 Zentrieren und Standardisieren: die 200 Befragten wie in R', () => {
   assert.ok(close(zAfter(applyOp(rows, 'lernzeit', 'reverse')), -c.s.z![1], 1e-9));
   const zc = bridgeContext(zentrieren.compute, 'series', rows, 'lernzeit', '', 1), bz = bridgeZentrieren;
   assert.equal(bz.lines[1].all(zc), 'Von jedem der 200 Werte ziehen wir 7,75 h ab. Danach liegt die Mitte bei 0: 103 Werte sind negativ, 97 positiv.');
-  assert.equal(bz.interpret(zc, 'centering').kurz, 'Nach dem Zentrieren liegt die Mitte bei 0. P002 steht bei +0,55: P002 lernt 0,55 Stunden mehr als der Durchschnitt.');
+  assert.equal(bz.interpret(zc, 'centering').kurz, 'Nach dem Zentrieren liegt die Mitte bei 0. P002 steht bei +0,55 und lernt damit 0,55 Stunden mehr als der Durchschnitt.');
   assert.equal(bz.interpret(zc, 'centering').fachlich, 'Die zentrierte Spalte „Lernzeit“ hat den Mittelwert 0 und dieselbe Standardabweichung wie vorher, s ≈ 3,24 h.');
 });
 

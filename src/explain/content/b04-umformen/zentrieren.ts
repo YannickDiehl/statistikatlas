@@ -106,7 +106,7 @@ export const bridgeZentrieren: Bridge<ZStats> = {
     return {
       kurz: Math.abs(d) < 0.005
         ? `Nach dem Zentrieren liegt die Mitte bei 0. ${P(c)} steht genau dort: ${lernzeit(c) ? 'Die Lernzeit entspricht dem Durchschnitt.' : 'Der Wert entspricht dem Durchschnitt.'}`
-        : `Nach dem Zentrieren liegt die Mitte bei 0. ${P(c)} steht bei ${signed(d)}: ${lernzeit(c) ? `${P(c)} lernt ${amount(c, Math.abs(d))} ${d > 0 ? 'mehr' : 'weniger'} als der Durchschnitt.` : `Der Wert liegt ${c.u(Math.abs(d))} ${d > 0 ? 'über' : 'unter'} dem Durchschnitt.`}`,
+        : `Nach dem Zentrieren liegt die Mitte bei 0. ${P(c)} steht bei ${signed(d)} und ${lernzeit(c) ? `lernt damit ${amount(c, Math.abs(d))} ${d > 0 ? 'mehr' : 'weniger'} als der Durchschnitt.` : `liegt damit ${c.u(Math.abs(d))} ${d > 0 ? 'über' : 'unter'} dem Durchschnitt.`}`,
       fachlich: `Die zentrierte Spalte „${c.col.title}“ hat den Mittelwert 0 und dieselbe Standardabweichung wie vorher, s ≈ ${c.u(c.s.sd)}.`,
       zusatz: `${c.s.below} von ${N(c)} Befragten haben einen negativen zentrierten Wert, ${c.s.above} einen positiven${zero ? `, ${zero} genau 0` : ''}.`,
     };
