@@ -1,0 +1,19 @@
+/* Bereich B14 „Skalen und Faktorenanalyse“: Stile der Bilder (src/components/explain/pictures/b14-faktoren.tsx). */
+.b14-line{fill:none;stroke:var(--muted);stroke-width:1.5;opacity:.75}
+.b14-line.sel{stroke:var(--green);stroke-width:3;opacity:1}
+.b14-link{stroke:var(--line);stroke-width:1;stroke-dasharray:3 4}
+.b14-link.sel{stroke:var(--green);stroke-width:1.5}
+.b14-sum{cursor:pointer}
+.b14-sum circle{fill:var(--paper);stroke:var(--muted);stroke-width:1.5}
+.b14-sum.sel circle{fill:var(--wash);stroke:var(--green);stroke-width:2.5}
+.b14-total{fill:var(--wash);stroke:var(--muted);stroke-width:1}
+.b14-seg{fill:var(--paper);stroke:var(--ink);stroke-width:1}
+.b14-shared{fill:var(--xw-pos-fill);stroke:var(--green);stroke-width:2}
+.b14-excess{fill:var(--xw-neg-fill);stroke:var(--xw-neg);stroke-width:2}
+.b14-point{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.b14-point.pol{fill:var(--wash);stroke:var(--green)}
+.b14-point.kir{fill:var(--xw-neg-fill);stroke:var(--xw-neg)}
+.b14-rot{stroke:var(--green);stroke-width:2}
+.b14-old{stroke:var(--muted);stroke-width:1;stroke-dasharray:4 4}
+.b14-circle{fill:none;stroke:var(--line);stroke-width:1}
+.b14-kaiser{stroke:var(--xw-neg);stroke-width:1.5;stroke-dasharray:5 4}
