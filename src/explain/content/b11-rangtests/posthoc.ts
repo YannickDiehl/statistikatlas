@@ -15,8 +15,6 @@ export const SCHOOL = ['Ohne Schulabschluss', 'Haupt-/Volksschulabschluss', 'Mit
 export const tukeyHurdle = (alpha: number, se: number, k: number, df: number) => qtukey(1 - alpha, k, df) / Math.SQRT2 * se;
 /** Scheffé-Hürde in Stunden: √((k − 1) · F_krit) · SE. */
 export const scheffeHurdle = (alpha: number, se: number, k: number, df: number) => Math.sqrt((k - 1) * qf(1 - alpha, k - 1, df)) * se;
-/** Hürde ohne Schutz: ein einzelner t-Test mit der gemeinsamen Fehlervarianz. */
-export { qt } from '../../../tasks/kit/dist';
 
 export type PairsResult = NonNullable<ReturnType<typeof meanPairs>>;
 

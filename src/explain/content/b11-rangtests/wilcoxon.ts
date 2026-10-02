@@ -87,7 +87,7 @@ export const bridgeWilcoxon: Bridge<WxStats> = {
     },
     {
       all: c => c.s.n === 0 ? 'Ohne Veränderung meldet R wie SPSS z = 0 und p = 1.' : `Erwartung ${c.s.n} · ${c.s.n + 1} / 4 = ${num(c.s.E)}. z = (${num(c.s.small)} − ${num(c.s.E)}) / ${num(c.s.sd)} ≈ ${num(c.s.z)}.`,
-      person: c => c.s.d[c.who] === 0 ? `${BP(c)} zählt für z nicht mit.` : `Der Rang von ${BP(c)} macht ${pct(c.s.rank[c.who] / c.s.total, 2)} aller Ränge aus.`,
+      person: c => c.s.d[c.who] === 0 ? `${BP(c)} zählt für z nicht mit.` : `Der Rang von ${BP(c)} macht ${pct(c.s.rank[c.who] / c.s.total, 2)} der Summe aller Ränge aus.`,
     },
   ],
   metrics: c => [
@@ -101,7 +101,7 @@ export const bridgeWilcoxon: Bridge<WxStats> = {
     const [more, less] = t.Wpos >= t.Wneg ? ['positiven', 'negativen'] : ['negativen', 'positiven'];
     return {
       kurz: `${t.nPos} Befragte haben bei ${T2(c)} einen höheren Wert als bei ${T1(c)}, ${t.nNeg} einen niedrigeren, ${t.nZero} denselben. Die Ränge der ${more} Differenzen ergeben ${num(Math.max(t.Wpos, t.Wneg))}, die der ${less} ${num(Math.min(t.Wpos, t.Wneg))}. Gäbe es keine Veränderung, käme ein so ungleiches Verhältnis ${pOften(t.p)} Stichproben vor (${pText(t.p)}).`,
-      fachlich: `Wilcoxon-Test für verbundene Stichproben, ${T2(c)} minus ${T1(c)}: V = W⁺ = ${num(t.Wpos)}, z ≈ ${num(t.z)}, ${pText(t.p)}, r ≈ ${num(t.r)}. ${signif(t.p)}; der Effekt ist nach der Faustregel ${rWord(t.r)}.`,
+      fachlich: `Wilcoxon-Test für verbundene Stichproben, ${T2(c)} minus ${T1(c)}: W⁺ = ${num(t.Wpos)}, z ≈ ${num(t.z)}, ${pText(t.p)}, r ≈ ${num(t.r)}. ${signif(t.p)}; der Effekt ist nach der Faustregel ${rWord(t.r)}.`,
       zusatz: t.nZero === 0 ? `Niemand hat zweimal denselben Wert; gerechnet wird mit allen ${t.n} Paaren.` : `${t.nZero === 1 ? 'Eine Person mit gleichem Wert fällt' : `Die ${t.nZero} Befragten mit gleichem Wert fallen`} weg; gerechnet wird mit ${count(t.n)} Paaren.`,
     };
   },
@@ -193,7 +193,7 @@ export const wilcoxonWorkshop: Workshop<Pairs, WxStats> = {
       rechnung: c => c.s.n === 0
         ? 'Niemand hat sich verändert. Beide Summen sind 0.'
         : `W⁺ = ${plusRanks(c, 1).join(' + ') || '0'}${plusRanks(c, 1).length > 1 ? ` = ${num(c.s.Wpos)}` : ''}. W⁻ = ${plusRanks(c, -1).join(' + ') || '0'}${plusRanks(c, -1).length > 1 ? ` = ${num(c.s.Wneg)}` : ''}. Zusammen ${num(c.s.total)} = ${c.s.n} · ${c.s.n + 1} / 2.`,
-      fach: 'W⁺ ist die Summe der Ränge aller positiven Differenzen; R nennt sie V. Es gilt W⁺ + W⁻ = n(n + 1) / 2.',
+      fach: 'W⁺ ist die Summe der Ränge aller positiven Differenzen, und es gilt W⁺ + W⁻ = n(n + 1) / 2. In summary() steht W⁺ als Sum of Ranks in der Zeile Positive Ranks; wilcox.test() aus Basis-R nennt sie V.',
       warum: c => `Ohne Veränderung wären Verbesserungen und Verschlechterungen etwa gleich häufig und gleich groß. Dann bekäme jede Summe etwa die Hälfte, hier ${num(c.s.E)}.`,
       acht: 'Zusammengezählt werden die Ränge, nicht die Differenzen selbst. Sonst zählte eine große Veränderung wieder mit ihrer vollen Größe.',
       check: {
@@ -254,14 +254,14 @@ export const wilcoxonWorkshop: Workshop<Pairs, WxStats> = {
   },
   think: [
     {
-      question: 'Person D löst beim zweiten Test 20 statt 17 Aufgaben. Was passiert mit W⁺?', options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 1, step: 3,
+      question: 'Mit den Startdaten: Person D löst beim zweiten Test 20 statt 17 Aufgaben. Was passiert mit W⁺?', options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 1, step: 3,
       explain: 'D rückt auf Rang 6, F auf Rang 5. Beide sind Verbesserungen, die Summe ihrer Ränge bleibt dieselbe. Wie groß die größte Veränderung ist, spielt keine Rolle.',
       kurz: 'Auch hier zählt nur die Reihenfolge.',
-      tryIt: { label: 'Person D auf 20 Aufgaben', apply: d => ({ x: d.x, y: d.y.map((v, i) => i === 3 ? 20 : v) }) },
+      tryIt: { label: 'Startdaten, Person D auf 20 Aufgaben', apply: () => ({ x: [...WX_START.x], y: WX_START.y.map((v, i) => i === 3 ? 20 : v) }) },
     },
     {
       question: 'Alle lösen beim zweiten Test eine Aufgabe mehr. Was passiert mit W⁺?', options: ['steigt', 'bleibt gleich', 'sinkt'], correct: 0, step: 3,
-      explain: 'Jede Differenz wächst um 1. Verschlechterungen werden kleiner und rutschen nach vorn in der Reihe, Verbesserungen größer. Die Plus-Ränge sammeln mehr.',
+      explain: 'Jede Differenz wächst um 1. Verschlechterungen werden kleiner und bekommen kleinere Ränge, Verbesserungen größere. Die Plus-Ränge sammeln mehr.',
       kurz: 'Mehr Verbesserung, größere Plus-Summe.',
       tryIt: { label: 'alle im zweiten Test eine Aufgabe mehr', apply: d => ({ x: d.x, y: d.y.map(v => Math.min(20, v + 1)) }) },
     },
@@ -320,7 +320,7 @@ export const wilcoxonTabs: ConceptTabs = {
     think: [
       {
         question: 'Angenommen, beim ersten Test hätten alle eine Aufgabe mehr gelöst. Was passiert mit der Rangsumme der Verbesserungen W⁺?', options: ['sinkt', 'bleibt gleich', 'steigt'], correct: 0, step: 3,
-        explain: 'Jede Differenz schrumpft um eine Aufgabe. Verbesserungen werden kleiner oder fallen weg, Verschlechterungen größer: Die Plus-Ränge verlieren Gewicht. Auch p steigt, von unter 0,001 auf etwa 0,06.',
+        explain: 'Jede Differenz schrumpft um eine Aufgabe. Verbesserungen werden kleiner oder fallen weg, Verschlechterungen größer: Die Plus-Ränge verlieren Gewicht. Auch p steigt, von unter 0,001 auf etwa 0,06, und jetzt überwiegen knapp die Verschlechterungen (68 gegen 85).',
         kurz: 'Kleinere Verbesserungen, kleinere Plus-Summe.',
         tryIt: { label: 'erster Test eine Aufgabe mehr', op: 'shift', column: 'x', value: 1 },
         expect: { change: 'down' },
@@ -341,7 +341,7 @@ export const wilcoxonTabs: ConceptTabs = {
     },
     outputMap: [
       { match: 'wissenstest_t2 - wissenstest', atlas: 'dᵢ = yᵢ − xᵢ', step: 1, explain: 'Die Richtung der Differenz: zweiter minus erster Messzeitpunkt, also die zweite Spalte im Aufruf minus die erste.' },
-      { match: 'Z', atlas: 'z', step: 4, explain: 'Aus der kleineren Rangsumme gerechnet, deshalb negativ. Die Verbesserungen überwiegen hier: 115 gegen 53.' },
+      { match: 'Z', atlas: 'z', step: 4, explain: 'Aus der kleineren Rangsumme gerechnet, deshalb negativ. 115 Verbesserte gegen 53 Verschlechterte; die Rangsummen sind 10.425,5 gegen 3.770,5.' },
       { match: 'p', atlas: 'p-Wert', explain: 'Gäbe es keine Veränderung, käme ein so ungleiches Verhältnis in weniger als 1 von 1.000 Stichproben vor.' },
       { match: 'r', atlas: 'Effektgröße r', explain: 'r = |z| / √n mit den 168 Paaren ohne Nulldifferenz: 5,36 / √168 ≈ 0,41. medium heißt mittel.' },
       { match: 'N', atlas: 'n', explain: 'N zählt alle 200 Befragten, auch die 32 ohne Veränderung, die für die Ränge wegfallen.' },

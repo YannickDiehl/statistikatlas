@@ -14,12 +14,12 @@ export const pairwiseWilcoxonCard: ConceptCard = {
   wofuer: 'Im Lehrdatensatz lösen die Befragten zu drei Messzeitpunkten unterschiedlich viele Aufgaben im Wissenstest. Gäbe es keine Unterschiede zwischen den Zeitpunkten, wäre ein so großes Q nach Friedman sehr überraschend (p < 0,001). Aber zwischen welchen Zeitpunkten liegt der Unterschied?',
   kurz: 'Der paarweise Wilcoxon-Test vergleicht nach Friedman jedes Paar von Messzeitpunkten mit dem Wilcoxon-Test für verbundene Stichproben. Die p-Werte werden für die Zahl der Vergleiche korrigiert.',
   stellDirVor: {
-    text: 'Vom ersten zum zweiten Messzeitpunkt verbessern sich 115 Befragte, 53 werden schlechter. Vom zweiten zum dritten verbessern sich 108, und 65 werden schlechter: Der Schritt ist kleiner, z ≈ −3,76 statt −5,36. Drei Zeitpunkte ergeben drei Paare, und nach der Holm-Korrektur liegen alle drei unter α = 0,05.',
+    text: 'Vom ersten zum zweiten Messzeitpunkt verbessern sich 115 Befragte, 53 werden schlechter. Vom zweiten zum dritten verbessern sich 108, und 65 werden schlechter: Der Schritt ist kleiner, r ≈ 0,29 statt 0,41. Drei Zeitpunkte ergeben drei Paare, und nach der Holm-Korrektur liegen die p-Werte aller drei unter α = 0,05.',
     figures: [
       { label: 'Paare', value: '3' },
-      { label: 'erster gegen zweiten', value: 'z ≈ −5,36' },
-      { label: 'zweiter gegen dritten', value: 'z ≈ −3,76' },
-      { label: 'erster gegen dritten', value: 'z ≈ −8,54' },
+      { label: 'erster gegen zweiten', value: 'r ≈ 0,41' },
+      { label: 'zweiter gegen dritten', value: 'r ≈ 0,29' },
+      { label: 'erster gegen dritten', value: 'r ≈ 0,64' },
     ],
   },
   heisst: {
@@ -64,7 +64,7 @@ export const pairwiseWilcoxonCard: ConceptCard = {
     },
     {
       question: 'Erster gegen zweiten Zeitpunkt: z ≈ −5,36. Heißt das, die Befragten sind schlechter geworden?', options: ['ja', 'nein'], correct: 1, step: 2,
-      explain: 'z ist bei mariposa nie positiv, es wird aus der kleineren Rangsumme gerechnet. Die Richtung zeigt die Spalte Based on: negative heißt, die zweite Messung ist eher höher.',
+      explain: 'z ist bei mariposa nie positiv, es wird aus der kleineren Rangsumme gerechnet. Die Richtung zeigt die Spalte Based on in summary(): negative heißt, die zweite Messung ist eher höher.',
       kurz: 'Die Richtung steht nicht im Vorzeichen von z.',
     },
   ],
@@ -86,9 +86,9 @@ export const pairwiseWilcoxonCard: ConceptCard = {
       'Ohne Korrektur wären weniger Paare auffällig.',
     ],
     correct: 0,
-    right: 'Genau. Auch nach der Korrektur für drei Vergleiche liegt jedes Paar unter α.',
+    right: 'Genau. Auch nach der Korrektur für drei Vergleiche liegt das p jedes Paars unter α.',
     diagnose: {
-      1: 'Fast! p sagt nichts über die Größe. Die Schritte sind verschieden groß: z ≈ −5,36 und −3,76.',
+      1: 'Fast! p sagt nichts über die Größe. Die Schritte sind verschieden groß: r ≈ 0,41 vom ersten zum zweiten, r ≈ 0,29 vom zweiten zum dritten Zeitpunkt.',
       2: 'Fast! Bei 200 Befragten werden auch kleine Unterschiede auffällig. Wie groß sie sind, zeigt die Effektgröße r.',
       3: 'Fast! Andersherum: Ohne Korrektur sind die p-Werte kleiner, es könnten also höchstens mehr Paare auffallen.',
     },
@@ -154,7 +154,7 @@ export const pairwiseWilcoxonTabs: ConceptTabs = {
     outputMap: [
       { match: '(Holm)', atlas: 'Holm-Korrektur', step: 3, explain: 'Die p-Werte sind für die drei Vergleiche korrigiert, wie im Aufruf mit p_adjust = "holm" verlangt.' },
       { match: '3 comparisons', atlas: 'drei Paare', step: 1, explain: 'Drei Messzeitpunkte ergeben 3 · 2 / 2 = 3 Paare.' },
-      { match: '3 significant', atlas: 'auffällige Paare', step: 3, explain: 'Alle drei Paare liegen nach der Korrektur unter α = 0,05.' },
+      { match: '3 significant', atlas: 'auffällige Paare', step: 3, explain: 'Bei allen drei Paaren liegt das p nach der Korrektur unter α = 0,05.' },
       { match: 'p < .05', atlas: 'Signifikanzniveau α', explain: 'Die Schwelle α = 0,05 für die korrigierten p-Werte.' },
     ],
     check: {

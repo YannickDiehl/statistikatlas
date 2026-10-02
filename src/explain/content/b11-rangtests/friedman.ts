@@ -155,8 +155,8 @@ export const friedmanWorkshop: Workshop<number[][], FrStats> = {
       was: 'Wir nehmen die Summe mal 12 / (N · k · (k + 1)) = 12 / 60 = 0,2. So entsteht Q, das R mit der χ²-Verteilung vergleicht.',
       rechnung: c => `Q = 12 / (5 · 3 · 4) · ${num(c.s.ss)} = 0,2 · ${num(c.s.ss)} = ${num(c.s.Qraw)}${c.s.ties && Number.isFinite(c.s.Q) ? `. Wegen der Gleichstände innerhalb der Personen korrigiert R und meldet Q ≈ ${num(c.s.Q)}.` : '.'}`,
       fach: 'Q = 12 / (N · k · (k + 1)) · Σ(Rⱼ − E)². Ohne Unterschied folgt Q ungefähr einer χ²-Verteilung mit k − 1 = 2 Freiheitsgraden.',
-      warum: 'Der Faktor macht Q vergleichbar, egal wie viele Personen es sind. In der Ausgabe von R heißt Q deshalb Chi-Square.',
-      acht: 'Ein großes Q sagt nur: Irgendwann unterscheiden sich die Zeitpunkte. Welche Paare es sind, zeigt erst der paarweise Wilcoxon-Test.',
+      warum: 'Der Faktor bringt Q auf eine feste Skala: Ohne Unterschied folgt Q ungefähr der χ²-Verteilung mit 2 Freiheitsgraden, egal wie viele Personen es sind. Deshalb heißt Q in der Ausgabe von R Chi-Square.',
+      acht: 'Ein großes Q spricht nur dafür, dass sich mindestens zwei Zeitpunkte unterscheiden. Welche Paare es sind, zeigt erst der paarweise Wilcoxon-Test.',
       check: {
         question: 'Wie groß ist Q vor der Korrektur für Gleichstände?',
         answer: c => c.s.Qraw,
@@ -210,10 +210,10 @@ export const friedmanWorkshop: Workshop<number[][], FrStats> = {
   },
   think: [
     {
-      question: 'Person D löst im dritten Test 20 statt 16 Aufgaben. Was passiert mit Q?', options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 1,
+      question: 'Mit den Startdaten: Person D löst im dritten Test 20 statt 16 Aufgaben. Was passiert mit Q?', options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 1,
       explain: 'Der dritte Test bleibt Ds bestes Ergebnis, Rang 3. Kein Rang ändert sich, also auch keine Rangsumme und nicht Q.',
       kurz: 'Innerhalb der Person zählt nur die Reihenfolge.',
-      tryIt: { label: 'Person D im dritten Test auf 20', apply: d => d.map((r, i) => i === 3 ? [r[0], r[1], 20] : [...r]) },
+      tryIt: { label: 'Startdaten, Person D im dritten Test auf 20', apply: () => FR_START.map((r, i) => i === 3 ? [r[0], r[1], 20] : [...r]) },
     },
     {
       question: 'Alle lösen in jedem Test drei Aufgaben mehr. Was passiert mit Q?', options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 1,
@@ -231,7 +231,7 @@ export const friedmanWorkshop: Workshop<number[][], FrStats> = {
   variants: {
     friedman_test: {
       lastStep: 6,
-      kurz: 'Der Friedman-Test vergleicht drei oder mehr Messungen derselben Personen. Jede Person ordnet ihre eigenen Ergebnisse, und der Test fragt, ob ein Zeitpunkt dabei auffällig oft vorn oder hinten liegt.',
+      kurz: 'Der Friedman-Test vergleicht drei oder mehr Messungen derselben Personen. Jede Person ordnet ihre eigenen Ergebnisse, und der Test fragt, ob ein Zeitpunkt dabei auffällig oft oben oder unten landet.',
       fachlich: 'Rangtest für k verbundene Stichproben: Ränge je Person, Q = 12 / (N · k · (k + 1)) · Σ(Rⱼ − N(k + 1) / 2)², geprüft mit der χ²-Verteilung mit k − 1 Freiheitsgraden; dazu Kendalls W = Q / (N(k − 1)).',
       symbolic: [{ part: ['Q'], m: 5 }, ' = ', { frac: [{ part: ['12 ·'], m: 5 }, ' ', { big: 'Σ', m: 4 }, { part: ['('], m: 4 }, { part: ['R', { sub: 'j' }], m: 2 }, ' ', { part: ['− E'], m: 3 }, { part: [')²'], m: 4 }], den: ['N · k · (k + 1)'], m: 5 }, { br: true },
         { part: ['W = Q / (N(k − 1))'], m: 6 }],
@@ -243,7 +243,7 @@ export const friedmanWorkshop: Workshop<number[][], FrStats> = {
       ],
       interpret: c => ({
         kurz: c.s.ss < 1e-9
-          ? 'Alle drei Tests haben dieselbe Rangsumme 10. Kein Zeitpunkt liegt auffällig vorn oder hinten, Q ist 0.'
+          ? 'Alle drei Tests haben dieselbe Rangsumme 10. Kein Zeitpunkt landet auffällig oft oben oder unten, Q ist 0.'
           : `Der ${ORD[best(c.s)]} Test schneidet mit der Rangsumme ${num(c.s.R[best(c.s)])} am besten ab, der ${ORD[worst(c.s)]} mit ${num(c.s.R[worst(c.s)])} am schwächsten. Ohne Unterschied hätte jeder Test etwa 10.`,
         fachlich: Number.isFinite(c.s.Q)
           ? `Q ≈ ${num(c.s.Q)} bei 2 Freiheitsgraden, ${pText(c.s.p)} (χ²-Näherung wie in R). Gäbe es keinen Unterschied zwischen den Zeitpunkten, käme ein so großes Q ${pOften(c.s.p)} Stichproben vor. ${signif(c.s.p)}; Kendalls W ≈ ${num(c.s.W)} ist nach der Faustregel ${wWord(c.s.W)}.`

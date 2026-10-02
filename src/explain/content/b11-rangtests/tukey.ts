@@ -2,7 +2,7 @@
 // Hürde aus der studentisierten Spannweite, wie mariposa::tukey_test(). Zahlen aus R in b11-rangtests.test.ts.
 import type { ConceptCard, ConceptTabs, SampleCtx } from '../../types';
 import { num } from '../../format';
-import { basePairs, hurdle40, pairLabel, pairsOf, SCHOOL, tukeyHurdle } from './posthoc';
+import { basePairs, hurdle40, pairLabel, pairsOf, SCHOOL } from './posthoc';
 
 /** Wie viele der Paare bei diesem α auffällig sind (p nach Tukey kleiner als α). */
 export const tukeyCount = (alpha: number) => basePairs().pairs.filter(p => p.pTukey < alpha).length;
@@ -23,7 +23,7 @@ export const tukeyCard: ConceptCard = {
   },
   heisst: {
     sym: 'q', say: 'q',
-    fach: 'Die Tukey-HSD-Methode misst jede Mittelwertdifferenz an der studentisierten Spannweite q: dem größten Abstand zwischen k Gruppenmitteln, den man ohne echte Unterschiede erwarten würde. So bleibt die familienweise Fehlerrate bei α.',
+    fach: 'Die Tukey-HSD-Methode misst jede Mittelwertdifferenz an der studentisierten Spannweite q: dem Abstand zwischen größtem und kleinstem von k Gruppenmitteln, gemessen in Standardfehlern. Die Hürde ist ihr 95-%-Quantil; so bleibt die familienweise Fehlerrate bei α.',
   },
   bausteine: [
     {
@@ -31,14 +31,14 @@ export const tukeyCard: ConceptCard = {
       was: 'Fünf Gruppen ergeben 5 · 4 / 2 = 10 Paare. Jedes Paar ist ein eigener Vergleich, also ein eigener Test.',
       rechnung: 'Gäbe es keine Unterschiede, fiele bei zehn unabhängigen Tests mit α = 0,05 in 1 − 0,95¹⁰ ≈ 40 % der Studien mindestens einer auf.',
       warum: 'Viele Tests geben dem Zufall viele Gelegenheiten. Irgendein Paar fällt dann leicht auf, auch ohne echten Unterschied.',
-      acht: 'Die 40 % sind nur eine grobe Grenze. Die zehn Vergleiche teilen sich Gruppen und sind deshalb nicht unabhängig, die Richtung stimmt aber.',
+      acht: 'Die 40 % sind nur ein grober Richtwert: Die zehn Vergleiche teilen sich Gruppen und sind nicht unabhängig. Klar bleibt: Bei vielen Vergleichen fällt leicht irgendwo einer zufällig auf.',
       concept: 'multiplicity',
     },
     {
       title: 'Eine gemeinsame Hürde festlegen',
-      was: 'Tukey fragt: Wie weit liegen ohne echte Unterschiede das größte und das kleinste von fünf Gruppenmitteln typischerweise auseinander? Daraus folgt eine Hürde für alle Paare.',
+      was: 'Tukey fragt: Wie weit können das größte und das kleinste von fünf Gruppenmitteln ohne echte Unterschiede auseinanderliegen? Die Hürde ist der Abstand, den der Zufall nur in 5 von 100 Studien übertrifft.',
       rechnung: 'Bei 5 Gruppen und 195 Freiheitsgraden ist die kritische Spannweite q ≈ 3,89. Für ohne Schulabschluss gegen Abitur ergibt das 3,89 / √2 · 0,67 ≈ 1,84 Stunden; mit allen Nachkommastellen rechnet R 1,83.',
-      warum: 'Die Hürde richtet sich nach dem größten Abstand, den der Zufall unter fünf Gruppen erzeugt. Was sie überspringt, fällt auch im Vergleich aller Paare auf.',
+      warum: 'Die Hürde richtet sich nach dem größten Abstand unter fünf Gruppen, den der Zufall nur selten übertrifft. Was sie überspringt, fällt auch im Vergleich aller Paare auf.',
       acht: 'Die Hürde wächst mit der Zahl der Gruppen. Mit mehr Gruppen braucht es größere Unterschiede, damit Tukey sie meldet.',
       concept: 'tukey_test',
     },
@@ -74,7 +74,7 @@ export const tukeyCard: ConceptCard = {
     format: v => `α = ${num(v, 3)}`,
     describe: v => {
       const r = basePairs(), n = tukeyCount(v);
-      return `Bei α = ${num(v, 3)} muss ein Paar mit je 40 Personen mindestens ${num(hurdle40(r, 'tukey', v))} Stunden auseinanderliegen. Das schaffen im Lehrdatensatz ${n === 1 ? 'ein Paar' : `${n} der 10 Paare`}.`;
+      return `Bei α = ${num(v, 3)} muss ein Paar mit je 40 Personen mindestens ${num(hurdle40(r, 'tukey', v))} Stunden auseinanderliegen. Im Lehrdatensatz ${n === 1 ? 'überspringt ein Paar seine' : `überspringen ${n} der 10 Paare ihre`} eigene Hürde.`;
     },
   },
   check: {
@@ -122,7 +122,7 @@ export const tukeyTabs: ConceptTabs = {
       const means = r.anova.groups.map(g => g.mean);
       return {
         kurz: `Bei α = 0,05 meldet Tukey ${hits.length} der ${r.pairs.length} Paare als auffällig. Am weitesten auseinander liegen ${SCHOOL[far.a]} und ${SCHOOL[far.b]}: ${num(means[far.a])} gegen ${num(means[far.b])} Stunden.`,
-        fachlich: `Tukey-HSD nach der einfaktoriellen ANOVA, MSE ≈ ${num(r.mse)} bei ${r.df} Freiheitsgraden. ${hits.length ? `Auffällig (p < 0,05), in der Richtung von R: ${hits.map(p => `${pairLabel(p)} ${num(p.diff)} h`).join('; ')}.` : 'Kein Paar liegt unter α = 0,05.'}`,
+        fachlich: `Tukey-HSD nach der einfaktoriellen ANOVA, MSE ≈ ${num(r.mse)} bei ${r.df} Freiheitsgraden. ${hits.length ? `Auffällig (p < 0,05), in der Richtung von R: ${hits.map(p => `${pairLabel(p)} ${num(p.diff)} h`).join('; ')}.` : 'Bei keinem Paar liegt das p unter α = 0,05.'}`,
         zusatz: `Für zwei Gruppen mit je 40 Personen liegt die Hürde bei ${num(hurdle40(r, 'tukey'))} Stunden.`,
       };
     },
@@ -177,4 +177,3 @@ export const tukeyTabs: ConceptTabs = {
   },
 };
 
-export { tukeyHurdle };

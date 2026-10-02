@@ -254,7 +254,7 @@ test('B11 Wilcoxon, verbunden: 200 Befragte und In R wie in R', () => {
   const b = bridgeWilcoxon, bc = bridgeContext(wxW.compute, 'pairs', rows, 'wissenstest', 'wissenstest_t2', 1);
   const r = b.interpret(bc, 'wilcoxon_test');
   assert.equal(r.kurz, '115 Befragte haben bei „Wissenstest, Zeitpunkt 2“ einen höheren Wert als bei „Wissenstest“, 53 einen niedrigeren, 32 denselben. Die Ränge der positiven Differenzen ergeben 10.425,5, die der negativen 3.770,5. Gäbe es keine Veränderung, käme ein so ungleiches Verhältnis in weniger als 1 von 1.000 Stichproben vor (p < 0,001).');
-  assert.equal(r.fachlich, 'Wilcoxon-Test für verbundene Stichproben, „Wissenstest, Zeitpunkt 2“ minus „Wissenstest“: V = W⁺ = 10.425,5, z ≈ −5,36, p < 0,001, r ≈ 0,41. Bei α = 0,05 ist das signifikant; der Effekt ist nach der Faustregel mittel.');
+  assert.equal(r.fachlich, 'Wilcoxon-Test für verbundene Stichproben, „Wissenstest, Zeitpunkt 2“ minus „Wissenstest“: W⁺ = 10.425,5, z ≈ −5,36, p < 0,001, r ≈ 0,41. Bei α = 0,05 ist das signifikant; der Effekt ist nach der Faustregel mittel.');
   assert.equal(r.zusatz, 'Die 32 Befragten mit gleichem Wert fallen weg; gerechnet wird mit 168 Paaren.');
   assert.equal(b.lines[0].all(bc), 'Für jede Person „Wissenstest, Zeitpunkt 2“ minus „Wissenstest“: 115 Plus, 53 Minus, 32 Nullen.');
   assert.equal(b.lines[1].all(bc), '32 Nullen fallen weg. Die übrigen 168 Beträge bekommen die Ränge 1 bis 168; gleiche Beträge teilen sich ihren Platz.');
@@ -264,7 +264,7 @@ test('B11 Wilcoxon, verbunden: 200 Befragte und In R wie in R', () => {
   const shifted = b.value(bridgeContext(wxW.compute, 'pairs', applyOp(rows, 'wissenstest', 'shift', 1), 'wissenstest', 'wissenstest_t2', 1), 'wilcoxon_test')!;
   assert.ok(shifted === 4885 && near(wxSample(ctx(applyOp(rows, 'wissenstest', 'shift', 1), columns)).p, 0.062801), `W⁺ nach dem Verschieben ${shifted}`);
   assert.equal(wxSample(ctx(applyOp(applyOp(rows, 'wissenstest', 'shift', 1), 'wissenstest_t2', 'shift', -1), columns)).Wpos, 2089.5);
-  assert.match(s.think[0].explain, /von unter 0,001 auf etwa 0,06/);
+  assert.match(s.think[0].explain, /von unter 0,001 auf etwa 0,06, und jetzt überwiegen knapp die Verschlechterungen \(68 gegen 85\)/);
   assert.match(wxW.variants.wilcoxon_test.genau.paragraphs(at(wxW, WX_START))[2], /32 von 200 Befragten/);
   const map = Object.fromEntries(wilcoxonTabs.r!.outputMap.map(o => [o.match, o.explain]));
   assert.match(map.r, /168 Paaren .* 5,36 \/ √168 ≈ 0,41/);
@@ -393,7 +393,11 @@ test('B11 Tukey und Scheffé: Lehrdatensatz wie in R', () => {
   assert.match(tukeyCard.ausprobieren[0].explain, /von 3,89 auf 4,53/);
   assert.match(tukeyCard.ausprobieren[1].explain, /1,31 Stunden .* 1,83 Stunden/);
   assert.match(tukeyCard.check.diagnose[3]!, /etwa 0,01/);
-  assert.equal(tukeyCard.regler!.describe(0.05), 'Bei α = 0,05 muss ein Paar mit je 40 Personen mindestens 1,86 Stunden auseinanderliegen. Das schaffen im Lehrdatensatz 4 der 10 Paare.');
+  assert.equal(tukeyCard.regler!.describe(0.05), 'Bei α = 0,05 muss ein Paar mit je 40 Personen mindestens 1,86 Stunden auseinanderliegen. Im Lehrdatensatz überspringen 4 der 10 Paare ihre eigene Hürde.');
+  // Die eigenen Hürden der zehn Paare: qtukey(0.95, 5, 195) / sqrt(2) * SE mit den SE aus summary(tukey_test()) (0.6618 bis 0.6876)
+  // liegen zwischen 1.8222 und 1.8932 Stunden.
+  const own = r.pairs.map(p => tukeyHurdle(0.05, p.se, 5, 195));
+  assert.ok(near(Math.min(...own), 1.8222, 2e-4) && near(Math.max(...own), 1.8932, 2e-4), `eigene Hürden ${Math.min(...own)} bis ${Math.max(...own)}`);
   assert.match(tukeyCard.regler!.describe(0.1), /1,67 Stunden .* 5 der 10 Paare/);
   assert.match(scheffeCard.stellDirVor.text, /Tukey 4 der 10 .* Scheffé nur 3\. .* −2,06 Stunden\. Tukey meldet dafür p ≈ 0,023, Scheffé p ≈ 0,06/);
   assert.match(scheffeCard.bausteine[1].rechnung!, /√\(\(5 − 1\) · 2,42\) ≈ 3,11 .* 3,89 \/ √2 ≈ 2,75\. .* 3,11 · 0,68 ≈ 2,11 Stunden statt 1,87\./);
@@ -471,7 +475,10 @@ test('B11 Paarweiser Wilcoxon: Lehrdatensatz wie in R', () => {
   assert.equal(pwImproved(ctx(applyOp(rows, 'wissenstest_t2', 'shift', -1), columns), 1, 2), 135);
   assert.deepEqual([3, 4, 8].map(k => bonferroniFor(k).m), [3, 6, 28]);
   assert.match(pairwiseWilcoxonCard.regler!.describe(4), /6 Paare\. .* 0,05 \/ 6 ≈ 0,0083/);
-  assert.match(pairwiseWilcoxonCard.stellDirVor.text, /115 Befragte, 53 werden schlechter\. Vom zweiten zum dritten verbessern sich 108, und 65 .* z ≈ −3,76 statt −5,36/);
+  assert.match(pairwiseWilcoxonCard.stellDirVor.text, /115 Befragte, 53 werden schlechter\. Vom zweiten zum dritten verbessern sich 108, und 65 .* r ≈ 0,29 statt 0,41/);
+  assert.ok(near(ps[0].test.r, 0.413405) && near(ps[1].test.r, 0.643856), `r ${ps[0].test.r} ${ps[1].test.r}`);
+  assert.deepEqual(pairwiseWilcoxonCard.stellDirVor.figures!.slice(1).map(f => f.value), ['r ≈ 0,41', 'r ≈ 0,29', 'r ≈ 0,64']);
+  assert.match(pairwiseWilcoxonCard.check.diagnose[1]!, /r ≈ 0,41 vom ersten zum zweiten, r ≈ 0,29 vom zweiten/);
   assert.match(pairwiseWilcoxonCard.genau.paragraphs[2], /r ≈ 0,29/);
   const s = pairwiseWilcoxonTabs.sample!;
   if (s.kind !== 'analysis') return assert.fail('Auswertung erwartet');
@@ -480,4 +487,35 @@ test('B11 Paarweiser Wilcoxon: Lehrdatensatz wie in R', () => {
   assert.equal(r.zusatz, '1 gegen 2: 115 besser, 53 schlechter; 1 gegen 3: 145 besser, 31 schlechter; 2 gegen 3: 108 besser, 65 schlechter.');
   assert.match(s.think[0].explain, /101 statt 145/);
   assert.match(s.think[1].explain, /135 statt 108/);
+});
+
+/*
+ * Nachbesserung Runde 1 (Begutachtung task-B11-review.md): Wortlaut, der Deutungsfehler vermeidet. Zahlen wie oben in R.
+ */
+test('B11 Nachbesserung: Hürde als Quantil, Skala der Prüfgröße, p statt H, Richtung von U, Größe über r', () => {
+  // I1: Tukey-Hürde ist das 95-%-Quantil, nicht der typische größte Abstand.
+  assert.match(tukeyCard.heisst.fach, /Die Hürde ist ihr 95-%-Quantil/);
+  assert.match(tukeyCard.bausteine[1].was, /nur in 5 von 100 Studien übertrifft/);
+  for (const t of [tukeyCard.heisst.fach, tukeyCard.bausteine[1].was, tukeyCard.bausteine[1].warum]) assert.ok(!/typischerweise|erwarten würde/.test(t), t);
+  // I2: Der Faktor legt die Nullverteilung fest, nicht die Größe.
+  for (const w of [kwW.steps[4].warum, frW.steps[4].warum]) assert.match(w as string, /^Der Faktor bringt [HQ] auf eine feste Skala: Ohne Unterschied folgt [HQ] ungefähr/);
+  // I3: Mit α vergleicht man p, nie H.
+  for (const t of [dunnCard.ausprobieren[0].explain, dunnCard.bausteine[2].acht, dunnCard.fuerDich]) { assert.match(t, /das p (von Kruskal–Wallis|des Gesamttests)|mit p unter α/i, t); assert.ok(!/H liegt unter α|Gesamttest unter α/.test(t), t); }
+  // I4: U₁ zählt die Paare, in denen die erste Gruppe den höheren Wert hat; kein „vorn“ mehr bei Mann–Whitney.
+  assert.match(mwW.steps[2].fach as string, /den höheren Wert hat/);
+  assert.match(mwW.variants.mann_whitney.kurz, /einen höheren Wert hat als eine Person der anderen/);
+  assert.match(mwW.steps[0].alltag!, /Körpergröße/);
+  assert.ok(!/vorn/.test(JSON.stringify(mwW.steps.map(st => [st.alltag, txt(st.fach, at(mwW, MW_START))]))), 'kein vorn in Mann–Whitney');
+  // M1: 8 ist die Erwartung von U₁ und U₂, nicht von U = min(U₁, U₂).
+  assert.match(mwW.steps[4].was as string, /für U₁ und U₂ je 16 \/ 2 = 8/);
+  // I5: Die Größe eines Schritts zeigt r, nicht z.
+  assert.ok(!/z ≈/.test(pairwiseWilcoxonCard.stellDirVor.text), 'keine z-Werte als Größe');
+  // M11: Denkfragen mit Startwerten setzen die Startdaten.
+  assert.deepEqual(mwW.think[0].tryIt!.apply(MW_TIES), [2, 4, 5, 9, 6, 7, 10, 12]);
+  assert.deepEqual(kwW.think[0].tryIt!.apply(KW_TIES), [2, 5, 7, 4, 8, 10, 9, 12, 13]);
+  assert.deepEqual(wxW.think[0].tryIt!.apply(WX_TIES).y, [11, 12, 7, 20, 11, 16]);
+  assert.deepEqual(frW.think[0].tryIt!.apply(FR_TIES)[3], [12, 15, 20]);
+  for (const t of [mwW.think[0], kwW.think[0], wxW.think[0], frW.think[0]]) assert.match(t.question, /^Mit den Startdaten:/);
+  // M12: Jedes Paar hat seine eigene Hürde.
+  assert.match(tukeyCard.regler!.describe(0.05), /ihre eigene Hürde/);
 });

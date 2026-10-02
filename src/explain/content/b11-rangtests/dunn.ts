@@ -14,7 +14,7 @@ export const dunnCard: ConceptCard = {
   wofuer: 'Im Lehrdatensatz kommen Befragte mit verschiedenen Schulabschlüssen unterschiedlich gut mit ihrem Haushaltseinkommen aus. Gäbe es keine Unterschiede, käme ein so großes H nach Kruskal–Wallis nur in etwa 2 von 100 Stichproben vor. Aber welche Abschlüsse unterscheiden sich? Die Dunn-Vergleiche prüfen jedes Paar über dieselben Ränge.',
   kurz: 'Die Dunn-Vergleiche prüfen nach Kruskal–Wallis jedes Paar von Gruppen über ihre mittleren Ränge. Die p-Werte werden für die Zahl der Vergleiche korrigiert.',
   stellDirVor: {
-    text: 'Die Gruppe Fachhochschulreife hat den höchsten mittleren Rang (119,23), die Gruppe Mittlerer Abschluss den niedrigsten (84,38). Ohne Schutz sähen zwei Paare auffällig aus, beide mit p ≈ 0,006. Nach der Holm-Korrektur für zehn Vergleiche steigt ihr p auf 0,06, und kein Paar liegt mehr unter α = 0,05.',
+    text: 'Die Gruppe Fachhochschulreife hat den höchsten mittleren Rang (119,23), die Gruppe Mittlerer Abschluss den niedrigsten (84,38). Ohne Schutz sähen zwei Paare auffällig aus, beide mit p ≈ 0,006. Nach der Holm-Korrektur für zehn Vergleiche steigt ihr p auf 0,06, und bei keinem Paar liegt das p mehr unter α = 0,05.',
     figures: [
       { label: 'Kruskal–Wallis H', value: '11,59' },
       { label: 'Paare', value: '10' },
@@ -47,14 +47,14 @@ export const dunnCard: ConceptCard = {
       was: 'Holm macht kleine p-Werte größer, und zwar das kleinste am stärksten. Danach vergleichst du wie gewohnt mit α.',
       rechnung: 'Das kleinste p mal 10, das zweitkleinste mal 9 und so weiter, nie kleiner als das vorige: 0,006 · 10 ≈ 0,06.',
       warum: 'So bleibt die Wahrscheinlichkeit, irgendwo einen Unterschied zu melden, den es nicht gibt, für alle zehn Vergleiche zusammen höchstens α.',
-      acht: 'Ein Gesamttest unter α garantiert kein auffälliges Paar. Hier liegt Kruskal–Wallis unter α = 0,05, aber nach der Korrektur kein einziges Paar.',
+      acht: 'Ein Gesamttest mit p unter α garantiert kein auffälliges Paar. Hier liegt das p von Kruskal–Wallis unter α = 0,05, nach der Korrektur aber bei keinem einzigen Paar.',
       concept: 'multiplicity',
     },
   ],
   ausprobieren: [
     {
       question: 'Kruskal–Wallis ist bei α = 0,05 signifikant. Muss dann mindestens ein Paar auffällig sein?', options: ['ja', 'nein'], correct: 1, step: 3,
-      explain: 'Hier nicht: H liegt unter α, aber nach der Korrektur kein einzelnes Paar. Der Gesamttest bündelt kleine Unterschiede, die einzeln zu schwach sind.',
+      explain: 'Hier nicht: Das p von Kruskal–Wallis liegt unter α, nach der Korrektur aber bei keinem einzigen Paar. Der Gesamttest bündelt kleine Unterschiede, die einzeln zu schwach sind.',
       kurz: 'Gesamttest und Paare beantworten verschiedene Fragen.',
     },
     {
@@ -95,7 +95,7 @@ export const dunnCard: ConceptCard = {
       3: 'Fast! Die mittleren Ränge bleiben dieselben. Nur p ist größer geworden, die Hürde also höher.',
     },
   },
-  fuerDich: 'Liegt der Gesamttest unter α, lohnt der Blick auf die korrigierten Paarvergleiche. Bleibt dort nichts übrig, beschreibst du den Unterschied vorsichtig, als Muster über alle Gruppen.',
+  fuerDich: 'Liegt das p des Gesamttests unter α, lohnt der Blick auf die korrigierten Paarvergleiche. Bleibt dort nichts übrig, beschreibst du den Unterschied vorsichtig, als Muster über alle Gruppen.',
   genau: {
     kurz: 'Dunn nutzt die gemeinsamen Ränge aller Gruppen und korrigiert für Gleichstände. Welche Korrektur der p-Werte du nimmst, legst du vorher fest.',
     paragraphs: [
@@ -166,7 +166,7 @@ export const dunnTabs: ConceptTabs = {
     outputMap: [
       { match: '(Holm)', atlas: 'Holm-Korrektur', step: 3, explain: 'Die p-Werte sind für die zehn Vergleiche korrigiert, wie im Aufruf mit p_adjust = "holm" verlangt.' },
       { match: '10 comparisons', atlas: 'zehn Paare', step: 3, explain: 'Fünf Gruppen ergeben 5 · 4 / 2 = 10 Paare.' },
-      { match: '0 significant', atlas: 'auffällige Paare', step: 3, explain: 'Nach der Korrektur liegt kein Paar unter α = 0,05, obwohl Kruskal–Wallis bei α = 0,05 signifikant ist.' },
+      { match: '0 significant', atlas: 'auffällige Paare', step: 3, explain: 'Nach der Korrektur liegt bei keinem Paar das p unter α = 0,05, obwohl das p von Kruskal–Wallis darunter liegt.' },
       { match: 'p < .05', atlas: 'Signifikanzniveau α', explain: 'Die Schwelle α = 0,05 für die korrigierten p-Werte.' },
     ],
     check: {

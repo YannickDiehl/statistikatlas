@@ -4,7 +4,7 @@
 import type { KeyboardEvent, PointerEvent } from 'react';
 import { num } from '../../../explain/format';
 import { MW_GROUP, type MwStats } from '../../../explain/content/b11-rangtests/mann-whitney';
-import { KW_GROUP, KW_LABELS, type KwStats } from '../../../explain/content/b11-rangtests/kruskal-wallis';
+import { KW_GROUP, KW_LABELS, KW_SHORT, type KwStats } from '../../../explain/content/b11-rangtests/kruskal-wallis';
 import type { WxStats } from '../../../explain/content/b11-rangtests/wilcoxon';
 import type { FrStats } from '../../../explain/content/b11-rangtests/friedman';
 import type { Pairs } from '../../../explain/math';
@@ -16,23 +16,30 @@ import { Axis, clamp, DragPoint, forCard, forWorkshop, GridCell, keyStep, linear
 type RowPoint = { value: number; label: string; name: string; at: number };
 /** Eine Zeile: Name links, Punkte, rechts eine Notiz; `head` beginnt eine neue Gruppe mit Überschrift. */
 type Row = { name: string; points: RowPoint[]; note?: string; head?: string; arrow?: boolean; tone?: 'pos' | 'neg' };
+/** Großzügig geschätzte Breite eines Texts der Klasse `xw-t` (14 px), damit nichts am Bildrand abgeschnitten wird. */
+const textWidth = (chars: number) => Math.ceil(chars * 8);
 
 /**
  * Zeilen mit ziehbaren Punkten auf einer gemeinsamen Achse (eine Zeile je Person). Ziehen und Pfeiltasten ändern den
  * Wert des Punkts (`onChange(at, wert)`), ein Klick wählt die Person der Zeile (`onPick(zeile)`).
  */
-function DotRows({ rows, bounds, axisTitle, who, onPick, onChange, label, tickStep }: {
+function DotRows({ rows, bounds, axisTitle, who, onPick, onChange, label, tickStep, noteChars }: {
   rows: Row[]; bounds: Bounds; axisTitle: string; who: number; label: string; tickStep: number;
+  /** Platz für die längste mögliche Notiz rechts, in Zeichen (fest je Bild, damit die Achse beim Ziehen nicht springt). */
+  noteChars: number;
   onPick: (row: number) => void; onChange: (at: number, v: number) => void;
 }) {
   const [box, W] = useWidth();
-  const left = 40, right = W - 92, X = linear([bounds.min, bounds.max], [left, right]);
-  // Mehrere Punkte je Zeile stehen leicht versetzt übereinander, damit nahe Werte lesbar bleiben.
-  const heads = rows.filter(r => r.head).length, HEAD = 24, SHIFT = 10;
+  const left = 40, right = W - 26 - textWidth(noteChars), X = linear([bounds.min, bounds.max], [left, right]);
+  // Mehrere Punkte je Zeile stehen versetzt übereinander, damit nahe Werte lesbar bleiben: gleiche Werte ganz getrennt
+  // (22 px, Kreise berühren sich nicht), benachbarte 14 px, sonst 10 px.
+  const heads = rows.filter(r => r.head).length, HEAD = 24;
+  const gap = (r: Row) => Math.min(...r.points.flatMap((a, i) => r.points.filter((_, j) => j !== i).map(b => Math.abs(a.value - b.value))), Infinity);
+  const shift = rows.map(r => gap(r) < 0.5 ? 22 : gap(r) <= 1 ? 14 : 10);
   const ys: number[] = [];
   let y = 22;
-  rows.forEach(r => { const half = (r.points.length - 1) * SHIFT / 2; if (r.head) y += HEAD; y += half; ys.push(y); y += 30 + half; });
-  const py = (row: number, j: number) => ys[row] + (j - (rows[row].points.length - 1) / 2) * SHIFT;
+  rows.forEach((r, k) => { const half = (r.points.length - 1) * shift[k] / 2; if (r.head) y += HEAD; y += half; ys.push(y); y += 30 + half; });
+  const py = (row: number, j: number) => ys[row] + (j - (rows[row].points.length - 1) / 2) * shift[row];
   const AXIS = y - 6, H = AXIS + 50;
   const flat = rows.flatMap((r, k) => r.points.map((p, j) => ({ ...p, row: k, j })));
   const { svg, start, handlers } = useDrag((i, p) => { const pt = flat[i]; const v = clamp(X.invert(p.x), bounds); if (v !== pt.value) onChange(pt.at, v); });
@@ -57,7 +64,9 @@ function DotRows({ rows, bounds, axisTitle, who, onPick, onChange, label, tickSt
             {r.note && <text className={`xw-t${k === who ? ' xw-strong' : ''}`} x={right + 22} y={ys[k] + 5}>{r.note}</text>}
           </g>
         ))}
-        <Axis scale={X} ticks={ticks} at={AXIS} from={left} to={right} labelGap={20} title={axisTitle} />
+        <Axis scale={X} ticks={ticks} at={AXIS} from={left} to={right} labelGap={20} />
+        {/* Achsentitel mittig unter der Achse, aber nie über den Bildrand hinaus. */}
+        <text className="xw-t" x={Math.min(W - 4 - textWidth(axisTitle.length) / 2, Math.max(4 + textWidth(axisTitle.length) / 2, (left + right) / 2))} y={AXIS + 38} textAnchor="middle">{axisTitle}</text>
         {flat.map((pt, i) => (
           <DragPoint key={`p${i}`} x={X(pt.value)} y={py(pt.row, pt.j)} label={pt.name} selected={pt.row === who} valueNow={pt.value} bounds={bounds}
             onPointerDown={(e: PointerEvent) => { onPick(pt.row); start(i, e); }} onKeyDown={e => key(e, i)}>{pt.label}</DragPoint>
@@ -69,7 +78,7 @@ function DotRows({ rows, bounds, axisTitle, who, onPick, onChange, label, tickSt
 
 // Mann–Whitney-U -----------------------------------------------------------------------
 
-/** Alle 16 Paare aus je einer Person ohne (Zeilen) und mit Weiterbildung (Spalten): grün, wenn ohne vorn liegt, braunrot, wenn mit vorn liegt. */
+/** Alle 16 Paare aus je einer Person ohne (Zeilen) und mit Weiterbildung (Spalten): grün, wenn die Person ohne länger lernt, braunrot, wenn die Person mit länger lernt. */
 function PairGrid({ s, names, who }: { s: MwStats; names: readonly string[]; who: number }) {
   const [box, W] = useWidth();
   const cell = Math.min(44, Math.floor((W - 70) / 4)), x0 = 46, y0 = 44, H = y0 + 4 * cell + 34;
@@ -102,9 +111,9 @@ function UScale({ s }: { s: MwStats }) {
   return (
     <div ref={box}>
       <svg className="xw-svg" width={W} height={124} viewBox={`0 0 ${W} 124`} role="img"
-        aria-label={`U = ${num(s.U)} auf der Achse von 0 bis 16; ohne Unterschied erwartet man 8, z ≈ ${Number.isFinite(s.z) ? num(s.z) : 'nicht definiert'}.`}>
+        aria-label={`U = ${num(s.U)} auf der Achse von 0 bis 16; ohne Unterschied erwartet man für U₁ und U₂ je 8, z ≈ ${Number.isFinite(s.z) ? num(s.z) : 'nicht definiert'}.`}>
         {s.sd > 0 && <rect className="xw-band" x={X(Math.max(0, 8 - s.sd))} y={34} width={X(Math.min(16, 8 + s.sd)) - X(Math.max(0, 8 - s.sd))} height={base - 34} />}
-        <MarkLine x={X(8)} from={30} to={base} label="Erwartung 8" />
+        <MarkLine x={X(8)} from={30} to={base} label="n₁n₂ / 2 = 8" />
         <line className="xw-pos" strokeWidth={4} x1={X(s.U)} x2={X(s.U)} y1={40} y2={base} />
         <text className="xw-t xw-strong" x={X(s.U)} y={base + 44} textAnchor="middle">U = {num(s.U)}</text>
         <Axis scale={X} ticks={[0, 4, 8, 12, 16]} at={base} from={24} to={W - 24} labelGap={20} />
@@ -122,7 +131,7 @@ function MannWhitneyPicture({ data, s, step, who, setData, pickWho, names }: { d
   }));
   return <>
     <DotRows rows={rows} bounds={{ min: 0, max: 30 }} tickStep={5} axisTitle="Lernzeit in den letzten sieben Tagen (h)" who={who} onPick={pickWho}
-      onChange={(at, v) => setData(data.map((x, k) => k === at ? v : x))} label="Lernzeiten der acht Beispielpersonen, je Zeile eine Person" />
+      onChange={(at, v) => setData(data.map((x, k) => k === at ? v : x))} label="Lernzeiten der acht Beispielpersonen, je Zeile eine Person" noteChars={8} />
     {step >= 3 && <PairGrid s={s} names={names} who={who} />}
     {step >= 5 && <UScale s={s} />}
   </>;
@@ -133,7 +142,7 @@ function MannWhitneyPicture({ data, s, step, who, setData, pickWho, names }: { d
 /** Rangachse von 1 bis N mit dem mittleren Rang jeder Gruppe, ab Schritt 3 mit der Mitte und den Abständen dazu. */
 function MeanRanks({ s, step, labels }: { s: KwStats; step: number; labels: readonly string[] }) {
   const [box, W] = useWidth();
-  const right = step >= 4 ? W - 96 : W - 24, X = linear([1, s.N], [24, right]), Y = (j: number) => 44 + j * 44, AXIS = 44 + s.k * 44, H = AXIS + 56;
+  const right = step >= 4 ? W - 24 - textWidth(14) : W - 24, X = linear([1, s.N], [24, right]), Y = (j: number) => 44 + j * 44, AXIS = 44 + s.k * 44, H = AXIS + 56;
   return (
     <div ref={box}>
       <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
@@ -146,7 +155,7 @@ function MeanRanks({ s, step, labels }: { s: KwStats; step: number; labels: read
           </g>}
           <circle className="b11-mark" cx={X(m)} cy={Y(j)} r={6} />
           <text className="xw-t" x={24} y={Y(j) - 10}>{labels[j]}: {num(m)}</text>
-          {step >= 4 && <text className="xw-t" x={right + 12} y={Y(j) + 5}>· 3 = {num(s.weighted[j])}</text>}
+          {step >= 4 && <text className="xw-t" x={right + 12} y={Y(j) + 5}>mal 3 = {num(s.weighted[j])}</text>}
         </g>)}
         <Axis scale={X} ticks={Array.from({ length: s.N }, (_, k) => k + 1)} at={AXIS} from={24} to={right} labelGap={20} title="Rang in der gemeinsamen Reihe" />
         {step >= 5 && <text className="xw-t xw-strong" x={W - 24} y={14} textAnchor="end">H ≈ {num(s.Hraw)}</text>}
@@ -164,8 +173,8 @@ function KruskalWallisPicture({ data, s, step, who, setData, pickWho, names }: {
   }));
   return <>
     <DotRows rows={rows} bounds={{ min: 0, max: 30 }} tickStep={5} axisTitle="Lernzeit in den letzten sieben Tagen (h)" who={who} onPick={pickWho}
-      onChange={(at, v) => setData(data.map((x, k) => k === at ? v : x))} label="Lernzeiten der neun Beispielpersonen, je Zeile eine Person" />
-    {step >= 2 && <MeanRanks s={s} step={step} labels={['Haupt', 'Mittel', 'Abitur']} />}
+      onChange={(at, v) => setData(data.map((x, k) => k === at ? v : x))} label="Lernzeiten der neun Beispielpersonen, je Zeile eine Person" noteChars={8} />
+    {step >= 2 && <MeanRanks s={s} step={step} labels={KW_SHORT} />}
   </>;
 }
 
@@ -207,7 +216,7 @@ function WilcoxonPicture({ data, s, step, who, setData, pickWho, names }: { data
   const change = (at: number, v: number) => setData(at < n ? { x: data.x.map((x, k) => k === at ? v : x), y: data.y } : { x: data.x, y: data.y.map((y, k) => k === at - n ? v : y) });
   return <>
     <DotRows rows={rows} bounds={{ min: 0, max: 20 }} tickStep={5} axisTitle="gelöste Aufgaben im Wissenstest (von 20)" who={who} onPick={pickWho}
-      onChange={change} label="Zwei Tests der sechs Beispielpersonen, je Zeile eine Person" />
+      onChange={change} label="Zwei Tests der sechs Beispielpersonen, je Zeile eine Person" noteChars={9} />
     {step >= 3 && <RankSumBars s={s} step={step} />}
   </>;
 }
@@ -217,7 +226,8 @@ function WilcoxonPicture({ data, s, step, who, setData, pickWho, names }: { data
 /** Rangsummen der drei Tests als Balken, ab Schritt 3 mit der Erwartung, ab Schritt 4 mit den Quadraten der Abstände. */
 function TimeSums({ s, step }: { s: FrStats; step: number }) {
   const [box, W] = useWidth();
-  const top = s.N * s.k, left = 60, right = step >= 4 ? W - 110 : W - 50, X = linear([0, top], [left, right]);
+  // Rechts Platz für die Quadrate ab Schritt 4 („(−2,5)² = 6,25“), dazwischen für die Zahl am Balken.
+  const sqX = W - 4 - textWidth(15), top = s.N * s.k, left = 60, right = step >= 4 ? sqX - 48 : W - 50, X = linear([0, top], [left, right]);
   const Y = (j: number) => 26 + j * 36, H = 26 + s.k * 36 + 34;
   return (
     <div ref={box}>
@@ -227,7 +237,7 @@ function TimeSums({ s, step }: { s: FrStats; step: number }) {
           <text className="xw-t" x={4} y={Y(j) + 15}>Test {j + 1}</text>
           <rect className="xw-bar-plain" x={left} y={Y(j)} width={Math.max(2, X(r) - left)} height={20} />
           <text className="xw-t" x={X(r) + 6} y={Y(j) + 15}>{num(r)}</text>
-          {step >= 4 && <text className="xw-t" x={right + 30} y={Y(j) + 15}>({s.dev[j] < 0 ? '−' : s.dev[j] > 0 ? '+' : ''}{num(Math.abs(s.dev[j]))})² = {num(s.sq[j])}</text>}
+          {step >= 4 && <text className="xw-t" x={sqX} y={Y(j) + 15}>({s.dev[j] < 0 ? '−' : s.dev[j] > 0 ? '+' : ''}{num(Math.abs(s.dev[j]))})² = {num(s.sq[j])}</text>}
         </g>)}
         {step >= 3 && <MarkLine x={X(s.E)} from={14} to={Y(s.k - 1) + 28} />}
         {step >= 3 && <text className="xw-t" x={X(s.E)} y={H - 8} textAnchor="middle">Erwartung {num(s.E)}</text>}
@@ -245,7 +255,7 @@ function FriedmanPicture({ data, s, step, who, setData, pickWho, names }: { data
   const change = (at: number, v: number) => setData(data.map((r, i) => i === Math.floor(at / 3) ? r.map((x, j) => j === at % 3 ? v : x) : r));
   return <>
     <DotRows rows={rows} bounds={{ min: 0, max: 20 }} tickStep={5} axisTitle="gelöste Aufgaben im Wissenstest (von 20)" who={who} onPick={pickWho}
-      onChange={change} label="Drei Tests der fünf Beispielpersonen, je Zeile eine Person" />
+      onChange={change} label="Drei Tests der fünf Beispielpersonen, je Zeile eine Person" noteChars={14} />
     {step >= 2 && <TimeSums s={s} step={step} />}
   </>;
 }
@@ -255,14 +265,15 @@ function FriedmanPicture({ data, s, step, who, setData, pickWho, names }: { data
 /** Die zehn Paare der Lernzeit nach Schulabschluss: Betrag der Differenz als Balken, die Tukey-Hürde des Paars als Strich. */
 function TukeyPairs({ alpha }: { alpha: number }) {
   const [box, W] = useWidth();
-  const r = basePairs(), left = 118, right = W - 54, X = linear([0, 4], [left, right]), ROW = 26, top = 24;
+  const r = basePairs(), left = 118, right = W - 54, X = linear([0, 4], [left, right]), ROW = 26, top = 44;
   const H = top + r.pairs.length * ROW + 46;
   const hits = r.pairs.filter(p => p.pTukey < alpha).length;
   return (
     <div ref={box}>
       <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
         aria-label={`Zehn Paare von Schulabschlüssen: Unterschied der mittleren Lernzeit und die Tukey-Hürde bei α = ${num(alpha, 3)}. ${hits} Paare liegen über ihrer Hürde.`}>
-        <text className="xw-t xw-strong" x={4} y={14}>Unterschied in Stunden; Strich: Hürde bei α = {num(alpha, 3)}; +: darüber</text>
+        <text className="xw-t xw-strong" x={4} y={14}>Balken: Unterschied in Stunden</text>
+        <text className="xw-t" x={4} y={32}>Strich: Hürde bei α = {num(alpha, 3)}; +: darüber</text>
         {r.pairs.map((p, k) => {
           const y = top + k * ROW, d = Math.abs(p.diff), h = tukeyHurdle(alpha, p.se, r.k, r.df), on = p.pTukey < alpha;
           return <g key={k}>
@@ -285,15 +296,16 @@ function Hurdles({ k }: { k: number }) {
   const rows: [string, number, string][] = [['t-Test allein', h.t, 'xw-bar-plain'], ['Tukey', h.tukey, 'xw-bar-pos'], ['Scheffé', h.scheffe, 'xw-bar-pos']];
   return (
     <div ref={box}>
-      <svg className="xw-svg" width={W} height={170} viewBox={`0 0 ${W} 170`} role="img"
+      <svg className="xw-svg" width={W} height={188} viewBox={`0 0 ${W} 188`} role="img"
         aria-label={`Bei ${h.k} Gruppen mit je 40 Personen braucht ein Paar beim t-Test ${num(h.t)}, bei Tukey ${num(h.tukey)} und bei Scheffé ${num(h.scheffe)} Stunden Unterschied.`}>
-        <text className="xw-t xw-strong" x={4} y={14}>Nötiger Unterschied, {h.k} Gruppen mit je 40 Personen</text>
+        <text className="xw-t xw-strong" x={4} y={14}>Nötiger Unterschied in Stunden</text>
+        <text className="xw-t" x={4} y={32}>{h.k} Gruppen mit je 40 Personen</text>
         {rows.map(([name, v, cls], j) => <g key={name}>
-          <text className="xw-t" x={4} y={46 + j * 34}>{name}</text>
-          <rect className={cls} x={left} y={32 + j * 34} width={Math.max(2, X(v) - left)} height={20} />
-          <text className="xw-t" x={X(v) + 6} y={46 + j * 34}>{num(v)} h</text>
+          <text className="xw-t" x={4} y={64 + j * 34}>{name}</text>
+          <rect className={cls} x={left} y={50 + j * 34} width={Math.max(2, X(v) - left)} height={20} />
+          <text className="xw-t" x={X(v) + 6} y={64 + j * 34}>{num(v)} h</text>
         </g>)}
-        <Axis scale={X} ticks={[0, 1, 2, 3]} at={136} from={left} to={right} labelGap={18} />
+        <Axis scale={X} ticks={[0, 1, 2, 3]} at={154} from={left} to={right} labelGap={18} />
       </svg>
     </div>
   );

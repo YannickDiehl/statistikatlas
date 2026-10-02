@@ -55,9 +55,9 @@ const hours = (v: number) => `${num(v)} h`;
 /** „1 + 2 + 3 + 6“: die Ränge einer Gruppe. */
 const ranksOf = (c: C, g: 0 | 1) => c.s.rank.filter((_, i) => MW_GROUP[i] === g).map(r => num(r)).join(' + ');
 const zText = (c: C) => Number.isFinite(c.s.z) ? num(c.s.z) : 'nicht definiert';
-/** Wer in wie vielen Paaren vorn liegt, als Satz über Menschen. */
+/** Wer in wie vielen Paaren den höheren Wert hat, als Satz über Menschen. */
 function pairsSentence(s: MwStats): string {
-  if (Math.abs(s.U1 - s.U2) < 1e-9) return 'Beide Gruppen liegen in gleich vielen Paaren vorn, in je 8 von 16.';
+  if (Math.abs(s.U1 - s.U2) < 1e-9) return 'Beide Gruppen lernen in gleich vielen Paaren länger, in je 8 von 16.';
   const [lead, v] = s.U2 > s.U1 ? ['mit', s.U2] : ['ohne', s.U1];
   return `In ${num(v)} von 16 Paaren aus je einer Person ohne und einer mit Weiterbildung lernt die Person ${lead} Weiterbildung länger${s.ties ? ', ein Gleichstand zählt halb' : ''}.`;
 }
@@ -85,10 +85,10 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
     { sym: 'R(xᵢ)', say: 'R von x i', term: 'Rang', plain: 'der Platz von Person i in der gemeinsamen Reihe', step: 1 },
     { sym: 'R₁, R₂', say: 'R eins, R zwei', term: 'Rangsummen', plain: 'alle Ränge einer Gruppe zusammengezählt', step: 2 },
     { sym: 'n₁, n₂', say: 'n eins, n zwei', term: 'Gruppengrößen', plain: 'wie viele Personen in jeder Gruppe sind, hier je 4', step: 3 },
-    { sym: 'U₁', say: 'U eins', term: 'U der ersten Gruppe', plain: 'in wie vielen Paaren die erste Gruppe vorn liegt', step: 3 },
+    { sym: 'U₁', say: 'U eins', term: 'U der ersten Gruppe', plain: 'in wie vielen Paaren die erste Gruppe den höheren Wert hat', step: 3 },
     { sym: 'U', say: 'U', term: 'Mann–Whitney-U', plain: 'der kleinere der beiden U-Werte', step: 4 },
     { sym: 'σ(U)', say: 'Sigma von U', term: 'Standardabweichung von U', plain: 'wie stark U ohne Unterschied üblicherweise schwankt', step: 5 },
-    { sym: 'z', say: 'z', term: 'Prüfgröße', plain: 'Abstand von U zur Erwartung, in σ(U) gemessen', step: 5 },
+    { sym: 'z', say: 'z', term: 'Prüfgröße', plain: 'Abstand von U zu n₁n₂ / 2, in σ(U) gemessen', step: 5 },
   ],
   steps: [
     {
@@ -104,7 +104,7 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
       fach: 'Ein Rang ist der Platz eines Werts in der gemeinsamen Reihenfolge aller Werte. Gleiche Werte bekommen den Mittelwert ihrer Plätze.',
       warum: 'Ränge halten nur die Reihenfolge fest, nicht die Abstände. Ob jemand 10 oder 30 Stunden lernt, ist für den höchsten Rang gleich.',
       acht: 'Die Ränge vergibst du für alle acht gemeinsam, nicht getrennt je Gruppe. Sonst hätte jede Gruppe ihren eigenen Rang 1, und der Vergleich ginge verloren.',
-      alltag: 'Wie beim Zieleinlauf eines Laufs: Für die Platzierung zählt nur, wer vor wem ankommt, nicht wie viele Sekunden dazwischen liegen.',
+      alltag: 'Wie beim Aufstellen nach Körpergröße: Für den Platz zählt nur, wer größer ist als wer, nicht um wie viele Zentimeter.',
       check: {
         question: c => `Welchen Rang bekommt Person ${P(c)}?`,
         answer: c => c.s.rank[c.who],
@@ -139,10 +139,10 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
       button: 'U₁', title: 'Den kleinsten möglichen Wert abziehen', sym: 'U₁', say: 'U eins', concept: 'mann_whitney', perPerson: false,
       was: 'Von R₁ ziehen wir 4 · 5 / 2 = 10 ab. So viel hätte die Gruppe mindestens, wenn sie die Ränge 1 bis 4 belegt.',
       rechnung: c => `U₁ = ${num(c.s.R1)} − 4 · 5 / 2 = ${num(c.s.R1)} − 10 = ${num(c.s.U1)}`,
-      fach: 'U₁ = R₁ − n₁(n₁ + 1) / 2 zählt die Paare aus je einer Person beider Gruppen, in denen die Person der ersten Gruppe vorn liegt. Gleichstände zählen halb.',
+      fach: 'U₁ = R₁ − n₁(n₁ + 1) / 2 zählt die Paare aus je einer Person beider Gruppen, in denen die Person der ersten Gruppe den höheren Wert hat. Gleichstände zählen halb.',
       warum: c => `Danach ist U₁ eine Zahl von Paaren. Es gibt 4 · 4 = 16 Paare aus je einer Person ohne und einer mit Weiterbildung. In ${num(c.s.U1)} davon lernt die Person ohne Weiterbildung länger${c.s.ties ? ', ein Gleichstand zählt halb' : ''}.`,
       acht: 'Abgezogen wird n₁(n₁ + 1) / 2 mit n₁ = 4, also 10. Wer 4 · 3 / 2 = 6 abzieht, bekommt ein zu großes U.',
-      alltag: 'Wie bei einem Turnier, in dem jede Person ohne gegen jede Person mit Weiterbildung antritt: U₁ zählt die Siege der ersten Gruppe.',
+      alltag: 'Wie bei einem Turnier, in dem jede Person ohne gegen jede Person mit Weiterbildung antritt und gewinnt, wer länger lernt: U₁ zählt die Siege der ersten Gruppe.',
       check: {
         question: 'Was bleibt, wenn du von R₁ die 10 abziehst?',
         answer: c => c.s.U1,
@@ -159,7 +159,7 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
       button: 'U', title: 'Die andere Gruppe ergänzen', sym: 'U', say: 'U', concept: 'mann_whitney', perPerson: false,
       was: 'Die übrigen Paare gehen an die andere Gruppe: U₂ = 16 − U₁. R meldet den kleineren der beiden Werte als U.',
       rechnung: c => `U₂ = 4 · 4 − ${num(c.s.U1)} = ${num(c.s.U2)}. U = min(${num(c.s.U1)}, ${num(c.s.U2)}) = ${num(c.s.U)}.`,
-      fach: 'U = min(U₁, U₂) mit U₁ + U₂ = n₁ · n₂. Ein kleines U heißt: Eine Gruppe liegt in fast allen Paaren vorn.',
+      fach: 'U = min(U₁, U₂) mit U₁ + U₂ = n₁ · n₂. Ein kleines U heißt: Eine Gruppe hat in fast allen Paaren den höheren Wert.',
       warum: 'Beide Werte erzählen dieselbe Geschichte, nur von zwei Seiten. Der kleinere zeigt am deutlichsten, wie einseitig die Paare ausgehen.',
       acht: 'Ein kleines U ist ein deutliches Ergebnis, kein schwaches. U = 0 hieße: Alle aus einer Gruppe lernen länger als alle aus der anderen.',
       check: {
@@ -176,7 +176,7 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
     {
       button: 'z', title: 'Mit dem Zufall vergleichen', sym: 'z', say: 'z', concept: 'test_statistic', perPerson: false,
       links: [{ id: 'standard_normal', label: 'Standardnormalverteilung' }],
-      was: 'Ohne Unterschied erwartet man U = 16 / 2 = 8. Wir messen, wie weit U davon entfernt ist, in Standardabweichungen von U.',
+      was: 'Ohne Unterschied erwartet man für U₁ und U₂ je 16 / 2 = 8. Wir messen, wie weit U davon entfernt ist, in Standardabweichungen von U.',
       rechnung: c => Number.isFinite(c.s.z)
         ? `z = (${num(c.s.U)} − 8) / ${num(c.s.sd)} ≈ ${num(c.s.z)}${c.s.ties ? '. Die Gleichstände machen σ(U) etwas kleiner als 3,46.' : ''}`
         : 'Alle acht lernen gleich lange. Dann schwankt U nicht, und z lässt sich nicht berechnen.',
@@ -216,14 +216,14 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
     2: 'Rechts neben jeder Gruppe steht ihre Rangsumme.',
     3: 'Das Gitter zeigt alle 16 Paare. Ein grünes Feld mit + heißt: Die Person ohne Weiterbildung lernt länger.',
     4: 'Grüne Felder mit + zählen für U₁, braunrote mit − für U₂. Ein ½ ist ein Gleichstand und zählt für beide halb.',
-    5: 'Die Achse reicht von 0 bis 16 Paaren. Markiert sind U und die Erwartung 8 ohne Unterschied; das helle Band reicht eine σ(U) um die 8.',
+    5: 'Die Achse reicht von 0 bis 16 Paaren. Markiert sind U und die 8, die man ohne Unterschied für U₁ und U₂ erwartet; das helle Band reicht eine σ(U) um die 8.',
   },
   think: [
     {
-      question: 'Person H lernt 12 statt 30 Stunden. Was passiert mit U?', options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 1,
+      question: 'Mit den Startdaten: Person H lernt 12 statt 30 Stunden. Was passiert mit U?', options: ['wird größer', 'bleibt gleich', 'wird kleiner'], correct: 1, step: 1,
       explain: 'H lernt immer noch am längsten und behält Rang 8. Kein Rang ändert sich, also auch U nicht. Der Mittelwert der Gruppe mit Weiterbildung fiele dagegen um 4,5 Stunden.',
       kurz: 'Ränge sind unempfindlich gegen Ausreißer.',
-      tryIt: { label: 'Person H auf 12 Stunden', apply: d => d.map((v, i) => i === 7 ? 12 : v) },
+      tryIt: { label: 'Startdaten, Person H auf 12 Stunden', apply: () => MW_START.map((v, i) => i === 7 ? 12 : v) },
     },
     {
       question: 'Alle lernen nur halb so lange. Was passiert mit U?', options: ['wird kleiner', 'bleibt gleich', 'wird größer'], correct: 1, step: 1,
@@ -233,7 +233,7 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
     },
     {
       question: 'Alle vier ohne Weiterbildung lernen kürzer als alle vier mit. Wie groß ist U?', options: ['0', '8', '16'], correct: 0, step: 4,
-      explain: 'Dann liegt in allen 16 Paaren die Person mit Weiterbildung vorn. U₁ ist 0 und U₂ ist 16; R meldet den kleineren Wert, also 0.',
+      explain: 'Dann lernt in allen 16 Paaren die Person mit Weiterbildung länger. U₁ ist 0 und U₂ ist 16; R meldet den kleineren Wert, also 0.',
       kurz: 'U = 0 ist der deutlichste Unterschied, den es geben kann.',
       tryIt: { label: 'ohne 1 2 3 4, mit 5 6 7 8', apply: () => [1, 2, 3, 4, 5, 6, 7, 8] },
     },
@@ -241,7 +241,7 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
   variants: {
     mann_whitney: {
       lastStep: 5,
-      kurz: 'Der Mann–Whitney-U-Test vergleicht zwei Gruppen über ihre Plätze in einer gemeinsamen Reihe. Er zählt, wie oft eine Person der einen Gruppe vor einer Person der anderen liegt.',
+      kurz: 'Der Mann–Whitney-U-Test vergleicht zwei Gruppen über ihre Plätze in einer gemeinsamen Reihe. Er zählt, wie oft eine Person der einen Gruppe einen höheren Wert hat als eine Person der anderen.',
       fachlich: 'Rangtest für zwei unabhängige Stichproben: U = min(U₁, U₂) mit U₁ = R₁ − n₁(n₁ + 1) / 2, geprüft über z mit der Normalverteilung und Bindungskorrektur.',
       symbolic: ['U₁ = ', { big: 'Σ', m: 2 }, { part: ['R(xᵢ)'], m: 1 }, ' ', { part: ['−'], m: 3 }, ' ', { frac: ['n₁(n₁ + 1)'], den: ['2'], m: 3 }, { br: true },
         { part: ['z'], m: 5 }, ' = ', { frac: [{ part: ['U'], m: 4 }, ' − n₁n₂ / 2'], den: ['σ(U)'], m: 5 }],
@@ -261,7 +261,7 @@ export const mannWhitneyWorkshop: Workshop<number[], MwStats> = {
         kurz: 'Bei so wenigen Personen ist die Normalverteilung nur eine grobe Näherung. Und ein Unterschied in den Rängen ist nicht automatisch ein Unterschied der Mediane.',
         paragraphs: c => [
           `R (mariposa) rechnet wie SPSS mit der Normalverteilung, ohne Stetigkeitskorrektur. ${c.s.exact !== null && Number.isFinite(c.s.p) ? `Der exakte Test aus wilcox.test() zählt alle 70 möglichen Aufteilungen der Ränge durch und meldet hier p ≈ ${num(c.s.exact)} statt ${num(c.s.p)}.` : 'Mit Gleichständen rechnet auch wilcox.test() nur mit dieser Näherung.'} Als Faustregel passen beide ab etwa 20 Personen je Gruppe gut zusammen.`,
-          'Der Test fragt, ob die Personen einer Gruppe in der gemeinsamen Reihe eher vorn liegen. Als Unterschied der Mediane darfst du das nur lesen, wenn beide Gruppen ähnlich geformte Verteilungen haben, die nur verschoben sind.',
+          'Der Test fragt, ob die Personen einer Gruppe in der gemeinsamen Reihe eher die höheren Ränge bekommen. Als Unterschied der Mediane darfst du das nur lesen, wenn beide Gruppen ähnlich geformte Verteilungen haben, die nur verschoben sind.',
           `Zum Vergleich die Mittelwerte: ohne Weiterbildung ${hours(c.s.sum1 / 4)}, mit ${hours(c.s.sum2 / 4)}. Ein einzelner sehr hoher Wert verschiebt einen Mittelwert stark, einen Rang dagegen höchstens bis Platz 8.`,
           'Die Gruppen müssen unabhängig sein: Jede Person gehört zu genau einer Gruppe. Für zwei Messungen derselben Personen nimmst du den Wilcoxon-Test für verbundene Stichproben.',
         ],
@@ -324,7 +324,7 @@ export const mannWhitneyTabs: ConceptTabs = {
       mann_whitney: { sym: 'mann_whitney()', term: 'Mann–Whitney-U', kurz: 'Vergleicht zwei unabhängige Gruppen über ihre Ränge. Meldet U, z, p und die Effektgröße r.', fehler: 'Hat die Gruppenspalte mehr als zwei Gruppen, rechnet mariposa nicht und meldet: `schulabschluss` has 5 groups with valid values; the Mann-Whitney test needs exactly 2.' },
       group: { sym: 'group =', term: 'Gruppenvariable', kurz: 'Nennt die Spalte, die die Befragten in zwei Gruppen teilt, hier Weiterbildung Nein oder Ja. Die erste Gruppe ist der kleinere Code.', fehler: 'Welche Gruppe die erste ist, legt der Code fest: 0 = Nein kommt vor 1 = Ja. Bei einem einseitigen Test prüfst du sonst leicht die falsche Richtung.' },
       mu: { sym: 'mu =', term: 'Null- & Alternativhypothese', kurz: 'Die Verschiebung, die die Nullhypothese annimmt. mu = 0 heißt: Ohne Unterschied liegen beide Gruppen gleich in der Reihe.', fehler: 'mu ist hier kein Mittelwert, sondern eine Verschiebung der ersten Gruppe. mu = 0 ist schon die Voreinstellung.' },
-      '"two.sided"': { sym: '"two.sided"', term: 'Einseitig & zweiseitig testen', kurz: 'Zweiseitig: Gefragt ist, ob eine der beiden Gruppen in der Reihe vorn liegt, egal welche.', fehler: 'Nur die englischen Wörter funktionieren. alternative = "kleiner" ergibt: \'arg\' sollte eines von \'“two.sided”, “less”, “greater”\' sein.' },
+      '"two.sided"': { sym: '"two.sided"', term: 'Einseitig & zweiseitig testen', kurz: 'Zweiseitig: Gefragt ist, ob eine der beiden Gruppen eher die höheren Ränge hat, egal welche.', fehler: 'Nur die englischen Wörter funktionieren. alternative = "kleiner" ergibt: \'arg\' sollte eines von \'“two.sided”, “less”, “greater”\' sein.' },
     },
     outputMap: [
       { match: 'U', atlas: 'U', step: 4, explain: 'Der kleinere der beiden U-Werte: In so vielen Paaren kommt die Person mit Weiterbildung leichter mit dem Einkommen aus. Gleichstände zählen halb.' },
@@ -335,7 +335,7 @@ export const mannWhitneyTabs: ConceptTabs = {
     ],
     check: {
       question: 'Welche Zahl in der Ausgabe ist U? Tippe sie an.', correct: 'U',
-      wrong: { Z: 'Fast! Das ist z. Es misst U am üblichen Schwanken.', p: 'Fast! Das ist der p-Wert. Er sagt, wie überraschend U wäre, wenn es keinen Unterschied gäbe.', r: 'Fast! Das ist die Effektgröße r. Sie wird aus z gerechnet.', N: 'Fast! N ist die Zahl der Befragten. U steht ganz vorn hinter U =.' },
+      wrong: { Z: 'Fast! Das ist z. Es misst U am üblichen Schwanken.', p: 'Fast! Das ist der p-Wert. Er sagt, wie überraschend U wäre, wenn es keinen Unterschied gäbe.', r: 'Fast! Das ist die Effektgröße r. Sie wird aus z gerechnet.', N: 'Fast! N ist die Zahl der Befragten. U steht am Anfang der Zeile, hinter U =.' },
     },
   },
   next: {

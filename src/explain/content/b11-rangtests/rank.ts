@@ -3,24 +3,14 @@
 // (ungewichtet; Normal- bzw. χ²-Näherung mit Bindungskorrektur, z wie in SPSS aus der kleineren Summe).
 // Die Referenzwerte aus R stehen in b11-rangtests.test.ts.
 import type { SurveyRow } from '../../../domain/survey';
+import { averageRanks } from '../../../domain/descriptive';
 import { pchisq, pf, pnorm } from '../../../tasks/kit/dist';
 import { tukeyHSD, onewayAnova } from '../../../tasks/kit/means';
 
 const sum = (a: readonly number[]) => a.reduce((s, v) => s + v, 0);
 
-/** Mittlere Ränge wie R rank() (ties.method = "average"): Gleichstände teilen sich ihre Plätze. */
-export function midRanks(values: readonly number[]): number[] {
-  const order = values.map((v, i) => [v, i] as const).sort((a, b) => a[0] - b[0]);
-  const ranks = new Array<number>(values.length);
-  for (let i = 0; i < order.length;) {
-    let j = i;
-    while (j + 1 < order.length && order[j + 1][0] === order[i][0]) j++;
-    const r = (i + j + 2) / 2;
-    for (let k = i; k <= j; k++) ranks[order[k][1]] = r;
-    i = j + 1;
-  }
-  return ranks;
-}
+/** Mittlere Ränge wie R rank() (ties.method = "average"): Gleichstände teilen sich ihre Plätze. Gemeinsame Rechnung aus domain/descriptive.ts. */
+export const midRanks = (values: readonly number[]): number[] => averageRanks([...values]);
 
 /** Bindungsterm Σ(t³ − t) über alle Gruppen gleicher Werte (0 ohne Gleichstände). */
 export function tieTerm(values: readonly number[]): number {
@@ -209,5 +199,3 @@ export function byGroup(rows: readonly SurveyRow[], x: string, group: string): {
 /** Werte mehrerer Spalten, eine Liste je Spalte (Messungen derselben Personen). */
 export const columnsOf = (rows: readonly SurveyRow[], ids: readonly string[]) => ids.map(id => rows.map(r => r.values[id]));
 
-/** Ob alle Werte gleich sind (dann rechnet ein Rangtest nicht). */
-export const allSame = (values: readonly number[]) => values.every(v => v === values[0]);

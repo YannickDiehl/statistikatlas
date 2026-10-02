@@ -106,7 +106,7 @@ export const scheffeCard: ConceptCard = {
     paragraphs: [
       'mariposa rechnet F = Differenz² / ((k − 1) · MSE · (1/nᵢ + 1/nⱼ)) und vergleicht mit der F-Verteilung mit k − 1 und N − k Freiheitsgraden. Die Intervalle nutzen S = √((k − 1) · F_krit) Standardfehler.',
       'Ein Kontrast ist eine gewichtete Summe von Gruppenmitteln, deren Gewichte zusammen 0 ergeben, etwa (x̄₁ + x̄₂) / 2 − x̄₃. mariposa bietet nur Paarkontraste an; frei eingegebene Kontraste gibt es dort nicht.',
-      'Liegt der F-Test der ANOVA nicht unter α, findet Scheffé auch keinen auffälligen Kontrast. Bei Tukey kann das in seltenen Fällen anders sein.',
+      'Liegt das p des F-Tests der ANOVA nicht unter α, findet Scheffé auch keinen auffälligen Kontrast. Bei Tukey kann das in seltenen Fällen anders sein.',
       'Nach einer mehrfaktoriellen ANOVA nimmt scheffe_test() die rohen Gruppenmittel und die Fehlervarianz des Gesamtmodells.',
     ],
   },
@@ -127,7 +127,7 @@ export const scheffeTabs: ConceptTabs = {
       const s = r.pairs.filter(p => p.pScheffe < 0.05), t = r.pairs.filter(p => p.pTukey < 0.05);
       return {
         kurz: `Bei α = 0,05 meldet Scheffé ${s.length} der ${r.pairs.length} Paare als auffällig, Tukey ${t.length}. Für zwei Gruppen mit je 40 Personen liegt die Scheffé-Hürde bei ${num(hurdle40(r, 'scheffe'))} Stunden, die von Tukey bei ${num(hurdle40(r, 'tukey'))}.`,
-        fachlich: `Scheffé nach der einfaktoriellen ANOVA, MSE ≈ ${num(r.mse)} bei ${r.df} Freiheitsgraden. ${s.length ? `Auffällig (p < 0,05), in der Richtung von R: ${s.map(p => `${pairLabel(p)} ${num(p.diff)} h`).join('; ')}.` : 'Kein Paar liegt unter α = 0,05.'}`,
+        fachlich: `Scheffé nach der einfaktoriellen ANOVA, MSE ≈ ${num(r.mse)} bei ${r.df} Freiheitsgraden. ${s.length ? `Auffällig (p < 0,05), in der Richtung von R: ${s.map(p => `${pairLabel(p)} ${num(p.diff)} h`).join('; ')}.` : 'Bei keinem Paar liegt das p unter α = 0,05.'}`,
         zusatz: `${t.length - s.length === 1 ? 'Ein Paar fällt' : `${t.length - s.length} Paare fallen`} nur bei Tukey auf, keines nur bei Scheffé.`,
       };
     },

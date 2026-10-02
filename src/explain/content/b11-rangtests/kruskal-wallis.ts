@@ -10,7 +10,7 @@ import { epsWord, pOften, pText, signif } from './words';
 export const KW_NAMES = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] as const;
 export const KW_GROUP = [0, 0, 0, 1, 1, 1, 2, 2, 2] as const;
 export const KW_LABELS = ['Hauptschulabschluss', 'Mittlerer Abschluss', 'Abitur'] as const;
-const KW_SHORT = ['Haupt', 'Mittel', 'Abitur'] as const;
+export const KW_SHORT = ['Haupt', 'Mittel', 'Abitur'] as const;
 export const KW_START = [2, 5, 7, 4, 8, 10, 9, 12, 25];
 export const KW_TIES = [3, 5, 5, 5, 8, 10, 8, 12, 20];
 export const KW_EVEN = [1, 5, 9, 2, 6, 7, 3, 4, 8];
@@ -55,7 +55,7 @@ const numeric = (c: C): FNode[] => [
 export const kruskalWallisWorkshop: Workshop<number[], KwStats> = {
   id: 'b11-kw',
   wofuer: 'Unterscheiden sich Menschen mit verschiedenen Schulabschlüssen darin, wie viel sie lernen? Neun Personen sagen, wie viele Stunden sie in den letzten sieben Tagen gelernt haben: je drei mit Hauptschulabschluss, Mittlerem Abschluss und Abitur. Bei drei Gruppen reicht ein einzelner Paarvergleich nicht mehr. Kruskal–Wallis prüft alle Gruppen auf einmal, wieder über Ränge.',
-  mut: 'Die Formel sieht nach viel aus. Sie besteht aber nur aus fünf kleinen Schritten: ordnen, Mitte finden, Abstände messen, quadrieren und zusammenzählen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
+  mut: 'Die Formel sieht nach viel aus. Sie besteht aber nur aus fünf kleinen Schritten: ordnen, Mitte finden, Abstände messen, quadrieren und zusammenzählen, am Ende malnehmen. Das Rechnen übernimmt später R. Hier geht es ums Verstehen.',
   picture: 'b11-kw',
   names: KW_NAMES,
   bounds: { min: 0, max: 30 },
@@ -159,8 +159,8 @@ export const kruskalWallisWorkshop: Workshop<number[], KwStats> = {
       was: 'Wir nehmen die Summe mal 12 / (N · (N + 1)) = 12 / 90. So entsteht H, das R mit einer festen Verteilung vergleicht.',
       rechnung: c => `H = 12 / 90 · ${num(c.s.ss)} = ${num(12 * c.s.ss)} / 90 ≈ ${num(c.s.Hraw)}${c.s.ties && Number.isFinite(c.s.H) ? `. Wegen der Gleichstände teilt R noch durch ${num(c.s.C, 3)} und meldet H ≈ ${num(c.s.H)}.` : '.'}`,
       fach: 'H = 12 / (N(N + 1)) · Σ nⱼ(R̄ⱼ − R̄)². Ohne Unterschied folgt H ungefähr einer χ²-Verteilung mit k − 1 Freiheitsgraden, hier 2.',
-      warum: 'Der Faktor macht H vergleichbar, egal wie viele Personen es sind. Dann lässt sich H immer mit derselben χ²-Verteilung vergleichen.',
-      acht: 'Ein großes H sagt nur: Irgendwo unterscheiden sich Gruppen. Welche es sind, zeigen erst Paarvergleiche wie die Dunn-Vergleiche.',
+      warum: 'Der Faktor bringt H auf eine feste Skala: Ohne Unterschied folgt H ungefähr derselben χ²-Verteilung, egal wie viele Personen es sind. So kann R den p-Wert ablesen.',
+      acht: 'Ein großes H spricht nur dafür, dass sich mindestens zwei Gruppen unterscheiden. Welche es sind, zeigen erst Paarvergleiche wie die Dunn-Vergleiche.',
       check: {
         question: 'Wie groß ist H vor der Korrektur für Gleichstände? Zwei Nachkommastellen reichen.',
         answer: c => c.s.Hraw,
@@ -191,16 +191,16 @@ export const kruskalWallisWorkshop: Workshop<number[], KwStats> = {
   captions: {
     1: 'Jede Zeile ist eine Person, nach Abschluss gruppiert. Du kannst die Punkte ziehen; rechts steht der Rang.',
     2: 'Unten auf der Rangachse von 1 bis 9 steht der mittlere Rang jeder Gruppe.',
-    3: 'Die gestrichelte Linie ist die Mitte 5. Die Pfeile zeigen den Abstand jeder Gruppe: grün darüber, braunrot darunter.',
+    3: 'Die gestrichelte Linie ist die Mitte 5. Die Linien zeigen den Abstand jeder Gruppe zur Mitte: grün rechts davon (höhere Ränge), braunrot links davon.',
     4: 'Rechts steht für jede Gruppe ihr Quadrat mal 3. Zusammen ergeben sie die Summe aus Schritt 4.',
     5: 'Je weiter die mittleren Ränge auseinanderliegen, desto größer wird H.',
   },
   think: [
     {
-      question: 'Person I lernt 13 statt 25 Stunden. Was passiert mit H?', options: ['wird kleiner', 'bleibt gleich', 'wird größer'], correct: 1, step: 1,
+      question: 'Mit den Startdaten: Person I lernt 13 statt 25 Stunden. Was passiert mit H?', options: ['wird kleiner', 'bleibt gleich', 'wird größer'], correct: 1, step: 1,
       explain: 'I lernt immer noch am längsten und behält Rang 9. Kein Rang ändert sich, also auch kein mittlerer Rang und nicht H.',
       kurz: 'Ein Ausreißer zählt nur als letzter Platz.',
-      tryIt: { label: 'Person I auf 13 Stunden', apply: d => d.map((v, i) => i === 8 ? 13 : v) },
+      tryIt: { label: 'Startdaten, Person I auf 13 Stunden', apply: () => KW_START.map((v, i) => i === 8 ? 13 : v) },
     },
     {
       question: 'Alle drei Gruppen haben den mittleren Rang 5. Wie groß ist H?', options: ['0', '5', 'hängt von den Lernzeiten ab'], correct: 0, step: 3,
@@ -217,7 +217,7 @@ export const kruskalWallisWorkshop: Workshop<number[], KwStats> = {
   variants: {
     kruskal_wallis: {
       lastStep: 5,
-      kurz: 'Kruskal–Wallis vergleicht mehrere Gruppen über ihre Plätze in einer gemeinsamen Reihe. Je weiter die mittleren Ränge der Gruppen auseinanderliegen, desto größer wird H.',
+      kurz: 'Kruskal–Wallis stellt alle in eine gemeinsame Reihe und schaut, ob manche Gruppen eher vorn, andere eher hinten stehen. Je weiter die Gruppen im Schnitt auseinanderstehen, desto größer wird die Prüfgröße H.',
       fachlich: 'Rangtest für k unabhängige Stichproben: H = 12 / (N(N + 1)) · Σ nⱼ(R̄ⱼ − R̄)², bei Gleichständen korrigiert, geprüft mit der χ²-Verteilung mit k − 1 Freiheitsgraden.',
       symbolic: ['H = ', { frac: [{ part: ['12 ·'], m: 5 }, ' ', { big: 'Σ', m: 4 }, 'n', { sub: 'j' }, { part: ['('], m: 4 }, { part: ['R̄', { sub: 'j' }], m: 2 }, ' ', { part: ['− R̄'], m: 3 }, { part: [')²'], m: 4 }], den: ['N(N + 1)'], m: 5 }],
       aria: 'H gleich 12 geteilt durch N mal N plus eins, mal die Summe über alle Gruppen j von n j mal R quer j minus R quer, zum Quadrat',
