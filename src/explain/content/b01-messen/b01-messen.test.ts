@@ -13,6 +13,7 @@ import { BERUF, nominal, nominalTabs } from './nominal';
 import { FINANZ, ordinal, ordinalTabs } from './ordinal';
 import { OP, operationalization, operationalizationTabs } from './operationalization';
 import { pearson } from './shared';
+import { attenuation, measurementError, measurementErrorTabs, MF } from './measurement-error';
 import { surveyColumns } from '../../../domain/survey';
 import { styleProblems } from '../../style';
 
@@ -65,6 +66,15 @@ import { styleProblems } from '../../style';
  *   m <- rowMeans(sapply(paste0("methoden", 1:5), function(v) as.numeric(atlas[[v]])))
  *   cor(m, y)                                       # 0.0211 (Methoden-Zuversicht und Wissenstest)
  *   atlas %>% find_var("lern", search = "name_label")   # lernzeit in Spalte 10, Label = Fragetext
+ *
+ * Messfehler (measurement_error), klassisches Messmodell mit fehlerfreiem Wissenstest:
+ *   cor(y, as.numeric(atlas$wissenstest_t2))       # 0.8413497 (zwei Zeitpunkte)
+ *   v <- var(x); r <- cor(x, y)                     # 10.4815; 0.5391689
+ *   for (s in c(1, 2, 3, 6)) { rel <- v / (v + s^2); print(c(v + s^2, rel, r * sqrt(rel))) }
+ *   #   s = 1: 11.4815 0.9129 0.5152;  s = 2: 14.4815 0.7238 0.4587;  s = 3: 19.4815 0.5380 0.3955;  s = 6: 46.4815 0.2255 0.2560
+ *   cor(x + 1, y); mean(x + 1)                      # 0.5391689; 8.7515 (systematischer Fehler +1 h)
+ *   rel <- atlas %>% reliability(methoden1, methoden2, methoden3, methoden4, methoden5, na.rm = TRUE); summary(rel)
+ *   #   Cronbach's Alpha 0.898, N (listwise) 200, Corrected Item-Total (methoden1) 0.761
  */
 
 const rows = createSurvey();
@@ -178,4 +188,22 @@ test('B1 Operationalisierung: Messregel, Mittelwerte und Methoden-Zuversicht wie
   assert.match(at().fachlich, /beobachtet 0 h bis 18,4 h, Mittelwert x̄ ≈ 7,75 h/);
   assert.match(at(applyOp(rows, 'lernzeit', 'double')).kurz, /mit 15,5 h\./);
   assert.match(at(applyOp(rows, 'lernzeit', 'shift', 1)).kurz, /mit 8,75 h\./);
+});
+
+test('B1 Messfehler: Messmodell, Regler und Reiter wie in R', () => {
+  const lz = col('lernzeit'), m = lz.reduce((a, b) => a + b, 0) / 200, v = lz.reduce((a, b) => a + (b - m) ** 2, 0) / 199;
+  assert.ok(close(v, MF.varT, 1e-4) && close(pearson(lz, col('wissenstest'))!, MF.r, 1e-6), 'Varianz und r wie in R');
+  assert.ok(close(pearson(col('wissenstest'), col('wissenstest_t2'))!, MF.rRetest, 1e-6), 'Wissenstest zu zwei Zeitpunkten wie in R');
+  for (const [s, varX, rel, r] of [[1, 11.4815, 0.9129, 0.5152], [2, 14.4815, 0.7238, 0.4587], [3, 19.4815, 0.5380, 0.3955], [6, 46.4815, 0.2255, 0.2560]]) {
+    const a = attenuation(s);
+    assert.ok(close(a.varX, varX, 1e-4) && close(a.rel, rel, 1e-4) && close(a.r, r, 1e-4), `Messmodell bei s = ${s}: ${JSON.stringify(a)}`);
+  }
+  assert.match(measurementError.stellDirVor.text, /r ≈ 0,84\./);
+  assert.match(measurementError.bausteine[2].rechnung!, /Var\(X\) = 10,48 h² \+ 4 h² = 14,48 h²\. Echt sind 10,48 \/ 14,48 ≈ 0,72 davon\./);
+  assert.match(measurementError.regler!.describe(2), /wächst die Streuung auf 14,48 h²\. Nur 72 % davon sind echt, .* von 0,54 auf etwa 0,46\./);
+  assert.match(measurementError.ausprobieren[1].explain, /auf etwa 0,4\./);
+  const tab = analysis(measurementErrorTabs.sample), r = tab.result(ctx());
+  assert.match(r.kurz, /Wer mehr lernt, löst im Wissenstest eher mehr Aufgaben: r ≈ 0,54\. .* nur bei etwa 0,46\./);
+  assert.match(r.zusatz!, /von 7,75 h auf 8,75 h\./);
+  assert.ok(close(tab.value!(ctx(applyOp(rows, 'lernzeit', 'shift', 1))) as number, MF.r, 1e-6), 'r nach +1 h wie in R');
 });

@@ -3,6 +3,7 @@
 // Eigene Stile in src/explain/areas/b01-messen.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
 import { num } from '../../../explain/format';
 import { paareFuer, R_FUENF } from '../../../explain/content/b01-messen/pairs';
+import { attenuation, MF } from '../../../explain/content/b01-messen/measurement-error';
 import { Axis, forCard, linear, useWidth, type Picture } from './kit';
 
 /** Fünf Wertepaare (Lernzeit, Wissenstest) als Streudiagramm, wie erhoben oder mit getrennt sortierten Spalten. */
@@ -31,6 +32,31 @@ function Paare({ sorted }: { sorted: boolean }) {
   );
 }
 
+/**
+ * Messmodell als Balken: die Streuung der gemessenen Lernzeiten Var(X), zerlegt in die echte Streuung Var(T) und die
+ * Fehlerstreuung Var(E) eines zufälligen Fehlers mit Standardabweichung `sigma`; darunter Reliabilität und r.
+ */
+function Messfehler({ sigma }: { sigma: number }) {
+  const [box, W] = useWidth();
+  const a = attenuation(sigma), err = sigma * sigma, left = 16, right = W - 16;
+  const x = linear([0, MF.varT + 36], [left, right]), top = 58, h = 34;
+  const label = `Balken: Streuung der gemessenen Lernzeiten ${num(a.varX)} h², davon echt ${num(MF.varT)} h² und Messfehler ${num(err)} h². Reliabilität ${num(a.rel)}, r mit dem Wissenstest etwa ${num(a.r)}.`;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={196} viewBox={`0 0 ${W} 196`} role="img" aria-label={label}>
+        <text className="xw-t xw-strong" x={left} y={20}>Var(X) = {num(MF.varT)} + {num(err)} = {num(a.varX)} h²</text>
+        <text className="xw-t" x={left} y={44}>echt</text>
+        {err > 0 && <text className="xw-t" x={Math.min(x(MF.varT) + 6, right - 70)} y={44}>Messfehler</text>}
+        <rect className="xw-bar-pos" x={x(0)} y={top} width={x(MF.varT) - x(0)} height={h} />
+        {err > 0 && <rect className="xw-bar-neg" x={x(MF.varT)} y={top} width={Math.max(2, x(MF.varT + err) - x(MF.varT))} height={h} />}
+        <text className="xw-t" x={left} y={top + h + 30}>Reliabilität: {num(MF.varT)} / {num(a.varX)} ≈ {num(a.rel)}</text>
+        <text className="xw-t xw-strong" x={left} y={top + h + 56}>r mit dem Wissenstest: {num(MF.r)} → etwa {num(a.r)}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
   'b01-paare': forCard(p => <Paare sorted={(p.value ?? 0) >= 0.5} />),
+  'b01-messfehler': forCard(p => <Messfehler sigma={p.value ?? 2} />),
 };
