@@ -72,7 +72,7 @@ export const unabhaengigkeit: Workshop<FourData, FourStats> = {
       was: 'Wir tun so, als hätten die beiden Merkmale nichts miteinander zu tun. Dann bekommt jede Zelle ihren Anteil: Zeilensumme mal Spaltensumme, geteilt durch n.',
       rechnung: c => `${Z(c)}: ${c.s.rowSum[c.who >> 1]} · ${c.s.colSum[c.who & 1]} / ${c.s.n} = ${count(c.s.prod[c.who])} / ${c.s.n} ${eqFor(fine(c.s.e[c.who]), c.s.e[c.who])} ${fine(c.s.e[c.who])}.`,
       fach: 'Die erwartete Zellhäufigkeit Eⱼₖ = Zeilensumme mal Spaltensumme / n gilt, wenn beide Merkmale stochastisch unabhängig sind.',
-      warum: c => `Ohne Zusammenhang wären in beiden Zeilen gleich viele ${c.s.cols[1]}: ${pct(c.s.overall)} wie unter allen ${c.s.n}. Genau das rechnet die Formel aus.`,
+      warum: c => `Ohne Zusammenhang wäre in beiden Zeilen derselbe Anteil ${c.s.cols[1]}: ${pct(c.s.overall)} wie unter allen ${c.s.n}. Genau das rechnet die Formel aus.`,
       acht: 'Erwartete Zahlen müssen keine ganzen Zahlen sein. Ein Bruchteil einer Person kommt nicht vor, als Maßstab ist die Zahl trotzdem richtig.',
       check: {
         question: c => `Wie viele Befragte erwartest du in Zelle ${c.names[c.who]}?`,

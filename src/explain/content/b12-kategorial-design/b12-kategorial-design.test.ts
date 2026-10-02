@@ -101,6 +101,8 @@ test('B12 Unabhängigkeit: Vierfeldertafeln, erwartete Zahlen, χ², Yates und C
   const c = { s: w, who: 0, names: unabhaengigkeit.names };
   assert.equal(txt(unabhaengigkeit.steps[0].rechnung, c), 'Zelle a (ohne Weiterbildung, nicht erwerbstätig): 118 · 63 / 200 = 7.434 / 200 = 37,17.');
   assert.equal(txt(unabhaengigkeit.steps[4].rechnung, c), '0,22 + 0,099 + 0,31 + 0,14 ≈ 0,77. Zelle a steuert 0,22 bei, das sind 28 % von χ².');
+  // M6: Ohne Zusammenhang sind die Anteile gleich, nicht die Anzahlen (die Zeilen haben 118 und 82 Befragte).
+  assert.match(txt(unabhaengigkeit.steps[0].warum!, c), /^Ohne Zusammenhang wäre in beiden Zeilen derselbe Anteil erwerbstätig: 68,5 % wie unter allen 200\./);
   assert.equal(txt(unabhaengigkeit.steps[1].rechnung, { ...c, s: a, who: 2 }), 'Zelle c (ab 66 Jahren, nicht erwerbstätig): 29 − 9,135 = +19,865, also 19,865 mehr als erwartet.');
   assert.equal(txt(unabhaengigkeit.steps[2].rechnung, { ...c, s: a, who: 0 }), 'Zelle a (bis 65 Jahre, nicht erwerbstätig): (−19,865) · (−19,865) ≈ 394,62. Minus mal Minus ergibt Plus.');
   // Zelle d (O = 0, E = 19,865): R chisq.test(matrix(c(34, 137, 29, 0), 2, byrow = TRUE), correct = FALSE), Beitrag
