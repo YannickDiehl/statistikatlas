@@ -237,6 +237,7 @@ test('B5 Phi: Vierfeldertafel und die 200 wie in R', () => {
  *   atlas %>% cramers_v(schulabschluss, geschlecht)   # 0.1292178 = sqrt(10.01834 / (200 * 3))
  *   sqrt(10.02 / 600); sqrt(40.08 / 2400)      # 0.1292285 (gerundetes χ²), bei n und χ² mal 4 gleich
  *   sqrt(18 / 200); sqrt(18 / 100); sqrt(18 / 300)   # 0.3 (Kontrollfrage); 0.424 ohne k; 0.245 mit k = 3
+ *   table(geschlecht)                          # 0: 95, 1: 103, 2 (Divers): 1, 3 (Kein Eintrag): 1
  */
 test('B5 Cramér-V: Formel als Satz und die 200 wie in R', () => {
   const s = cramerSatz.compute(cramerSatz.initial);
@@ -247,6 +248,7 @@ test('B5 Cramér-V: Formel als Satz und die 200 wie in R', () => {
   const v = vData({ rows, columns: { x: ['schulabschluss'], y: ['geschlecht'] } });
   assert.ok(near(v.V, 0.1292178) && near(v.chi2, 10.01834, 1e-5) && v.r === 5 && v.k === 4, 'V, χ², 5 × 4 wie in R');
   assert.equal(locate(CATALOG_OUTPUT['cramers_v:0'].output, '0.1292178')?.text, '0.1292178');
+  assert.deepEqual([2, 3].map(code => rows.filter(r => r.values.geschlecht === code).length), [1, 1], 'Divers und Kein Eintrag je eine Person');
 });
 
 /*
