@@ -7,6 +7,7 @@ import { pairedDesign, pairedDesignTabs } from './paired-design';
 import { anovaWerkstatt, groupVariationTabs, onewayAnovaTabs } from './anova';
 import { factorialAnova, factorialAnovaTabs } from './factorial-anova';
 import { ancova, ancovaTabs } from './ancova';
+import { varianceAssumption, varianceAssumptionTabs } from './variance-assumption';
 
 export const b10Mittelwerte: AreaIndex = {
   explanations: {
@@ -17,6 +18,7 @@ export const b10Mittelwerte: AreaIndex = {
     oneway_anova: { kind: 'werkstatt', workshop: anovaWerkstatt, variant: 'oneway_anova' },
     factorial_anova: { kind: 'begriff', card: factorialAnova },
     ancova: { kind: 'begriff', card: ancova },
+    variance_assumption: { kind: 'begriff', card: varianceAssumption },
   },
   tabs: {
     t_test: tTestTabs,
@@ -26,5 +28,6 @@ export const b10Mittelwerte: AreaIndex = {
     oneway_anova: onewayAnovaTabs,
     factorial_anova: factorialAnovaTabs,
     ancova: ancovaTabs,
+    variance_assumption: varianceAssumptionTabs,
   },
 };

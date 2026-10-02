@@ -8,6 +8,7 @@ import { sdForR, tForR, WISSEN } from '../../../explain/content/b10-mittelwerte/
 import { GRUPPEN, type AnovaStats } from '../../../explain/content/b10-mittelwerte/anova';
 import { ZELLEN } from '../../../explain/content/b10-mittelwerte/factorial-anova';
 import { BEREINIGT } from '../../../explain/content/b10-mittelwerte/ancova';
+import { STREUUNGEN } from '../../../explain/content/b10-mittelwerte/variance-assumption';
 import { Axis, Bar, clamp, DragPoint, forCard, forWorkshop, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
 /** Ganzzahlige Ticks von `from` bis `to` in Schritten von `by`. */
@@ -211,7 +212,30 @@ function AdjustedMeans() {
   );
 }
 
+/** Gleiche Fehlervarianz: Standardabweichung der Lernzeit je Schulabschluss und die gemeinsame Streuung √MS_W (gestrichelt). */
+function GroupSpreads() {
+  const [box, W] = useWidth();
+  const left = 70, right = W - 60, X = linear([0, 4], [left, right]), rowY = (i: number) => 40 + i * 30, bottom = rowY(STREUUNGEN.sd.length - 1) + 20;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={bottom + 70} viewBox={`0 0 ${W} ${bottom + 70}`} role="img"
+        aria-label={`Standardabweichung der Lernzeit je Schulabschluss: ${STREUUNGEN.labels.map((l, i) => `${l} ${num(STREUUNGEN.sd[i])}`).join(', ')} Stunden; gemeinsame Streuung ${num(STREUUNGEN.pooled)} Stunden.`}>
+        <text className="xw-t xw-strong" x={8} y={18}>Streuung s der Lernzeit je Abschluss</text>
+        <MarkLine x={X(STREUUNGEN.pooled)} from={28} to={bottom} />
+        {STREUUNGEN.sd.map((v, i) => <g key={STREUUNGEN.labels[i]}>
+          <text className="xw-t" x={8} y={rowY(i) + 5}>{STREUUNGEN.labels[i]}</text>
+          <Bar x={left} y={rowY(i) - 9} width={X(v) - left} height={18} tone="plain" />
+          <text className="xw-t b10-label" x={X(v) + 6} y={rowY(i) + 5}>{num(v)}</text>
+        </g>)}
+        <Axis scale={X} ticks={[0, 1, 2, 3, 4]} at={bottom} from={left} to={right} labelGap={18} title="Stunden" />
+        <text className="xw-t" x={8} y={bottom + 62}>gestrichelt: gemeinsame Streuung {num(STREUUNGEN.pooled)}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b10-streuungen': forCard(() => <GroupSpreads />),
   'b10-bereinigt': forCard(() => <AdjustedMeans />),
   'b10-interaktion': forCard(() => <InteractionPlot />),
   'b10-anova': forWorkshop(p => <GroupDots values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),

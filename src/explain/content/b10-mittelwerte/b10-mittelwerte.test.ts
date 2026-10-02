@@ -23,9 +23,10 @@ import { tTestSentence, VERTRAUEN, welchFromSummary } from './t-test';
 import { paarWerkstatt, pairedStats } from './paired-difference';
 import { pairedDesign, sdForR, tForR, WISSEN } from './paired-design';
 import { anovaStats, anovaWerkstatt } from './anova';
-import { anovaFor, factorialFor } from './stats';
+import { anovaFor, factorialFor, groupsFor } from './stats';
 import { factorialAnova, TERME, ZELLEN } from './factorial-anova';
 import { ancova, BEREINIGT } from './ancova';
+import { sdRatio, STREUUNGEN, varianceAssumption } from './variance-assumption';
 import { ancovaFor } from './stats';
 import { pairedFor } from './stats';
 import { txt } from '../../types';
@@ -320,6 +321,28 @@ test('Kovarianzanalyse: rohe und bereinigte Mittel wie in R', () => {
     const r = sample.result(c);
     assert.match(r.kurz, /Roh lösen die Gruppen im Schnitt 8,62 \(ohne Schulabschluss\) bis 11,35 Aufgaben \(Abitur\)\. .* nur noch 9,57 bis 10,67 Aufgaben voraus\./);
     assert.match(r.fachlich, /F\(4, 193\) ≈ 1,5, p ≈ 0,2; ohne Kovariaten F\(4, 195\) ≈ 4,34, p ≈ 0,0022\. Steigung der Lernzeit ≈ 0,5 Aufgaben je Stunde\./);
+  }
+});
+
+/*
+ * Gleiche Fehlervarianz (Begriffskarte), Lernzeit nach Schulabschluss:
+ *   sds <- tapply(lernzeit, schulabschluss, sd)   # 3.071975 2.529113 3.324454 2.725655 3.360475
+ *   max(sds) / min(sds)                           # 1.328717 (auch mit 2 * lernzeit)
+ *   sqrt(anova(lm(lernzeit ~ factor(schulabschluss)))$`Mean Sq`[2])   # 3.014356 = √MS_W
+ *   atlas %>% oneway_anova(lernzeit, group = schulabschluss) %>% summary()   # F 8.639; Welch 8.254, df2 96.702
+ *   atlas %>% levene_test(lernzeit, group = schulabschluss, center = "median")   # F(4, 195) = 0.799, p = 0.527
+ */
+test('Gleiche Fehlervarianz: Streuungen je Gruppe wie in R', () => {
+  const c = ctx({ x: 'lernzeit', group: 'schulabschluss' }), g = groupsFor(c);
+  [3.071975345, 2.529112543, 3.324454391, 2.72565499, 3.360475394].forEach((v, k) => { near(g[k].sd, v, 1e-8, `s ${k}`); near(STREUUNGEN.sd[k], v, 1e-6, `Karte s ${k}`); });
+  near(sdRatio(c)!, 1.328717222, 1e-8, 'Verhältnis'); near(STREUUNGEN.pooled, 3.014356274, 1e-8, '√MS_W');
+  near(sdRatio(ctx({ x: 'lernzeit', group: 'schulabschluss' }, applyOp(rows, 'lernzeit', 'double')))!, 1.328717222, 1e-8, 'doppelt');
+  assert.match(varianceAssumption.stellDirVor.text, /zwischen 2,53 Stunden \(Hauptschulabschluss\) und 3,36 Stunden \(Abitur\)\. Die größte ist damit 1,33-mal so groß .* F = 8,64, .* F = 8,25\./);
+  const sample = b10Mittelwerte.tabs.variance_assumption.sample!;
+  if (sample.kind === 'analysis') {
+    const r = sample.result(c);
+    assert.match(r.kurz, /zwischen 2,53 Stunden \(Hauptschulabschluss\) und 3,36 Stunden \(Abitur\)\. Die größte Standardabweichung ist 1,33-mal so groß/);
+    assert.match(r.fachlich, /F\(4, 195\) ≈ 8,64; Welch-ANOVA ohne gleiche Varianzen F ≈ 8,25 bei 4 und 96,7 Freiheitsgraden\. Brown–Forsythe-Test: F ≈ 0,8, p ≈ 0,53\./);
   }
 });
 
