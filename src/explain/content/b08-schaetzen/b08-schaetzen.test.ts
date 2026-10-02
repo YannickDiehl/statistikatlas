@@ -9,6 +9,8 @@ import { ALLBUS, INTERESSE, VERTRAUEN } from './daten';
 import { haelften, kopienSE, sampling, samplingTabs } from './sampling';
 import { parameter, populationParameter, populationParameterTabs } from './population-parameter';
 import { LERNZEIT, estimator, estimatorTabs, schaetzungen } from './estimator';
+import { ANTEIL_N, WEITERBILDUNG, anteilText, mittelwerte, samplingDistribution, samplingDistributionTabs, seAnteil } from './sampling-distribution';
+import { binomial, middle95 } from './daten';
 
 /*
  * Referenzwerte des Bereichs B8, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand).
@@ -26,6 +28,15 @@ import { LERNZEIT, estimator, estimatorTabs, schaetzungen } from './estimator';
  *   atlas %>% describe(lernzeit, show = c("mean", "median", "var"))   # Mean 7.752, Median 7.600, Variance 10.482
  *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; mean(xx) - mean(x) }))   # +0.108 bis +0.200: steigt immer
  *   median(x + 1)                                             # 8.6
+ *   sig <- sqrt(mean((x - mean(x))^2)); sig; sig / 5          # 3.229411  0.645882 (σ der 200, SE bei 25 Ziehungen)
+ *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; sqrt(mean((xx - mean(xx))^2)) - sig }))   # +0.650 bis +0.721
+ *   p <- 0.41; for (n in c(5, 10, 20, 50, 100, 200, 500, 1000))      # Anteil mit Weiterbildung, n Ziehungen mit Zurücklegen
+ *     print(c(n, 100 * sqrt(p * (1 - p) / n), qbinom(.025, n, p) / n, qbinom(.975, n, p) / n,
+ *             pbinom(qbinom(.975, n, p), n, p) - pbinom(qbinom(.025, n, p) - 1, n, p)))
+ *   #   5 21.995 0.00 0.80 0.98841     10 15.553 0.10 0.70 0.98032     20 10.998 0.20 0.65 0.97885
+ *   #  50  6.956 0.28 0.54 0.95703    100  4.918 0.31 0.51 0.96778    200  3.478 0.34 0.48 0.96318
+ *   # 500  2.200 0.368 0.454 0.95446  1000 1.555 0.380 0.441 0.95371
+ *   1.96 * sqrt(0.25 / 1000)                                  # 0.03099 (plus minus 3 Prozentpunkte)
  *
  * ALLBUS 2023 (ZA8831_v1-3-0.sav, nur lesen, Pfad in ALLBUS_SAV), nur Aggregate:
  *   d <- haven::read_sav(Sys.getenv("ALLBUS_SAV"))
@@ -101,6 +112,34 @@ test('B8 estimator: zwei Regeln für die Lernzeit und die Varianz mit n − 1 ge
   assert.match(estimator.genau.paragraphs[1], /ergibt sie 10,43 statt 10,48 h²/);
   const s = estimatorTabs.sample!;
   if (s.kind === 'analysis') assert.match(s.result(ctx()).kurz, /ergibt 7,75 Stunden\. .* ergibt 7,6 Stunden\./);
+});
+
+test('B8 sampling_distribution: exakte Binomialverteilung der Anteile und SE der Mittelwerte wie in R', () => {
+  const R: Record<number, [number, number, number, number]> = {
+    5: [21.99545408, 0, 0.8, 0.9884143799], 10: [15.55313473, 0.1, 0.7, 0.9803150663], 20: [10.99772704, 0.2, 0.65, 0.9788518586],
+    50: [6.955573305, 0.28, 0.54, 0.9570270272], 100: [4.918333051, 0.31, 0.51, 0.9677763044], 200: [3.477786652, 0.34, 0.48, 0.9631798794],
+    500: [2.199545408, 0.368, 0.454, 0.9544631737], 1000: [1.555313473, 0.38, 0.441, 0.9537149671],
+  };
+  assert.equal(WEITERBILDUNG.pi, 0.41);
+  for (const n of ANTEIL_N) {
+    const [se, lo, hi, prob] = R[n], m = middle95(n, WEITERBILDUNG.pi);
+    assert.ok(close(seAnteil(n) * 100, se, 1e-7) && close(m.lo, lo, 1e-12) && close(m.hi, hi, 1e-12) && close(m.prob, prob, 1e-9), `n = ${n}: ${JSON.stringify(m)}`);
+    assert.ok(close(binomial(n, WEITERBILDUNG.pi).reduce((a, b) => a + b, 0), 1, 1e-12), `n = ${n}: Summe 1`);
+  }
+  assert.ok(close(binomial(10, 0.41)[4], 0.2503034, 1e-7), 'dbinom(4, 10, 0.41) = 0.2503034');
+  assert.match(samplingDistribution.stellDirVor.text, /In etwa 96 von 100 Stichproben liegt er zwischen 28 % und 54 %\./);
+  assert.equal(anteilText(50), 'Mit 50 Gezogenen schwankt der Anteil typischerweise um etwa 6,96 Prozentpunkte um 41 %. In etwa 96 von 100 Stichproben liegt er zwischen 28 % und 54 %.');
+  assert.match(anteilText(1000), /etwa 1,56 Prozentpunkte .* In etwa 95 von 100 Stichproben liegt er zwischen 38 % und 44,1 %\./);
+  assert.equal(samplingDistribution.bausteine[2].rechnung, 'SE = √(0,41 · 0,59 / 50) ≈ 0,070, also 6,96 Prozentpunkte');
+  assert.match(samplingDistribution.ausprobieren[0].explain, /von etwa 6,96 auf 3,48 Prozentpunkte/);
+  assert.match(samplingDistribution.fuerDich, /≈ 0,031, also gut 3 Prozentpunkte/);
+  const m = mittelwerte(ctx());
+  assert.ok(close(m.sigma, 3.229411363, 1e-8) && close(m.se, 0.6458822726, 1e-9), 'σ und SE der Mittelwerte');
+  const s = samplingDistributionTabs.sample!;
+  if (s.kind === 'analysis') {
+    assert.match(s.result(ctx()).kurz, /schwanken um 7,75 Stunden, den Mittelwert aller 200\. Typischerweise liegen sie etwa 0,65 Stunden daneben/);
+    assert.match(s.result(ctx()).fachlich, /σ \/ √25 = 3,23 \/ 5 ≈ 0,65 h/);
+  }
 });
 
 test('B8: ALLBUS-Aggregate aus der Datei nachgerechnet (nur mit ALLBUS_SAV)', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, () => {
