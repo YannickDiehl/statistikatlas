@@ -95,7 +95,7 @@ export const predictionInterval: SentenceTemplate<PiValues, PiStats> = {
     diagnose: v => close(v, 1.0201, 0.005) ? 'Fast! Das ist 1 + h₀. Jetzt noch die Wurzel ziehen.'
       : close(v, Math.sqrt(0.0201), 0.005) ? 'Fast! Das ist √h₀ allein, wie beim Konfidenzintervall. Beim Vorhersageintervall kommt die 1 unter die Wurzel.'
       : close(v, 1 + Math.sqrt(0.0201), 0.005) ? 'Fast! Die 1 gehört unter die Wurzel: erst 1 + 0,0201, dann die Wurzel.'
-      : close(v, 1, 0.0011) ? 'Fast! Fast richtig, nur zu stark gerundet. Mit zwei Nachkommastellen ist es 1,01.'
+      : close(v, 1, 0.0011) ? 'Fast! Nur zu stark gerundet: Mit zwei Nachkommastellen ist es 1,01.'
       : 'Noch nicht ganz. Rechne erst 1 + 0,0201 und ziehe dann die Wurzel.',
   },
   interpret: s => ({

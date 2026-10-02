@@ -32,6 +32,16 @@ export function lernzeitKi(c: SampleCtx) {
 const START: KiValues = { s: VERTRAUEN.sd, n: VERTRAUEN.n, t: 95 };
 /** Ob die Regler noch auf den ALLBUS-Werten stehen (Streuung und Fallzahl); nur dann gilt der Vergleich mit dem gewichteten Mittel. */
 const allbusWerte = (v: KiValues) => Math.abs(v.s - START.s) < 1e-9 && v.n === START.n;
+/**
+ * Wo das gewichtete Mittel zur oberen Grenze liegt. Zeigen beide mit zwei Nachkommastellen dieselbe Zahl (97 % und
+ * 98 %: „bis 4,01“), stehen beide mit drei Stellen da, damit „knapp außerhalb“ auch in den sichtbaren Zahlen stimmt.
+ */
+function gewichtetZurGrenze(s: KiStats): string {
+  const aussen = VERTRAUEN.gewichtet > s.hi;
+  return fixed(s.hi) === fixed(VERTRAUEN.gewichtet)
+    ? `Gewichtet liegt der Mittelwert bei ${fixed(VERTRAUEN.gewichtet, 3)}, knapp ${aussen ? 'über' : 'unter'} der oberen Grenze ${fixed(s.hi, 3)}.`
+    : `Gewichtet liegt der Mittelwert bei ${num(VERTRAUEN.gewichtet)}, ${aussen ? 'knapp außerhalb' : 'hier knapp innerhalb'}.`;
+}
 
 export const confidence: SentenceTemplate<KiValues, KiStats> = {
   concept: 'confidence',
@@ -97,7 +107,7 @@ export const confidence: SentenceTemplate<KiValues, KiStats> = {
   },
   interpret: s => ({
     kurz: allbusWerte(s)
-      ? `Rechnet man den ALLBUS wie eine einfache Zufallsstichprobe, sind für das mittlere Vertrauen Werte zwischen ${fixed(s.lo)} und ${fixed(s.hi)} plausibel. Bei wiederholten Zufallsstichproben mit ${count(s.n)} Befragten enthielten etwa ${num(s.t)} % solcher Intervalle den wahren Mittelwert. Das Intervall erfasst nur den Zufallsfehler: Gewichtet liegt der Mittelwert bei ${num(VERTRAUEN.gewichtet)}, ${VERTRAUEN.gewichtet > s.hi ? 'knapp außerhalb' : 'hier knapp innerhalb'}.`
+      ? `Rechnet man den ALLBUS wie eine einfache Zufallsstichprobe, sind für das mittlere Vertrauen Werte zwischen ${fixed(s.lo)} und ${fixed(s.hi)} plausibel. Bei wiederholten Zufallsstichproben mit ${count(s.n)} Befragten enthielten etwa ${num(s.t)} % solcher Intervalle den wahren Mittelwert. Das Intervall erfasst nur den Zufallsfehler: ${gewichtetZurGrenze(s)}`
       : `Rechnet man wie bei einer einfachen Zufallsstichprobe mit ${count(s.n)} Befragten, wären für das mittlere Vertrauen Werte zwischen ${fixed(s.lo)} und ${fixed(s.hi)} plausibel. Bei wiederholten Zufallsstichproben dieser Größe enthielten etwa ${num(s.t)} % solcher Intervalle den wahren Mittelwert.`,
     fachlich: `${num(s.t)}-%-Konfidenzintervall: x̄ ± t · SE = ${num(VERTRAUEN.mean)} ± ${num(s.tq)} · ${small(s.se)}, also von ${fixed(s.lo)} bis ${fixed(s.hi)}. t ist das ${num(50 + s.t / 2, 1)}-%-Quantil der t-Verteilung mit ${count(s.df)} Freiheitsgraden.`,
   }),
@@ -113,7 +123,7 @@ export const confidence: SentenceTemplate<KiValues, KiStats> = {
     paragraphs: [
       'Das konkrete Intervall gibt dem festen Parameter keine nachträgliche Wahrscheinlichkeit von 95 %. Die 95 % beschreiben das Verfahren: Über viele Stichproben enthalten etwa 95 % der so gebauten Intervalle den wahren Wert.',
       'Der kritische Wert kommt aus der t-Verteilung mit n − 1 Freiheitsgraden, weil s aus den Daten geschätzt ist. Bei vielen Befragten ist er fast 1,96, der Wert der Standardnormalverteilung.',
-      `Hier ungewichtet und wie eine einfache Zufallsstichprobe gerechnet. Gewichtet liegt der Mittelwert bei ${num(VERTRAUEN.gewichtet)}, also knapp außerhalb des Intervalls: Ein Konfidenzintervall misst nur den Zufallsfehler, nicht die Verzerrung durch den Stichprobenplan. Der echte Standardfehler ist wegen der Gemeindeauswahl außerdem etwas größer.`,
+      `Hier ungewichtet und wie eine einfache Zufallsstichprobe gerechnet. Gewichtet liegt der Mittelwert bei ${num(VERTRAUEN.gewichtet)}, also knapp außerhalb des 95-%-Intervalls: Ein Konfidenzintervall misst nur den Zufallsfehler, nicht die Verzerrung durch den Stichprobenplan. Der echte Standardfehler ist wegen der Gemeindeauswahl außerdem etwas größer.`,
       'Symmetrische Intervalle sind nur eine Form. Für Anteile nahe 0 oder 1 und für umgerechnete Größen gibt es Intervalle, die nicht symmetrisch um die Schätzung liegen.',
     ],
   },
