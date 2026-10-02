@@ -5,6 +5,7 @@ import type { KeyboardEvent } from 'react';
 import { num, signed } from '../../../explain/format';
 import type { ZStats } from '../../../explain/content/b04-umformen/shared';
 import { LERNZEIT } from '../../../explain/content/b04-umformen/skalieren';
+import type { RankStats } from '../../../explain/content/b04-umformen/raenge';
 import { DragPoint, forSentence, forWorkshop, keyStep, linear, useDrag, useWidth, clamp, type Bounds, type Picture } from './kit';
 
 /** Gut lesbare Abstände für Striche (1, 2, 5 mal Zehnerpotenz), etwa `count` Stück über `span`. */
@@ -117,7 +118,54 @@ function Teilen({ x, a }: { x: number; a: number }) {
   );
 }
 
+/**
+ * Lernzeiten in Zeilen über dem Lineal in Stunden, darunter dieselben Personen auf einer Reihe gleich weit
+ * auseinanderliegender Plätze (Schritt 1) bzw. Ränge (Schritt 2). Gleiche Ränge stehen übereinander.
+ */
+function Raenge({ values, s, step, who, names, bounds, onChange, onWho }: {
+  values: number[]; s: RankStats; step: number; who: number; names: readonly string[]; bounds: Bounds;
+  onChange: (v: number[]) => void; onWho: (i: number) => void;
+}) {
+  const [box, W] = useWidth();
+  const left = 44, right = W - 26, X = linear([bounds.min, bounds.max], [left, right]), n = values.length;
+  const rowY = (i: number) => 34 + i * 26, r1 = rowY(n - 1) + 52, r2 = r1 + 100, H = r2 + 46;
+  const R = linear([1, Math.max(2, n)], [left, right]);
+  const set = (i: number, v: number) => { if (v !== values[i]) onChange(values.map((x, k) => k === i ? v : x)); };
+  const { svg, start, handlers } = useDrag((i, p) => set(i, clamp(X.invert(p.x), bounds)));
+  const pos = step >= 2 ? s.rank : s.place;
+  // Gleiche Positionen übereinander stapeln, ohne in die Beschriftung des Stunden-Lineals zu reichen.
+  const level = pos.map((v, i) => pos.slice(0, i).filter(w => Math.abs(w - v) < 1e-9).length);
+  const gap = Math.min(24, (r2 - r1 - 44) / Math.max(1, Math.max(...level)));
+  const markY = (i: number) => r2 - 14 - level[i] * gap;
+  const hourMarks = ticksBetween(bounds.min, bounds.max, niceStep(bounds.max - bounds.min, 4)).map(v => ({ x: X(v), label: num(v) }));
+  const rankMarks = Array.from({ length: n }, (_, k) => ({ x: R(k + 1), label: String(k + 1) }));
+  return (
+    <div ref={box}>
+      <svg ref={svg} className="xw-svg xw-drag" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group"
+        aria-label={`Lernzeiten der fünf Personen in Stunden und darunter ihre ${step >= 2 ? 'Ränge' : 'Plätze'}: ${values.map((_, i) => `${names[i]} ${num(pos[i])}`).join(', ')}`} {...handlers}>
+        {values.map((_, i) => <g key={`row${i}`}><line className="xw-guide" x1={left - 10} x2={right + 10} y1={rowY(i)} y2={rowY(i)} /><text className="xw-t" x={10} y={rowY(i) + 4}>{names[i]}</text></g>)}
+        {values.map((v, i) => <line key={`link${i}`} className={`b04-link${i === who ? ' sel' : ''}`} x1={X(v)} x2={R(pos[i])} y1={r1} y2={markY(i) + 11} />)}
+        <Ruler y={r1} from={left} to={right} marks={hourMarks} title="Stunden" />
+        <Ruler y={r2} from={left} to={right} marks={rankMarks} title={step >= 2 ? 'Ränge' : 'Plätze der Reihe nach'} />
+        {values.map((_, i) => <g key={`mark${i}`}>
+          <circle className={`xw-s-dot${i === who ? ' sel' : ''}`} cx={R(pos[i])} cy={markY(i)} r={11} />
+          <text className="xw-t xw-strong" x={R(pos[i])} y={markY(i) + 5} textAnchor="middle">{names[i]}</text>
+        </g>)}
+        {values.map((v, i) => (
+          <DragPoint key={`dot${i}`} x={X(v)} y={rowY(i)} label={`Person ${names[i]}, Lernzeit in Stunden`} selected={i === who} valueNow={v} bounds={bounds}
+            onPointerDown={e => { onWho(i); start(i, e); }}
+            onKeyDown={(e: KeyboardEvent) => {
+              const next = keyStep(e, v, bounds);
+              if (next !== null) { e.preventDefault(); onWho(i); set(i, next); }
+            }}>{num(v, 1)}</DragPoint>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b04-raenge': forWorkshop(p => <Raenge values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b04-skalieren': forSentence(p => <Teilen x={p.values.x} a={p.values.a} />),
   'b04-zentrieren': forWorkshop(p => <Lineale values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} mode="centering" onChange={p.setData} onWho={p.pickWho} />),
   'b04-standardisieren': forWorkshop(p => <Lineale values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} mode="z" onChange={p.setData} onWho={p.pickWho} />),

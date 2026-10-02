@@ -11,6 +11,7 @@ import { zentrieren, bridgeZentrieren } from './zentrieren';
 import { standardisieren, bridgeStandardisieren } from './standardisieren';
 import { ssOf, tabsSs } from './ss';
 import { LERNZEIT, proTag, skalieren, tabsScaling } from './skalieren';
+import { bridgeRaenge, raenge, rankStats } from './raenge';
 
 /*
  * Referenzwerte des Bereichs B4 „Umformen“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -53,6 +54,12 @@ import { LERNZEIT, proTag, skalieren, tabsScaling } from './skalieren';
  *   8.3 / 7; mean(x / sd(x)); sd(x / sd(x))                                  # 1.185714; 2.394274; 1
  *   mean((2 * x) / 7); mean((x + 7) / 7) - mean(x / 7)                       # 2.214714; 1
  *   range(sapply(1:200, function(k) { xx <- x; xx[k] <- 40; mean(xx / 7) - mean(x / 7) }))   # 0.01542857 0.02857143
+ * Ränge (mittlere Ränge wie rank(), ties.method = "average"):
+ *   rank(c(9, 4, 15, 7, 7)); rank(c(9, 4, 40, 7, 7)); rank(c(9, 4, 15, 6, 7))  # 4 1 5 2.5 2.5; 4 1 5 2.5 2.5; 4 1 5 2 3
+ *   r <- rank(x); r[atlas$id %in% c("P001", "P002", "P175")]; sum(r); mean(r)   # 55.5 113.5 200; 20100; 100.5
+ *   sum(x < 8.3); sum(x == 8.3); sum(x > 8.3)                                    # 112 2 86
+ *   sum(duplicated(x) | duplicated(x, fromLast = TRUE))                          # 152 Befragte teilen ihren Wert
+ *   all.equal(rank(x + 1), r); all.equal(rank(2 * x), r)                         # TRUE; TRUE
  */
 
 const rows = createSurvey();
@@ -153,4 +160,22 @@ test('B4 Skalieren: Lernzeit pro Tag wie in R', () => {
   const deltas = rows.map((_, k) => proTag({ rows: applyOp(rows, 'lernzeit', 'outlier', 40, k), columns: c.columns }).day - t.day);
   assert.ok(close(Math.min(...deltas), 0.01542857, 1e-6) && close(Math.max(...deltas), 0.02857143, 1e-6), 'Ausreißer wie in R');
   assert.ok(close(proTag({ rows: applyOp(rows, 'lernzeit', 'shift', 7), columns: c.columns }).day - t.day, 1, 1e-9));
+});
+
+test('B4 Ränge: fünf Beispielpersonen und die 200 Befragten wie in R', () => {
+  assert.deepEqual(rankStats([9, 4, 15, 7, 7]).rank, [4, 1, 5, 2.5, 2.5]);
+  assert.deepEqual(rankStats([9, 4, 40, 7, 7]).rank, [4, 1, 5, 2.5, 2.5]);
+  assert.deepEqual(rankStats([9, 4, 15, 6, 7]).rank, [4, 1, 5, 2, 3]);
+  const g = rankStats([9, 4, 15, 7, 7]);
+  assert.equal(txt(raenge.steps[1].rechnung, ctx(g, 3)), 'Person D: Plätze 2 und 3, Rang (2 + 3) / 2 = 2,5.');
+  assert.equal(txt(raenge.steps[0].rechnung, ctx(g, 3)), '4 (B) ≤ 7 (D) ≤ 7 (E) ≤ 9 (A) ≤ 15 (C). Person D teilt sich mit E die Plätze 2 und 3.');
+  assert.match(raenge.steps[1].check.diagnose(ctx(g, 3), 2)!, /^Fast! Das ist einer der Plätze/);
+  assert.match(raenge.steps[1].check.diagnose(ctx(g, 0), 2)!, /^Fast! Du hast von der längsten Lernzeit an gezählt/);
+  const c = bridgeContext(raenge.compute, 'series', rows, 'lernzeit', '', 1), s = c.s;
+  assert.deepEqual([s.rank[0], s.rank[1], s.rank[174], s.sum, s.tied], [55.5, 113.5, 200, 20100, 152]);
+  assert.deepEqual([s.below[1], s.equal[1], s.above[1]], [112, 2, 86]);
+  assert.equal(bridgeRaenge.lines[1].person(c), 'P002 teilt 8,3 h mit 1 weiteren Person: Plätze 113 und 114, Rang 113,5.');
+  assert.equal(bridgeRaenge.lines[0].person(c), 'Vor P002 stehen 112 Befragte mit weniger Lernzeit; 1 weitere Person hat genau 8,3 h.');
+  assert.equal(bridgeRaenge.interpret(c, 'ranks').kurz, 'P002 steht auf Rang 113,5 von 200. 112 Befragte lernen weniger, 86 mehr.');
+  for (const op of ['shift', 'double'] as const) assert.deepEqual(rankStats(applyOp(rows, 'lernzeit', op).map(r => r.values.lernzeit)).rank, s.rank, op);
 });
