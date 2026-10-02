@@ -1,6 +1,125 @@
 // Bilder des Bereichs B11 „Rangtests und Paarvergleiche“ für alle Vorlagen. Schlüssel = `picture` der Erklärung, Bausteine und
 // `forWorkshop`/`forCard`/`forSentence`/`forTable` aus ./kit.tsx.
 // Eigene Stile in src/explain/areas/b11-rangtests.css (lädt main.tsx automatisch). Anleitung: src/explain/AUTHORING.md.
-import type { Picture } from './kit';
+import type { KeyboardEvent, PointerEvent } from 'react';
+import { num } from '../../../explain/format';
+import { MW_GROUP, type MwStats } from '../../../explain/content/b11-rangtests/mann-whitney';
+import { Axis, clamp, DragPoint, forWorkshop, GridCell, keyStep, linear, MarkLine, useDrag, useWidth, type Bounds, type Picture } from './kit';
 
-export const pictures: Record<string, Picture> = {};
+/** Ein Punkt einer Zeile: Wert, Beschriftung im Kreis, vorgelesener Name, Index in den Daten. */
+type RowPoint = { value: number; label: string; name: string; at: number };
+/** Eine Zeile: Name links, Punkte, rechts eine Notiz; `head` beginnt eine neue Gruppe mit Überschrift. */
+type Row = { name: string; points: RowPoint[]; note?: string; head?: string; arrow?: boolean; tone?: 'pos' | 'neg' };
+
+/**
+ * Zeilen mit ziehbaren Punkten auf einer gemeinsamen Achse (eine Zeile je Person). Ziehen und Pfeiltasten ändern den
+ * Wert des Punkts (`onChange(at, wert)`), ein Klick wählt die Person der Zeile (`onPick(zeile)`).
+ */
+function DotRows({ rows, bounds, axisTitle, who, onPick, onChange, label, tickStep }: {
+  rows: Row[]; bounds: Bounds; axisTitle: string; who: number; label: string; tickStep: number;
+  onPick: (row: number) => void; onChange: (at: number, v: number) => void;
+}) {
+  const [box, W] = useWidth();
+  const left = 40, right = W - 92, X = linear([bounds.min, bounds.max], [left, right]);
+  const heads = rows.filter(r => r.head).length, ROW = 30, HEAD = 24;
+  const ys: number[] = [];
+  let y = 22;
+  rows.forEach(r => { if (r.head) y += HEAD; ys.push(y); y += ROW; });
+  const AXIS = y - 6, H = AXIS + 50;
+  const flat = rows.flatMap((r, k) => r.points.map(p => ({ ...p, row: k })));
+  const { svg, start, handlers } = useDrag((i, p) => { const pt = flat[i]; const v = clamp(X.invert(p.x), bounds); if (v !== pt.value) onChange(pt.at, v); });
+  const key = (e: KeyboardEvent, i: number) => {
+    const pt = flat[i], next = keyStep(e, pt.value, bounds);
+    if (next === null) return;
+    e.preventDefault(); onPick(pt.row);
+    if (next !== pt.value) onChange(pt.at, next);
+  };
+  const ticks = Array.from({ length: Math.floor((bounds.max - bounds.min) / tickStep) + 1 }, (_, k) => bounds.min + k * tickStep);
+  return (
+    <div ref={box}>
+      <svg ref={svg} className="xw-svg xw-drag" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="group" aria-label={label} {...handlers}>
+        {heads > 0 && rows.map((r, k) => r.head ? <text key={`h${k}`} className="xw-t xw-strong" x={4} y={ys[k] - 20}>{r.head}</text> : null)}
+        {rows.map((r, k) => (
+          <g key={`r${k}`}>
+            <line className="xw-guide" x1={left - 8} x2={right + 8} y1={ys[k]} y2={ys[k]} />
+            <text className={`xw-t${k === who ? ' xw-strong' : ''}`} x={6} y={ys[k] + 5}>{r.name}</text>
+            {r.arrow && r.points.length === 2 && Math.abs(r.points[1].value - r.points[0].value) > 1e-9 && (
+              <line className={r.tone === 'neg' ? 'xw-neg' : 'xw-pos'} strokeWidth={k === who ? 4.5 : 3} x1={X(r.points[0].value)} x2={X(r.points[1].value)} y1={ys[k]} y2={ys[k]} />
+            )}
+            {r.note && <text className={`xw-t${k === who ? ' xw-strong' : ''}`} x={right + 22} y={ys[k] + 5}>{r.note}</text>}
+          </g>
+        ))}
+        <Axis scale={X} ticks={ticks} at={AXIS} from={left} to={right} labelGap={20} title={axisTitle} />
+        {flat.map((pt, i) => (
+          <DragPoint key={`p${i}`} x={X(pt.value)} y={ys[pt.row]} label={pt.name} selected={pt.row === who} valueNow={pt.value} bounds={bounds}
+            onPointerDown={(e: PointerEvent) => { onPick(pt.row); start(i, e); }} onKeyDown={e => key(e, i)}>{pt.label}</DragPoint>
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+// Mann–Whitney-U -----------------------------------------------------------------------
+
+/** Alle 16 Paare aus je einer Person ohne (Zeilen) und mit Weiterbildung (Spalten): grün, wenn ohne vorn liegt, braunrot, wenn mit vorn liegt. */
+function PairGrid({ s, names, who }: { s: MwStats; names: readonly string[]; who: number }) {
+  const [box, W] = useWidth();
+  const cell = Math.min(44, Math.floor((W - 70) / 4)), x0 = 46, y0 = 44, H = y0 + 4 * cell + 34;
+  const ohne = [0, 1, 2, 3], mit = [4, 5, 6, 7];
+  const won = (a: number, b: number) => s.xs[a] > s.xs[b] ? 1 : s.xs[a] === s.xs[b] ? 0.5 : 0;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Alle 16 Paare: In ${num(s.U1)} Paaren lernt die Person ohne Weiterbildung länger, in ${num(s.U2)} die Person mit Weiterbildung.`}>
+        <text className="xw-t" x={x0} y={14}>mit Weiterbildung</text>
+        {mit.map((b, j) => <text key={`c${j}`} className="xw-t xw-strong" x={x0 + j * cell + cell / 2} y={y0 - 8} textAnchor="middle">{names[b]}</text>)}
+        {ohne.map((a, i) => <g key={`r${i}`}>
+          <text className="xw-t xw-strong" x={x0 - 10} y={y0 + i * cell + cell / 2 + 5} textAnchor="end">{names[a]}</text>
+          {mit.map((b, j) => {
+            const w = won(a, b);
+            return <GridCell key={`g${j}`} x={x0 + j * cell} y={y0 + i * cell} w={cell} h={cell} text={w === 1 ? '+' : w === 0.5 ? '½' : '−'}
+              tone={w === 1 ? 'pos' : w === 0 ? 'neg' : 'plain'} selected={a === who || b === who} />;
+          })}
+        </g>)}
+        <text className="xw-t" x={x0} y={y0 + 4 * cell + 22}>U₁ = {num(s.U1)}, U₂ = {num(s.U2)}</text>
+      </svg>
+    </div>
+  );
+}
+
+/** Achse von 0 bis n₁ · n₂ mit dem gemeldeten U und der Erwartung ohne Unterschied. */
+function UScale({ s }: { s: MwStats }) {
+  const [box, W] = useWidth();
+  const X = linear([0, 16], [24, W - 24]), base = 70;
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={124} viewBox={`0 0 ${W} 124`} role="img"
+        aria-label={`U = ${num(s.U)} auf der Achse von 0 bis 16; ohne Unterschied erwartet man 8, z ≈ ${Number.isFinite(s.z) ? num(s.z) : 'nicht definiert'}.`}>
+        {s.sd > 0 && <rect className="xw-band" x={X(Math.max(0, 8 - s.sd))} y={34} width={X(Math.min(16, 8 + s.sd)) - X(Math.max(0, 8 - s.sd))} height={base - 34} />}
+        <MarkLine x={X(8)} from={30} to={base} label="Erwartung 8" />
+        <line className="xw-pos" strokeWidth={4} x1={X(s.U)} x2={X(s.U)} y1={40} y2={base} />
+        <text className="xw-t xw-strong" x={X(s.U)} y={base + 44} textAnchor="middle">U = {num(s.U)}</text>
+        <Axis scale={X} ticks={[0, 4, 8, 12, 16]} at={base} from={24} to={W - 24} labelGap={20} />
+      </svg>
+    </div>
+  );
+}
+
+function MannWhitneyPicture({ data, s, step, who, setData, pickWho, names }: { data: number[]; s: MwStats; step: number; who: number; setData: (d: number[]) => void; pickWho: (i: number) => void; names: readonly string[] }) {
+  const rows: Row[] = data.map((v, i) => ({
+    name: names[i],
+    head: i === 0 ? `ohne Weiterbildung${step >= 2 ? `: R₁ = ${num(s.R1)}` : ''}` : i === 4 ? `mit Weiterbildung${step >= 2 ? `: R₂ = ${num(s.R2)}` : ''}` : undefined,
+    points: [{ value: v, label: String(num(v)), name: `Person ${names[i]}, ${MW_GROUP[i] ? 'mit' : 'ohne'} Weiterbildung, Lernzeit in Stunden`, at: i }],
+    note: `Rang ${num(s.rank[i])}`,
+  }));
+  return <>
+    <DotRows rows={rows} bounds={{ min: 0, max: 30 }} tickStep={5} axisTitle="Lernzeit in den letzten sieben Tagen (h)" who={who} onPick={pickWho}
+      onChange={(at, v) => setData(data.map((x, k) => k === at ? v : x))} label="Lernzeiten der acht Beispielpersonen, je Zeile eine Person" />
+    {step >= 3 && <PairGrid s={s} names={names} who={who} />}
+    {step >= 5 && <UScale s={s} />}
+  </>;
+}
+
+export const pictures: Record<string, Picture> = {
+  'b11-mw': forWorkshop(p => <MannWhitneyPicture data={p.data} s={p.s} step={p.step} who={p.who} setData={p.setData} pickWho={p.pickWho} names={p.workshop.names} />),
+};
