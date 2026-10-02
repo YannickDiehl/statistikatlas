@@ -1,0 +1,15 @@
+/* Stile des Bereichs B3 „Lage und Verteilung“ (Bilder in src/components/explain/pictures/b03-lage.tsx). */
+.b03-bracket line{stroke:var(--muted);stroke-width:1.5}
+.b03-bracket.b03-range line{stroke:var(--ink);stroke-width:2}
+.b03-mark{stroke:var(--green);stroke-width:2.5}
+.b03-mark-q{stroke:var(--ink);stroke-width:1.5;stroke-dasharray:5 3}
+.b03-col{fill:var(--wash);stroke:var(--line);stroke-width:1}
+.b03-col.on{fill:var(--xw-pos-fill);stroke:var(--green);stroke-width:2}
+.b03-toggle{cursor:pointer;outline:none}
+.b03-toggle rect{fill:var(--paper);stroke:var(--ink);stroke-width:1.5}
+.b03-toggle.on rect{fill:var(--xw-pos-fill);stroke:var(--green);stroke-width:2}
+.b03-toggle.sel rect{stroke-width:2.5}
+.b03-toggle:focus-visible rect{stroke:var(--red);stroke-width:3}
+.b03-toggle text{pointer-events:none}
+.b03-slot{fill:var(--paper);stroke:var(--line);stroke-width:1}
+.b03-slot.on{fill:var(--xw-pos-fill);stroke:var(--green);stroke-width:2}
