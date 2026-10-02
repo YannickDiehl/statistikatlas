@@ -13,6 +13,12 @@ import { applyOp } from '../../sample';
 import { confounding, PLANUNG } from './confounding';
 import { causality, LERNEN } from './causality';
 import { coinGroups, randomAssignment, TYPISCH } from './random-assignment';
+import { STEP_CARDS, STEP_TABS } from './rechenbausteine';
+import { zaehlen, zaehlenTabs, zaehlung } from './count';
+import { LERNZEIT, spalteSd, streuen } from './positive-sd';
+import { stepCardFor } from '../../registry';
+import { conceptById } from '../../../domain/concepts';
+import { styleProblems } from '../../style';
 
 /*
  * Referenzwerte des Bereichs B12, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -288,4 +294,58 @@ test('B12 Zufällige Zuweisung: Münzwürfe und typische Zufallsunterschiede wie
   assert.match(randomAssignment.regler!.describe(4), /106 Befragte, Gruppe B 94\. .* 7,37 und 8,18 Stunden, ein Unterschied von 0,81 Stunden.* 1,64 Stunden\./);
   assert.match(randomAssignment.ausprobieren[0].explain, /etwa 0,46 Stunden/);
   assert.match(randomAssignment.ausprobieren[1].explain, /von 0,46 auf 0,14 Stunden/);
+});
+
+/*
+ * Rechenbausteine: Zählen und „Die Werte streuen“ (Lehrdatensatz):
+ *   nrow(atlas); table(wb); table(sa)                      # 200; 118 82; 42 40 37 41 40
+ *   range(lern); mean(lern); sd(lern)                      # 0 18.4; 7.7515; 3.237515294
+ *   lern[atlas$id == "P002"]; (8.3 - mean(lern)) / sd(lern)   # 8.3; 0.1694200491 (Abstand 0.5485)
+ *   sum(alter >= 66); sum(ew[alter >= 66]); sd(ew[alter >= 66])   # 29; 0; 0
+ *   scale(c(5, 5, 5, 5, 5))[, 1]                           # NaN NaN NaN NaN NaN
+ *   cor(alter[alter >= 66], ew[alter >= 66])               # NA (Standardabweichung null)
+ *   sd(c(5, 5, 5, 5, 5)); sd(8)                            # 0; NA
+ */
+test('B12 Rechenbausteine: Zahlen der Begriffskarten, Schrittkarten in die Pilot-Werkstätten, vorbereitete Weiter-Sätze', () => {
+  assert.equal(rows.length, 200);
+  assert.equal(SCHULE.reduce((a, b) => a + b, 0), 200);
+  assert.match(zaehlen.stellDirVor.text, /42, 40, 37, 41 und 40 Befragte, zusammen wieder 200/);
+  assert.equal(zaehlen.bausteine[1].rechnung, '42 + 40 + 37 + 41 + 40 = 200.');
+  const lern = rows.map(r => r.values.lernzeit), m = lern.reduce((a, b) => a + b, 0) / lern.length, sd = Math.sqrt(lern.reduce((a, x) => a + (x - m) ** 2, 0) / (lern.length - 1));
+  assert.ok(near(m, LERNZEIT.mean) && near(sd, LERNZEIT.sd) && Math.min(...lern) === LERNZEIT.min && Math.max(...lern) === LERNZEIT.max);
+  assert.ok(near((LERNZEIT.p002 - m) / sd, LERNZEIT.z002) && rows.find(r => r.id === 'P002')!.values.lernzeit === LERNZEIT.p002);
+  const old = rows.filter(r => r.values.alter >= 66);
+  assert.ok(old.length === LERNZEIT.ab66 && old.every(r => r.values.erwerbstaetig === 0), 'ab 66 niemand erwerbstätig');
+  assert.match(streuen.stellDirVor.text, /s = 3,24 Stunden\. P002 liegt mit 8,3 Stunden 0,55 Stunden über dem Mittelwert 7,75, das ergibt z ≈ 0,17\./);
+  assert.match(streuen.bausteine[0].rechnung!, /von 0 bis 18,4 Stunden, s = 3,24/);
+  // Auswertungen mit allen 200 (R: length(table(lern)) = 99, häufigster Wert 7.3 mit 7, sum(lern == 0) = 1; sd(wiss) = 3.115753)
+  const z = zaehlung({ rows, columns: { x: ['lernzeit'] } });
+  assert.deepEqual([z.n, z.distinct, z.top, z.topCount, z.zeros], [200, 99, 7.3, 7, 1]);
+  const zs = zaehlenTabs.sample!;
+  if (zs.kind === 'analysis') {
+    assert.match(zs.result({ rows, columns: { x: ['lernzeit'] } }).zusatz!, /^Eine Person hat den Wert 0; sie zählt mit\.$/);
+    assert.match(zs.result({ rows, columns: { x: ['schulabschluss'] } }).kurz, /5 verschiedene Werte; am häufigsten ist „Ohne Schulabschluss“ mit 42 Befragten/);
+  }
+  const ctx = { rows, columns: { x: ['lernzeit'], y: ['wissenstest'] } };
+  assert.ok(near(spalteSd(ctx, 'x').sd, LERNZEIT.sd) && near(spalteSd(ctx, 'y').sd, 3.115753), 'Standardabweichungen wie in R');
+  assert.equal(spalteSd({ ...ctx, rows: applyOp(rows, 'lernzeit', 'constant', 5) }, 'x').sd, 0);
+  // Schrittkarten: jeder Rechenbaustein zeigt auf den Schritt der Pilot-Werkstatt, in dem er passiert.
+  const expected: Record<string, [string, string]> = {
+    add: ['mittel', 'Alles zusammenzählen'], divide: ['mittel', 'Gerecht verteilen'], subtract: ['streuung', 'Abstände messen'],
+    square: ['streuung', 'Abstände quadrieren'], sqrt: ['streuung', 'Zurück zur Skala'], multiply: ['zusammenhang', 'Die Abstände malnehmen'],
+  };
+  for (const [id, [workshop, title]] of Object.entries(expected)) {
+    const card = stepCardFor(id)!;
+    assert.ok(card && card.workshop.id === workshop && card.workshop.steps[card.step - 1].title === title, `${id}: Schrittkarte zeigt nicht auf „${title}“`);
+    assert.deepEqual(STEP_CARDS[id].workshop, workshop);
+  }
+  // Vorbereitete Weiter-Sätze der Schrittkarten: Ziele gibt es, keines doppelt, Ton nach dem Sprachleitfaden.
+  for (const [id, tabs] of Object.entries(STEP_TABS)) {
+    const items = [tabs.next.next, ...tabs.next.before, ...tabs.next.after, ...(tabs.next.more ?? [])];
+    assert.equal(new Set(items.map(i => i.id)).size, items.length, `${id}: Ziel doppelt`);
+    for (const item of items) {
+      assert.ok(conceptById[item.id] && item.id !== id, `${id}: Ziel ${item.id}`);
+      assert.deepEqual(styleProblems(item.why as string, { maxWords: 25, maxSentences: 2 }), [], `${id} → ${item.id}`);
+    }
+  }
 });
