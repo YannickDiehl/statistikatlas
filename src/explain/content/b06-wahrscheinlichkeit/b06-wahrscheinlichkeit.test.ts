@@ -11,6 +11,7 @@ import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic
 import { randomVariable, randomVariableTabs } from './random_variable';
 import { empiricalDistribution, empiricalDistributionTabs } from './empirical_distribution';
 import { theoreticalDistribution, theoreticalDistributionTabs } from './theoretical_distribution';
+import { discreteContinuous, discreteContinuousTabs } from './discrete_continuous';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -177,4 +178,21 @@ test('B6 theoretical_distribution: Normalmodell der Schlafdauer, unter 6 Stunden
   const sl = col('schlafdauer');
   const bins = Array.from({ length: 10 }, (_, k) => count(sl, v => v >= 5 + k * 0.5 - 1e-9 && v < 5.5 + k * 0.5 - 1e-9));
   assert.deepEqual(bins, [6, 12, 25, 45, 44, 40, 18, 9, 0, 1], 'Histogramm wie in R');
+});
+
+/*
+ *   mean(h == 2); mean(h == 1) + mean(h == 2)            # 0.19, 0.425
+ *   pnorm(8, m, s) - pnorm(7, m, s)                      # 0.4085611
+ *   length(unique(h)); length(unique(sl)); range(sl)     # 5, 38, 5.1 bis 9.5
+ */
+test('B6 discrete_continuous: Haushaltsgröße und Schlafdauer wie in R', () => {
+  const card = discreteContinuous;
+  assert.deepEqual(card.stellDirVor.figures!.map(f => f.value), ['5 Werte, 1 bis 5', '19 %', '5,1 bis 9,5 h', '40,9 %']);
+  assert.equal(card.bausteine[1].rechnung, 'P(X = 2) = 19 %; P(X ≤ 2) = 23,5 % + 19 % = 42,5 %');
+  assert.equal(card.bausteine[2].rechnung, 'Im Normalmodell der Schlafdauer: P(7 ≤ X ≤ 8) ≈ 40,9 %');
+  const tab = discreteContinuousTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, 'Die Haushaltsgröße hat bei 200 Befragten 5 verschiedene Werte, von 1 bis 5. Die Schlafdauer hat 38 verschiedene Werte, weil sie auf 0,1 Stunden gerundet ist; ungerundet wären fast alle verschieden.');
+  assert.equal(tab.value!(ctxFor(tab)), 38);
 });

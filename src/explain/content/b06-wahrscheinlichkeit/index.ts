@@ -7,6 +7,7 @@ import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic
 import { randomVariable, randomVariableTabs } from './random_variable';
 import { empiricalDistribution, empiricalDistributionTabs } from './empirical_distribution';
 import { theoreticalDistribution, theoreticalDistributionTabs } from './theoretical_distribution';
+import { discreteContinuous, discreteContinuousTabs } from './discrete_continuous';
 
 export const b06Wahrscheinlichkeit: AreaIndex = {
   explanations: {
@@ -16,6 +17,7 @@ export const b06Wahrscheinlichkeit: AreaIndex = {
     random_variable: { kind: 'begriff', card: randomVariable },
     empirical_distribution: { kind: 'begriff', card: empiricalDistribution },
     theoretical_distribution: { kind: 'begriff', card: theoreticalDistribution },
+    discrete_continuous: { kind: 'begriff', card: discreteContinuous },
   },
   tabs: {
     probability: probabilityTabs,
@@ -24,5 +26,6 @@ export const b06Wahrscheinlichkeit: AreaIndex = {
     random_variable: randomVariableTabs,
     empirical_distribution: empiricalDistributionTabs,
     theoretical_distribution: theoreticalDistributionTabs,
+    discrete_continuous: discreteContinuousTabs,
   },
 };
