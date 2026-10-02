@@ -6,6 +6,7 @@ import { conditionalProbability, conditionalProbabilityTabs } from './conditiona
 import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic_independence';
 import { randomVariable, randomVariableTabs } from './random_variable';
 import { empiricalDistribution, empiricalDistributionTabs } from './empirical_distribution';
+import { theoreticalDistribution, theoreticalDistributionTabs } from './theoretical_distribution';
 
 export const b06Wahrscheinlichkeit: AreaIndex = {
   explanations: {
@@ -14,6 +15,7 @@ export const b06Wahrscheinlichkeit: AreaIndex = {
     stochastic_independence: { kind: 'begriff', card: stochasticIndependence },
     random_variable: { kind: 'begriff', card: randomVariable },
     empirical_distribution: { kind: 'begriff', card: empiricalDistribution },
+    theoretical_distribution: { kind: 'begriff', card: theoreticalDistribution },
   },
   tabs: {
     probability: probabilityTabs,
@@ -21,5 +23,6 @@ export const b06Wahrscheinlichkeit: AreaIndex = {
     stochastic_independence: stochasticIndependenceTabs,
     random_variable: randomVariableTabs,
     empirical_distribution: empiricalDistributionTabs,
+    theoretical_distribution: theoreticalDistributionTabs,
   },
 };

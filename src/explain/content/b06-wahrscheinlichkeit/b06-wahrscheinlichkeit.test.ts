@@ -10,6 +10,7 @@ import { conditionalProbability, conditionalProbabilityTabs } from './conditiona
 import { stochasticIndependence, stochasticIndependenceTabs } from './stochastic_independence';
 import { randomVariable, randomVariableTabs } from './random_variable';
 import { empiricalDistribution, empiricalDistributionTabs } from './empirical_distribution';
+import { theoreticalDistribution, theoreticalDistributionTabs } from './theoretical_distribution';
 
 /*
  * Referenzwerte des Bereichs B6, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -150,4 +151,30 @@ test('B6 empirical_distribution: Anteile und kumulierte Anteile des Schulabschlu
   assert.equal(r.kurz, 'Die Anteile der fünf Abschlüsse von ohne bis Abitur: 21 %, 20 %, 18,5 %, 20,5 %, 20 %. Höchstens einen mittleren Abschluss haben 59,5 %.');
   assert.match(r.fachlich, /Fₙ = 21 %, 41 %, 59,5 %, 80 %, 100 % für die Codes 0 bis 4/);
   assert.ok(close(tab.value!(ctxFor(tab))!, 0.595, 1e-12));
+});
+
+/*
+ *   m <- mean(sl); s <- sd(sl)
+ *   pnorm(6, m, s); sum(sl < 6) / 200                  # 0.09333222, 0.09
+ *   pnorm(5, m, s); 200 * pnorm(5, m, s)               # 0.005536561, 1.107312 (gut eine Person)
+ *   pnorm(6, 8, s); pnorm(6, m + 1, s); pnorm(6, m - 1, s)   # 0.00734885, 0.005536561, 0.4599184
+ *   hist(sl, breaks = seq(5, 10, by = .5), right = FALSE)$counts   # 6 12 25 45 44 40 18 9 0 1
+ *   atlas %>% normality_test(schlafdauer)              # KS = 0.051, p = 0.238 (Lilliefors); max |Fₙ − F| = 0.05073636
+ */
+test('B6 theoretical_distribution: Normalmodell der Schlafdauer, unter 6 Stunden im Modell und in den Daten wie in R', () => {
+  const card = theoreticalDistribution;
+  assert.match(card.stellDirVor.text, /μ = 7,08 h und σ = 0,82 h\. Sie sagt zum Beispiel: Weniger als 6 Stunden schlafen 9,3 %\. In den Daten sind es 18 von 200, also 9 %\./);
+  assert.equal(card.bausteine[2].rechnung, 'Modell: P(X < 6) ≈ 9,3 %. Daten: 18 von 200 = 9 %.');
+  assert.match(card.ausprobieren[0].explain, /schlafen im Modell 0,6 %/);
+  assert.match(card.ausprobieren[2].explain, /nur noch 0,7 %, beobachtet sind 9 %/);
+  assert.match(card.regler!.describe(7.08), /9,3 % schlafen weniger als 6 Stunden\. In den Daten sind es 9 %\. Das passt gut\./);
+  assert.match(card.regler!.describe(6.5), /27,1 %.*mehr kurze Nächte/);
+  const tab = theoreticalDistributionTabs.sample!;
+  if (tab.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  const r = tab.result(ctxFor(tab));
+  assert.equal(r.kurz, 'Das Modell ist eine Normalverteilung mit μ = 7,08 h und σ = 0,82 h. Weniger als 6 Stunden schlafen darin 9,3 %; in den Daten sind es 9 %.');
+  assert.ok(close(tab.value!(ctxFor(tab))!, 0.09333222, 1e-6), 'P(X < 6) wie pnorm in R');
+  const sl = col('schlafdauer');
+  const bins = Array.from({ length: 10 }, (_, k) => count(sl, v => v >= 5 + k * 0.5 - 1e-9 && v < 5.5 + k * 0.5 - 1e-9));
+  assert.deepEqual(bins, [6, 12, 25, 45, 44, 40, 18, 9, 0, 1], 'Histogramm wie in R');
 });

@@ -37,6 +37,9 @@ export const cdf = (x: number, mu: number, sigma: number) => pnorm((x - mu) / si
 /** p-Quantil einer Normalverteilung. */
 export const quant = (p: number, mu: number, sigma: number) => mu + sigma * qnorm(p);
 
+/** Reglerwert für μ: Die Startstellung 7,08 steht für den genauen Mittelwert 7,0825, damit Bild und Text dieselben Zahlen zeigen wie „Stell dir vor …“. */
+export const sleepMu = (v: number) => Math.abs(v - SCHLAF.mean) < 0.005 ? SCHLAF.mean : v;
+
 /** Normalmodell der Schlafdauer mit den Kennwerten der 200 Befragten. */
 export const schlafModell = {
   f: (x: number) => dnorm(x, SCHLAF.mean, SCHLAF.sd),
