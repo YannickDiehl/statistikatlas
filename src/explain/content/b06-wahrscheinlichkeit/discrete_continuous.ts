@@ -73,7 +73,7 @@ export const discreteContinuous: ConceptCard = {
     {
       question: 'Wie wahrscheinlich schläft jemand im Modell genau 7 Stunden, also 7,000… ohne jede Rundung?',
       options: ['etwa 0,5', 'etwa 40 %', '0'], correct: 2, step: 3,
-      explain: `Ein einzelner Punkt hat keine Breite und damit keine Fläche. Schon „auf die Sekunde genau“ wäre ein Bereich, mit etwa ${num(F7_SHOWN)} / 3600 ≈ ${num(F7_SHOWN / 3600, 5)}.`,
+      explain: `Ein einzelner Punkt hat keine Breite und damit keine Fläche. Schon „auf die Sekunde genau“ ist ein Bereich von 1 / 3600 Stunde. Seine Wahrscheinlichkeit ist etwa Höhe der Dichte mal Breite: ${num(F7_SHOWN)} · 1 / 3600 ≈ ${num(F7_SHOWN / 3600, 5)}.`,
       kurz: 'Stetig: Einzelne Werte haben die Wahrscheinlichkeit 0.',
     },
   ],

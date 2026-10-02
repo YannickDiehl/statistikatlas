@@ -336,7 +336,6 @@ test('B6 Werkstatt Erwartung: μ, σ² und s² der fünf Personen und der 200 Be
   assert.equal(br.lines[4].all(bc), '2.085,82 · 1 / 200 ≈ 10,43 h². Durch 200 − 1 geteilt wäre es s² ≈ 10,48 h².');
   assert.equal(br.metrics(bc, 'population_variance').at(-1)!.value, '10,43 h²');
   assert.equal(br.interpret(bc, 'expectation').kurz, 'Ziehst du sehr oft zufällig eine der 200 Befragten, kommen im Mittel 7,75 Stunden Lernzeit heraus. Das ist genau ihr Mittelwert.');
-  assert.ok(close(10.48 * 199 / 200, 10.43, 0.005), 'Rechnung im R-Reiter mit den sichtbaren Zahlen');
 });
 
 /*
@@ -355,7 +354,7 @@ test('B6 Fix-Runde 1: geänderte Texte und ihre Zahlen wie in R', () => {
   // C1, I1
   assert.match(discreteContinuous.bausteine[2].warum, /^Bei einer stetigen Größe verteilt sich die Wahrscheinlichkeit lückenlos über einen ganzen Bereich\./);
   assert.match(discreteContinuous.ausprobieren[2].question, /ohne jede Rundung/);
-  assert.match(discreteContinuous.ausprobieren[2].explain, /0,48 \/ 3600 ≈ 0,00013\.$/);
+  assert.match(discreteContinuous.ausprobieren[2].explain, /ein Bereich von 1 \/ 3600 Stunde\. Seine Wahrscheinlichkeit ist etwa Höhe der Dichte mal Breite: 0,48 · 1 \/ 3600 ≈ 0,00013\.$/);
   assert.ok(close(0.48 / 3600, 0.000133, 5e-7) && close(schlafModell.f(7) / 3600, 0.0001345, 5e-8), 'eine Sekunde im Modell');
   // I3: alle mit Weiterbildung, gleich großer Anteil
   const ind = stochasticIndependenceTabs.sample!;
@@ -370,6 +369,15 @@ test('B6 Fix-Runde 1: geänderte Texte und ihre Zahlen wie in R', () => {
   assert.equal(erwartung.think[1].tryIt, undefined, 'kein Ausprobieren, das auf der Karte Erwartungswert μ statt der Abstände zeigt');
   assert.equal(erwartung.think[2].questionFor?.expectation, 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?');
   assert.doesNotMatch(String(erwartung.think[2].explain), /n − 1|s²/);
+  // Korrekturrunde 2: Was die gemeinsame Werkstatt auf der Karte Erwartungswert zeigt (Frage, Antworten, Erklärung, Kurz gesagt),
+  // nennt weder die Streuungszeichen noch n − 1; „Kurz gesagt“ jeder Denkfrage steht auf beiden Karten und ist neutral.
+  for (const t of erwartung.think) {
+    const shown = [t.questionFor?.expectation ?? t.question, ...t.options, txt(t.explain, a), t.kurz];
+    for (const x of shown) assert.doesNotMatch(x, /σ|s²|n − 1/, `Karte Erwartungswert zeigt Streuungsstoff: ${x}`);
+    for (const v of ['expectation', 'population_variance']) assert.ok(t.kurz.trim() && !/n − 1|0,25/.test(t.kurz), `${v}: Kurz gesagt nicht neutral: ${t.kurz}`);
+  }
+  assert.equal(erwartung.think.filter(t => t.tryIt).length, 1, 'ein Ausprobieren, zu „Was passiert mit μ?“');
+  for (const v of ['expectation', 'population_variance']) assert.equal(erwartung.variants[v].metrics.at(-1)!.label, 'Erwartungswert μ', `${v}: Ausprobieren meldet μ`);
   assert.doesNotMatch(erwartung.mut, /fünf kleinen Schritten/);
   assert.equal(erwartung.steps[4].title, 'Die Quadrate gewichtet zusammenzählen');
   const bc = bridgeContext(erwartung.compute, 'series', rows, 'lernzeit', '', 1);

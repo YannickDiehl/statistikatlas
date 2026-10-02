@@ -309,8 +309,8 @@ export const erwartung: Workshop<number[], Erw> = {
       question: 'Warum teilst du hier durch 5 und nicht durch 4 wie bei der Stichprobenvarianz s²?',
       questionFor: { expectation: 'Warum zählt jede der fünf Personen mit 0,2 und nicht mit 0,25?' },
       options: ['weil die fünf die ganze Gruppe sind, aus der gezogen wird', 'weil das Ergebnis dann kleiner wird'], correct: 0, step: 5, stepFor: { expectation: 1 },
-      explain: 'Gezogen wird aus genau diesen fünf, jede mit der Chance 1 / 5. Du kennst die ganze Gruppe; es gibt nichts zu schätzen.',
-      kurz: 'Ganze Gruppe: durch n. Schätzung aus einer Stichprobe: durch n − 1.',
+      explain: 'Gezogen wird aus genau diesen fünf, jede mit der Chance 1 / 5. Zusammen ergeben die fünf Chancen 1.',
+      kurz: 'Gezogen wird aus allen n: Jede Person zählt mit 1 / n.',
     },
   ],
   variants: {
@@ -341,7 +341,8 @@ export const erwartung: Workshop<number[], Erw> = {
       fachlich: 'Der Erwartungswert der quadrierten Abweichung vom Erwartungswert: σ² = E[(X − μ)²], bei N gleich wahrscheinlichen Werten Σ(xᵢ − μ)² / N.',
       symbolic: ['σ² = ', { big: 'Σ', m: 5 }, { part: ['('], m: 4 }, { part: ['x', { sub: 'i' }, ' −'], m: 3 }, ' ', { part: ['μ'], m: 2 }, { part: [')²'], m: 4 }, ' · ', { part: ['p', { sub: 'i' }], m: 1 }],
       aria: 'sigma Quadrat gleich Summe über alle Personen i von x i minus mü, zum Quadrat, mal p i',
-      metrics: [{ label: 'Erwartungswert μ', value: c => num(c.s.mu) }, { label: 'Populationsvarianz σ²', value: c => num(c.s.sigma2) }],
+      // μ zuletzt: Das einzige Ausprobieren (Denkfrage 1, „Was passiert mit μ?“) meldet die letzte Kennzahl.
+      metrics: [{ label: 'Populationsvarianz σ²', value: c => num(c.s.sigma2) }, { label: 'Erwartungswert μ', value: c => num(c.s.mu) }],
       interpret: c => ({
         kurz: c.s.sigma2 < 1e-12 ? 'Alle fünf leben in gleich großen Haushalten. Es gibt keine Streuung, σ² ist 0.'
           : `Der gewichtete Durchschnitt der Abstandsquadrate, jede Person mit ihrer Chance 0,2, ist ${unit(c.s.sigma2, 'Person²', 'Personen²')}. Seine Wurzel σ ≈ ${people(c.s.sigma)} sagt grob, wie weit ein Haushalt von μ = ${num(c.s.mu)} entfernt liegt.`,
