@@ -12,6 +12,7 @@ import { standardisieren, bridgeStandardisieren } from './standardisieren';
 import { ssOf, tabsSs } from './ss';
 import { LERNZEIT, proTag, skalieren, tabsScaling } from './skalieren';
 import { bridgeRaenge, raenge, rankStats } from './raenge';
+import { pompLernplanung, pomps, tabsPomps } from './pomps';
 
 /*
  * Referenzwerte des Bereichs B4 „Umformen“, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem
@@ -60,6 +61,15 @@ import { bridgeRaenge, raenge, rankStats } from './raenge';
  *   sum(x < 8.3); sum(x == 8.3); sum(x > 8.3)                                    # 112 2 86
  *   sum(duplicated(x) | duplicated(x, fromLast = TRUE))                          # 152 Befragte teilen ihren Wert
  *   all.equal(rank(x + 1), r); all.equal(rank(2 * x), r)                         # TRUE; TRUE
+ * POMP (mariposa::pomps):
+ *   pomps(4, scale_min = 1, scale_max = 5); pomps(4, 1, 7); pomps(4, 1, 10); pomps(5, 1, 7)   # 75; 50; 33.33333; 66.66667
+ *   atlas %>% mutate(pomp = pomps(lernplanung5, scale_min = 1, scale_max = 5)) %>%
+ *     summarise(m = mean(pomp), n0 = sum(pomp == 0), n100 = sum(pomp == 100))     # 56.5 17 35 (Mittelwert lernplanung5 3.26)
+ *   atlas %>% mutate(pomp = pomps(6 - as.numeric(lernplanung5), scale_min = 1, scale_max = 5)) %>% summarise(mean(pomp))   # 43.5
+ *   atlas %>% mutate(pomp = pomps(lernplanung5, scale_min = 5, scale_max = 1))   # Fehler: `scale_min` (5) must be less than `scale_max` (1).
+ *   atlas %>% mutate(pomp = pomps(lernplanung5, scale_min = 2, scale_max = 5))   # Warnung: `lernplanung5` has value outside the scale range 2-5: 1.
+ *   atlas %>% mutate(pomp = pomps(lernplanung5, scale_min = 1, scale_max = 5)) %>%
+ *     describe(lernplanung5, pomp, show = c("mean", "min", "max"))               # pomp 56.500 0.000 100.000
  */
 
 const rows = createSurvey();
@@ -178,4 +188,23 @@ test('B4 Ränge: fünf Beispielpersonen und die 200 Befragten wie in R', () => {
   assert.equal(bridgeRaenge.lines[0].person(c), 'Vor P002 stehen 112 Befragte mit weniger Lernzeit; 1 weitere Person hat genau 8,3 h.');
   assert.equal(bridgeRaenge.interpret(c, 'ranks').kurz, 'P002 steht auf Rang 113,5 von 200. 112 Befragte lernen weniger, 86 mehr.');
   for (const op of ['shift', 'double'] as const) assert.deepEqual(rankStats(applyOp(rows, 'lernzeit', op).map(r => r.values.lernzeit)).rank, s.rank, op);
+});
+
+test('B4 POMP: Formel und Lernplanung der 200 Befragten wie in R', () => {
+  const s = pomps.compute(pomps.initial);
+  assert.equal(s.pomp, 75);
+  assert.equal(pomps.compare(s), 'Dieselbe Antwort 4 ergibt auf einer Skala bis 5 den Wert 75, auf einer Skala bis 7 den Wert 50, auf einer Skala bis 10 den Wert 33,33.');
+  assert.ok(close(pomps.check.answer, 66.66667, 1e-5), 'Kontrollfrage wie in R');
+  assert.match(pomps.check.diagnose(500 / 6), /^Fast! Du hast 5 \/ 6 gerechnet/);
+  assert.equal(pomps.interpret(s).kurz, 'Die Antwort 4 liegt drei Viertel des Wegs von der niedrigsten zur höchsten Stufe: POMP 75. Auf einer Skala bis 7 ergäbe dieselbe 4 den Wert 50.');
+  const c = { rows, columns: { x: ['lernplanung5'] } }, p = pompLernplanung(c);
+  assert.ok(close(p.mean, 3.26, 1e-9) && close(p.pomp, 56.5, 1e-9), 'Lernplanung wie in R');
+  assert.deepEqual([p.ones, p.fives], [17, 35]);
+  assert.ok(close(pompLernplanung({ ...c, rows: applyOp(rows, 'lernplanung5', 'reverse') }).pomp, 43.5, 1e-9), 'umgepolt wie in R');
+  const sample = tabsPomps.sample!;
+  if (sample.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  assert.equal(sample.result(c).kurz, 'Im Schnitt kommen die 200 Befragten bei der Lernplanung auf einen POMP-Wert von 56,5. Das ist etwas mehr als die Hälfte des Wegs von „Stimme überhaupt nicht zu“ bis „Stimme voll und ganz zu“.');
+  const out = CATALOG_OUTPUT['pomps:0'].output;
+  assert.deepEqual(['56.500', 'Mean', '0.000', '100.000'].map(m => locate(out, m)?.text), ['56.500', '3.260', '0.000', '100.000']);
+  assert.match(out, /pomp {10}56\.500 {2}0\.000 {2}100\.000/);
 });

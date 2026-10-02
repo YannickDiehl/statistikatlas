@@ -164,7 +164,34 @@ function Raenge({ values, s, step, who, names, bounds, onChange, onWho }: {
   );
 }
 
+/**
+ * POMP als Weg: oben die Antwortstufen 1 bis max, der zurückgelegte Weg bis zur Antwort x als Balken, darunter
+ * dasselbe Lineal in POMP von 0 bis 100.
+ */
+function PompWeg({ x, hi }: { x: number; hi: number }) {
+  const [box, W] = useWidth();
+  const top = Math.max(hi, x), left = 28, right = W - 28, X = linear([1, top], [left, right]);
+  const r1 = 70, r2 = 140, H = 172, p = 100 * (x - 1) / (hi - 1);
+  const stageMarks = Array.from({ length: top }, (_, k) => ({ x: X(k + 1), label: String(k + 1) })).filter((m, k, all) => all.length <= 10 || k % 2 === 0);
+  const pompMarks = [0, 25, 50, 75, 100].map(v => ({ x: X(1 + v / 100 * (hi - 1)), label: String(v) }));
+  const at = X(x), tag = Math.min(right - 36, Math.max(left + 36, at));
+  return (
+    <div ref={box}>
+      <svg className="xw-svg" width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
+        aria-label={`Antwortskala von 1 bis ${num(hi)}. Die Antwort ${num(x)} liegt bei POMP ${num(p)}.`}>
+        <rect className="b04-fill" x={X(1)} y={54} width={Math.max(0, X(Math.min(x, hi)) - X(1))} height={10} />
+        <line className="b04-reading" x1={at} x2={at} y1={54} y2={r2} />
+        <Ruler y={r1} from={left} to={right} marks={stageMarks} title="Antwortstufen" />
+        <Ruler y={r2} from={left} to={X(hi)} marks={pompMarks} title="POMP" />
+        <circle className="xw-s-dot sel" cx={at} cy={r1} r={5.5} />
+        <text className="xw-t xw-strong xw-halo" x={tag} y={r2 - 8} textAnchor="middle">{x > hi ? 'über 100' : `POMP ${num(p)}`}</text>
+      </svg>
+    </div>
+  );
+}
+
 export const pictures: Record<string, Picture> = {
+  'b04-pomps': forSentence(p => <PompWeg x={p.values.x} hi={p.values.hi} />),
   'b04-raenge': forWorkshop(p => <Raenge values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} onChange={p.setData} onWho={p.pickWho} />),
   'b04-skalieren': forSentence(p => <Teilen x={p.values.x} a={p.values.a} />),
   'b04-zentrieren': forWorkshop(p => <Lineale values={p.data} s={p.s} step={p.step} who={p.who} names={p.workshop.names} bounds={p.workshop.bounds} mode="centering" onChange={p.setData} onWho={p.pickWho} />),
