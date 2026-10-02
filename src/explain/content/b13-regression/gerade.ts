@@ -295,7 +295,7 @@ export const gerade: Workshop<Pairs, Fit> = {
     },
     prediction: {
       lastStep: 4,
-      kurz: 'Der lineare Prädiktor setzt Startwert und Gewicht zu einer Vorhersage zusammen: Startwert plus Steigung mal Lernzeit. So bekommt jede Person die Zahl, die die Gerade für sie erwartet.',
+      kurz: 'Der lineare Prädiktor setzt Startwert und Gewicht zu einer Vorhersage zusammen: Startwert plus Gewicht mal Lernzeit. So bekommt jede Person die Zahl, die die Gerade für sie erwartet.',
       fachlich: 'Die gewichtete Summe ηᵢ = b₀ + Σ bⱼ · xᵢⱼ der Prädiktorwerte einer Person. In der linearen Regression ist der vorhergesagte Wert ŷᵢ = ηᵢ.',
       symbolic: [{ part: ['ŷᵢ'], m: 4 }, ' = ', { part: ['b₀'], m: 3 }, ' + ', { part: ['b₁'], m: 2 }, { part: [' · xᵢ'], m: 4 }],
       aria: 'y Dach i gleich b null plus b eins mal x i',
@@ -363,18 +363,20 @@ const PB = (c: BC) => c.names[c.who];
 const N = (c: BC) => c.values.length;
 const t1 = (c: BC) => `„${c.col.title}“`, t2 = (c: BC) => `„${c.col2!.title}“`;
 const uy = (c: BC, v: number) => unitText(c.col2!, v);
-/** b₁ in Rechnungen: mit genug gültigen Ziffern, negativ in Klammern. */
-const pc = (v: number) => v < 0 ? `(${coef(v)})` : coef(v);
-/** Koeffizient mit der Einheit von y („0,52 Aufgaben“, „0,00031 Aufgaben“). */
+/** b₁ in den Rechnungen der Brücke: drei gültige Ziffern (`coefCalc`), negativ in Klammern. */
+const pc = (v: number) => v < 0 ? `(${coefCalc(v)})` : coefCalc(v);
+/** Koeffizient mit der Einheit von y („0,52 Aufgaben“, „0,00037 Aufgaben“). */
 const uyc = (c: BC, v: number) => `${coef(v)}${c.col2!.unit ? ` ${c.col2!.unit}` : ''}`;
 const lw = (c: BC) => c.col.id === 'lernzeit' && c.col2!.id === 'wissenstest';
 const shown = (v: number) => Math.round(v * 100) / 100;
-/** Koeffizient mit höchstens zwei Nachkommastellen; sehr kleine Werte mit drei gültigen Ziffern („0,000368“), damit Rechnungen aufgehen. */
-/** Nachkommastellen, mit denen `coef` eine Zahl zeigt. */
-const coefDigits = (v: number) => { const a = Math.abs(v); return a >= 0.01 || a === 0 ? 2 : Math.min(10, 2 - Math.floor(Math.log10(a))); };
-/** Der Wert, den `coef` sichtbar macht (für Proben mit den sichtbaren Zahlen). */
-const coefShown = (v: number) => Number(v.toFixed(coefDigits(v)));
-export const coef = (v: number) => num(v, coefDigits(v));
+/** Nachkommastellen für einen Koeffizienten: höchstens zwei, bei Werten unter 0,01 so viele, dass `sig` gültige Ziffern sichtbar sind. */
+const coefDigits = (v: number, sig: number) => { const a = Math.abs(v); return a >= 0.01 || a === 0 ? 2 : Math.min(10, sig - 1 - Math.floor(Math.log10(a))); };
+/** Koeffizient in Texten (AUTHORING 2a): höchstens zwei Nachkommastellen, kleine Werte mit zwei gültigen Ziffern („0,00037“). */
+export const coef = (v: number) => num(v, coefDigits(v, 2));
+/** b₁ in den Rechnungen der Brücke mit drei gültigen Ziffern („0,000366“), damit b₀ und ŷ mit den sichtbaren Zahlen aufgehen. */
+const coefCalc = (v: number) => num(v, coefDigits(v, 3));
+/** Der Wert, den `coefCalc` sichtbar macht (für Proben mit den sichtbaren Zahlen). */
+const coefShown = (v: number) => Number(v.toFixed(coefDigits(v, 3)));
 /** Anteil an einer Summe in Prozent, kleine Anteile als „weniger als 0,01 %“. */
 const share = (part: number, whole: number) => whole <= 0 ? '0 %' : part / whole * 100 < 0.005 ? 'weniger als 0,01 %' : `${num(part / whole * 100)} %`;
 /** Satz zum Skalenniveau einer Spalte, leer bei metrischen Spalten. */
@@ -394,7 +396,7 @@ export const bridgeGerade: Bridge<Fit> = {
   numeric: (c, last) => {
     const s = c.s, n = N(c), out: FNode[] = ['b₁ = [ ', ...sumNodes(n, c.who, i => prodTerm(c, i)), ' ] / [ ', ...sumNodes(n, c.who, i => sqTerm(c, i)), ' ]', { br: true }];
     if (s.b1 === null) return [...out, '= ', { part: [num(s.cp)], m: 2 }, ' / ', { part: ['0'], m: 2 }, ': ', { part: ['nicht definiert'], m: 2 }];
-    out.push('= ', { part: [`${num(s.cp)} / ${num(s.sxx)}`], m: 2 }, ' ≈ ', { part: [coef(s.b1)], m: 2 });
+    out.push('= ', { part: [`${num(s.cp)} / ${num(s.sxx)}`], m: 2 }, ' ≈ ', { part: [coefCalc(s.b1)], m: 2 });
     if (last >= 3) out.push({ br: true }, 'b₀ = ', { part: [num(s.y.mean)], m: 1 }, ' − ', { part: [pc(s.b1)], m: 2 }, ' · ', { part: [num(s.x.mean)], m: 1 }, ' ≈ ', { part: [num(s.b0!)], m: 3 });
     if (last >= 4) out.push({ br: true }, 'ŷ', { sub: PB(c) }, ' = ', { part: [num(s.b0!)], m: 3 }, ' + ', { part: [pc(s.b1)], m: 2 }, ` · ${num(c.values[c.who])} ≈ `, { part: [uy(c, s.yhat[c.who])], m: 4 });
     if (last >= 5) out.push({ br: true }, 'e', { sub: PB(c) }, ` = ${num(c.values2![c.who])} − `, { part: [num(s.yhat[c.who])], m: 4 }, ' ≈ ', { part: [signed(s.e[c.who])], m: 5 });
@@ -408,7 +410,7 @@ export const bridgeGerade: Bridge<Fit> = {
     },
     {
       all: c => c.s.b1 === null ? `${t1(c)} streut nicht. Dann gibt es keine Steigung.`
-        : `Summe der Produkte ${num(c.s.cp)}, Quadratsumme von x ${num(c.s.sxx)}: b₁ = ${num(c.s.cp)} / ${num(c.s.sxx)} ≈ ${coef(c.s.b1)}.`,
+        : `Summe der Produkte ${num(c.s.cp)}, Quadratsumme von x ${num(c.s.sxx)}: b₁ = ${num(c.s.cp)} / ${num(c.s.sxx)} ≈ ${coefCalc(c.s.b1)}.`,
       person: c => { const i = c.who, p = c.s.prod[i]; return `${PB(c)} steuert ${paren(c.s.x.dev[i])} · ${paren(c.s.y.dev[i])} ${eq(p)} ${signed(p)} zum Zähler und ${num(c.s.xsq[i])} zum Nenner bei.`; },
     },
     {
@@ -424,7 +426,7 @@ export const bridgeGerade: Bridge<Fit> = {
       all: c => {
         const s = c.s;
         if (s.b1 === null) return `Ohne Steigung sagt die Gerade für alle ${N(c)} Personen ȳ voraus.`;
-        return `Für jede der ${N(c)} Personen: ŷ = ${lineText(s.b0!, s.b1, coef)}. Die Vorhersagen reichen von ${uy(c, Math.min(...s.yhat))} bis ${uy(c, Math.max(...s.yhat))}.`;
+        return `Für jede der ${N(c)} Personen: ŷ = ${lineText(s.b0!, s.b1, coefCalc)}. Die Vorhersagen reichen von ${uy(c, Math.min(...s.yhat))} bis ${uy(c, Math.max(...s.yhat))}.`;
       },
       person: c => {
         const s = c.s, i = c.who;
