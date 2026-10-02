@@ -13,6 +13,9 @@ import { CONVERSION_MITTEL, conversion, conversionTabs } from './conversion';
 import { EINKOMMEN, missingMittel, missingTools, missingToolsTabs, mitCode } from './missing-tools';
 import { FORMATE, dataExport } from './data-export';
 import { positionP002, reihe, sorting, sortingTabs } from './sorting';
+import { codebook, codebookTabs, eintrag } from './codebook';
+import { surveyColumns } from '../../../domain/survey';
+import { savVariableLabel } from '../../../domain/savWriter';
 
 /*
  * Referenzwerte des Bereichs B2, in R nachgerechnet (R 4.x, mariposa 0.7.4 aus dem Quellstand) auf dem Lehrdatensatz,
@@ -214,6 +217,42 @@ test('Sortieren: Reihenfolge, Positionen und die 200 wie in R', () => {
   assert.equal(liveOutput({ fn: 'describe', show: ['min', 'max'] }, applyOp(rows, 'lernzeit', 'shift', 1), 'lernzeit').split('\n')[7], '  lernzeit  1.000  19.400  200        0');
 });
 
+/*
+ * Codebuch (Lehrdatensatz):
+ *   atlas %>% codebook(view = FALSE)          # 29 variables | 200 observations | 29 labelled; Types: 1 chr, 9 dbl, 19 lbl+dbl
+ *   summary(atlas %>% codebook(view = FALSE)) # lernzeit: Values 0 - 18.4 (99 distinct); id: Label Befragten-ID
+ *   atlas %>% find_var("lern")                # lernzeit, lernplanung5, lernzuversicht7, quelle_buch, quelle_video, quelle_kurs
+ *   atlas %>% find_var("Bildung")             # nur weiterbildung
+ *   table(atlas$geschlecht)                   # 0: 95, 1: 103, 2: 1, 3: 1
+ *   allbus %>% find_var("Bundestag")          # pt03 VERTRAUEN: BUNDESTAG, pv01 BEFR.: WAHLABSICHT BUNDESTAGSWAHL
+ *   Fehlermeldungen: codebook(view = FALSE) ohne Daten → Argument `data` is missing, with no default.
+ *                    atlas %>% codebook(View = FALSE)  → Unknown argument `View` of `codebook()`.
+ */
+test('Codebuch: Zahlen der Karte, der Suche und des Eintrags wie in R', () => {
+  // find_var() sucht ohne Rücksicht auf Groß- und Kleinschreibung in Namen und Variablenlabels.
+  const find = (p: string) => surveyColumns.filter(c => `${c.id} ${savVariableLabel(c)}`.toLowerCase().includes(p.toLowerCase())).map(c => c.id);
+  assert.deepEqual(find('lern'), ['lernzeit', 'lernplanung5', 'lernzuversicht7', 'quelle_buch', 'quelle_video', 'quelle_kurs']);
+  assert.deepEqual(find('Bildung'), ['weiterbildung']);
+  assert.equal(surveyColumns.length + 1, 29, '28 Fragen und die Kennung id');
+  assert.equal(surveyColumns.filter(c => c.categories).length, 19, '19 Spalten mit Wertelabels');
+  const e = eintrag(ctx(rows, 'lernzeit'));
+  assert.deepEqual([e.n, e.fehlend, e.verschieden, e.min, e.max], [200, 0, 99, 0, 18.4]);
+  assert.match(codebook.bausteine[2].was, /von 0 bis 18,4 Stunden, mit 99 verschiedenen Werten/);
+  assert.match(codebook.stellDirVor.text, /5\.246 Befragte und 579 Spalten/);
+  assert.match(codebook.ausprobieren[0].question, /bei 1\.596 Befragten der Code −11/);
+  const s = codebookTabs.sample!;
+  if (s.kind !== 'analysis') throw new Error('Auswertung erwartet');
+  assert.equal(s.result(ctx(rows, 'lernzeit')).kurz, 'Die Spalte lernzeit trägt das Label „Wie viele Stunden haben Sie in den letzten sieben Tagen selbstständig gelernt?“ Die Antworten reichen von 0 bis 18,4 h, mit 99 verschiedenen Werten. Es fehlt keine Angabe.');
+  assert.match(s.result(ctx(rows, 'geschlecht')).kurz, /verteilen sich auf 4 von 4 Antworten; am häufigsten ist „Weiblich“ mit 103\./);
+  assert.match(s.result(ctx(rows, 'quelle_buch')).kurz, /trägt das Label „Lernquelle Buch“\. Die 200/);
+  assert.equal(s.value!(ctx(applyOp(rows, 'lernzeit', 'reverse'), 'lernzeit')), 99);
+  const out = CATALOG_OUTPUT['codebook:0'].output;
+  assert.match(out, /29 variables \| 200 observations \| 29 labelled/);
+  assert.match(out, /Types: 1 chr, 9 dbl, 19 lbl\+dbl/);
+  // Jede Spalte des Lehrdatensatzes ergibt einen lesbaren Eintrag.
+  for (const c of surveyColumns) { const r = s.result(ctx(rows, c.id)); assert.ok(!/NaN|undefined|Infinity/.test(r.kurz + r.fachlich + r.zusatz), c.id); }
+});
+
 // ALLBUS 2023 nur, wenn die eigene GESIS-Datei da ist (ALLBUS_SAV); die Aggregate stehen fest in ./daten.ts.
 const allbusFile = process.env.ALLBUS_SAV;
 test('ALLBUS 2023: Größe und Vertrauen in den Bundestag (pt03) wie in R', { skip: !allbusFile && 'ALLBUS_SAV nicht gesetzt' }, async () => {
@@ -240,6 +279,9 @@ test('ALLBUS 2023: Größe und Vertrauen in den Bundestag (pt03) wie in R', { sk
   assert.ok(close(values.reduce((a, b) => a + b, 0) / values.length, ALLBUS.pt03.mittelMitCodes, 1e-6), 'Mittelwert mit Codes als Zahlen');
   for (const c of ALLBUS.pt03.codes) assert.equal(values.filter(x => x === c.code).length, c.n, `Code ${c.code}`);
   assert.equal(pt03.label, 'VERTRAUEN: BUNDESTAG');
+  assert.equal(pt03.valueLabels.get(-11), 'TNZ: SPLIT');
+  assert.equal(pt03.valueLabels.get(1), 'GAR KEIN VERTRAUEN');
+  assert.equal(pt03.valueLabels.get(7), 'GROSSES VERTRAUEN');
 });
 
 test('B2: Live-Ausgaben der Leitaufrufe wie in R', () => {

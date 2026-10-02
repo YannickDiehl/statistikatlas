@@ -6,9 +6,11 @@ import { conversion, conversionTabs } from './conversion';
 import { missingTools, missingToolsTabs } from './missing-tools';
 import { dataExport, dataExportTabs } from './data-export';
 import { sorting, sortingTabs } from './sorting';
+import { codebook, codebookTabs } from './codebook';
 
 export const b02Datenwerkzeuge: AreaIndex = {
   explanations: {
+    codebook: { kind: 'begriff', card: codebook },
     labels: { kind: 'tabelle', tool: labels },
     conversion: { kind: 'tabelle', tool: conversion },
     missing_tools: { kind: 'tabelle', tool: missingTools },
@@ -16,6 +18,7 @@ export const b02Datenwerkzeuge: AreaIndex = {
     sorting: { kind: 'tabelle', tool: sorting },
   },
   tabs: {
+    codebook: codebookTabs,
     labels: labelsTabs,
     conversion: conversionTabs,
     missing_tools: missingToolsTabs,
