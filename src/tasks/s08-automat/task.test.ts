@@ -5,7 +5,7 @@ import { renderSession } from '../testRender';
 import { inputById } from './content';
 import { initialS08, leveneVariants, machineFor, prepare, spread, variants, type Variant } from './domain';
 
-const render = (state: object) => renderSession(7, true, { tasks: { s08: { ...initialS08(), ...state } } });
+const render = (state: object) => renderSession(8, true, { tasks: { s08: { ...initialS08(), ...state } } });
 const p = prepare(fixtureSav()), vars = variants(p, inputById.pt03);
 const get = (kind: Variant['kind']) => vars.find(v => v.kind === kind)!;
 const f3 = (x: number) => x.toFixed(3).replace('.', ',').replace('-', '−');
@@ -13,8 +13,8 @@ const main = get('main');
 const setting = { input: 'pt03', a: f3(main.a), b: f3(main.b), r2: f3(main.r2) };
 const machine = machineFor(p, inputById.pt03, main, setting), sp = spread(machine);
 
-test('session 8 starts with the brief in the visitor centre and the choice of the question', () => {
-  const html = renderSession(7);
+test('session 9 starts with the brief in the visitor centre and the choice of the question', () => {
+  const html = renderSession(8);
   assert.match(html, /Dein neuer Job: Technik im Besucherzentrum des Landtags\./);
   assert.match(html, /Die Kuratorin Ida Lorenzen schreibt dir/);
   assert.match(html, /10 · Vertrauen in den Bundestag/);

@@ -15,7 +15,7 @@ const load = () => {
 };
 const r = (x: number, d: number) => Math.round(x * 10 ** d) / 10 ** d;
 
-test('session 8: the pt03 automaton, its spread and Levene match spec 4.8', { skip }, () => {
+test('session 9: the pt03 automaton, its spread and Levene match spec 4.8', { skip }, () => {
   const p = load(), vars = variants(p, inputById.pt03);
   const get = (kind: Variant['kind']) => vars.find(v => v.kind === kind)!;
   const main = get('main');
@@ -46,7 +46,7 @@ test('session 8: the pt03 automaton, its spread and Levene match spec 4.8', { sk
   assert.match(checkLevene(mp, leveneVariants(mp), '74.860')[0].text, /^Stimmt: F\(6; 3\.567,9\) = 74,860/);
 });
 
-test('session 8: the parade of all ten inputs matches spec 4.8', { skip }, () => {
+test('session 9: the parade of all ten inputs matches spec 4.8', { skip }, () => {
   const rows = parade(load(), true);
   const row = (id: string) => rows.find(x => x.item.id === id)!;
   // Faulpelz ±1: „65 %“ – je Eingabe 65,3 bis 65,9 %; bester Automat 71 % (70,8); bei 5 von 10 Eingaben trifft der Automat seltener

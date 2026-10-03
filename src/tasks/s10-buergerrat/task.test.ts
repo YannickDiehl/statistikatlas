@@ -8,7 +8,7 @@ import { renderSession } from '../testRender';
 import { Buergerrat } from './Buergerrat';
 import { initialS10, personNumbers, prepare, type S10State } from './domain';
 
-const render = (state: Partial<S10State>) => renderSession(9, true, { tasks: { s10: { ...initialS10(), ...state } } });
+const render = (state: Partial<S10State>) => renderSession(10, true, { tasks: { s10: { ...initialS10(), ...state } } });
 const p = prepare(fixtureSav()), m = p.main as LogitFit;
 const fmt = (x: number, d = 3) => x.toFixed(d).replace('.', ',');
 const jana = personNumbers(m, p.profiles.jana), wiegand = personNumbers(m, p.profiles.wiegand);
@@ -23,8 +23,8 @@ const TAFEL = /Dolmetscher-Tafel: eine Stufe mehr Pflichtgefühl in drei Sprache
 // Referenzwerte der Testdatei, die vor dem eigenen Eintrag nirgends stehen dürfen
 const secrets = ['2,615', '2,417', '50,5', '72,7', '94,0', '97,6', '22,2', '+3,6', '15,6', '40,7', '10,3'];
 
-test('session 10 starts with the brief, both council members and the first station', () => {
-  const html = renderSession(9);
+test('session 11 starts with the brief, both council members and the first station', () => {
+  const html = renderSession(10);
   assert.match(html, /AUFGABE · STATISTIK-DOLMETSCHER:IN/);
   assert.match(html, /Dein neuer Job: Statistik-Dolmetscher:in\./);
   assert.match(html, /„Pflichtgefühl: Exp\(B\) = 3,77 \*\*\*“/);
@@ -38,7 +38,7 @@ test('session 10 starts with the brief, both council members and the first stati
   for (const s of secrets) assert.ok(!html.includes(s), s);
   assert.doesNotMatch(html, TAFEL);
   assert.doesNotMatch(html, /Nachwort/);
-  const empty = renderSession(9, false);
+  const empty = renderSession(10, false);
   assert.match(empty, /Dolmetschen für den Bürgerrat/);
   assert.match(empty, /ALLBUS-Datei hierher ziehen/);
 });

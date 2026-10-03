@@ -172,7 +172,7 @@ const OR_TEXT: Record<Exclude<ModelId | 'b', 'main'>, (r: Reading) => string> = 
   nonvote: r => `Gegenrichtung: Hast du Nichtwahl als 1 kodiert – oder beide Skalen nicht umgepolt? Beides dreht alle Effekte um: 1/${entered(r)} ≈ ${f2(1 / r.x)}.`,
   pe09: () => 'pe09 läuft von „stimme voll zu“ (1) bis „stimme gar nicht zu“ (4). Ohne Umpolen heißt ein höherer Wert weniger Pflichtgefühl – deshalb liegt Exp(B) unter 1.',
   pa02a: () => 'pa02a läuft von „sehr stark“ (1) bis „überhaupt nicht“ (5). Ohne Umpolen dreht sich der Effekt des Interesses um.',
-  dontknow: () => '„Weiß nicht“ als Nichtwahl gezählt? Wer bei pv01 „weiß nicht“ (−8) sagt, hat keine Absicht geäußert – der Code gehört zu NA (Sitzung 4).',
+  dontknow: () => '„Weiß nicht“ als Nichtwahl gezählt? Wer bei pv01 „weiß nicht“ (−8) sagt, hat keine Absicht geäußert – der Code gehört zu NA (Sitzung 5).',
   ineligible: () => 'Nicht Wahlberechtigte (−50) als Nichtwählende gezählt? Wer nicht wählen darf, entscheidet sich nicht gegen das Wählen – −50 gehört zu NA.',
   allMissing: () => 'Alle fehlenden Angaben als Nichtwahl gezählt? Mit else=0 werden auch „weiß nicht“, „verweigert“ und „nicht wahlberechtigt“ zu 0. Setz else=NA.',
   pflichtOnly: () => 'Das ist das Modell nur mit dem Pflichtgefühl. Der Sachverständige hatte auch das politische Interesse im Modell.',
@@ -353,7 +353,7 @@ export function answerNotes(text: string, k: Known): Note[] {
     ? `Probier es an Jana: ${probe} – geht das? Exp(B) vervielfacht die Chance (wählen : nicht wählen), nicht die Wahrscheinlichkeit.`
     : 'Probier es an Jana aus: Nimm ihre Wahrscheinlichkeit aus Station 2 mal Exp(B) – was kommt heraus? Exp(B) vervielfacht die Chance (wählen : nicht wählen), nicht die Wahrscheinlichkeit.' });
   else if (ODDS_WORDS.test(text)) notes.push({ tone: 'ok', text: 'Du sprichst von Chancen – genau darauf bezieht sich Exp(B): Je Stufe Pflichtgefühl wird die Chance (wählen : nicht wählen) mit Exp(B) multipliziert.' });
-  if (CAUSAL_WORDS.test(text)) notes.push({ tone: 'hint', text: 'Du schreibst von einer Wirkung. Das Modell vergleicht Menschen mit mehr und weniger Pflichtgefühl – was eine Kampagne bewirkt, zeigt es nicht (Sitzung 9). Wie klingt dein Satz als Vergleich?' });
+  if (CAUSAL_WORDS.test(text)) notes.push({ tone: 'hint', text: 'Du schreibst von einer Wirkung. Das Modell vergleicht Menschen mit mehr und weniger Pflichtgefühl – was eine Kampagne bewirkt, zeigt es nicht (Sitzung 10). Wie klingt dein Satz als Vergleich?' });
   if (deterministic(text)) notes.push({ tone: 'hint', text: k.pJana !== null
     ? `Das Modell sagt nichts über Jana persönlich: Von 100 Menschen, die so antworten wie Jana, würden etwa ${de(100 * k.pJana, 0)} wählen gehen.`
     : 'Das Modell sagt nichts über Jana persönlich, sondern über Menschen wie sie: Von 100 Menschen, die so antworten wie Jana, …' });
@@ -460,7 +460,7 @@ export function tafelNotes(p: Prepared, campaign: CampaignAnswer | '', answer: s
   notes.push({ tone: 'hint', text: langs.length
     ? `Deine Antwort spricht ${langs.map(l => LANG_LABELS[l]).join(' und ')}. Die anderen Sprachen: ${(['odds', 'prob', 'logit'] as Lang[]).filter(l => !langs.includes(l)).map(l => s[l]).join(' ')}`
     : `Ich erkenne nicht, in welcher Sprache du antwortest. Alle drei: ${s.odds} ${s.prob} ${s.logit}` });
-  if (CAUSAL_WORDS.test(answer)) notes.push({ tone: 'hint', text: 'Vorsicht mit „bewirkt“: Das Modell vergleicht Menschen, die sich im Pflichtgefühl unterscheiden. Ob eine Kampagne Pflichtgefühl erzeugt und damit Menschen an die Urne bringt, zeigt es nicht (Sitzung 9).' });
+  if (CAUSAL_WORDS.test(answer)) notes.push({ tone: 'hint', text: 'Vorsicht mit „bewirkt“: Das Modell vergleicht Menschen, die sich im Pflichtgefühl unterscheiden. Ob eine Kampagne Pflichtgefühl erzeugt und damit Menschen an die Urne bringt, zeigt es nicht (Sitzung 10).' });
   return notes;
 }
 

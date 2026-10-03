@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { antraege, SETUP_SCRIPT } from '../src/tasks/s01-schon-gefragt/content';
 import { R_SOLUTION as S02 } from '../src/tasks/s02-datenerfassung/content';
 import { R_SOLUTION as S03 } from '../src/tasks/s03-stuehle/content';
+import { hints as GRAFIK_HINTS, QUESTIONS as GRAFIK_QUESTIONS } from '../src/tasks/grafik-erst-zeichnen/content';
+import { rSolution as grafikSolution, type Plan as GrafikPlan } from '../src/tasks/grafik-erst-zeichnen/domain';
 import { R_SOLUTION as S04 } from '../src/tasks/s04-nenner-check/content';
 import { CARDS } from '../src/tasks/s05-treiber/content';
 import { rCodeFor } from '../src/tasks/s05-treiber/domain';
@@ -21,11 +23,21 @@ if (!sav || !out) {
   console.error('Aufruf: node --import tsx scripts/export-task-scripts.ts <datei.sav> <ordner>');
   process.exit(1);
 }
+// Teil 3: je Leitfrage der Bauplan, den die Vorschau als passend bestätigt.
+const GRAFIK_PLANS: Record<string, GrafikPlan> = {
+  demokratie: { geom: 'fill', x: 'eastwest', second: 'ps03' },
+  stunden: { geom: 'boxplot', x: 'sex', second: 'dw15' },
+  alter: { geom: 'jitter', x: 'age', second: 'ls01' },
+};
+const GRAFIK_SETUP = 'library(dplyr)\nlibrary(ggplot2)\nlibrary(mariposa)\nallbus <- read_spss(file.choose())\n';
 const withFile = (code: string) => code.replaceAll('file.choose()', () => JSON.stringify(sav));
 const scripts: Record<string, string> = {
   's01-schon-gefragt.R': `${SETUP_SCRIPT}\n${antraege.map(a => a.hint.solution).join('\n')}\n`,
   's02-datenerfassung.R': S02,
   's03-stuehle.R': S03,
+  ...Object.fromEntries(GRAFIK_QUESTIONS.map(q => [`grafik-erst-zeichnen-${q.id}.R`, grafikSolution(q, GRAFIK_PLANS[q.id])])),
+  'grafik-erst-zeichnen-teil1.R': `${GRAFIK_SETUP}\n${GRAFIK_HINTS.sketch.solution}\n`,
+  'grafik-erst-zeichnen-teil2.R': `${GRAFIK_SETUP}\n${GRAFIK_HINTS.silhouettes.solution}\n`,
   's04-nenner-check.R': S04,
   ...Object.fromEntries(CARDS.map(c => [`s05-treiber-${c.id}.R`, rCodeFor(c)])),
   's06-letzte-frage.R': S06(4),

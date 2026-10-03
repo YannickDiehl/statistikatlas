@@ -42,7 +42,7 @@ export const DETOURS = [
   { title: 'Ohne Gewicht gerechnet', text: 'Der ALLBUS befragt Ostdeutsche absichtlich häufiger. Für eine Aussage über Deutschland gehört weights = wghtpew in das Modell; ohne Gewicht liegt Exp(B) etwas daneben.' },
   { title: 'Gegenrichtung', text: 'Wer Nichtwahl als 1 kodiert oder beide Skalen nicht umpolt, bekommt Kehrwerte: Aus einem Exp(B) über 1 wird eines unter 1.' },
   { title: 'Eine Skala nicht umgepolt', text: 'pe09 läuft von „stimme voll zu“ (1) bis „stimme gar nicht zu“ (4), pa02a von „sehr stark“ (1) bis „überhaupt nicht“ (5). Ohne rec(…, rules = "rev") heißt ein höherer Wert weniger Pflichtgefühl bzw. weniger Interesse.' },
-  { title: 'Nichtwahl zu weit gefasst', text: '„Weiß nicht“, „nicht wahlberechtigt“ (−50) oder alle fehlenden Angaben als 0 zu zählen, verwässert den Vergleich: Wer keine Absicht geäußert hat oder nicht wählen darf, entscheidet sich nicht gegen das Wählen (Sitzung 4).' },
+  { title: 'Nichtwahl zu weit gefasst', text: '„Weiß nicht“, „nicht wahlberechtigt“ (−50) oder alle fehlenden Angaben als 0 zu zählen, verwässert den Vergleich: Wer keine Absicht geäußert hat oder nicht wählen darf, entscheidet sich nicht gegen das Wählen (Sitzung 5).' },
   { title: 'Chance als Wahrscheinlichkeit gelesen', text: 'Eine Chance von 3 heißt „3 zu 1“, also 75 %. Wahrscheinlichkeiten liegen zwischen 0 und 1, Chancen zwischen 0 und unendlich.' },
   { title: 'Exp(B) als „x-mal so wahrscheinlich“ gelesen', text: 'Exp(B) vervielfacht die Chance, nicht die Wahrscheinlichkeit. Wer schon zu 80 % wählt, kann nicht dreimal so wahrscheinlich wählen – das wären 240 %.' },
 ] as const;

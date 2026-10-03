@@ -1,3 +1,13 @@
+## 3. Oktober 2026 – Lernpfad: neue Sitzung 4 „Daten sehen“
+
+- Neue Sitzung 4 zwischen „Erste Auszählung“ und „Kreuztabellen“ (Spezifikation `docs/entwicklung/spezifikationen/2026-10-03-lernpfad-sitzung-4-daten-sehen-design.md`); die bisherigen Sitzungen 4–10 sind jetzt 5–11. Aufgabe „Erst zeichnen, dann zeigen“ (`src/tasks/grafik-erst-zeichnen/`, Speicherschlüssel `grafik`; `s04`–`s10` unverändert): Grafikredaktion eines Schulbuchverlags; Vorher-Skizze der Lebenszufriedenheit mit Zeichenfeld (Maus, Finger, Pfeiltasten), Ablesen am eigenen ggplot2-Plot, Überlagerung von Skizze und Daten; Rätselkasten mit vier Silhouetten und einem Köder; Bauplan mit sieben Formen und Vorschau inklusive der Meldungen von ggplot2; Bildunterschrift mit n-Prüfung; Achsenbeginn mit Bildfaktor.
+- Verweise auf Sitzungsnummern in den Aufgaben 8 und 11 angepasst; Testtitel und Render-Indizes der Sitzungen 5–11 nachgezogen.
+- Reproduziert mit ZA8831 v1.3.0: `ls01` n = 5.164, Modus 8 (1.506), Mittel 7,3555; Silhouetten `hs01`, `pa01`, `age` (82 Jahre), `dw15` (742-mal 40 Stunden, 60,9 % Vielfache von 5); `ps03` × `eastwest` n = 3.621; Boxplot-Quartile nach Geschlecht wie `quantile(type = 7)`; `age` × `ls01` n = 5.142; Mittel West 7,4387, Ost 7,1790, Bildfaktor bei Achse ab 7,1: 4,29.
+- Prüfung: 664 automatisierte Tests bestanden (26 Echtdaten-Tests ohne Datei übersprungen, mit der Datei alle 20 Echtdaten-Tests des Lernpfads bestanden); TypeScript und Produktions-Build erfolgreich; die fünf neuen Lösungsskripte (`grafik-erst-zeichnen-*.R`) laufen in R auf der echten Datei (lokal mariposa 0.6.3.2, ggplot2 4.0.3). Browser: Skizze, Ablesen, Überlagerung, Silhouetten, alle Formen der drei Leitfragen, Bildunterschrift, Achse und Kartenlinks bei 1024 px und 375 px geprüft.
+- Offen: Knoten für Balkendiagramm, Histogramm, Boxplot und Streudiagramm in der Karte; Offline-Build und `check-explanations.cjs` nicht erneut ausgeführt.
+
+---
+
 ## 2. Oktober 2026 – Veröffentlichung und Aufräumen
 
 - Öffentlich auf GitHub (https://github.com/YannickDiehl/statistikatlas) mit GitHub Pages (https://yannickdiehl.github.io/statistikatlas/); jeder Push auf `main` testet, baut und veröffentlicht neu.

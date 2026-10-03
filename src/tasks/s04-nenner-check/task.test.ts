@@ -9,10 +9,10 @@ const party = fourfold(joint, PARTY);
 const own = fourfold(joint, { item: 'pe05', distrust: [3, 4], nonvote: [-8], else0: false, weighted: false });
 const p2 = { rowDistrust: fmt(percent(party, 'a', 'row')), rowOthers: fmt(percent(party, 'c', 'row')), total: fmt(percent(party, 'a', 'all')) };
 const p3 = { ...initialS04().p3, rowDistrust: fmt(percent(own, 'a', 'row')), rowOthers: fmt(percent(own, 'c', 'row')), n: String(own.n.a) };
-const render = (state: object) => renderSession(3, true, { tasks: { s04: { ...initialS04(), ...state } } });
+const render = (state: object) => renderSession(4, true, { tasks: { s04: { ...initialS04(), ...state } } });
 
-test('session 4 shows the press release, three checks, the verdict and the plenum card', () => {
-  const html = renderSession(3);
+test('session 5 shows the press release, three checks, the verdict and the plenum card', () => {
+  const html = renderSession(4);
   assert.match(html, /Faktencheck-Redaktion „Nachgezählt“ · dein Auftrag/);
   assert.match(html, /87 Prozent der Nichtwähler/);
   for (const step of ['Prüfauftrag 1 · Zahl nachbauen', 'Prüfauftrag 2 · Eine Zelle, drei Nenner', 'Prüfauftrag 3 · Deine Lesart', 'Urteil und Faktencheck-Satz']) assert.match(html, new RegExp(step));

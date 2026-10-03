@@ -1,6 +1,7 @@
 import { schonGefragt } from './s01-schon-gefragt';
 import { datenerfassung } from './s02-datenerfassung';
 import { stuehle } from './s03-stuehle';
+import { erstZeichnen } from './grafik-erst-zeichnen';
 import { nennerCheck } from './s04-nenner-check';
 import { treiber } from './s05-treiber';
 import { letzteFrage } from './s06-letzte-frage';
@@ -16,6 +17,7 @@ export const taskRegistry: Partial<Record<TaskId, TaskDef<any>>> = {
   s01: schonGefragt,
   s02: datenerfassung,
   s03: stuehle,
+  grafik: erstZeichnen,
   s04: nennerCheck,
   s05: treiber,
   s06: letzteFrage,

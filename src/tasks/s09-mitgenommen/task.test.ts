@@ -5,15 +5,15 @@ import { renderSession } from '../testRender';
 import { COMMON_CAUSES, GROUP_IDS } from './content';
 import { core, initialS09, interaction, modelStore, prepare, selection, type Model, type ModelEntry } from './domain';
 
-const render = (state: object) => renderSession(8, true, { tasks: { s09: { ...initialS09(), ...state } } });
+const render = (state: object) => renderSession(9, true, { tasks: { s09: { ...initialS09(), ...state } } });
 const p = prepare(fixtureSav()), models = modelStore(p);
 const f3 = (x: number) => x.toFixed(3).replace('.', ',').replace('-', '−');
 const entry = (m: Model, withC = true): ModelEntry => ({ c: withC ? f3(m.c) : '', b: GROUP_IDS.map(g => (g === m.spec.ref ? '' : f3(m.b[g]))) as ModelEntry['b'] });
 const m4 = core(models, 4)!, m1 = core(models, 1)!;
 const pred = (m: Model) => (m.c + m.b[2]).toFixed(2).replace('.', ',');
 
-test('session 9 starts with the brief of the documentary desk and the two camps', () => {
-  const html = renderSession(8);
+test('session 10 starts with the brief of the documentary desk and the two camps', () => {
+  const html = renderSession(9);
   assert.match(html, /Neuer Job: Datenrecherche in der Doku-Redaktion „Zweiufer“\./);
   assert.match(html, /Redakteurin Mara Lindqvist schreibt dir/);
   assert.match(html, /„Prägung“ erwartet/);

@@ -19,6 +19,7 @@ export type Session = {
 const t = (label: string, concept?: string): Term => ({ label, concept });
 
 // Gliederung nach „Statistik im WiSe 24/25“; die gestrichenen Sitzungen 7–8 (EFA) entfallen.
+// Sitzung 4 „Daten sehen“ ist eingefügt: Sitzungsplan 3 nennt Visualisierungen nur als Wiederholung.
 export const sessions: Session[] = [
   {
     id: 1, plan: 'Sitzungsplan 1', title: 'Einstieg', short: 'R, RStudio, ALLBUS',
@@ -42,49 +43,56 @@ export const sessions: Session[] = [
     task: 's03',
   },
   {
-    id: 4, plan: 'Sitzungsplan 4', title: 'Kreuztabellen', short: 'Prozentbasen, Umkodieren',
+    id: 4, plan: 'zu Sitzungsplan 3', title: 'Daten sehen', short: 'Verteilungen, ggplot2',
+    question: 'Wie zufrieden ist Deutschland – und wie zeigt man das ehrlich?',
+    repetition: [t('Nominale Kategorien', 'nominal'), t('Geordnete Kategorien', 'ordinal'), t('Metrisches Skalenniveau', 'metric'), t('Häufigkeiten', 'frequency'), t('Modus', 'mode'), t('Arithmetisches Mittel', 'mean'), t('Median', 'median'), t('Quantile & Interquartilsabstand', 'quantile'), t('Schiefe & Kurtosis', 'shape'), t('Fehlende Angaben', 'missing')],
+    introduced: [t('Empirische Verteilung', 'empirical_distribution'), t('Diskret & stetig', 'discrete_continuous'), t('Grafiken mit ggplot2'), t('Balkendiagramm'), t('Histogramm'), t('Boxplot'), t('Streudiagramm'), t('Labels in Grafiken', 'conversion')],
+    task: 'grafik',
+  },
+  {
+    id: 5, plan: 'Sitzungsplan 4', title: 'Kreuztabellen', short: 'Prozentbasen, Umkodieren',
     question: 'Gehen Misstrauende nicht mehr wählen?',
     repetition: [t('AV und UV'), t('Kausalität', 'causality'), t('Grundgesamtheit & Parameter', 'population_parameter'), t('Stichprobe & Unabhängigkeit', 'sampling'), t('Chi-Quadrat · Unabhängigkeit', 'chi_square')],
     introduced: [t('Kreuztabelle', 'crosstab'), t('Zeilen-, Spalten-, Zellenprozente'), t('Rekodieren & Umpolen', 'recode'), t('Dummyvariablen', 'dummy'), t('Rechnen innerhalb einer Person', 'row_operations')],
     task: 's04',
   },
   {
-    id: 5, plan: 'Sitzungsplan 5', title: 'Gewichtung und Zusammenhang', short: 'Gewichte, Zusammenhangsmaße',
+    id: 6, plan: 'Sitzungsplan 5', title: 'Gewichtung und Zusammenhang', short: 'Gewichte, Zusammenhangsmaße',
     question: 'Was hängt mit der Zufriedenheit mit der Demokratie zusammen?',
     repetition: [],
     introduced: [t('Gewichte', 'weights'), t('Drittvariable'), t('Confounding · gemeinsame Ursachen', 'confounding'), t('Phi', 'phi'), t('Cramér-V', 'cramers_v'), t('Goodman–Kruskal-Gamma', 'goodman_gamma'), t('Kendall Tau-b', 'kendall_tau'), t('Spearman-Korrelation', 'spearman'), t('Pearson-Korrelation', 'pearson')],
     task: 's05',
   },
   {
-    id: 6, plan: 'Sitzungsplan 6', title: 'Mittelwerte vergleichen', short: 't-Test, ANOVA',
+    id: 7, plan: 'Sitzungsplan 6', title: 'Mittelwerte vergleichen', short: 't-Test, ANOVA',
     question: 'Unterscheiden sich Gruppen im Mittel?',
     repetition: [t('Normalverteilung', 'normal_distribution')],
     introduced: [t('t-Test', 't_test'), t('Einfaktorielle ANOVA', 'oneway_anova'), t('Korrelationsmatrix', 'correlation_matrix')],
     task: 's06',
   },
   {
-    id: 7, plan: 'Sitzungsplan 9', title: 'Index und Skala', short: 'Reliabilität, Cronbachs α',
+    id: 8, plan: 'Sitzungsplan 9', title: 'Index und Skala', short: 'Reliabilität, Cronbachs α',
     question: 'Wie misst man Populismus mit mehreren Fragen?',
     repetition: [t('Validität', 'validity'), t('Messfehler', 'measurement_error')],
     introduced: [t('Mittelwertindex', 'row_operations'), t('Skalenwert pro Person', 'item_score'), t('Kombinationsindex'), t('Reliabilität · Alpha & Omega', 'reliability')],
     task: 's07',
   },
   {
-    id: 8, plan: 'Sitzungsplan 10', title: 'Lineare Regression', short: 'Modell, Residuen, R²',
+    id: 9, plan: 'Sitzungsplan 10', title: 'Lineare Regression', short: 'Modell, Residuen, R²',
     question: 'Was sagt eine Gerade über politische Einstellungen?',
     repetition: [],
     introduced: [t('Lineare Regression', 'linear_regression'), t('Linearer Prädiktor', 'prediction'), t('Residuen & kleinste Quadrate', 'residuals'), t('Erklärter Varianzanteil · R²', 'explained_variance'), t('Gleiche Fehlervarianz', 'variance_assumption')],
     task: 's08',
   },
   {
-    id: 9, plan: 'Sitzungsplan 11', title: 'Regression vertiefen', short: 'mehrere Prädiktoren',
+    id: 10, plan: 'Sitzungsplan 11', title: 'Regression vertiefen', short: 'mehrere Prädiktoren',
     question: 'Was bleibt, wenn man mehr berücksichtigt?',
     repetition: [],
     introduced: [t('Dummyvariablen', 'dummy'), t('Multikollinearität', 'multicollinearity'), t('Ausreißer & Einfluss', 'outliers_influence'), t('Interaktion', 'interaction'), t('Confounding · gemeinsame Ursachen', 'confounding')],
     task: 's09',
   },
   {
-    id: 10, plan: 'Sitzungsplan 12', title: 'Logistische Regression', short: 'Odds, Logit',
+    id: 11, plan: 'Sitzungsplan 12', title: 'Logistische Regression', short: 'Odds, Logit',
     question: 'Wer geht wählen – und wie wahrscheinlich?',
     repetition: [],
     introduced: [t('Wahrscheinlichkeit, Odds & Logit', 'logit'), t('Logistische Regression', 'logistic_regression'), t('Likelihood', 'likelihood'), t('Marginale Effekte', 'marginal_effects')],

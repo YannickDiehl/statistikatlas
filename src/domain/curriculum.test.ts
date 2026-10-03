@@ -5,9 +5,9 @@ import { renderSession } from '../tasks/testRender';
 import { conceptById } from './concepts';
 import { sessions } from './curriculum';
 
-test('follows the session plan: ten sessions, one task each', () => {
-  assert.deepEqual(sessions.map(s => s.id), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-  assert.deepEqual(sessions.map(s => s.task), ['s01', 's02', 's03', 's04', 's05', 's06', 's07', 's08', 's09', 's10']);
+test('follows the session plan: eleven sessions with the inserted visualisation session, one task each', () => {
+  assert.deepEqual(sessions.map(s => s.id), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  assert.deepEqual(sessions.map(s => s.task), ['s01', 's02', 's03', 'grafik', 's04', 's05', 's06', 's07', 's08', 's09', 's10']);
   for (const s of sessions) {
     assert.ok(s.introduced.length > 0, `Sitzung ${s.id}`);
     for (const term of [...s.repetition, ...s.introduced]) if (term.concept) assert.ok(conceptById[term.concept], `${s.id}: ${term.concept}`);
@@ -15,7 +15,7 @@ test('follows the session plan: ten sessions, one task each', () => {
 });
 
 test('lists every session with its status and marks missing map terms', () => {
-  const html = renderSession(3, true, { tasks: { s04: { ...initialS04(), guess: 'Nichtwähler' } } });
+  const html = renderSession(4, true, { tasks: { s04: { ...initialS04(), guess: 'Nichtwähler' } } });
   for (const s of sessions) assert.match(html, new RegExp(`<strong>${s.title}<small>`));
   assert.match(html, /Kreuztabellen<small>Aufgabe läuft/);
   assert.match(html, /Mittelwerte vergleichen<small>Aufgabe offen/);
@@ -27,10 +27,12 @@ test('lists every session with its status and marks missing map terms', () => {
   assert.match(html, /<span class="learning-eyebrow">LERNPFAD<\/span>/);
 });
 
-test('shows the Nenner-Check in session 4 and a task in every later session', () => {
-  assert.match(renderSession(3), /Nenner-Check/);
-  assert.match(renderSession(3, false), /87 Prozent der Nichtwähler/);
-  const later = renderSession(7);
+test('shows the drawing task in session 4, the Nenner-Check in session 5 and a task in every later session', () => {
+  assert.match(renderSession(3), /Erst zeichnen, dann zeigen/);
+  assert.match(renderSession(3), /Daten sehen<small>Aufgabe offen/);
+  assert.match(renderSession(4), /Nenner-Check/);
+  assert.match(renderSession(4, false), /87 Prozent der Nichtwähler/);
+  const later = renderSession(8);
   assert.match(later, /Der Demokratie-Automat/);
   assert.doesNotMatch(later, /AUFGABE FOLGT/);
   assert.match(renderSession(99), /Logistische Regression/);

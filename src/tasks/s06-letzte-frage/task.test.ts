@@ -4,7 +4,7 @@ import { fixtureSav } from '../../sandbox/testData';
 import { renderSession } from '../testRender';
 import { compute, initialS06, prepare, type S06State } from './domain';
 
-const render = (state: Partial<S06State>) => renderSession(5, true, { tasks: { s06: { ...initialS06(), ...state } } });
+const render = (state: Partial<S06State>) => renderSession(6, true, { tasks: { s06: { ...initialS06(), ...state } } });
 const c = compute(prepare(fixtureSav()));
 const pctIn = (x: number) => (100 * x).toFixed(1).replace('.', ',');
 const propIn = (x: number) => x.toFixed(3).replace('.', ',').replace('-', '−');
@@ -16,7 +16,7 @@ const rep = (scope: 'all' | 'online') => ({ a: pctIn(share(scope, 'rep', 0)), b:
 const rOf = (pair: string) => propIn(c.rs.find(v => v.pair === pair && v.scope === 'all' && !v.weighted)!.value);
 const fOnline = c.fs.find(v => v.scope === 'online' && v.kind === 'classical' && !v.weighted)!;
 
-test('session 6 starts with the brief, the four versions and the gut feeling – no numbers from the file', () => {
+test('session 7 starts with the brief, the four versions and the gut feeling – no numbers from the file', () => {
   const html = render({});
   assert.match(html, /AUFGABE · PANELAUFBAU IM UMFRAGEINSTITUT/);
   assert.match(html, /Neuer Job: Panelaufbau beim Institut Wiederfrage\./);

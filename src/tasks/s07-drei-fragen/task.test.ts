@@ -7,7 +7,7 @@ import { renderSession } from '../testRender';
 import { DreiFragen } from './DreiFragen';
 import { detailOf, dutyFor, initialS07, kuer, prepare, type S07State } from './domain';
 
-const render = (state: Partial<S07State>) => renderSession(6, true, { tasks: { s07: { ...initialS07(), ...state } } });
+const render = (state: Partial<S07State>) => renderSession(7, true, { tasks: { s07: { ...initialS07(), ...state } } });
 const p = prepare(fixtureSav());
 const A = p.byKey['pa31+pa32+pa33'], B = p.byKey['pa29+pa30+pa33'];
 const f3 = (x: number) => x.toFixed(3).replace('.', ',');
@@ -18,8 +18,8 @@ const entered: Partial<S07State> = {
 };
 const LANDSCAPE = /Die stimmigste Kurzskala ist/;
 
-test('session 7 starts with the news app brief, the seven questions and the battery check', () => {
-  const html = renderSession(6);
+test('session 8 starts with the news app brief, the seven questions and the battery check', () => {
+  const html = renderSession(7);
   assert.match(html, /AUFGABE · DATENTEAM EINER NACHRICHTEN-APP/);
   assert.match(html, /Drei Fragen müssen reichen/);
   assert.match(html, /Neuer Job: Datenteam der Nachrichten-App „Wochenfaden“\./);

@@ -73,7 +73,43 @@
 .sandbox .task-grid select{width:100%}
 @media(max-width:560px){.s03-hall{grid-template-columns:1fr}}
 
-/* Sitzung 4 · Nenner-Check */
+/* Sitzung 4 · Erst zeichnen, dann zeigen */
+.grafik-pad{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px;touch-action:none;cursor:ns-resize;user-select:none}
+.grafik-pad.locked{cursor:default}
+.grafik-pad text{font:14px var(--sans);fill:var(--muted)}
+.grafik-pad text.hint{font:italic 16px var(--sans)}
+.grafik-pad-col{outline:none}
+.grafik-pad-col:focus-visible{stroke:var(--red);stroke-width:2}
+.grafik-figure{margin:12px 0}
+.grafik-figure svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
+.grafik-figure text{font:13px var(--sans);fill:var(--muted)}
+.grafik-figure text.value,.grafik-figure text.axis-name{fill:var(--ink);font-weight:600}
+.grafik-figure text.warn{fill:var(--red);font-weight:600}
+.grafik-figure figcaption{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:15px;color:var(--muted);margin-top:6px}
+.grafik-figure figcaption i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.grafik-figure figcaption i.dashed{background:none;border:2px dashed var(--red);border-radius:2px}
+.grafik-plan{overflow-x:auto}
+.grafik-plan svg{min-width:520px}
+.grafik-candidates{list-style:none;padding:0;margin:10px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px}
+.grafik-candidates li{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:15px}
+.grafik-candidates code{font-size:14px;color:var(--muted)}
+.grafik-candidates small{color:var(--muted)}
+.grafik-silhouettes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:12px 0}
+.grafik-silhouettes figure{margin:0;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.grafik-silhouettes figure.right{border-color:#9fbf9a;background:#f3f8f1}
+.grafik-silhouettes figure.wrong{border-color:#e3c08a;background:#fffaf0}
+.grafik-silhouettes label{display:flex;gap:10px;align-items:center;font:600 18px/1.4 var(--sans)}
+.grafik-silhouettes select{flex:1;min-width:0;font:16px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
+.grafik-silhouettes p{font-size:15px;margin:8px 0 0}
+.grafik-silhouette{display:block;width:100%;height:auto;margin-bottom:8px}
+.grafik-vars{padding-left:20px;font-size:16px;margin:8px 0 12px}
+.grafik-vars li{margin:0 0 4px}
+.grafik-slider{display:flex;flex-direction:column;gap:6px;font:16px var(--sans);color:var(--muted);margin:14px 0 4px}
+.grafik-slider input{width:100%;max-width:420px;accent-color:var(--green)}
+.grafik-axis svg{max-width:420px}
+.grafik .sandbox-chips button{text-align:left}
+
+/* Sitzung 5 · Nenner-Check */
 .s04 .sandbox-quote blockquote{font-size:21px}
 .s04-bars,.s04-strip{margin:12px 0}
 .s04-bars svg,.s04-strip svg{width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:8px}
@@ -92,7 +128,7 @@
 .s04-extra summary{font:600 18px/1.4 var(--sans);cursor:pointer}
 .s04 .sandbox-chips .sandbox-note{margin:0 6px 0 0;align-self:center}
 
-/* Sitzung 5 · Treiber-Rangliste */
+/* Sitzung 6 · Treiber-Rangliste */
 .s05-pick{display:flex;align-items:center;gap:8px;font-size:16px;color:var(--muted)}
 .s05-pick select{font:17px/1.4 var(--sans);border:1px solid var(--line);border-radius:6px;padding:6px 8px;background:#fff;color:var(--ink)}
 .s05-card{margin-top:12px}
@@ -117,7 +153,7 @@
 .s05-rank .s05-scroll svg{min-width:560px}
 .s05-rank-table td{white-space:nowrap}
 
-/* Sitzung 6 · Die letzte Frage */
+/* Sitzung 7 · Die letzte Frage */
 .s06-role{font:600 14px/1 var(--sans);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 8px;margin-left:6px;vertical-align:2px;white-space:nowrap}
 .s06-table{width:100%;border-collapse:collapse;font-size:16px;margin:8px 0}
 .s06-table caption{text-align:left;color:var(--muted);margin-bottom:4px}
@@ -162,7 +198,7 @@
 .s06-state-freigegeben{border-color:#9fbf9a;background:#eef5ec}
 .s06-state-Veto{border-color:#e3c08a;background:#fff5e6}
 @media (prefers-reduced-motion:reduce){.s06-bar-fill{transition:none}}
-/* Sitzung 7 · Drei Fragen müssen reichen */
+/* Sitzung 8 · Drei Fragen müssen reichen */
 .s07-items{list-style:none;padding:0;margin:8px 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
 .s07-items .task-card{margin:0;padding:12px 16px}
 .s07-items h4{font:600 17px/1.4 var(--sans);margin:0 0 6px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline}
@@ -203,7 +239,7 @@
 .s07-kuer>summary{font:600 18px/1.4 var(--sans);cursor:pointer}
 .s07-duty-draw{background:#fff;border:1px solid var(--line);border-left:4px solid #7d6b5d;border-radius:0 8px 8px 0;padding:10px 14px;font-size:17px}
 @media(max-width:560px){.s07-table{font-size:14px}.s07-table th,.s07-table td{padding:3px 4px}.s07-agree{margin-left:0}}
-/* Sitzung 10 · Dolmetschen für den Bürgerrat */
+/* Sitzung 11 · Dolmetschen für den Bürgerrat */
 .s10-questions{margin:0 0 10px;padding-left:22px}
 .s10-questions li{margin:0 0 4px}
 .s10-council{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:0 0 4px}
@@ -230,7 +266,7 @@
 .s10-afterword li{margin:0 0 6px}
 .s10-notes{margin:10px 0;padding-left:20px;font-size:17px}
 .s10-notes li{margin:0 0 6px}
-/* Sitzung 8 · Der Demokratie-Automat */
+/* Sitzung 9 · Der Demokratie-Automat */
 .s08-card{margin-top:12px}
 .s08-card h4 code{font-size:16px;color:var(--muted);margin-left:6px}
 .s08-ask{font:20px/1.4 Georgia,serif;margin:0 0 6px}
@@ -265,7 +301,7 @@
 .s08-notes li{margin:0 0 6px}
 @media(max-width:560px){.s08-table{font-size:14px}.s08-table th,.s08-table td{padding:3px 4px}}
 
-/* Sitzung 9 · Mitgenommen */
+/* Sitzung 10 · Mitgenommen */
 .s09-scroll{overflow-x:auto}
 .s09-table{width:100%;border-collapse:collapse;font-size:16px;margin:8px 0}
 .s09-table caption{text-align:left;color:var(--muted);margin-bottom:4px}

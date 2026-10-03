@@ -18,7 +18,7 @@ const load = () => {
 const r = (x: number, d: number) => Math.round(x * 10 ** d) / 10 ** d;
 const fit = (p: Prepared, id: keyof Prepared['models']) => p.models[id] as LogitFit;
 
-test('session 10: the expert model (weighted, n = 2,758) as in the concept', { skip }, () => {
+test('session 11: the expert model (weighted, n = 2,758) as in the concept', { skip }, () => {
   const p = load(), m = p.main!;
   assert.equal(m.n, 2758);
   assert.deepEqual(m.coef.map(b => r(b, 3)), [-2.154, 1.326, 0.34]);
@@ -36,7 +36,7 @@ test('session 10: the expert model (weighted, n = 2,758) as in the concept', { s
   assert.equal(checkModel(p, { pflicht: '3,8', interesse: '1,4' })[0].tone, 'hint');
 });
 
-test('session 10: Jana and Herr Wiegand with and without one step more', { skip }, () => {
+test('session 11: Jana and Herr Wiegand with and without one step more', { skip }, () => {
   const p = load(), m = p.main!;
   const j = personNumbers(m, p.profiles.jana), w = personNumbers(m, p.profiles.wiegand);
   assert.deepEqual([r(j.logit[0], 2), r(j.odds[0], 2), r(100 * j.prob[0], 1)], [1.18, 3.25, 76.4]);
@@ -69,7 +69,7 @@ test('session 10: Jana and Herr Wiegand with and without one step more', { skip 
   assert.match(checkChain(p, { logit: '', odds: '', prob: '3,25' })[0].text, /Das ist die Chance, nicht die Wahrscheinlichkeit/);
 });
 
-test('session 10: the error variants of the concept', { skip }, () => {
+test('session 11: the error variants of the concept', { skip }, () => {
   const p = load();
   const or = (id: keyof Prepared['models']) => fit(p, id).expB.slice(1).map(v => r(v, 2));
   assert.deepEqual(or('unweighted'), [3.7, 1.4]);
@@ -82,7 +82,7 @@ test('session 10: the error variants of the concept', { skip }, () => {
   assert.match(checkModel(p, { pflicht: '1,80', interesse: '1,69' })[0].text, /„Weiß nicht“ als Nichtwahl/);
 });
 
-test('session 10: hit rate 95.1 % against 94.8 % for “everyone votes”, 18 of 143 non-voters', { skip }, () => {
+test('session 11: hit rate 95.1 % against 94.8 % for “everyone votes”, 18 of 143 non-voters', { skip }, () => {
   const p = load(), c = p.main!.classification;
   assert.equal(r(c.overall, 1), 95.1);
   assert.equal(r(100 * c.n1 / (c.n0 + c.n1), 1), 94.8);

@@ -17,7 +17,7 @@ const load = () => {
 };
 const r = (x: number, d: number) => Math.round(x * 10 ** d) / 10 ** d;
 
-test('session 9: dummies with reference West-Bleibende, CIs, invariant predictions and group sizes match spec 4.9', { skip }, () => {
+test('session 10: dummies with reference West-Bleibende, CIs, invariant predictions and group sizes match spec 4.9', { skip }, () => {
   const p = load(), models = modelStore(p);
   const m = core(models, 4)!;
   assert.deepEqual([r(m.c, 2), r(m.b[1], 2), r(m.b[2], 2), r(m.b[3], 2)], [4.24, -0.71, -0.17, -0.03]);
@@ -37,7 +37,7 @@ test('session 9: dummies with reference West-Bleibende, CIs, invariant predictio
   assert.deepEqual([r(u.b[1], 3), r(u.b[2], 3), r(u.b[3], 3)], [-0.708, -0.166, -0.037]);
 });
 
-test('session 9: movers, selection, controls, the pt03 counter-check and the interaction match spec 4.9', { skip }, () => {
+test('session 10: movers, selection, controls, the pt03 counter-check and the interaction match spec 4.9', { skip }, () => {
   const p = load(), models = modelStore(p);
   const mv = Object.fromEntries(moverVariants(p).map(v => [v.key, v]));
   assert.deepEqual([mv.model.ow, mv.model.wo], [91, 97]);
@@ -67,7 +67,7 @@ test('session 9: movers, selection, controls, the pt03 counter-check and the int
   assert.ok(Math.abs(it.fit.r2 - core(models, 4)!.fit.r2) < 1e-10);
 });
 
-test('session 9: the wobble test stays far from the 0.7 both camps would need (concept values)', { skip }, () => {
+test('session 10: the wobble test stays far from the 0.7 both camps would need (concept values)', { skip }, () => {
   const models = modelStore(load());
   const w = Object.fromEntries(wobbleTest(core(models, 4)!).map(x => [x.g, x]));
   // Konzept (Original): Ost→West −0,02 … 0,26, West→Ost −0,12 … 0,13 – gerundet aus −0,015 … 0,255 und −0,123 … 0,134
@@ -77,7 +77,7 @@ test('session 9: the wobble test stays far from the 0.7 both camps would need (c
   assert.ok(Math.abs(w[2].lo) < 0.7 && Math.abs(w[3].lo) < 0.7);
 });
 
-test('session 9: entries typed as R prints them (dot decimals, 78.0%) are recognised', { skip }, () => {
+test('session 10: entries typed as R prints them (dot decimals, 78.0%) are recognised', { skip }, () => {
   const p = load(), models = modelStore(p);
   const e: ModelEntry = { c: '4.243', b: ['-0.705', '-0.166', '-0.034', ''] };
   assert.equal(checkModel(p, models, 4, e)[0].tone, 'ok');

@@ -5,10 +5,10 @@ import { renderSession } from '../testRender';
 import { cardById } from './content';
 import { initialS05, prepare, variants } from './domain';
 
-const render = (state: object) => renderSession(4, true, { tasks: { s05: { ...initialS05(), ...state } } });
+const render = (state: object) => renderSession(5, true, { tasks: { s05: { ...initialS05(), ...state } } });
 
-test('session 5 starts with the brief and the card draw', () => {
-  const html = renderSession(4);
+test('session 6 starts with the brief and the card draw', () => {
+  const html = renderSession(5);
   assert.match(html, /Analyst:in im Beratungsbüro „Querschnitt“\./);
   assert.match(html, /Der Förderfonds „Gemeinsinn“ vergibt/);
   assert.match(html, /Karte ziehen/);

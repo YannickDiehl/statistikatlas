@@ -1,6 +1,6 @@
 # Statistikatlas
 
-Interaktiver Lernbegleiter für Statistik Ib (Politikwissenschaft): ein Lernpfad mit zehn Sitzungsaufgaben auf ALLBUS-Daten und eine freie Karte, in der alle Statistikbegriffe Schritt für Schritt erklärt sind, mit R-Code im mariposa-Stil.
+Interaktiver Lernbegleiter für Statistik Ib (Politikwissenschaft): ein Lernpfad mit elf Sitzungsaufgaben auf ALLBUS-Daten und eine freie Karte, in der alle Statistikbegriffe Schritt für Schritt erklärt sind, mit R-Code im mariposa-Stil.
 
 **[Atlas öffnen](https://yannickdiehl.github.io/statistikatlas/)**
 
@@ -9,7 +9,7 @@ Interaktiver Lernbegleiter für Statistik Ib (Politikwissenschaft): ein Lernpfad
 
 ## Was drin ist
 
-- **Lernpfad:** zehn Sitzungen nach dem Sitzungsplan. Jede Sitzung hat eine eigene Aufgabe mit Rolle, Rechnen in R mit mariposa und einem Ergebnis fürs Plenum.
+- **Lernpfad:** elf Sitzungen nach dem Sitzungsplan. Jede Sitzung hat eine eigene Aufgabe mit Rolle, Rechnen in R mit mariposa (in Sitzung 4 dazu ggplot2) und einem Ergebnis fürs Plenum.
 - **Freie Karte:** 144 Begriffe als Netz. Jeder Begriff wird erklärt: erst an fünf Beispielpersonen, dann mit 200 Befragten, dann in R mit `read_spss()`.
 
 ## Daten
@@ -19,7 +19,7 @@ Interaktiver Lernbegleiter für Statistik Ib (Politikwissenschaft): ein Lernpfad
 
 ## Lokal starten
 
-Voraussetzungen: Node 22 und pnpm; für den R-Code mariposa 0.7.4.
+Voraussetzungen: Node 22 und pnpm; für den R-Code mariposa 0.7.4 und ggplot2.
 
 ```bash
 pnpm install

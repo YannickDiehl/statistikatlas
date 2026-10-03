@@ -7,6 +7,8 @@ import { askedCount, findVar } from './s01-schon-gefragt/domain';
 import { S02_VARS, sheets } from './s02-datenerfassung/content';
 import { countCode, factorPosition, gradeCell, scanCode } from './s02-datenerfassung/domain';
 import { describeHours, diagnoseSeats, hoursFor, rawCounts, seatsFor, validCodes } from './s03-stuehle/domain';
+import { QUESTIONS as GRAFIK_QUESTIONS } from './grafik-erst-zeichnen/content';
+import { axisTop, checkCaption, heaping, pictureRatio, planPreview, regionMeans, silhouetteBars, sketchTruth } from './grafik-erst-zeichnen/domain';
 import { allTables, checkP1, denominators, fourfold, PARTY, percent, prepare as prepareS04, readings, stairs } from './s04-nenner-check/domain';
 import { chiSquare, MEASURES } from './kit/stats';
 import { cardById, KONF_ORDERS } from './s05-treiber/content';
@@ -84,7 +86,37 @@ test('session 3: chairs per rule, diagnoses and hours match the concept', { skip
   assert.deepEqual([a.n, r1(a.mean), a.median], [5208, 21.4, 25]);
 });
 
-test('session 4: the 87 %, three denominators, 18 readings and the stairs match the concept', { skip }, () => {
+test('session 4: distribution, silhouettes, plan previews and the axis match R (ggplot2, mariposa)', { skip }, () => {
+  const sav = load();
+  const t = sketchTruth(sav);
+  assert.deepEqual(t.counts, [26, 29, 81, 120, 174, 413, 416, 998, 1506, 868, 533]);
+  assert.equal(t.n, 5164);
+  assert.equal(t.mode, 8);
+  assert.equal(t.median, 8);
+  assert.equal(t.mean.toFixed(4), '7.3555');
+  assert.deepEqual(silhouetteBars(sav, 'hs01'), [864, 2071, 1470, 616, 188]);
+  assert.deepEqual(silhouetteBars(sav, 'pa01'), [186, 250, 751, 672, 1381, 1001, 407, 227, 65, 57]);
+  assert.equal(silhouetteBars(sav, 'age').length, 82);
+  assert.equal(silhouetteBars(sav, 'dw15').length, 91);
+  const h = heaping(sav);
+  assert.equal(h.at40, 742);
+  assert.equal(Math.round(h.round * 1000), 609);
+  const [demokratie, stunden, alter] = GRAFIK_QUESTIONS;
+  assert.equal(planPreview(sav, demokratie, { geom: 'fill', x: 'eastwest', second: 'ps03' }).n, 3621);
+  const box = planPreview(sav, stunden, { geom: 'boxplot', x: 'sex', second: 'dw15' });
+  assert.equal(box.n, 2943);
+  assert.ok(box.view?.kind === 'boxplot');
+  if (box.view?.kind === 'boxplot') assert.deepEqual(box.view.boxes.map(b => [b.label, b.n, b.q1, b.median, b.q3]), [['Mann', 1491, 39, 40, 45], ['Frau', 1442, 30, 37.5, 40], ['divers', 10, 32.125, 40, 43.75]]);
+  assert.equal(planPreview(sav, alter, { geom: 'jitter', x: 'age', second: 'ls01' }).n, 5142);
+  assert.equal(checkCaption(sav, { geom: 'fill', x: 'eastwest', second: 'ps03' }, 'ALLBUS 2023, n = 3.621')[0].tone, 'ok');
+  const m = regionMeans(sav);
+  assert.equal(m.west.toFixed(4), '7.4387');
+  assert.equal(m.east.toFixed(4), '7.1790');
+  assert.equal(axisTop(m), 7.5);
+  assert.equal(pictureRatio(m, 7.1).toFixed(2), '4.29');
+});
+
+test('session 5: the 87 %, three denominators, 18 readings and the stairs match the concept', { skip }, () => {
   const sav = load(), joint = prepareS04(sav), tables = allTables(joint);
   const party = fourfold(joint, PARTY);
   assert.deepEqual(party.n, { a: 127, b: 1829, c: 19, d: 810 });
@@ -112,7 +144,7 @@ test('session 4: the 87 %, three denominators, 18 readings and the stairs match 
   assert.deepEqual([r1(percent(unreversed, 'a', 'row')), r1(percent(unreversed, 'c', 'row'))], [3.2, 6.9]);
 });
 
-test('session 5: measures per card, strata and the ranking match mariposa (ps03 reversed)', { skip }, () => {
+test('session 6: measures per card, strata and the ranking match mariposa (ps03 reversed)', { skip }, () => {
   const p = prepareS05(load());
   const r3 = (x: number) => Math.round(x * 1000) / 1000;
   const get = (id: keyof typeof cardById, measure: string, weighted: boolean, stratum = -1) =>

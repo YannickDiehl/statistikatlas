@@ -17,7 +17,7 @@ const load = () => {
 const r3 = (x: number) => Math.round(x * 1000) / 1000;
 const r1 = (x: number) => Math.round(x * 10) / 10;
 
-test('session 7: battery, 35 short scales, the example and the bonus task match spec 4.7', { skip }, () => {
+test('session 8: battery, 35 short scales, the example and the bonus task match spec 4.7', { skip }, () => {
   const p = load();
   // Alle sieben Fragen: α = .833, ω = .841, n = 3.427; schwächste Trennschärfe pa29 (.348), ohne pa29 α = .842
   assert.deepEqual([r3(p.full.alpha), r3(p.full.omega), p.full.n], [0.833, 0.841, 3427]);

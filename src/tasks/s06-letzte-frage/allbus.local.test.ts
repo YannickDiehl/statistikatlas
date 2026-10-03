@@ -18,7 +18,7 @@ const r3 = (x: number) => Math.round(x * 1000) / 1000;
 const welch = (c: Computed, scope: Scope, grouping: 'rep' | 'amt', weighted = false) =>
   c.tests.find(v => v.scope === scope && v.grouping === grouping && v.kind === 'welch' && v.weighted === weighted)!.test;
 
-test('session 6: repetition and amount over all self-completers and online (spec 4.6)', { skip }, () => {
+test('session 7: repetition and amount over all self-completers and online (spec 4.6)', { skip }, () => {
   const c = load(), tr = trap(c)!;
   // Wiederholung über alle Selbstausfüller:innen: 52,7 → 67,7 %, +15,1 Punkte, p < .001; nur online +1,0 (p = .69)
   assert.deepEqual([r1(100 * tr.all[0]), r1(100 * tr.all[1]), r1(100 * (tr.all[1] - tr.all[0]))], [52.7, 67.7, 15.1]);
@@ -38,7 +38,7 @@ test('session 6: repetition and amount over all self-completers and online (spec
   assert.deepEqual([r1(100 * signedEffect(repW, 'rep')), Math.round(repW.welch.p * 100) / 100, r1(100 * signedEffect(amtW, 'amt')), Math.round(amtW.welch.p * 100) / 100], [0.2, 0.93, 3.8, 0.11]);
 });
 
-test('session 6: ANOVA and Tukey online, unweighted and weighted (spec 4.6)', { skip }, () => {
+test('session 7: ANOVA and Tukey online, unweighted and weighted (spec 4.6)', { skip }, () => {
   const c = load(), a = c.anova.online!, aw = c.anova.onlineW!;
   // ANOVA online p = .046, gewichtet .063; F(3, 1519) = 2,68, η² = .005
   assert.deepEqual([a.dfBetween, a.dfWithin, Math.round(a.F * 100) / 100, r3(a.p), r3(a.eta2)], [3, 1519, 2.68, 0.046, 0.005]);
@@ -61,7 +61,7 @@ test('session 6: ANOVA and Tukey online, unweighted and weighted (spec 4.6)', { 
   assert.match(checkF(c, '20,690').notes[0].text, /über alle Selbstausfüller:innen/);
 });
 
-test('session 6: correlation matrix, cells and the amount = questionnaire half (spec 4.6)', { skip }, () => {
+test('session 7: correlation matrix, cells and the amount = questionnaire half (spec 4.6)', { skip }, () => {
   const c = load(), m = c.matrix.unweighted;
   // Wiederholung × Papier r = −.58; wiederholung × age −.20, papier × age .31, betrag × papier −.02, betrag × age −.00
   assert.deepEqual([m.r[0][2], m.r[0][3], m.r[2][3], m.r[1][2], m.r[1][3], m.r[2][4], m.r[3][4]].map(x => Math.round(x * 100) / 100), [-0.58, -0.2, 0.31, -0.02, -0, -0.22, -0.3]);

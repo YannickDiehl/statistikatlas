@@ -78,7 +78,7 @@ export const WORKSHOP = '9 Erklärungsmodelle (9.2 Einfache lineare Regression, 
 export const hints = {
   setting: {
     think: 'Der Automat braucht zwei Zahlen: die Anzeige bei Eingabe 0 und die Änderung pro Stufe. Beide stehen in der Koeffiziententabelle (Spalte B). Und was bedeutet bei ps03 die 1?',
-    pointer: 'Umpolen geht mit rec() und der passenden Regel (wie in Sitzung 5). linear_regression() mit Gewicht stellt den Automaten ein: Konstante und Steigung stehen in Spalte B, R² unter „Model Summary“.',
+    pointer: 'Umpolen geht mit rec() und der passenden Regel (wie in Sitzung 6). linear_regression() mit Gewicht stellt den Automaten ein: Konstante und Steigung stehen in Spalte B, R² unter „Model Summary“.',
     concept: { id: 'linear_regression', label: 'Lineare Regression' },
   },
   spread: {

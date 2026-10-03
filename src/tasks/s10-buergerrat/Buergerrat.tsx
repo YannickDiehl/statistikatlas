@@ -173,7 +173,7 @@ export function Buergerrat({ data, state, onChange, onConcept }: TaskProps<S10St
       <details className="s10-afterword">
         <summary>Nachwort: sechs typische Umwege</summary>
         <ol>{DETOURS.map(d => <li key={d.title}><strong>{d.title}.</strong> {d.text}</li>)}</ol>
-        <p>Und das Wichtigste: In Wahrscheinlichkeiten hat das Logit-Modell eine eingebaute Wechselwirkung. Wie viel eine Stufe mehr bringt, hängt davon ab, wo jemand auf der S-Kurve steht – deshalb gibt es nicht die eine Zahl, sondern eine Wahl der Sprache (Brücke zu Sitzung 9).</p>
+        <p>Und das Wichtigste: In Wahrscheinlichkeiten hat das Logit-Modell eine eingebaute Wechselwirkung. Wie viel eine Stufe mehr bringt, hängt davon ab, wo jemand auf der S-Kurve steht – deshalb gibt es nicht die eine Zahl, sondern eine Wahl der Sprache (Brücke zu Sitzung 10).</p>
       </details>
       <details className="s02-solution"><summary>Ein vollständiges R-Skript zum Mitnehmen</summary><RBlock code={R_SOLUTION.full} file="buergerrat.R" /></details>
     </>}
