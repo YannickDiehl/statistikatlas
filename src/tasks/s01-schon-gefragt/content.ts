@@ -8,6 +8,8 @@ export type Antrag = {
   text: string;
   /** Rückmeldung zu Variablen, die man für diese Idee übernehmen könnte (spiegelt, bewertet nicht). */
   catalog: Record<string, string>;
+  /** Variablen, die die Idee eindeutig treffen: Ihre Rückmeldung erscheint als „richtig“ (grün). */
+  fits?: string[];
   /** Reaktion der Kollegin auf den Stempel „beauftragen“. */
   onAsk: { tone: 'ok' | 'hint'; text: string; needsReason: boolean };
   hint: Hint;
@@ -40,6 +42,7 @@ export const antraege: Antrag[] = [
     id: 'horoskop',
     text: 'Halten die Leute eigentlich etwas von Horoskopen?',
     catalog: { rh08b: 'Passt: Die Frage misst genau, was man von Astrologie und Horoskopen hält.' },
+    fits: ['rh08b'],
     onAsk: { tone: 'hint', text: 'Die Kollegin: „Such aus Neugier noch nach ‚tarot‘ – der ALLBUS fragt Überraschendes.“', needsReason: false },
     hint: {
       think: 'find_var() findet auch Wortteile. Ein kurzes Suchwort reicht.',

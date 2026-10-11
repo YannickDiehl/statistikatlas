@@ -10,7 +10,8 @@ export type Stamp = {
   decision: 'take' | 'ask' | null;
   variable: string;
   lowest: string;
-  asked: string;
+  /** Eingetragene Zahl der gültigen Antworten. */
+  valid: string;
   searches: string[];
   note: string;
 };
@@ -24,7 +25,7 @@ export type S01State = {
   lesson: string;
 };
 
-export const emptyStamp = (): Stamp => ({ decision: null, variable: '', lowest: '', asked: '', searches: [], note: '' });
+export const emptyStamp = (): Stamp => ({ decision: null, variable: '', lowest: '', valid: '', searches: [], note: '' });
 export const initialS01 = (): S01State => ({
   mode: 'solo', cases: '', vars: '',
   stamps: { horoskop: emptyStamp(), gefluechtete: emptyStamp(), politik: emptyStamp(), einsamkeit: emptyStamp() },
@@ -35,7 +36,8 @@ function parseStamp(raw: unknown): Stamp {
   const r = record(raw);
   return {
     decision: r.decision === 'take' || r.decision === 'ask' ? r.decision : null,
-    variable: str(r.variable, 40), lowest: str(r.lowest, 120), asked: str(r.asked, 20),
+    // Früher hieß das Feld „asked“ (wem die Frage gestellt wurde); gespeicherte Eingaben werden übernommen.
+    variable: str(r.variable, 40), lowest: str(r.lowest, 120), valid: str(r.valid ?? r.asked, 20),
     searches: strList(r.searches, 12, 60), note: str(r.note, 600),
   };
 }
@@ -100,7 +102,15 @@ export function askedCount(v: SavVariable): number {
   return n;
 }
 
-const validCount = (v: SavVariable) => Array.from(v.values).filter(x => !isMissingCode(v, x)).length;
+/** Gültige Antworten: alle Werte, die kein fehlender Code sind. */
+export const validCount = (v: SavVariable) => Array.from(v.values).filter(x => !isMissingCode(v, x)).length;
+
+/** Fehlende Werte nach Code, die häufigsten zuerst (für die Rückmeldung). */
+function missingBreakdown(v: SavVariable, skip: number[] = []): { label: string; count: number }[] {
+  const counts = new Map<number, number>();
+  for (const x of v.values) if (isMissingCode(v, x) && !Number.isNaN(x) && !skip.includes(x)) counts.set(x, (counts.get(x) ?? 0) + 1);
+  return [...counts].sort((a, b) => b[1] - a[1]).map(([code, count]) => ({ label: v.valueLabels.get(code) ?? String(code), count }));
+}
 
 export function lowestLabel(v: SavVariable): string | null {
   const valid = [...v.valueLabels].filter(([code]) => !isMissingCode(v, code)).sort((a, b) => a[0] - b[0]);
@@ -113,6 +123,7 @@ const labelMatches = (input: string, label: string) => {
   return a.length >= 3 && (b.includes(a) || a.includes(b));
 };
 const n = (x: number) => x.toLocaleString('de-DE');
+const hat = (x: number) => x === 1 ? 'hat' : 'haben';
 
 /* ---------- Stempel spiegeln ---------- */
 
@@ -122,21 +133,22 @@ export function checkStamp(sav: SavFile, antrag: Antrag | null, stamp: Stamp): N
     if (!name) return [{ tone: 'hint', text: 'Welche Variable übernimmst du? Trag ihren Namen ein, zum Beispiel rh08b.' }];
     const v = sav.byName.get(name);
     if (!v) return [{ tone: 'warn', text: `Eine Variable „${stamp.variable.trim()}“ gibt es im ALLBUS nicht. Prüf die Schreibweise mit find_var().` }];
-    const notes: Note[] = [{ tone: 'hint', text: antrag?.catalog[name] ?? `${name} heißt im Datensatz „${v.label}“. Passt das zur Idee?` }];
+    const notes: Note[] = [{ tone: antrag?.fits?.includes(name) ? 'ok' : 'hint', text: antrag?.catalog[name] ?? `${name} heißt im Datensatz „${v.label}“. Passt das zur Idee?` }];
     if (stamp.lowest.trim()) {
       const lowest = lowestLabel(v);
       notes.push(lowest && labelMatches(stamp.lowest, lowest)
         ? { tone: 'ok', text: `Stimmt: Der niedrigste Wert heißt „${lowest}“.` }
         : { tone: 'warn', text: `Das passt nicht zum Label des niedrigsten gültigen Werts. Schau mit codebook(allbus, ${name}) nach.` });
     }
-    const asked = parseNumber(stamp.asked);
-    if (asked !== null) {
-      const want = askedCount(v), valid = validCount(v), never = sav.nCases - want;
-      const tnz = tnzCodes(v).map(c => `${c} = ${v.valueLabels.get(c)}`).join(', ');
-      if (asked === want) notes.push({ tone: 'ok', text: `Stimmt: ${n(want)} Befragten wurde die Frage gestellt.` });
-      else if (asked === valid) notes.push({ tone: 'ok', text: `${n(valid)} ist die Zahl der gültigen Antworten. Gestellt wurde die Frage ${n(want)} Personen – manche haben sie gehört, aber nicht beantwortet.` });
-      else if (asked === sav.nCases && never > 0) notes.push({ tone: 'warn', text: `Schau unter den fehlenden Werten nach: ${tnz} (n = ${n(never)}). Diesen Menschen wurde die Frage nie gestellt.` });
-      else notes.push({ tone: 'warn', text: 'Diese Zahl finde ich nicht. Zähl nach: alle Befragten minus diejenigen mit einem Code „TNZ“ (trifft nicht zu).' });
+    const given = parseNumber(stamp.valid);
+    if (given !== null) {
+      const valid = validCount(v), asked = askedCount(v), never = sav.nCases - asked;
+      const split = never > 0 ? ` Gestellt wurde die Frage nur ${n(asked)} Befragten: ${n(never)} ${hat(never)} sie nie gehört (${tnzCodes(v).map(c => v.valueLabels.get(c)).join(', ')}).` : '';
+      const list = (skip: number[] = []) => missingBreakdown(v, skip).slice(0, 4).map(m => `${m.label} (n = ${n(m.count)})`).join(', ');
+      if (given === valid) notes.push({ tone: 'ok', text: `Stimmt: ${n(valid)} gültige Antworten.${split}` });
+      else if (given === asked) notes.push({ tone: 'hint', text: `Fast! ${n(asked)} Befragten wurde die Frage gestellt. ${n(asked - valid)} von ihnen ${hat(asked - valid)} nicht gültig geantwortet: ${list(tnzCodes(v))}. Zieh auch sie ab.` });
+      else if (given === sav.nCases) notes.push({ tone: 'warn', text: `Das sind alle Befragten. Zieh die fehlenden Werte ab: ${list()}.` });
+      else notes.push({ tone: 'warn', text: `Diese Zahl finde ich nicht. Zähl nach: alle Befragten minus alle fehlenden Werte (die negativen Codes im Codebuch, etwa „KEINE ANGABE“ oder „TNZ“).` });
     }
     return notes;
   }
@@ -181,7 +193,7 @@ export function plenumLines(s: S01State): [string, string][] {
 }
 
 function stampLine(stamp: Stamp): string {
-  if (stamp.decision === 'take') return `Stempel: übernehmen · Variable ${stamp.variable.trim() || '–'} · niedrigster Wert: ${stamp.lowest.trim() || '–'} · gestellt: ${stamp.asked.trim() || '–'}`;
+  if (stamp.decision === 'take') return `Stempel: übernehmen · Variable ${stamp.variable.trim() || '–'} · niedrigster Wert: ${stamp.lowest.trim() || '–'} · gültige Antworten: ${stamp.valid.trim() || '–'}`;
   if (stamp.decision === 'ask') return `Stempel: beauftragen · gesucht: ${stamp.searches.map(x => `„${x}“`).join(', ') || '–'}${stamp.note.trim() ? ` · Begründung: ${stamp.note.trim()}` : ''}`;
   return 'Stempel: offen';
 }

@@ -51,7 +51,7 @@ function StampEditor({ sav, antrag, stamp, onChange }: { sav: SavFile; antrag: A
     {stamp.decision === 'take' && <div className="task-grid">
       <label>Variable<input type="text" value={stamp.variable} placeholder="z. B. rh08b" onChange={e => set({ variable: e.target.value })} /></label>
       <label>Label des niedrigsten Werts<input type="text" value={stamp.lowest} onChange={e => set({ lowest: e.target.value })} /></label>
-      <label>Wie vielen wurde die Frage gestellt?<input type="text" inputMode="numeric" value={stamp.asked} onChange={e => set({ asked: e.target.value })} /></label>
+      <label>Wie viele gültige Antworten gibt es?<input type="text" inputMode="numeric" value={stamp.valid} onChange={e => set({ valid: e.target.value })} /></label>
     </div>}
     {stamp.decision === 'ask' && <div className="task-grid">
       <label>Deine Suchwörter in R (mit Komma getrennt)<SearchWordsInput words={stamp.searches} onChange={searches => set({ searches })} /></label>

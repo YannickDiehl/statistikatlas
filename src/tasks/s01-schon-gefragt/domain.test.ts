@@ -38,14 +38,32 @@ test('mirrors a take-stamp without judging it', () => {
   const take = { ...emptyStamp(), decision: 'take' as const };
   assert.match(checkStamp(sav, antragById.politik, take)[0].text, /Welche Variable/);
   assert.match(checkStamp(sav, antragById.politik, { ...take, variable: 'pt99' })[0].text, /gibt es im ALLBUS nicht/);
-  const good = checkStamp(sav, antragById.politik, { ...take, variable: 'PT03', lowest: 'gar kein Vertrauen', asked: '4' });
+  const good = checkStamp(sav, antragById.politik, { ...take, variable: 'PT03', lowest: 'gar kein Vertrauen', valid: '3' });
   assert.match(good[0].text, /Bundestag/);
   assert.equal(good[1].tone, 'ok');
-  assert.match(good[2].text, /4 Befragten wurde die Frage gestellt/);
-  assert.match(checkStamp(sav, antragById.politik, { ...take, variable: 'pt03', asked: '5' })[1].text, /TNZ: SPLIT \(n = 1\)/);
-  assert.match(checkStamp(sav, antragById.politik, { ...take, variable: 'pt03', asked: '3' })[1].text, /gültigen Antworten/);
+  assert.equal(good[2].tone, 'ok');
+  assert.match(good[2].text, /Stimmt: 3 gültige Antworten\. Gestellt wurde die Frage nur 4 Befragten: 1 hat sie nie gehört \(TNZ: SPLIT\)/);
+  const asked = checkStamp(sav, antragById.politik, { ...take, variable: 'pt03', valid: '4' })[1];
+  assert.equal(asked.tone, 'hint');
+  assert.match(asked.text, /^Fast! 4 Befragten wurde die Frage gestellt\. 1 von ihnen hat nicht gültig geantwortet: KEINE ANGABE \(n = 1\)/);
+  assert.doesNotMatch(asked.text, /TNZ/);
+  const all = checkStamp(sav, antragById.politik, { ...take, variable: 'pt03', valid: '5' })[1];
+  assert.equal(all.tone, 'warn');
+  assert.match(all.text, /alle Befragten.*TNZ: SPLIT \(n = 1\).*KEINE ANGABE \(n = 1\)/);
+  assert.match(checkStamp(sav, antragById.politik, { ...take, variable: 'pt03', valid: '2' })[1].text, /finde ich nicht/);
+  const noSplit = checkStamp(sav, antragById.horoskop, { ...take, variable: 'rh08b', valid: '4' })[1];
+  assert.equal(noSplit.text, 'Stimmt: 4 gültige Antworten.');
   assert.match(checkStamp(sav, antragById.politik, { ...take, variable: 'pt03', lowest: 'viel' })[1].text, /passt nicht/);
   assert.match(checkStamp(sav, null, { ...take, variable: 'rh08b' })[0].text, /HALTE VON: ASTROLOGIE/);
+  assert.equal(good[0].tone, 'hint');
+});
+
+test('a variable that clearly fits the idea is confirmed in green', () => {
+  const take = { ...emptyStamp(), decision: 'take' as const };
+  const fit = checkStamp(sav, antragById.horoskop, { ...take, variable: 'rh08b' })[0];
+  assert.equal(fit.tone, 'ok');
+  assert.match(fit.text, /^Passt/);
+  assert.equal(checkStamp(sav, null, { ...take, variable: 'rh08b' })[0].tone, 'hint');
 });
 
 test('asks for documented searches and lets a reason overrule an objection', () => {
@@ -76,6 +94,7 @@ test('restores state defensively and reports status, plenum line, report and scr
   assert.deepEqual(state.stamps.politik.searches, ['vertrauen']);
   assert.equal(state.stamps.horoskop.decision, null);
   assert.equal(state.mode, 'pair');
+  assert.equal(parseS01({ stamps: { politik: { decision: 'take', asked: '3592' } } }).stamps.politik.valid, '3592', 'Eingaben aus dem früheren Feld bleiben erhalten');
   assert.equal(statusS01(initialS01()), 'open');
   assert.equal(statusS01(state), 'running');
   const done = { ...state, stamps: {

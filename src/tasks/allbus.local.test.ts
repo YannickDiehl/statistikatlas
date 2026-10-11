@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { readSav, type SavFile } from '../sandbox/readSav';
-import { askedCount, findVar } from './s01-schon-gefragt/domain';
+import { askedCount, findVar, validCount } from './s01-schon-gefragt/domain';
 import { S02_VARS, sheets } from './s02-datenerfassung/content';
 import { countCode, factorPosition, gradeCell, scanCode } from './s02-datenerfassung/domain';
 import { describeHours, diagnoseSeats, hoursFor, rawCounts, seatsFor, validCodes } from './s03-stuehle/domain';
@@ -38,6 +38,10 @@ test('session 1: search hits and asked counts match the concept', { skip }, () =
   assert.equal(askedCount(sav.byName.get('rh08b')!), 5246);
   assert.equal(askedCount(sav.byName.get('pt03')!), 3650);
   assert.equal(askedCount(sav.byName.get('mp16')!), 3599);
+  // Gültige Antworten, mit R nachgezählt (haven, user_na = TRUE): alle Befragten minus alle negativen Codes.
+  assert.equal(validCount(sav.byName.get('rh08b')!), 5030);
+  assert.equal(validCount(sav.byName.get('pt03')!), 3592);
+  assert.equal(validCount(sav.byName.get('mp16')!), 3480);
 });
 
 test('session 2: paper-only codes, factor positions and sheet grading', { skip }, () => {
